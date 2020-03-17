@@ -75,4 +75,93 @@
 	- Entendendo a paginação
 	- Implementando paginação
   
-  
+- Conhecendo mais sobre o Entity Manager
+	- Entendendo a Sessão e Transação no projeto
+	- Usando JTA em um ambiente Java EE
+	- Ciclo de vida e Estados dos objetos
+	- Movendo os objetos pelo ciclo de vida
+	
+- Consultas com Criteria
+	- O que é API Criteria?
+	- Consulta com Criteria
+	- Projeções
+	- Funções de agregação
+	- Resultados complexos, tuplas e construtores
+	- Funções
+	- Ordenação de resultado
+	- Join e Fetch
+	- Subqueries
+	- Metamodel
+	- Mais consultas com Criteria
+	- Implementando mais consultas
+	
+- Gravação e exclusão em cascata
+	- Gravação em cascata
+	- Exercício: Gravação em cascata
+	- Exclusão com Many-to-Many
+	- Exclusão em cascata
+	- Exclusão de objetos orfãos
+	- Gravação e exclusão em cascata
+	
+- Conceitos e mapeamentos avançados - parte 2
+	- Mapeando chaves compostas
+	- Mapeando objetos embutidos
+	- Propriedades transientes
+	- Coleções de tipos básicos
+	- Coleções com objetos embutidos
+	- Objetos grandes
+	- Exibindo a imagem
+	
+- Outros detalhes importantes
+	- Schema e Catalog
+	- Mais detalhes de @Column
+	- Problema n+1
+	- Cache de primeiro nível
+	- Consultas nativas
+	- Testes com jUnit, DBUnit e JIntegrity
+	- Bean Validation
+	- Aplicação Java EE no Glassfish
+	
+- Hibernate Criteria
+	- Introdução - Restrições between e eq
+	- Função de agregação sum e restrições sql
+	- Criando subselects
+	- LazyLoading e o FetchMode
+	- Transforme, ordene e agrupe a consulta
+	- Navegando e filtrando nos relacionamentos
+	
+- Novidades JPA 2.1
+	- Conversores
+	- Delete e Update com Criteria
+	- Convertendo o resultado de queries nativas
+	- Gerando o schema
+	- Conclusão
+	
+- Cache
+	- O que é cache?
+	- Tipos de cache do Hibernate
+	- Cache de segundo nível
+	- Cache de coleções
+	- Cache de queries
+	- Cache com Ehcache
+	- Cache com Infinispan, JTA e no WildFly
+	
+- Recursos avançados - parte 1
+	- O pattern DAO
+	- Criando um DAO Genérico
+	- O pattern Repository
+	- Datasources
+	- Pool de conexões com C3P0
+	- Trabalhando com procedures
+	- Named Queries em arquivos externos
+	
+- Recursos avançados - parte 2
+	- OneToOne Lazy - Com anotações
+	- OneToOne Lazy - Com instrumentação
+	- Lock Otimista
+	- Lock Pessimista
+	- Introdução ao Multi-Tenancy
+	- Multi-tenancy com bancos separados
+	- Multi-tenancy com schemas diferentes
+	- Engenharia reversa com Hibernate Tools
+
