@@ -1,0 +1,460 @@
+<!--
+    Aula 09.005. Exclusao de Objetos Orfaos
+
+1. Vamos ver, agora, a exclusao de Objetos Orfaos.
+
+2. Como assim Objetos Orfaos, Normandes?
+
+    @Test
+    public void exclusaoDeObjetosOrfaos() {
+        Carro carro = this.manager.find(Carro.class, 6L);
+
+
+    }
+
+3. Bom, eh o seguinte. Quando o Objeto fica sem Pai.
+
+4. Eh, exatamente, a mesma analogia que a gente tem.
+
+5. Como que isso funciona?
+
+6. Eh o seguinte. Eu criei, aqui, o metodo de teste exclusaoDeObjetosOrfaos(), que eu vou fazer o seguinte. Eu vou usar esse Carro de codigo 6, e vou criar, nele, aqui, que eh esse Codigo de Carro, aqui, 'DDD-1234', eh o Fit, aqui, eh o de Codigo 6, fiz a pesquisa, primeiro, vamos cadastrar, aqui, em http://localhost:8080/locadora-veiculo-web/aluguel/NovoAluguel.xhtml, algumas coisas, alguns alugueis, nele, aqui, bem aleatorio, mesmo, so para a gente colocar. Vamos colocar 2 alugueis, nele.
+
+7. Salvei. De novo, aqui, o mesmo Carro, atencao a isso dai, colocar, aqui, outro Aluguel. Okay, alguma coisa assim.
+
+8. Beleza. Se eu for no meu banco de dados, agora, pesquisar, 'select * from aluguel where codigo_carro = 6'. Oh, eu vou pesquisar todos os Alugueis, em que o Codigo do Carro seja igual a 6.
+
+9. Certo? 
+
+10. Retornou,
+
+# codigo, data_devolucao, data_entrega, data_pedido, valor_total, codigo_apolice_seguro, codigo_carro, codigo_motorista
+4, 2019-02-27 19:00:00, 2019-02-20 14:00:00, 2019-02-20, 200.00, 4, 6, 17
+5, 2019-02-22 17:00:00, 2019-02-21 17:00:00, 2019-02-20, 400.00, 5, 6, 18
+
+
+11. O Carro esta aqui, o Carro de Codigo 6 esta aqui,
+
+select * from carro where codigo = 6
+
+# codigo, chassi, cor, placa, valor_diaria, codigo_modelo, data_criacao, data_modificacao
+6, , Prata, DDD-1234, 130.00, 3, , 
+
+
+12. Beleza?
+
+13. Bom, o que que eu vou fazer?
+
+14. Antes, no exemplo anterior, aqui, quando a gente tentou apagar, la, Um Carro, e ele tinha Um Aluguel, a gente tentou remover o Carro. Repare, bem, a diferenca, aqui, em cima, exclusoaEmCascata(),
+
+    @Test
+    public void exclusaoEmCascata() {
+        Carro carro = this.manager.find(Carro.class, 3L);
+
+        this.manager.getTransaction().begin();
+        this.manager.remove(carro);
+        this.manager.getTransaction().commit();
+    }
+
+, que foi quando a gente veio, aqui, no Relacionamento do aluguel,
+
+    @OneToMany(mappedBy = "carro")
+    public List<Aluguel> getAlugueis() {
+        return alugueis;
+    }
+
+, e, ai a gente colocou, aqui, cascade = CascadeType.REMOVE, a gente veio, aqui, e colocou REMOVE, significava o que?
+
+15. Ora, quando eu estou removendo Um Carro, se tiver, entao, ai, o Aluguel, sai removendo os alugueis, ai, tambem.
+
+16. Entao, ele vai la e sai arrancando. Mas, nao eh esse o caso, agora.
+
+17. O caso, agora, que eu quero te mostrar eh um pouco diferente.
+
+18. Eh o seguinte, oh. Eu fui la e busquei o Carro de Codigo 6,
+
+    @Test
+    public void exclusaoDeObjetosOrfaos() {
+        Carro carro = this.manager.find(Carro.class, 6L);
+
+
+
+    }
+
+, que a gente viu que tem Aluguel nele. Certo? E, ai, a gente vem, agora, aqui, oh, this.getTransaction().begin(), ja vamos iniciar, aqui,
+
+    this.manager.getTransaction().begin();
+
+
+    this.manager.getTransaction().commit();
+
+19. Eu quero, simplesmente, remover a Relacao. Eu quero tirar da Colecao de Carro o Aluguel.
+
+20. Como, assim, Normandes?
+
+21. Deixa eu digitar, aqui, que eu acho que vai ficar mais claro para voce ver,
+
+    this.manager.getTransaction().begin();
+
+
+
+    this.managet.getTransaction().commit();
+
+, so fazendo a Transacao, porque eu vou alterar o Carro, entao, eu vou dar um Begin e Um Commit, aqui. Aqui, eu vou fazer o seguinte, oh;
+
+    carro.getAlugueis()
+
+, eu sei que tem alugueis, la, nao sei? A gente nao veio aqui, oh, 
+
+    select * from alguel
+    where codigo_carro = 6
+
+, e fez, olha, la,
+
+# codigo, data_devolucao, data_entrega, data_pedido, valor_total, codigo_apolice_seguro, codigo_carro, codigo_motorista
+4, 2019-02-27 19:00:00, 2019-02-20 14:00:00, 2019-02-20, 200.00, 4, 6, 17
+5, 2019-02-22 17:00:00, 2019-02-21 17:00:00, 2019-02-20, 400.00, 5, 6, 18
+
+, tem 2 Alugueis, onde o codigo do carro eh igual a 6.
+
+22. Vou tirar o primeiro, de indice 0, eh o primeiro que voltar, ali,
+
+    carro.getAlugueis().remove(0);
+
+23. Entao, eu removi. Esta vendo que eu removi da lista de alugueis de Carro. Entao, eu so fui la e removi, pronto.
+
+24. Okay?
+
+25. Simplesmente isso.
+
+26. Se eu tentar executar isso, daqui, agora, a execucao desse cara, aqui,
+
+    @Test
+    public void exclusaoDeObjetosOrfaos() {
+        Carro carro = this.manager.find(Carro.class, 6L);
+
+        this.manager.getTransaction().begin();
+        this.getAlugueis().remove(0);
+        this.manager.getTransaction().commit();
+    }
+
+, vamos ver o que que ele vai fazer, aqui, oh.
+
+27. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_0_,
+        carro0_.chassi as chassi2_3_0_,
+        carro0_.cor as cor3_3_0_,
+        carro0_.data_criacao as data_cri4_3_0_,
+        carro0_.data_modificacao as data_mod5_3_0_,
+        carro0_.codigo_modelo as codigo_m8_3_0_,
+        carro0_.placa as placa6_3_0_,
+        carro0_.valor_diaria as valor_di7_3_0_ 
+    from
+        Carro carro0_ 
+    where
+        carro0_.codigo=?
+Hibernate: 
+    select
+        alugueis0_.codigo_carro as codigo_c7_1_0_,
+        alugueis0_.codigo as codigo1_1_0_,
+        alugueis0_.codigo as codigo1_1_1_,
+        alugueis0_.codigo_apolice_seguro as codigo_a6_1_1_,
+        alugueis0_.codigo_carro as codigo_c7_1_1_,
+        alugueis0_.data_devolucao as data_dev2_1_1_,
+        alugueis0_.data_entrega as data_ent3_1_1_,
+        alugueis0_.data_pedido as data_ped4_1_1_,
+        alugueis0_.codigo_motorista as codigo_m8_1_1_,
+        alugueis0_.valor_total as valor_to5_1_1_,
+        apoliceseg1_.codigo as codigo1_2_2_,
+        apoliceseg1_.protecao_causas_naturais as protecao2_2_2_,
+        apoliceseg1_.protecao_roubo as protecao3_2_2_,
+        apoliceseg1_.protecao_terceiro as protecao4_2_2_,
+        apoliceseg1_.valor_franquia as valor_fr5_2_2_,
+        motorista2_.codigo as codigo2_9_3_,
+        motorista2_1_.cpf as cpf3_9_3_,
+        motorista2_1_.data_nascimento as data_nas4_9_3_,
+        motorista2_1_.nome as nome5_9_3_,
+        motorista2_1_.sexo as sexo6_9_3_,
+        motorista2_.numero_cnh as numero_c1_8_3_ 
+    from
+        Aluguel alugueis0_ 
+    left outer join
+        apolice_seguro apoliceseg1_ 
+            on alugueis0_.codigo_apolice_seguro=apoliceseg1_.codigo 
+    left outer join
+        Motorista motorista2_ 
+            on alugueis0_.codigo_motorista=motorista2_.codigo 
+    left outer join
+        Pessoa motorista2_1_ 
+            on motorista2_.codigo=motorista2_1_.codigo 
+    where
+        alugueis0_.codigo_carro=?
+
+
+28. Hum. Nao apagou nada. So fez SELECT, aqui, que sao SELECT's normais. Se a gente voltar, aqui,
+
+select * from aluguel where codigo_carro = 6
+
+# codigo, data_devolucao, data_entrega, data_pedido, valor_total, codigo_apolice_seguro, codigo_carro, codigo_motorista
+4, 2019-02-27 19:00:00, 2019-02-20 14:00:00, 2019-02-20, 200.00, 4, 6, 17
+5, 2019-02-22 17:00:00, 2019-02-21 17:00:00, 2019-02-20, 400.00, 5, 6, 18
+
+
+, ah, nao apagou. Esta, aqui, ainda o Aluguel.
+
+29. Ah, Normandes, entao, voce ja ensinou, eh so eu vir, aqui, no Relacionamento, em Carro, e colocar cascade = CascadeType.REMOVE,
+
+    @OneToMany(mappedBy = "carro", cascade = CascadeType.REMOVE)
+    public List<Aluguel> alugueis( {
+        return alugueis;    
+    }
+
+, por exemplo. So fazer isso, nao eh, Normandes?
+
+30. Ainda nao.
+
+31. Vou executar, aqui, para voce ver que eu nao estou mentindo para voce, oh.
+
+32. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_0_,
+        carro0_.chassi as chassi2_3_0_,
+        carro0_.cor as cor3_3_0_,
+        carro0_.data_criacao as data_cri4_3_0_,
+        carro0_.data_modificacao as data_mod5_3_0_,
+        carro0_.codigo_modelo as codigo_m8_3_0_,
+        carro0_.placa as placa6_3_0_,
+        carro0_.valor_diaria as valor_di7_3_0_ 
+    from
+        Carro carro0_ 
+    where
+        carro0_.codigo=?
+Hibernate: 
+    select
+        alugueis0_.codigo_carro as codigo_c7_1_0_,
+        alugueis0_.codigo as codigo1_1_0_,
+        alugueis0_.codigo as codigo1_1_1_,
+        alugueis0_.codigo_apolice_seguro as codigo_a6_1_1_,
+        alugueis0_.codigo_carro as codigo_c7_1_1_,
+        alugueis0_.data_devolucao as data_dev2_1_1_,
+        alugueis0_.data_entrega as data_ent3_1_1_,
+        alugueis0_.data_pedido as data_ped4_1_1_,
+        alugueis0_.codigo_motorista as codigo_m8_1_1_,
+        alugueis0_.valor_total as valor_to5_1_1_,
+        apoliceseg1_.codigo as codigo1_2_2_,
+        apoliceseg1_.protecao_causas_naturais as protecao2_2_2_,
+        apoliceseg1_.protecao_roubo as protecao3_2_2_,
+        apoliceseg1_.protecao_terceiro as protecao4_2_2_,
+        apoliceseg1_.valor_franquia as valor_fr5_2_2_,
+        motorista2_.codigo as codigo2_9_3_,
+        motorista2_1_.cpf as cpf3_9_3_,
+        motorista2_1_.data_nascimento as data_nas4_9_3_,
+        motorista2_1_.nome as nome5_9_3_,
+        motorista2_1_.sexo as sexo6_9_3_,
+        motorista2_.numero_cnh as numero_c1_8_3_ 
+    from
+        Aluguel alugueis0_ 
+    left outer join
+        apolice_seguro apoliceseg1_ 
+            on alugueis0_.codigo_apolice_seguro=apoliceseg1_.codigo 
+    left outer join
+        Motorista motorista2_ 
+            on alugueis0_.codigo_motorista=motorista2_.codigo 
+    left outer join
+        Pessoa motorista2_1_ 
+            on motorista2_.codigo=motorista2_1_.codigo 
+    where
+        alugueis0_.codigo_carro=?
+
+
+33. Nao vai funcionar, ainda. Nao funcionou, nao apagou. Vamos, la confirmar, aqui, oh, select * from aluguel where codigo_carro = 6,
+
+# codigo, data_devolucao, data_entrega, data_pedido, valor_total, codigo_apolice_seguro, codigo_carro, codigo_motorista
+4, 2019-02-27 19:00:00, 2019-02-20 14:00:00, 2019-02-20, 200.00, 4, 6, 17
+5, 2019-02-22 17:00:00, 2019-02-21 17:00:00, 2019-02-20, 400.00, 5, 6, 18
+
+
+34. Mas, por que, Normandes, voce nao colocou o Cascade para o REMOVE? Entao, eh o REMOVE da Entidade Carro. Se eu tentar apagar Um Carro, ele vai sair apagando Aluguel, certo?
+
+35. Agora, aqui, no caso, nao eh isso que eu estou fazendo. Eu estou removendo, apenas, nao eh?, eu estou editando, apenas, aqui, e persistindo o Carro, de novo,
+
+    carro.getAlugueis().remove(0);
+
+36. Entao, o que que eu tenho que fazer aqui? Isso, daqui, eh um caso de a gente usar a Exclusao de Objetos Orfaos. Como assim?
+
+37. O Aluguel ficou orfao.
+
+38. Ele nao tem, oh, eu arranquei o Aluguel daqui,
+
+    carro.getAlugueis().remove(0),
+
+, e, ai, ele ficou, 'Opa, de quem que eh o Pai desse cara? Ele nao eh mais, aqui, de Carro,'
+
+    Carro >>> carro = this.manager.find(Carro.class, 6L);
+
+39. Humm, entao, se ele nao eh mais de Carro, ele nao vai sair, daqui, dessa forma,
+
+    @OneToMany(mappedBy = "carro", cascade = CascadeType.REMOVE)
+    public List<Aluguel> getAlugueis() {
+        return alugueis;    
+    }
+
+40. Para a gente fazer isso, eu tenho que vir, aqui, oh, orphanRemoval = true,
+
+    @OneToMany(mappedBy = "alugueis", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    public List<Aluguel> getAlugueis() {
+        return alugueis;    
+    }
+
+41. E, aqui, nao eh mais REMOVE, eh quando eu estiver persistindo,
+
+    @OneToMany(mappedBy = "carro", cascade = CascadeType.PERSIST, orphanRemoval = true)
+    public List<Aluguel> getAlugueis() {
+        return alugueis;    
+    }
+
+42. Nao eh? Quando estiver fazendo o persist, ou seja, alguma alteracao em Carro, o orphanRemoval vai falar, "Se ficar algum algum desses caras, aqui",
+
+    ...
+
+    public List<Aluguel> getAlugueis() {
+        return >>> alugueis <<<<;    
+    }
+
+    public void setAlugueis(List<Aluguel> val) {
+        this.alugueis = val;    
+    }
+
+, que estavam aqui, orfaos, ou seja, se saiu da Lista, ai, a gente apaga ele.
+
+43. Vamos ver aqui, oh? Vamos mandar executar mais uma vez esse carinha, exclusaoDeObjetosOrfaos().
+
+44. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_0_,
+        carro0_.chassi as chassi2_3_0_,
+        carro0_.cor as cor3_3_0_,
+        carro0_.data_criacao as data_cri4_3_0_,
+        carro0_.data_modificacao as data_mod5_3_0_,
+        carro0_.codigo_modelo as codigo_m8_3_0_,
+        carro0_.placa as placa6_3_0_,
+        carro0_.valor_diaria as valor_di7_3_0_ 
+    from
+        Carro carro0_ 
+    where
+        carro0_.codigo=?
+Hibernate: 
+    select
+        alugueis0_.codigo_carro as codigo_c7_1_0_,
+        alugueis0_.codigo as codigo1_1_0_,
+        alugueis0_.codigo as codigo1_1_1_,
+        alugueis0_.codigo_apolice_seguro as codigo_a6_1_1_,
+        alugueis0_.codigo_carro as codigo_c7_1_1_,
+        alugueis0_.data_devolucao as data_dev2_1_1_,
+        alugueis0_.data_entrega as data_ent3_1_1_,
+        alugueis0_.data_pedido as data_ped4_1_1_,
+        alugueis0_.codigo_motorista as codigo_m8_1_1_,
+        alugueis0_.valor_total as valor_to5_1_1_,
+        apoliceseg1_.codigo as codigo1_2_2_,
+        apoliceseg1_.protecao_causas_naturais as protecao2_2_2_,
+        apoliceseg1_.protecao_roubo as protecao3_2_2_,
+        apoliceseg1_.protecao_terceiro as protecao4_2_2_,
+        apoliceseg1_.valor_franquia as valor_fr5_2_2_,
+        motorista2_.codigo as codigo2_9_3_,
+        motorista2_1_.cpf as cpf3_9_3_,
+        motorista2_1_.data_nascimento as data_nas4_9_3_,
+        motorista2_1_.nome as nome5_9_3_,
+        motorista2_1_.sexo as sexo6_9_3_,
+        motorista2_.numero_cnh as numero_c1_8_3_ 
+    from
+        Aluguel alugueis0_ 
+    left outer join
+        apolice_seguro apoliceseg1_ 
+            on alugueis0_.codigo_apolice_seguro=apoliceseg1_.codigo 
+    left outer join
+        Motorista motorista2_ 
+            on alugueis0_.codigo_motorista=motorista2_.codigo 
+    left outer join
+        Pessoa motorista2_1_ 
+            on motorista2_.codigo=motorista2_1_.codigo 
+    where
+        alugueis0_.codigo_carro=?
+Hibernate: 
+    delete 
+    from
+        Aluguel 
+    where
+        codigo=?
+Hibernate: 
+    delete 
+    from
+        apolice_seguro 
+    where
+        codigo=?
+
+45. Opa. Olha os DELETE's, aqui, ja aparecendo, oh, apagou, com DELETE, o Aluguel, e a Apolice de Seguro, consequentemente.
+
+46. Vamos fazer, aqui, um SELECT, select * from aluguel where codigo_carro = 6,
+
+# codigo, data_devolucao, data_entrega, data_pedido, valor_total, codigo_apolice_seguro, codigo_carro, codigo_motorista
+5, 2019-02-22 17:00:00, 2019-02-21 17:00:00, 2019-02-20, 400.00, 5, 6, 18
+
+, tinham 2 registros. Eu mandei apagar o Primeiro, nao eh? Olha la, ficou apenas 1 Aluguel para o Carro de Codigo 6.
+
+47. O Carro continua aqui, select * from carro where codigo = 6,
+
+# codigo, chassi, cor, placa, valor_diaria, codigo_modelo, data_criacao, data_modificacao
+6, , Prata, DDD-1234, 130.00, 3, , 
+
+, repara que eu, simplesmente, editei, eu fiz, somente, a edicao do Carro, e, ai, quando eu persisti o Carro, que foi a alteracao que eu fiz, nao eh?, era Um objeto gerenciado, estava sendo gerenciado, porque o EntityManager que me retornou ele, 
+
+    Carro carro = this.manager.find(Carro.class, 6L);
+
+    this.manager.getTransaction().begin();
+    carro.getAlugueis().remove(0);
+    this.manager.getTranaction().commit();
+
+, abri a Transacao, fiz alguma alteracao nele, 
+
+    carro.getAlugueis().remove(0);
+
+, e, ai, fiz o commit(). Qual alteracao que eu fiz? Nao foi remove um cara da colecao?
+
+48. Removi alguem da colecao, esse objeto que eu removi da colecao ficou orfao.
+
+49. Para eu apagar,  do banco de dados, os objetos orfaos, se eu tiver esse tipo de situacao, 
+
+    @OneToMany(mappedBy = "carro", cascade = CascadeType.PERSIST, orphanRemoval = true)
+    public List<Aluguel> getAlugueis() {
+        return alugueis;    
+    }
+
+, eh so colocar orphanRemoval = true, ai, beleza?
+
+50. Mais uma vez, eu vou deixar sem isso, daqui,
+
+    @OneToMany(mappedBy = "carro", >>> cascade = CascadeType.PERSIST, orphanRemoval = true <<<)
+    public List<Aluguel> getAlugueis() {
+        return alugueis;    
+    }
+
+, foi so Um exemplo, porque eu nao quero que isso aconteca. A nao ser, como eu ja disse, se fosse um sistema que tivesse, aqui, um gerenciamento de Usuarios, viesse um gerente, ai, a gente deixaria isso daqui, mas so o Gerente poderia clicar, la, para excluir Um Carro que tivesse Um Aluguel, por exemplo.
+
+51. Beleza? Excluir esse tipo de Entidade, aqui. Bem, eh isso dai, se voce passar por isso, ai, no seu dia-a-dia, nao esqueca que tem o orphanRemoval, e voce consegue apagar, entao, dentro de Uma Colecao, Um Objeto,
+
+    this.manager.getTransaction().begin();
+    carro.getAlugueis().remove(0);
+    this.manager.getTransaction().commit();
+
+52. Fim da     Aula 09.005. Exclusao de Objetos Orfaos.
+
+
+
+-->

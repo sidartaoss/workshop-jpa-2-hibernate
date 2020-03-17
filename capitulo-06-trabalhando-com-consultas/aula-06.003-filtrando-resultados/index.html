@@ -1,0 +1,165 @@
+<!--
+
+    Aula 06.003. Filtrando Resultados
+
+1. E se a gente quiser fazer o seguinte.
+
+2. Eu quero saber o Modelo do Carro, a descricao, aqui, do Modelo do Carro,
+
+@Entity
+public class ModeloCarro {
+
+    ...
+    private String descricao;
+    ...
+}
+
+, onde o Fabricante eh a Honda, por exemplo.
+
+3. Entao, eu quero saber quais os Modelos de Carros que a Honda tem.
+
+4. Eh esse tipo de consulta que eu quero fazer agora.
+
+5. Entao, oh, se eu olhar no Modelo de Carro, a gente tem o atributo descricao, que eh o que eu quero descobrir, certo?, quero descobrir a descricao.
+
+6. O Fabricante esta aqui em Modelo de Carro,
+
+@Entity
+public class ModeloCarro {
+
+    ...
+    private String descricao;
+    private Fabricante fabricante;
+    ...
+}
+
+, opa, ja tem o Relacionamento aqui, oh,
+
+    @ManyToOne
+    @JoinColumn(name = "codigo_fabricante")
+    public getFabricante() {
+        return fabricante;
+    }
+
+, @ManyToOne. Entao, dentro de Fabricante, tem o atributo nome,
+
+@Entity
+public class Fabricante {
+
+    private Long codigo;
+    private String nome;
+}
+
+, que eh onde eu vou fazer o filtro.
+
+7. Entao, eu quero te mostrar, agora, como eh que a gente faz um filtro. Nos vamos ver mais detalhes sobre isso dai tambem, a medida que a gente vai avancando.
+
+8. Mas, ja para a gente comecar, oh,
+
+package com.algaworks.curso.jpa2.consultas;
+
+public class ConsultaModeloFiltrandoFabricante {
+
+    public static void main(String[] args) {
+        EntityManager em = JPAUtil.createEntityManager();
+
+
+
+        em.close();
+    }
+}
+
+9. Entao, criei a classe ConsultaModeloFiltrandoFabricante, okay? Entao, o que que a gente vai fazer?
+
+10. Nos vamos chegar no EntitiManager, entao, em.createQuery("", String.class). Nos vamos, entao, buscar de ModeloCarro mc, onde o mc.fabricante, cheguei la no Fabricante, fabricante.nome for igual a 'Honda',
+
+    em.createQuery("from ModeloCarro mc where mc.fabricante.nome = 'Honda'", )
+
+11. Eh isso daqui, Normandes?
+
+12. Exatamente.
+
+13. Isso aqui, e eu vou retornar nao eh uma String?
+
+14. Entao, 
+
+    em.createQuery("select mc.descricao from ModeloCarro mc where mc.fabricante.nome = 'Honda'", String.class)              .getResultList();
+
+15. Veja bem, eu estou selecionando a descricao,
+
+    em.createQuery("select >>> mc.descricao <<< from ModeloCarro mc where mc.fabricante.nome = 'Honda'", String.class).getResultList();
+
+, do Modelo de Carro, so que eu estou filtrando, eu estou falando, onde o ModeloCarro.Fabricante.nome, eu vou navegando mesmo, eu ja vou navegando nos objetos para fazer a Consulta.
+
+16. Ta vendo que, se voce fosse fazer um SQL, nesse caso aqui, voce teria que colocar, aqui, oh, from modelo_carro, fabricante, fazer o join dos IDs, neles, nao eh?, fazer o JOIN da chave estrangeira, e, ai, depois, fazer o filtro.
+
+17. Aqui nao, a gente esta trabalhando em objetos. Trabalhar em objetos eh muito mais simples, nao eh verdade?
+
+18. Isso aqui,
+
+    em.createQuery("select mc.descricao from ModeloCarro mc where mc.fabricante.nome = 'Honda'", String.class).getResultList();
+
+, vai me devolver uma lista de Strings, entao, eu vou colocar, aqui, uma Lista de String, que sao os modelos de carro,
+
+    List<String> modelos = em.createQuery("select mc.descricao from ModeloCarro mc where mc.fabricante.nome = 'Honda'", String.class).getResultList();
+
+19. Agora, simplesmente, fazemos o foreach, aqui, para a gente ver o resultado,
+
+        for (String modelo : modelos) {
+            System.out.println(modelo);
+        }
+
+20. A gente espera ele iniciar, e, la no banco, eu tenho cadastrado 2 Modelos para o Honda, Civic e Fit,
+
+Hibernate: 
+    select
+        modelocarr0_.descricao as col_0_0_ 
+    from
+        ModeloCarro modelocarr0_ cross 
+    join
+        Fabricante fabricante1_ 
+    where
+        modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+        and fabricante1_.nome='Honda'
+
+, e olha so o select que ele montou.
+
+21. Fez o select da descricao, em Modelo de Carro, fazendo o JOIN com Fabricante, ONDE, fez, aqui, o filtro da chave estrangeira, e adicionou la, ONDE o Fabricante.nome eh igual a 'Honda'.
+
+22. Ai, ele trouxe, la, o Civic e o Fit.
+
+23. E, aqui,
+
+    em.createQuery("select mc.descricao from ModeloCarro mc where mc.fabricante.nome = 'Honda'", String.class).getResultList();
+
+, se eu colocar Chevrolet, 
+
+    em.createQuery("select mc.descricao from ModeloCarro mc where mc.fabricante.nome = 'Chevrolet'", String.class).getResultList();
+
+, por exemplo, ele vai trazer apenas o Cruze, trouxe somente o Cruze, que eh o que esta cadastrado,
+
+Hibernate: 
+    select
+        modelocarr0_.descricao as col_0_0_ 
+    from
+        ModeloCarro modelocarr0_ cross 
+    join
+        Fabricante fabricante1_ 
+    where
+        modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+        and fabricante1_.nome='Chevrolet'
+Cruze
+
+24. Entao, para continuar aqui, a gente consegue, aqui, eu coloquei o igual,
+
+    em.createQuery("select mc.descricao from ModeloCarro mc where mc.fabricante.nome >>> = <<< 'Chevrolet'", String.class).getResultList();
+
+, mas a gente poderia utilizar com like, poderia utilizar in, nao eh?, todos esses operadores comuns do SQL tambem tem aqui no JPQL, a grande maioria deles a gente vai encontrar aqui e outras formas de fazer.
+
+25. Nos vamos ver isso dai ao longo do curso, eu tambem vou deixar isso ai descrito para voce.
+
+26. Okay?
+
+27. Fim da     Aula 06.003. Filtrando Resultados.
+
+-->

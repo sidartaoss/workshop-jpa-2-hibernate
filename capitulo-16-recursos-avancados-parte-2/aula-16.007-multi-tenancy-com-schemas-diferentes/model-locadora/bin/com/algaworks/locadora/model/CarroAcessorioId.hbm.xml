@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated 17/03/2019 18:04:26 by Hibernate Tools 3.5.0.Final -->
+<hibernate-mapping>
+    <class name="com.algaworks.locadora.model.CarroAcessorioId" table="CARROACESSORIOID">
+        <id name="codigoCarro" type="long">
+            <column name="CODIGOCARRO" />
+            <generator class="assigned" />
+        </id>
+        <property name="codigoAcessorio" type="long">
+            <column name="CODIGOACESSORIO" />
+        </property>
+    </class>
+</hibernate-mapping>

@@ -1,0 +1,122 @@
+<!--
+
+    Aula 08.004. Funcoes de Agregacao
+
+1. As funcoes de agregacao com Criteria tambem sao bem tranquilas.
+
+2. Agora, voce esta acostumando mais com Criteria, a gente vai vendo alguns exemplos, as coisas vao melhorando, voce vai ver.
+
+3. Entao, olha so, as funcoes de agregacao sao todas aquelas que a gente consegue fazer, pegar o valor maximo, fazer uma soma, fazer uma media, e todas elas sao criadas em cima do CriteriaBuilder,
+
+    CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+
+4. Entao, a gente pode vir aqui, oh, 
+
+    // builder.max()
+
+, entao, a gente consegue saber o maior valor que tem ali. O builder.sum(),
+
+    // builder.sum()
+
+, a gente faz a soma de determinada coluna, nao eh?, de determinado atributo. 
+
+5.
+
+    // builder.min()
+
+, a gente pega o menor valor ali, e por ai, vai. Tem varias funcoes de agregacao aqui dentro do builder, que voce pode utilizar, dependendo da sua necessidade.
+
+6. Vamos fazer o seguinte. Vamos pegar em Aluguel, e vamos somar o Valor Total, fazer uma soma de todos os valores totais, aqui, fazer quanto a gente ja ganhou de aluguel.
+
+7. Vamos imaginar que a gente queira fazer algo assim.
+
+8. Entao, a gente, eu ja criei, aqui, o CriteriaBuilder, que a gente sempre vai precisar dele. Agora que a gente ja tem ele, o que que a gente precisa?
+
+9. A gente precisa da nossa Query. Entao, CriteriaQuery. E essa nossa Query vai retornar o que?
+
+10. Ela retorna um BigDecimal, que vai ser a soma de todos os valores dos alugueis, ou seja, Aluguel.valorTotal. Entao, ela eh uma Criteria que vai retornar um BigDecimal. Entao, eu vou chamar ela de criteriaQuery, e quem cria ela para a gente eh o builder,
+
+    CriteriaQuery<BigDecimal> queryQuery = builder.createQuery(BigDecimal.class);
+
+11. Bom, qual que eh a nossa Entidade que a gente vai fazer a Consulta?
+
+12. Em cima de Aluguel,
+
+        // from Aluguel a
+        Root<Aluguel> a = criteriaQuery.from(Aluguel.class);
+
+13. Vamos fazer o select,
+
+            // select a from Aluguel a
+            criteriaQuery.select(a.<BigDecimal>get("valorTotal"));
+
+14. Nos vamos fazer o select(), agora, imagina, se voce estivesse fazendo esse select com jpql. Seria algo assim: select sum(), e, aqui, a gente vai colocar, la, a.valorTotal, nao era isso?, from Aluguel a
+
+                // select sum(a.valorTotal) from Aluguel a
+
+
+15. Nao seria algo assim?
+
+16. Entao, o que que a gente precisa fazer aqui?
+
+                criteriaQuery.select( >>> selection <<< )
+
+17. A soma. Entao, builder.sum(),
+
+                criteriaQuery.select(builder.sum());
+
+18. E, aqui, dentro do sum(), que a gente vai colocar, 'Bom, eu quero fazer a soma de quem?'
+
+19. Quem que eh a nossa Entidade? Nao eh Aluguel?
+
+20. Entao, a.get("valorTotal"),
+
+            criteriaQuery.select(builder.sum(a.get("valorTotal"));
+
+, que eh o campo, aqui, na class Aluguel.
+
+21. Mas ele eh de qual tipo?
+
+22. BigDecimal, nao eh?
+
+23. Entao, 
+
+                criteriaQuery.select(builder.sum(a.<BigDecimal>get("valorTotal")));
+
+24. Okay? Ai, a gente conseguiu montar essa consulta, aqui.
+
+25. Bom, agora que a gente ja montou a Consulta, a gente pode criar a Query Tipada, para facilitar, ja nos retornar o BigDecimal, a gente passa o criteriaQuery,
+
+                    TypedQuery<BigDeicmal> query = this.manager.createQuery(criteriaQuery);
+
+26. Pronto.
+
+27. BigDecimal, so mandar executar, vamos colocar, vamos chamar, aqui, de total, query.getSingleResult(), ja nos devolve o BigDecimal,
+
+                BigDecimal total = query.getSingleResult();
+
+28. E a gente so manda mostrar, aqui,
+
+                        System.out.println("Soma de todos os alugueis: " + total);
+
+29. Bom, para voce mandar executar somente esse teste, aqui, sem precisar mandar executar todos, pode fazer o seguinte: 1. Selecionar o metodo funcoesDeAgregacao(), 2. oh, ALT+SHIFT+X, vai aparecer esse Menuzinho, aqui, no Eclipse, voce clica, aqui, no Run JUnit Test, ou setinha para baixo, aqui, da um <Enter>, ai, que ele vai executar apenas a funcao de agregacao.
+
+30. Retornou,
+
+Hibernate: 
+    select
+        sum(aluguel0_.valor_total) as col_0_0_ 
+    from
+        Aluguel aluguel0_
+Soma de todos os alugueis: 1150.0
+
+
+31. Olha la. No cadastro que eu tenho no meu banco, aqui, agora, o valor deu 1150.0. Olha la o select() que ele fez.
+
+32. select sum(), de todos os valores totais, em cima de Aluguel.
+
+33. Certo? Entao, se voce tiver uma Consulta que precise fazer essa soma, eh so utilizar o Criteria, ai, tambem, que vai ficar bem legal.
+
+34. Fim da     Aula 08.004. Funcoes de Agregacao.
+
+-->

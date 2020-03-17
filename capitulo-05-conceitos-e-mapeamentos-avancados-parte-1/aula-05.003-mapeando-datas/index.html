@@ -1,0 +1,275 @@
+<!--
+    Aula 05.003. Mapeando Datas
+
+1. Vamos trabalhar com datas agora. Voce vai ver que eh bem simples trabalhar com datas no JPA, eh muito mais facil do que voce trabalhar direto com SQL, mexendo com data, nao eh?, tem que ficar convertendo de um tipo para o outro, da uma trabalheira danada, nao eh nao?
+
+2. Entao, vamos trabalhar com data, usando o JPA, que voce vai ver que eh bem facinho.
+
+3. Bom, existem duas formas, diferencas principais de a gente criar esse mapeamento. A primeira delas eh o seguinte.
+
+4. Se a gente trabalhar com esses objetos,
+
+java.sql.Date
+java.sql.Time
+java.sql.Timestamp
+
+, do pacote java.sql, tem uma caracteristica. O que que eh?
+
+5. Resposta: Nao tem nenhum segredo!,
+
+java.sql.Date--------------------------------|
+java.sql.Time--------------------------------|--|> Nao tem segredo!
+java.sql.Timestamp---------------------------|
+
+6. Eh diretao, da mesma forma que a gente mapeou String, a gente mapeia um Date, um Time, um Timestamp.
+
+7. Qual que eh a diferenca entre esses 3?
+
+8. Date so tem data, nao tem hora. O Time so tem a hora e nao tem a data. E o Timestamp eh a mistura dos dois, tem data e tambem tem hora.
+
+9. Bom, mas nao eh muito comum trabalhar com esses caras aqui,
+
+java.sql.Date
+java.sql.Time
+java.sql.Timestamp
+
+, apesar de funcionar, nao tem nenhum problema.
+
+10. Por que nao? Porque muitos frameworks, voce provavelmente, vai usar, como voce ja esta fazendo este curso para aprender a usar um framework, se voce estiver usando outros frameworks, eles, as vezes, nao aceitam esses tipos de dados, 
+
+java.sql.Date
+java.sql.Time
+java.sql.Timestamp
+
+11. Entao, existem outras duas formas de a gente trabalhar, que sao os objetos do pacote java.util,
+
+java.util.Date
+java.util.Calendar
+
+12. Ai, nesses casos, entao, so para lembrar, nao eh?, eh o Date. Tanto o Date quanto o Calendar, ambos guardam tanto a data quanto a hora no mesmo objeto.
+
+13. Entao, como eh que a gente adiciona esses comportamentos desses objetos aqui?,
+
+java.sql.Date
+java.sql.Time
+java.sql.Timestamp
+
+14. Atraves de uma anotacao. O @Temporal,
+
+java.util.Date--------------------------------|--|> @Temporal
+java.util.Calendar----------------------------|--|> @Temporal
+
+15. Com essa anotacao @Temporal, a gente vai conseguir dizer que, naquele atributo que eu estou usando como Calendar, por exemplo, eu quero que ele tenha somente a Data, ou a Hora, ou os dois.
+
+16. Eh simples assim.
+
+17. Entao, por que que a gente vai fazer nesse cenario, aqui, que eh mais comum?,
+
+java.util.Date--------------------------------|--|> @Temporal
+java.util.Calendar----------------------------|--|> @Temporal
+
+18. No caso, por exemplo, do JSF, nao eh?, que a gente esta usando, aqui, o Primefaces, ele so funciona com java.util.Date, o componente que eu vou utilizar.
+
+19. Entao, a gente vai mapear com java.util.Date, senao, a gente nem conseguiria fazer funcionar.
+
+20. Vamos la, entao, voltando, para o Diagrama de Classes. Aqui, na classe Aluguel, nos vamos fazer, entao, o mapeamento da classe Aluguel, nos temos a Data do Pedido, onde eu vou usar um Calendar, mas, a Data da Entrega e Data da Devolucao eu vou usar Date. A Data do Pedido vai ser a data que estiver salvando no banco, ali, na hora, eu quero configurar a data que vendeu, nao quero saber a hora, entao, eu vou deixar sem a hora.
+
+21. Mas, a Data da Entrega e a Data da Devolucao, eu vou deixar como Date e vou armazenar tanto a Data como a Hora.
+
+22. E, ai, nos vamos ver isso aqui acontecendo no banco de dados.
+
+23. Beleza? Para a gente fazer isso, eu adicionei, aqui, na Pagina de NovoAluguel.xhtml, dois componentes do Primefaces, o Calendar, que ja vai ser amarrado direto la na nossa entidade, oh, aluguel, no dataEntrega, e ele vai ser configurado com dia, mes e ano, hora e minutos, segundos vai ser sempre zero.
+
+24. Esse stepMinute, aqui, voce vai ver que tem uma barrinha para a gente rolar, la, para configurar a hora, entao, ele vai andar de 10 em 10 minutos,
+
+<p:outputLabel value="Data da entrega" for="dataEntrega" />
+<p:calendar id="dataEntrega" size="20" value="#{novoAluguelBean.aluguel.dataEntrega}" pattern="dd/MM/yyyy HH:mm" stepMinute="10" />
+
+25. Mesma coisa para a Data da Devolucao,
+
+<p:outputLabel value="Data da devolucao" for="dataDevolucao" />
+<p:calendar id="dataDevolucao" size="20" value="#{novoAluguelBean.aluguel.dataDevolucao}" pattern="dd/MM/yyyy HH:mm" stepMinute="10" />
+
+, mesmo padrao.
+
+26. Entao, vamos fazer o nosso mapeamento na classe Aluguel, para que isso possa funcionar.
+
+27. Bom, vamos la na nossa Entidade Aluguel, e, ai, nos vamos colocar um Calendar, do java.util., para a Data do Pedido, a data em que foi feita essa venda,
+
+import java.util.Calendar;
+
+import java.persistence.Temporal;
+
+@Entity
+public class Aluguel {
+
+    ...
+
+    private Calendar dataPedido;
+
+    ...
+
+    @Temporal
+    public Calendar getDataPedido() {
+        return dataPedido;
+    }
+
+    public void setDataPedido(Calendar dataPedido) {
+        this.dataPedido = dataPedido;
+    }
+
+}
+
+28. E vamos colocar um Date do java.util, porque, senao, nao vai funcionar no Primefaces, 
+
+import java.util.Calendar;
+import java.util.Date;
+
+import java.persistence.Temporal;
+
+@Entity
+public class Aluguel {
+
+    ...
+
+    private Calendar dataPedido;
+    private Date dataEntrega;
+    private Date dataDevolucao;
+
+    ...
+
+    @Temporal
+    public Calendar getDataPedido() {
+        return dataPedido;
+    }
+
+    public void setDataPedido(Calendar dataPedido) {
+        this.dataPedido = dataPedido;
+    }
+
+}
+
+29. Agora, criamos os Getters e os Setters. Bom, como eu disse, eh so a gente adicionar, entao, a anotacao @Temporal, do pacote javax.persistence. E ela vai esperar, aqui, um TemporalType, do pacote javax.persistence, para a gente falar se a gente quer somente a data, se a gente quer somente a hora, ou quer os dois. Neste caso, aqui, para voce ver a diferenca no banco de dados, vou colocar somente TemporalType.DATE,
+
+    @Temporal(TemporalType.DATE)
+    public Calendar getDataPedido() {
+        return dataPedido;
+    }
+
+30. Na Data da Entrega, eu vou colocar,
+
+    @Temporal(TemporalType.TIMESTAMP)
+    public Date getDataEntrega() {
+        return dataEntrega;
+    }
+
+31. A mesma coisa na Data da Devolucao,
+
+    @Temporal(TemporalType.TIMESTAMP)
+    public Date getDataDevolucao() {
+        return dataDevolucao;
+    }
+
+32. Bom, como a Data do Pedido faz parte de uma Regra de Negocio e diz, 'Definir esse valor na hora em que eu estiver salvando um novo Aluguel', eu vou vir aqui, no Servico, ou seja, CadastroAluguelService.java, antes, de entao, mandar esse Aluguel para o Banco de Dados, eu vou setar a Data do Pedido com a Data de Hoje. Como eh um Calendar, seto com Calendar.getInstance(), para configurar com a Data de Hoje,
+
+    @Transactional
+    public void salvar(Aluguel aluguel) throws NegocioException {
+
+        if (aluguel.getCarro() == null) {
+            throw new NegocioException("O Carro eh obrigatorio");
+        }
+
+        aluguel.setDataPedido(Calendar.getInstance());
+
+        this.aluguelDAO.salvar(aluguel);
+
+    }
+
+33. Okay? Acho que eh isso daqui, nao tem mais nenhum segredo, eh bem simples, mesmo, vamos iniciar o Servidor e ver o que que vai acontecer, como que isso vai aparecer na tela.
+
+34. Vamos iniciar o Tomcat, enquanto isso, ja vou mandar iniciar o nosso sistema, http://localhost:8080/locadora-veiculo-web/aluguel/NovoAluguel.xhtml. 
+
+35. Vamos clicar, aqui, no Menu Novo Aluguel, para ele subir o Hibernate, beleza, ja deve ter aparecido a nossa telinha. Okay. Entao, vamos la, vamos selecionar um carro, aqui, para alugar, Cruize: AAA-1234, Data da Entrega, 12/08/2013 12:20, 12 de agosto, ele vai buscar meio-dia e 20, por exemplo. A Data da Devolucao, oh, vai entregar no dia 15/08/2013, as 15 horas e 40 minutos, por exemplo, Valor total 500,00.
+
+36. Checar Protecao terceiro, Valor da Franquia, 300,00. Mandar Salvar, 'Aluguel salvo com sucesso!'. Vamos olhar la no banco de dados o que que virou?
+
+37. Retornou, no Log do Servidor,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_2_2_,
+        carro0_.chassi as chassi2_2_2_,
+        carro0_.cor as cor3_2_2_,
+        carro0_.codigo_modelo as codigo6_2_2_,
+        carro0_.placa as placa4_2_2_,
+        carro0_.valor_diaria as valor5_2_2_,
+        modelocarr1_.codigo as codigo1_4_0_,
+        modelocarr1_.categoria as categori2_4_0_,
+        modelocarr1_.descricao as descrica3_4_0_,
+        modelocarr1_.codigo_fabricante as codigo4_4_0_,
+        fabricante2_.codigo as codigo1_3_1_,
+        fabricante2_.nome as nome2_3_1_ 
+    from
+        Carro carro0_ 
+    left outer join
+        ModeloCarro modelocarr1_ 
+            on carro0_.codigo_modelo=modelocarr1_.codigo 
+    left outer join
+        Fabricante fabricante2_ 
+            on modelocarr1_.codigo_fabricante=fabricante2_.codigo 
+    where
+        carro0_.codigo=?
+Hibernate: 
+    insert 
+    into
+        apolice_seguro
+        (protecao_causas_naturais, protecao_roubo, protecao_terceiro, valor_franquia) 
+    values
+        (?, ?, ?, ?)
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_2_2_,
+        carro0_.chassi as chassi2_2_2_,
+        carro0_.cor as cor3_2_2_,
+        carro0_.codigo_modelo as codigo6_2_2_,
+        carro0_.placa as placa4_2_2_,
+        carro0_.valor_diaria as valor5_2_2_,
+        modelocarr1_.codigo as codigo1_4_0_,
+        modelocarr1_.categoria as categori2_4_0_,
+        modelocarr1_.descricao as descrica3_4_0_,
+        modelocarr1_.codigo_fabricante as codigo4_4_0_,
+        fabricante2_.codigo as codigo1_3_1_,
+        fabricante2_.nome as nome2_3_1_ 
+    from
+        Carro carro0_ 
+    left outer join
+        ModeloCarro modelocarr1_ 
+            on carro0_.codigo_modelo=modelocarr1_.codigo 
+    left outer join
+        Fabricante fabricante2_ 
+            on modelocarr1_.codigo_fabricante=fabricante2_.codigo 
+    where
+        carro0_.codigo=?
+Hibernate: 
+    insert 
+    into
+        Aluguel
+        (codigo_apolice_seguro, codigo_carro, data_devolucao, data_entrega, data_pedido, valor_total) 
+    values
+        (?, ?, ?, ?, ?, ?)
+
+38. select * from aluguel
+
+# codigo, valor_total, codigo_apolice_seguro, codigo_carro,     data_devolucao, 
+    1,      500.00,         1,                      1,          2019-01-15 17:40:00, 
+
+data_entrega,               data_pedido
+2019-01-12 14:20:00,        2019-01-10
+
+39. Oh, data_devolucao, entao, criou as coluninhas para a gente, nao eh?, no banco de dados. data_devolucao ficou 17:40, olha a hora aparecendo aqui. A data_entrega, tambem ficou aparecendo a hora, e a data_pedido ficou sem a hora. Por que? A gente colocou, la, o tipo como TemporalType.DATE, e nao como TemporalType.TIMESTAMP. Esta certo?
+
+40. Bom, eu acho que eh isso daqui.
+
+41. Fim da     Aula 05.003. Mapeando Datas.
+
+-->

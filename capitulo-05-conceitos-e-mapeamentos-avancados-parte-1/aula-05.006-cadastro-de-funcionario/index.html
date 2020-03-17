@@ -1,0 +1,53 @@
+<!--
+    Aula 05.006. Cadastro de Funcionario.
+
+1. Sera que, com tudo o que vimos, voce poderia me ajudar a terminar o Cadastro de Funcionario?
+
+2. Vou deixar, abaixo, o codigo das Paginas JSF, dos ManagedBeans e do Converter. Fica para voce fazer a Entidade Funcionario, o Servico e o DAO. Combinado?
+
+3. Qualquer duvida, voce pode me perguntar, ou ate pegar o codigo no GitHub, mas, te aconselho a perguntar, primeiro, se tiver algum problema, okay?
+
+4. Boa sorte!
+
+5. DICA: Sempre que copiar e colar um codigo, ou mesmo quiser dar uma organizada na indentacao, utilize o atalho do Eclipse, CTRL + SHIFT + F.
+
+6. As paginas JSF ficarao dentro de 'src/main/webapp', na pasta 'funcionario'.
+
+7. Segue, abaixo, a pagina CadastroFuncionario.xhtml.
+
+8. Acessar http://localhost:8080/locadora-veiculo-web/funcionario/CadastroFuncionario.xhtml. Ao clicar em Salvar, retornou, no Log do Servidor,
+
+Hibernate: 
+    insert 
+    into
+        Pessoa
+        (cpf, data_nascimento, nome) 
+    values
+        (?, ?, ?)
+Hibernate: 
+    insert 
+    into
+        Funcionario
+        (matricula, codigo) 
+    values
+        (?, ?)
+
+
+9. Ao clicar no Botao Pesquisa, em http://localhost:8080/locadora-veiculo-web/funcionario/PesquisaFuncionario.xhtml, retornou, no Log do Servidor,
+
+Hibernate: 
+    select
+        funcionari0_.codigo as codigo1_7_,
+        funcionari0_1_.cpf as cpf2_7_,
+        funcionari0_1_.data_nascimento as data3_7_,
+        funcionari0_1_.nome as nome4_7_,
+        funcionari0_.matricula as matricul1_4_ 
+    from
+        Funcionario funcionari0_ 
+    inner join
+        Pessoa funcionari0_1_ 
+            on funcionari0_.codigo=funcionari0_1_.codigo
+
+10. Fim da     Aula 05.006. Cadastro de Funcionario.
+
+-->

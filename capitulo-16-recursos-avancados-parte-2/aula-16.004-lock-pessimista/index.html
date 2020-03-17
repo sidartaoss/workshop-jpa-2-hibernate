@@ -1,0 +1,823 @@
+<!--
+    Aula 16.004. Lock Pessimista
+
+1. Bom, voce sabe que simular problemas de concorrencia nao eh facil, nao eh?
+
+2. Entao, para eu te explicar a respeito do Lock Pessimista, eu criei esse Projetinho, aqui, exemplo-locks, e dei uma forcadinha, aqui, coloquei uns sleep's, eu ja vou te mostrar, agora, mesmo, para a gente forcar isso,
+
+package com.algaworks.lock;
+
+public class LockPessimistaTest {
+
+    private JIntegrity helper;
+    private EntityManager manager;
+
+    @Before
+    public void init() {
+        this.helper = new JIntegrity();
+        this.helper.useMySQL();
+        this.helper.cleanAndInsert();
+
+        this.manager = JPAHelper.currentEntityManager();
+    }
+
+    @After
+    public void end() {
+        this.manager.getTransaction().commit();
+    }
+
+    @Test
+    public void deveAdicionarUmClienteAConta() {
+        Cliente cliente = new Cliente();
+        cliente.setNome("Maria");
+
+        cliente = this.manager.merge(cliente);
+        this.manager.flush();
+
+        Conta conta = this.manager.find(Conta.class, 2L);
+        conta.setClientes(new ArrayList<>());
+        conta.getClientes().add(cliente);
+
+        try {
+            System.out.println("Esperando...");
+            Thread.sleep(12000);
+        } catch (InterruptedException e) {
+
+        }
+
+        this.manager.merge(conta);
+
+
+    }
+}
+
+3. Logico que voce nao vai colocar isso no seu sistema, nao eh?, so para a gente simular mais de uma pessoa acessando ao mesmo tempo, fazendo em intervalos que pode acontecer, ai, okay?
+
+4. Olha so. O que que eh o Sisteminha?
+
+5. Eh um Sisteminha, entre aspas, "Bancario", ai, bem simples, que tem duas Entidades, aqui, oh, a Entidade Conta, e a Entidade Cliente.
+
+6. A Entidade Conta, tem, la, numero, saldo, tem varios clientes. Por exemplo, a conta conjunto, nao eh? Pode ter varios Clientes.
+
+7. Okay?
+
+8. E o Cliente tambem tem varias Contas.
+
+9. Tem o nome e tem varias Contas.
+
+10. Eu posso ter mais de Uma Conta, no Banco, nao eh?
+
+11. E, ai, eu criei, aqui, com o JIntegrity e o DBUnit, para a gente poder testar isso, aqui, adicionando esses Sleep's, dessa forma.
+
+12. Ele vai inicializar,
+
+
+@Before
+public void init() {
+    this.helper = new JIntegrity();
+    this.helper.useMySQL();
+    this.helper.cleanAndInsert();
+    this.manager = JPAHelper.currentEntityManager();
+}
+
+, vai limpar e inserir os dados. Que dados?
+
+13. Um cliente, Joao, em /src/test/resources/dados/Cliente.xml,
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<dataset>
+    <cliente codigo="1" nome="João" />
+</dataset>
+
+, Duas Contas, em src/test/resources/dados/Conta.xml, de dois codigos,
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<dataset>
+    <conta codigo="1" numero="1010" saldo="100" />
+    <conta codigo="2" numero="2020" saldo="200" />
+</dataset>
+
+, e a ContaCliente.xml, que eh a tabela que faz a o Join, nao eh?, a Juncao entre a Conta e o Cliente,
+
+<?xml version="1.0" encoding="UTF-8"?> 
+
+<dataset>
+    <conta_cliente codigo_conta="1" codigo_cliente="1" />
+</dataset>
+
+14. Entao, eu estou adicionando, aqui, codigo_conta="1" e codigo_cliente="1", eu estou querendo dizer que o Joao eh dono da conta 1. Beleza? A conta 2 esta sem dono, por enquanto.
+
+15. Nos vamos inserir um Cliente para a Conta 2, agora, nesse primeiro teste.
+
+16. Beleza?
+
+17. Aqui, oh, deveAdicionarUmClienteAConta().
+
+18. Esse teste, aqui, que ele vai fazer isso.
+
+19. Veja bem, como eh que esta esse codigo.
+
+20. Primeiro, eu crio o Cliente, nao eh?, nao tem o Cliente 2, ali, que eu quero criar Um Cliente 2 para aquela Conta 2, 
+
+    Cliente cliente = new Cliente();
+    cliente.setNome("Maria");
+
+21. Ai, eu vou salvar esse cliente, 
+
+    cliente = this.manager.merge(cliente);
+
+, e dar um flush(),
+
+    this.manager.flush();
+
+22. Eu ja estou falando, ja vai no Banco, fazer o comando de insert.
+
+23. Depois, ele vai fazer o find(), da Conta 2, que esta sem nenhum cliente,
+
+    Conta conta = this.manager.find(Conta.class, 2L);
+
+, certo?
+
+24. Vamos adicionar um novo ArrayList em Clientes,
+
+    conta.setClientes(new ArrayList<>());
+
+25. Quando eu estou adicionando um novo ArrayList, nao eh?, ele vai deletar todo o Relacionamento que existe na tabela conta_cliente, nao tem ninguem, porque nao tem nada, la, eu so tenho com codigo_cliente 1. Aqui, para esse codigo_cliente 2, nao tem nada.
+
+26. Depois, ele vai adicionar o Cliente, esse cliente 2, aqui,
+
+    cliente = this.manager.merge(cliente);
+
+, nessa conta de codigo 2.
+
+27. Ai, eu vou esperar, aqui, 12 segundos, para a gente poder comecar a brincar com isso, dai, ver o que que pode acontecer.
+
+28. Depois, no final, oh, eu, simplesmente, faco um merge(), da conta, para atualizar a conta, okay? Vai la e salva a conta.
+
+29. Bom, vamos executar a primeira vez, fazer umas consultas no Banco, mostrar o problema e ver como eh que a gente pode resolver, com Lock Pessimista.
+
+30. Mandar executar esse Teste, aqui. 
+
+31. Retornou,
+
+Hibernate: 
+    insert 
+    into
+        cliente
+        (nome) 
+    values
+        (?)
+Hibernate: 
+    select
+        conta0_.codigo as codigo1_1_0_,
+        conta0_.numero as numero2_1_0_,
+        conta0_.saldo as saldo3_1_0_ 
+    from
+        conta conta0_ 
+    where
+        conta0_.codigo=?
+Esperando...
+Hibernate: 
+    delete 
+    from
+        conta_cliente 
+    where
+        codigo_conta=?
+Hibernate: 
+    insert 
+    into
+        conta_cliente
+        (codigo_conta, codigo_cliente) 
+    values
+        (?, ?)
+
+32. Ele fez, la, o Insert do Cliente,
+
+Hibernate: 
+    insert 
+    into
+        cliente
+        (nome) 
+    values
+        (?)
+
+33. Depois, fez o select da Conta 2,
+
+Hibernate: 
+    select
+        conta0_.codigo as codigo1_1_0_,
+        conta0_.numero as numero2_1_0_,
+        conta0_.saldo as saldo3_1_0_ 
+    from
+        conta conta0_ 
+    where
+        conta0_.codigo=?
+
+, e, ai, ele esta esperando,
+
+Esperando...
+
+cai, nesse sleep(), aqui,
+
+    try {
+        Thread.sleep(12000);
+    } catch(InterruptedException e) {
+
+    }
+
+34. Quando ele terminar de esperar, olha la, ele foi la na conta_cliente, tentou apagar todo mundo com codigo_conta = 2, 
+
+Hibernate: 
+    delete 
+    from
+        conta_cliente 
+    where
+        codigo_conta=?
+
+, nao tinha ninguem, mas, depois, ele inseriu novamente, 
+
+Hibernate: 
+    insert 
+    into
+        conta_cliente
+        (codigo_conta, codigo_cliente) 
+    values
+        (?, ?)
+
+, para fazer o relacionamento entre esse cliente, que eu acabei de inserir,
+
+Hibernate: 
+    insert 
+    into
+        cliente
+        (nome) 
+    values
+        (?)
+
+, e a conta que eu acabei de buscar, aqui,
+
+Hibernate: 
+    select
+        conta0_.codigo as codigo1_1_0_,
+        conta0_.numero as numero2_1_0_,
+        conta0_.saldo as saldo3_1_0_ 
+    from
+        conta conta0_ 
+    where
+        conta0_.codigo=?
+
+35. Beleza? Se a gente fizer o select, aqui, oh, 
+
+select * from conta_cliente;
+
+# codigo_conta, codigo_cliente
+1, 1
+2, 2
+
+36. Agora, tem, la, codigo_conta 2, com o novo codigo_cliente 2.
+
+37. Okay. Fiz, aqui.
+
+38. Qual que eh o problema que eu quero mostrar?
+
+39. Imagina que eu, nesta situacao, aqui, eu vou tentar, entao, inserir, para esta conta,
+
+    	Conta conta = this.manager.find(Conta.class, 2L);
+		conta.setClientes(new ArrayList<>());
+		conta.getClientes().add(cliente);
+
+, nao eh?, esse cliente, mas, imagina que, nesse meio tempo, aqui, exatamente nesse tempo de espera, 
+
+    	try {
+			Thread.sleep(12000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+, alguem foi la e apagou a conta.
+
+40. Entenderam?
+
+41. Alguem foi la e apagou essa conta,
+
+    	Conta conta = this.manager.find(Conta.class, 2L);
+		conta.setClientes(new ArrayList<>());
+		conta.getClientes().add(cliente);
+        
+42. Ja peguei ela, fiz o select, aqui, para buscar, recupera a conta, e alguem foi la e apagou essa conta.
+
+43. Pode acontecer. Pode ser que tenha, la, o Sistema, deixa eu apagar todas as contas, aqui, que nao tenham clientes, nao eh? As vezes, nao eh?, uma rotina assim, ou, sei la, pode acontecer em varias situacoes.
+
+44. Mas, foi o que eu pensei, aqui, para te mostrar.
+
+45. Entao, olha so, eu vou executar mais uma vez, ele vai apagar todos os dados, la, e inserir de novo, e eu vou apagar na mao, la no Workbench, eu, ate, deixei, aqui, o delete pronto, oh, 
+
+delete from 
+conta 
+where codigo = 2;
+
+, eu vou apagar a Conta de codigo 2.
+
+46. Beleza?
+
+47. Entao, vamos la, oh, na hora em que ele estiver esperando.
+
+48. Mandei executar, oh, esta esperando,
+
+Hibernate: 
+    insert 
+    into
+        cliente
+        (nome) 
+    values
+        (?)
+Hibernate: 
+    select
+        conta0_.codigo as codigo1_1_0_,
+        conta0_.numero as numero2_1_0_,
+        conta0_.saldo as saldo3_1_0_ 
+    from
+        conta conta0_ 
+    where
+        conta0_.codigo=?
+Esperando...
+
+49. Eu venho, aqui, agora, no Workbench, e apaguei a conta de codigo 2, oh,
+
+delete from 
+conta  where codigo = 2;
+
+
+, so tem a conta de codigo 1, agora, 
+
+select * from conta;
+
+# codigo, numero, saldo
+1, 1010, 100.00
+
+
+50. O que que vai acontecer, aqui, quando ele tentar inserir?
+
+51. Oh, vai dar erro,
+
+Caused by: com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException: Cannot add or update a child row: a foreign key constraint fails (`exemplo_locks`.`conta_cliente`, CONSTRAINT `FK_mqk7wqxyyjl0yj1c5lkpsua6t` FOREIGN KEY (`codigo_conta`) REFERENCES `conta` (`codigo`))
+
+52. Vai dar um erro de constraint, porque ele nao vai conseguir colocar, aqui, 
+
+Hibernate: 
+    insert 
+    into
+        conta_cliente
+        (>>> codigo_conta <<< , codigo_cliente) 
+    values
+        (?, ?)
+
+, codigo_conta nao eh uma chave estrangeira, nao eh uma foreign key?
+
+53. Entao, como eh que ele vai falar? A conta_cliente.codigo_conta tem que apontar para conta de codigo 2. Mas a conta de codigo 2 nao existe mais, ela foi apagada.
+
+54. Beleza?
+
+55. Entao, olha ai.
+
+56. Que problemao, nao eh?, aconteceu.
+
+57. Entao, a gente nao pode deixar isso acontecer.
+
+58. Se esse tipo de situacao, no seu sistema, acontece, a gente tem que previnir.
+
+59. Beleza? E como eh que a gente previne isso?
+
+60. A gente pode, usar, aqui, o LockModeType.PESSIMISTIC_READ,
+
+...
+
+Conta conta = this.manager.find(Conta.class, 2L, LockModeType.PESSIMISTIC_READ);
+
+...
+
+61. O que que significa?
+
+62. Eu vou fazer um Lock, eu vou fazer um SELECT, aqui, que ele vai deixar o cara ler os dados, mas, nao deixa atualizar.
+
+63. Ele fala, "Voce nao pode atualizar os dados, nao, voce nao pode apagar, voce nao pode fazer nada, porque tem alguem que ja buscou ele.". No caso, aqui, ele quem?
+
+64. A Conta de codigo 2.
+
+65. Beleza?
+
+66. Entao, oh, eu fiz o select, com o Lock em SHARE MODE, ou seja, significa que eu posso ler, mas nao posso alterar, essa Conta de codigo 2.
+
+67. Eu vou fazer a mesma coisa agora.
+
+68. Eu vou mandar executar, quando estiver esperando, eu vou tentar excluir.
+
+69. Ai, voce vai ver que ele vai ficar lendo, vai falar, 'Voce nao pode, espera um pouco', na hora que ele tentar fazer, ja nao vai dar certo mais.
+
+70. Olha so, eu vou mandar executar de novo o teste deveAdicionarUmClienteAConta(), na hora em que estiver la no Esperando...,
+
+Hibernate: 
+    insert 
+    into
+        cliente
+        (nome) 
+    values
+        (?)
+Hibernate: 
+    select
+        conta0_.codigo as codigo1_1_0_,
+        conta0_.numero as numero2_1_0_,
+        conta0_.saldo as saldo3_1_0_ 
+    from
+        conta conta0_ 
+    where
+        conta0_.codigo=? lock in share mode
+
+
+Esperando...
+
+, Oh, esta esperando, eu vou no Workbench tentar apagar,
+
+delete from 
+conta  where codigo = 2;
+
+, olha agora, no Console do Workbench, ele nao vai deixar, ... ele vai falar, oh, 'Esta esperando...', Running..., esta esperando, aqui, acabar,
+
+
+10:38:16	delete from  conta  where codigo = 2	Running...	?
+
+
+71. Quando, aqui, acabar, 
+
+Hibernate: 
+    insert 
+    into
+        cliente
+        (nome) 
+    values
+        (?)
+Hibernate: 
+    select
+        conta0_.codigo as codigo1_1_0_,
+        conta0_.numero as numero2_1_0_,
+        conta0_.saldo as saldo3_1_0_ 
+    from
+        conta conta0_ 
+    where
+        conta0_.codigo=? lock in share mode
+
+
+Esperando...
+
+, que vai dar certo, agora, oh, ficou Verdinho na Guia do JUnit, o que vai dar errado eh do lado de la, agora, no Workbench, 
+
+10:38:16	delete from  conta  where codigo = 2	Error Code: 1451. Cannot delete or update a parent row: a foreign key constraint fails (`exemplo_locks`.`conta_cliente`, CONSTRAINT `FK_mqk7wqxyyjl0yj1c5lkpsua6t` FOREIGN KEY (`codigo_conta`) REFERENCES `conta` (`codigo`))	9.828 sec
+
+
+, porque eu tentei apagar, aqui, uma Conta que tem uma Referencia em Conta Corrente, oh, 
+
+select * from conta_cliente;
+
+# codigo_conta, codigo_cliente
+1, 1
+>>> 2 <<<, 22
+
+, eu nao posso, mais, apagar ela.
+
+72. Beleza?
+
+73. Entao, olha so o select que eu falei que ia te mostrar, olha la,
+
+Hibernate: 
+    select
+        conta0_.codigo as codigo1_1_0_,
+        conta0_.numero as numero2_1_0_,
+        conta0_.saldo as saldo3_1_0_ 
+    from
+        conta conta0_ 
+    where
+        conta0_.codigo=? >>> lock in share mode <<<
+
+, lock in share mode.
+
+74. Quando ele gera esse select, isso eh SQL, ele gera esse SQL, no modo SHARE MODE.
+
+75. Okay? Significa que ele pode ler, mas nao pode alterar.
+
+76. Okay?
+
+77. Ele pode ler ate em Lock Share Mode, eu vou deixar, aqui, oh, 
+
+select * from conta lock in share mode;
+
+, eu vou mandar executar, aqui, mais uma vez, o teste, deveAdicionarUmClienteAConta(), esta Esperando..., entao, vamos executar o comando, no Workbench,
+
+
+select * from conta lock in share mode;
+
+# codigo, numero, saldo
+1, 1010, 100.00
+2, 2020, 200.00
+
+
+, eu posso ler, eu posso ficar lendo, aqui, sem problema. Consigo consultar, so nao vou conseguir alterar.
+
+78. Beleza?
+
+79. Por que, neste caso, aqui, eu posso ler?
+
+80. Ueh, nao tem problema, eu estou fazendo uma adicao em um relacionamento, eu nao vou alterar esse cara, aqui,
+
+select * from conta lock in share mode;
+
+, eu nao estou alterando o valor dele. Entao, eu posso deixar os caras lerem, ai.
+
+81. Beleza?
+
+82. Nao tem problema nenhum.
+
+83. Agora, vamos pensar numa situacao onde eu nao possa nem ler.
+
+84. Eu nao possa nem ler o valor, porque eu vou estar alterando aquela linha, eu vou alterar aquela linha,
+
+@Test
+public void deveTransferirValor() {
+    Conta conta1 = this.manager.find(Conta.class, 1L);
+    Conta conta2 = this.manager.find(Conta.class, 2L);
+
+    BigDecimal valor = new BigDecimal("30");
+    conta1.setSaldo(conta1.getSaldo().subtract(valor));
+
+    this.manager.flush();
+
+    System.out.println("\n\nEsperando...\n\n")
+
+    try {
+        Thread.sleep(12000);
+    } catch (InterruptedException e) {
+
+    }
+
+    conta2.setSaldo(conta2.getSaldo().add(valor));
+
+
+}
+
+85. Olha so. Quer transferir um valor, entre a conta 1 e a conta 2. 
+
+86. Entao, eu faco, la, busco as duas contas, ai, vamos supor que eu estou transferindo, aqui, oh, 30,00, da conta 1 para a conta 2.
+
+87. E, olha so.
+
+88. Eu venho, aqui, na conta 1, setSaldo(), eh o valor que esta la, menos o valor que eu quero diminuir, subtrair.
+
+89. Manda para o banco, ou seja,
+
+    this.manager.flush();
+
+90. Vou esperar,
+
+    Thread.sleep(12000L), 
+
+, para simular a concorrencia, nao eh?, de alguem chegar ali e tentar fazer alguma operacao nesse meio do caminho, e, depois, eu vou atualizar o saldo da conta 2,
+
+    conta2.setSaldo(conta2.getSaldo().add(valor));
+
+91. OKay?
+
+92. Entao, qual que eh a ideia, aqui?
+
+93. Imagina que eu estou querendo fazer esse select, eh um select para atualizar a conta,
+
+        conta1.setSaldo(conta1.getSaldo().subtract(valor));
+
+, okay? E, ai, quando eu estiver atualizando a conta, eu nao quero que ninguem leia, eu nao quero que ninguem atualize ela ao mesmo tempo que eu.
+
+94. Porque, se eu deixar alguem atualizar ao mesmo tempo que eu, o que que vai acontecer?
+
+95. Pode ser que ele leia um valor errado.
+
+96. Ou seja, eu nao estou transferindo, aqui, oh, eu nao estou pegando da conta, vamos ver os valores que tem, aqui, oh, eu estou pegando 30,00 dessa conta,
+
+    <dataset>
+        <conta codigo="1" numero="1010" >>> saldo="100" <<< />
+        <conta codigo="2" numero="2020" saldo="200" />
+    </dataset>
+
+, e mandando para essa,
+
+    <dataset>
+        <conta codigo="1" numero="1010" saldo="100" />
+        <conta codigo="2" numero="2020" >>> saldo="200" <<< />
+    </dataset>
+
+97. Ou seja, a conta de codigo 1 vai ter que ficar com saldo de 70,00 e a conta de codigo 2 vai ter que ficar com 230,00.
+
+98. Imagina que, no meio do caminho, ele veio aqui, ler, uma outra Thread, ai, da Aplicacao,
+
+    <dataset>
+        <conta codigo="1" numero="1010" >>> saldo="100" <<< />
+        <conta codigo="2" numero="2020" saldo="200" />
+    </dataset>
+
+, tenta ler, "Ah, esta 100,00, eu vou tirar, aqui, 80,00", por exemplo.
+
+99. Ai, ele vai tirar os 80,00. So que, no meio do caminho, ja tinha um cara tirando 30,00 entao, o saldo era 70,00. E, ai, o que que vai acontecer?
+
+100. Entendeu?
+
+101. Entao, isso pode dar problema.
+
+102. Quando eu estou lendo para atualizar, eu tenho que tomar cuidado.
+
+103. Entao, oh, o que eu preciso fazer, aqui, eh um SELECT para atualizacao.
+
+104. Esse SELECT para atualizacao significa que, quando eu fizer ele, vai colocar um FOR UPDATE, aqui, na frente, oh,
+
+        select * from conta FOR UPDATE
+
+, e, ai, ele vai fazer o seguinte, ele nao vai deixar ninguem LER esse valor ate eu terminar de atualizar.
+
+105. Beleza?
+
+106. Nao vai deixar ninguem ler, dentro de algumas situacoes, por exemplo, nao vai deixar ninguem ler no lock in SHARE MODE, nao vai deixar ninguem ler no select FOR UPDATE, tambem, e, dependendo do nivel de transacao, tambem, nao vai deixar ninguem ler, esse cara.
+
+107. E, para a gente fazer isso, eh so colocar LockModeType.PESSIMISTIC_WRITE, aqui,
+
+    ... 
+
+    Conta conta1 = this.manager.find(Conta.class, 1L, LockModeType.PESSIMISTIC_WRITE);
+    Conta conta2 = this.manager.find(Conta.class, 2L, LockModeType.PESSIMISTIC_WRITE);
+
+    ...
+
+, ou seja, eu tenho um Pessimismo em Relacao A Escrita. Eu nao quero que ninguem escreva, eu estou atualizando esse cara, eu estou escrevendo nesse cara, e nao quero deixar ninguem mexer nele. Beleza? Nessa mesma conta,
+
+    >>> Conta conta1 = this.manager.find(Conta.class, 1L, LockModeType.PESSIMISTIC_WRITE);
+
+108. Entao, vamos la. Voce vai ver que, quando eu fizer o SELECT, o SELECT vai ficar parado, esperando, nao vai deixar eu nem fazer o select.
+
+109. Deixa eu executar de novo.
+
+110. Oh, esta esperando, aqui, 
+
+
+Hibernate: 
+    select
+        conta0_.codigo as codigo1_1_0_,
+        conta0_.numero as numero2_1_0_,
+        conta0_.saldo as saldo3_1_0_ 
+    from
+        conta conta0_ 
+    where
+        conta0_.codigo=? for update
+            
+Hibernate: 
+    select
+        conta0_.codigo as codigo1_1_0_,
+        conta0_.numero as numero2_1_0_,
+        conta0_.saldo as saldo3_1_0_ 
+    from
+        conta conta0_ 
+    where
+        conta0_.codigo=? for update
+            
+Hibernate: 
+    update
+        conta 
+    set
+        numero=?,
+        saldo=? 
+    where
+        codigo=?
+
+
+ Esperando... 
+ 
+ , eu vou tentar fazer o select, no Workbench,
+
+    
+    select * from conta FOR UPDATE
+
+
+111. Vai ficar, aqui, parado,
+
+
+12:17:56	select * from conta  LIMIT 0, 1000 for update	Running...	? / ?
+
+
+112. Nao vai deixar eu fazer o select.
+
+113. Por que, oh?
+
+114. Ele colocou, la, um select ... FOR UPDATE, nas entidades,
+
+Hibernate: 
+    select
+        conta0_.codigo as codigo1_1_0_,
+        conta0_.numero as numero2_1_0_,
+        conta0_.saldo as saldo3_1_0_ 
+    from
+        conta conta0_ 
+    where
+        conta0_.codigo=? >>> for update <<<
+            
+Hibernate: 
+    select
+        conta0_.codigo as codigo1_1_0_,
+        conta0_.numero as numero2_1_0_,
+        conta0_.saldo as saldo3_1_0_ 
+    from
+        conta conta0_ 
+    where
+        conta0_.codigo=? >>> for update <<<
+
+
+115. Ta vendo?
+
+116. Entao, eu nao consigo, nao eh?
+
+117. Na verdade, aqui, eu poderia colocar, tambem, nao eh?, 
+
+        select * from conta
+        where codigo = 1 FOR UPDATE
+
+, para ficar mais correto. Aqui, no Workbench, eu consigo executar, oh, nao tem ninguem travando. Mas, se eu mandar executar, aqui, no Eclipse, o Teste deveTransferirValor(), ele esta parado,
+
+Hibernate: 
+    select
+        conta0_.codigo as codigo1_1_0_,
+        conta0_.numero as numero2_1_0_,
+        conta0_.saldo as saldo3_1_0_ 
+    from
+        conta conta0_ 
+    where
+        conta0_.codigo=? for update
+            
+Hibernate: 
+    select
+        conta0_.codigo as codigo1_1_0_,
+        conta0_.numero as numero2_1_0_,
+        conta0_.saldo as saldo3_1_0_ 
+    from
+        conta conta0_ 
+    where
+        conta0_.codigo=? for update
+            
+Hibernate: 
+    update
+        conta 
+    set
+        numero=?,
+        saldo=? 
+    where
+        codigo=?
+
+
+ Esperando... 
+
+ 
+ , se eu tentar executar, no Workbench,
+
+
+        select * from conta
+        where codigo = 1 FOR UPDATE
+
+
+, nao vai deixar.
+
+
+118. Nem no FOR UPDATE, nem no LOCK IN READ MODE. Dependendo do nivel de Transacao, que voce estiver usando, tambem nao, ele vai me retornar depois que tiver atualizado o valor, que eh o que a gente quer, neste caso, nao eh?, eu quero garantir que o valor foi atualizado antes de alguem poder ler esse valor e atualizar ele novamente, fazer alguma conta com ele, algo assim.
+
+@Test
+public void deveTransferirValor() {
+    Conta conta1 = this.manager.find(Conta.class, 1L, LockModeType.PESSIMISTIC_WRITE);
+    Conta conta2 = this.manager.find(Conta.class, 2L, LockModeType.PESSIMISTIC_WRITE);
+
+    BigDecimal valor = new BigDecimal("30");
+    conta1.setSaldo(conta1.getSaldo().subtract(valor));
+
+    this.manager.flush();
+
+    System.out.println("\n\nEsperando...\n\n")
+
+    try {
+        Thread.sleep(12000);
+    } catch (InterruptedException e) {
+
+    }
+
+    conta2.setSaldo(conta2.getSaldo().add(valor));
+
+
+}
+
+119. Beleza? 
+
+120. Fim da     Aula 16.004. Lock Pessimista.
+
+
+-->

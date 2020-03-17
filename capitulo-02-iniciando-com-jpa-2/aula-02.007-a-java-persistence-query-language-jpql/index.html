@@ -1,0 +1,194 @@
+<!-- 
+
+Aula 02.007. A Java Persistence Query Language - JPQL
+
+1. Quando a gente tem um banco de dados, por exemplo, o MySQL, a gente utiliza SQL para interagir com ele, nao eh?
+
+2. A gente vai escrever, la, o 'select * from pessoa', a gente manda esse SQL para o Banco de Dados, e o Banco de Dados nos devolve uma lista, aqui, das Pessoas.
+
+3. Certo? Ou seja, o SQL eh a linguagem que o Banco de Dados entende, nao eh?, a linguagem de consulta do Banco de Dados, para devolver informacoes pra gente.
+
+4. E, no caso do JPA?
+
+5. No JPA, a gente tem a JPQL, que eh Java Persistence Query Language, ou seja, eh uma Linguagem de Consulta da Java Persistence. Ela eh um pouquinho diferente do SQL.
+
+6. No inicio, parece bem igual, so que o que que ela eh diferente do JPQL? A gente trabalha em nivel de Objeto, a gente nao trabalha em nivel de Tabela. E isso faz toda, toda diferenca, quando a gente esta trabalhando a nivel de Objeto, voce vai ver que fica mais natural, para a gente trabalhar, justamente porque a gente esta criando, ali, um Modelo do nosso negocio, a gente esta acostumado a trabalhar com Java.
+
+7. Dentro do JPQL, existe uma subdivisao.
+
+8. A divisao das Dynamic Queries, e as Named Queries.
+
+9. Named Queries tambem sao conhecidas como Queries Estaticas. A gente tambem, no nosso sisteminha, a gente vai criar, la, as Named Queries para voce ver como eh que eh.
+
+10. Assim como as Dynamic Queries, principalmente as Dynamic Queries, que sao mais usadas.
+
+11. As Queries Estaticas sao queries ja prontas, definidas, tipo um atalho, vamos falar assim, a gente tem um nome para uma Consulta, e utiliza ela de uma forma mais rapida.
+
+12. E a Dynamic Query, como o proprio nome diz, a gente monta, cria aquela Consulta na hora, nao eh?, naquele momento.
+
+13. Bom, para a gente fazer um exemplo, aqui, vamos pegar la, aquele Sisteminha que a gente ja tinha feito, la no CRUD, do Cadastro de Cliente, vamos pegar, aqui, na Tabela Cliente, e a gente ve aqui, oh, nessa Tabela Cliente, a gente tem esses dois dados aqui,
+
+codigo          nome            idade           sexo            profissao
+1               Jose da S. P.   28              M               Engenheiro
+2               Pedro Bial      40              M               Jornalista
+
+14. Vamos inserir mais alguns, na classe SalvandoPrimeiroObjeto.java,
+
+		Cliente cliente = new Cliente();
+		cliente.setNome("Maria Rita");
+		cliente.setIdade(20);
+		cliente.setProfissao("Médica");
+		cliente.setSexo("F");
+
+15. So para ter mais um registro la, a gente brincar um pouquinho mais.
+
+16. Entao, agora, a gente tem la Maria Rita, que eh o codigo 3, usando o Auto Increment, aqui, no meu caso, esta no codigo 3.
+
+17. Okay, eu criei uma outra classe, aqui, nesse proprio projeto de CRUD, ConsultandoComJPQL.java,
+
+package com.algaworks.curso.main;
+
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
+
+public class ConsultandoComJPQL {
+
+    public static void main(String[] args) {
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("exemploPU");
+        EntityManager em = emf.createEntityManager();
+
+
+    }
+}
+
+18. Bom, como eh que a gente cria, entao, uma JPQL? Como eh que a gente usa uma JPQL?
+
+19. Como eh que a gente faz isso daqui?
+
+20. EntityManager.createQuery();
+
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("exemploPU");
+        EntityManager em = emf.createEntityManager();
+
+        em.createQuery();
+
+21. Dentro desse metodo createQuery(), existem algumas versoes. A versao que a gente vai utilizar, aqui, a gente vai utilizar essa aqui, oh, 
+
+    createQuery(String arg0, Class<T> arg1): TypedQuery<T>
+
+, onde a gente passa a query, que eh uma String, e a classe, para ele nos retornar, ja, tipado, ele nos devolve uma Query Tipada, ou seja, para a gente nao ter que ficar fazendo casting.
+
+22. Okay?
+
+23. Entao, aqui, 
+
+    em.createQuery( >>> "" <<<, Class<T> arg1): TypedQuery<T>
+
+a gente vai passar a Consulta, e aqui,
+
+    createQuery("", >>> Class<T> arg1 <<<): TypedQuery<T>
+
+, o objeto que a gente esta fazendo essa Consulta, que eu ja quero que ele faca o casting para a gente.
+
+24. No caso, eh o Modelo de Cliente, entao, a gente vai passar Cliente.class,
+
+    em.createQuery("", Cliente.class): TypedQuery<T>
+
+25. Okay? Quando a gente passa, aqui, Cliente.class, se voce colocar o mouse em cima do metodo createQuery(), ele ja vai devolver, para a gente, oh, uma TypedQuery, do tipo Cliente, entao, a gente nao vai precisar ficar fazendo casting para Cliente, entao, fica bem legal, nao eh?
+
+    em.createQuery("", Cliente.class);
+
+26. Entao, eu vou fazer uma Consulta que nos devolve uma Lista de Clientes.
+
+27. Entao, eu vou escrever, aqui, uma Lista de Cliente, que eu vou chamar, aqui, oh, de clientes, no plural, eu vou escrever essa consulta aqui,
+
+    List<Cliente> clientes = em.createQuery("", Cliente.class);
+
+28. Para, depois que eu escrever essa Consulta, ele nos devolve, ele esta reclamando, aqui, que ele retornar um TypedQuery, nao eh uma Lista de Clientes.
+
+29. Para ele devolver, aqui, ele so criou, para ele devolver a gente executa o metodo, em cima do TypedQuery, o getResultList,
+
+    List<Cliente> clientes = em.createQuery("", Cliente.class)
+            .getResultList();
+
+, a gente pode encadear aqui, oh, getResultList().
+
+30. Bom, e, ai, esse clientes, aqui, como eh a consulta que eu faco para me devolver a Lista de Clientes?
+
+31. Ou seja, devolver todos os clientes?
+
+32. Na hora que ele devolver todos esses clientes, eu faco, aqui, um 'for', por exemplo, e, aqui, eu vou mostrar 'Codigo', o 'Nome', e vou mostrar o 'Sexo',
+
+    for (Cliente cliente : clientes) {
+        System.out.println("Codigo: " + cliente.getCodigo());
+        System.out.println("Nome: " + cliente.getNome());
+        System.out.println("Sexo: " + cliente.getSexo());
+        System.out.println("---------------------------");
+    }
+
+33. E, aqui, eu vou escrever a minha consulta,
+
+    List<Cliente> clientes = em.createQuery( >>> "" <<<, Cliente.class);
+
+34. No caso do SQL comum, a gente escreveria 'select * from cliente',
+
+    List<Cliente> clientes = em.createQuery("select * from cliente", Cliente.class);
+
+35. Mas, isso daqui nao eh SQL comum, isso aqui eh uma JPQL. Entao, eu nao preciso, para comecar, escrever esse SELECT,
+
+    List<Cliente> clientes = em.createQuery(">>> select <<< * from cliente", Cliente.class);
+
+, se eu quiser buscar todo mundo, eu ja comeco no 'from',
+
+    List<Cliente> clientes = em.createQuery("from ", Cliente.class);
+
+36. Entao, como eu quero todos os campos, eu ja vou comecar no 'from'. Eu estou buscando no Objeto, entao, o Objeto comeca com C maiusculo,
+
+    List<Cliente> clientes = em.createQuery("from Cliente", Cliente.class);    
+
+, 'from Cliente', pronto.
+
+37. Eu estou falando, 'Eu quero que voce busque, para mim, todos os objetos de Cliente'.
+
+38. Se eu executar esse cara, aqui, oh, ele ja fez essa parte do Hibernage e, ai, ele fa fez la a Consulta, oh,
+
+Código: 1
+Nome: Pedro Bial
+Sexo: M
+-----------------------------------
+Código: 2
+Nome: José da Silva Pereira
+Sexo: M
+-----------------------------------
+Código: 3
+Nome: Maria Rita
+Sexo: F
+-----------------------------------
+
+, trouxe la o Codigo, o Nome e o Sexo, ta vendo?
+
+39. E ai, aqui, a gente vai conseguir brincar, nao eh?, e, principalmente, depois que a gente ver como fazer Relacionamentos, para a gente fazer os Joins, nao eh?, os Relacionamentos entre as Tabelas, voce vai ver que isso aqui facilita demais, mas, aqui, se voce quiser fazer um filtro, onde, por exemplo, o sexo eh Masculino, pode colocar, ali, 
+
+    List<Cliente> clientes = em.createQuery("from Cliente where sexo = 'M'", Cliente.class).getResultList();
+
+tambem, mandar executar mais uma vez, aqui, e, ai, voce ja vai conseguir fazer alguns filtros, e tal,
+
+Código: 1
+Nome: Pedro Bial
+Sexo: M
+-----------------------------------
+Código: 2
+Nome: José da Silva Pereira
+Sexo: M
+-----------------------------------
+
+40. Nos vamos ver muitos mais detalhes disso dai no nosso Sistema, quando a gente estiver criando ele la, fazendo Relatorios, que a gente vai ter, ate, relatorios, nesse Sistema Web, la, com JSF, para voce treinar, para a gente brincar bastante com o JPQL, aqui.
+
+41. Fim da Aula 02.007. A Java Persistence Query Language - JPQL.
+
+
+
+
+
+-->

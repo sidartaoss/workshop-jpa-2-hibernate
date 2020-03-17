@@ -1,0 +1,203 @@
+<!-- 
+
+Aula 02.008. Fechando o Entity Manager
+
+1. Normalmente, em Aplicacoes Web, o Entity Manager eh fechado por Requisicao, isso, normalmente, porque pode ser que voce tenha algum caso de alguma Aplicacao muito especifica, que voce queira deixar sempre aberto.
+
+2. Em uma Aplicacao Desktop, isso, as vezes, tambem eh comum, deixar o EntityManager aberto.
+
+3. Mas, tudo depende da Aplicacao, caso a caso.
+
+4. Deixa eu te mostrar, agora, um pouquinho do que acontece quando o EntityManager eh fechado. 
+
+5. Vamos voltar, aqui, no exemplo do banco-tabajara, e vamos ver, aqui, no EntityManager, vamos fazer o seguinte, vamos supor que isso, aqui, fosse feito em duas etapas. Entao, ele vai, primeiro, buscar as contas, 
+
+		Scanner entrada = new Scanner(System.in);
+		Conta conta1 = em.find(Conta.class, 1L);
+		if (conta1 == null) {
+			System.out.print("Digite o saldo inicial da conta 1: ");
+			BigDecimal saldoInicialConta1 = BigDecimal.valueOf(entrada.nextDouble());
+			conta1 = new Conta();
+			conta1.setSaldo(saldoInicialConta1);
+		}
+		
+		Conta conta2 = em.find(Conta.class, 2L);
+		if (conta2 == null) {
+			System.out.print("Digite o saldo inicial da conta 2: ");
+			BigDecimal saldoInicialConta2 = BigDecimal.valueOf(entrada.nextDouble());
+			conta2 = new Conta();
+			conta2.setSaldo(saldoInicialConta2);
+		}		
+
+
+e, na hora que ele salvou essas contas, 
+
+		em.getTransaction().begin();
+		em.persist(conta1);
+		em.persist(conta2);
+		em.getTransaction().commit();
+
+		System.out.println("Saldo da conta1: " + conta1.getSaldo() 
+					+ ". Saldo da conta2: " + conta2.getSaldo());        
+
+, ele vai fechar o EntityManager. Entao, aqui, eu vou pegar o EntityManager e dar um close() nele,
+
+		em.getTransaction().begin();
+		em.persist(conta1);
+		em.persist(conta2);
+		em.getTransaction().commit();
+
+		System.out.println("Saldo da conta1: " + conta1.getSaldo() 
+					+ ". Saldo da conta2: " + conta2.getSaldo());
+
+        em.close();
+
+6. Okay? Simplesmente, fechano o Entity Manager.
+
+7. Se eu fechei o Entity Manager, aqui, significa que essas outras operacoes, aqui, 
+
+		System.out.println("--------------------------------------------------------");
+		System.out.print("Digite o valor a retirar da conta 1 e depositar na conta 2: ");
+		BigDecimal valorTransferencia = BigDecimal.valueOf(entrada.nextDouble());
+		
+		em.getTransaction().begin();
+		conta1.setSaldo(conta1.getSaldo().subtract(valorTransferencia));
+		conta2.setSaldo(conta2.getSaldo().add(valorTransferencia));
+		
+		if (conta1.getSaldo().compareTo(BigDecimal.ZERO) > 0) {
+			em.getTransaction().commit();
+			System.out.println("Transferência realizada com sucesso!");
+		} else {
+			em.getTransaction().rollback();
+			System.err.println("Tranferência não realizada, saldo insuficiente!");
+		}
+
+, o EntityManager esta fechado, voce nao vai conseguir fazer.
+
+8. E ai, vamos dar uma olhada?
+
+9. Oh, so para ver como eh que esta, aqui, no banco de dados, no banco tabajara. O saldo inicial, para conta 1 e para conta 2 esta sendo de 1000,00 reais.
+
+10. Se eu executar, aqui, a transferencia, vamos ver o que que vai acontecer, oh.
+
+11. Entao, la, o sado da conta 1 e o saldo da conta 2 esta 1000,00.
+
+12. Digite o valor para retirar da conta 1 e depositar na conta 2. Se eu tentar retirar 200,00 e mandar executar, ele ja vai dar um erro, 
+
+Exception in thread "main" java.lang.IllegalStateException: Cannot begin Transaction on closed Session/EntityManager
+	at org.hibernate.engine.transaction.internal.TransactionImpl.begin(TransactionImpl.java:66)
+	at com.algaworks.curso.main.Transferencia.main(Transferencia.java:74)
+
+, falando, para a gente, que o EntityManager esta fechado.
+
+13. Ai, voce pensar, 'Ah, Normandes, eh facil, entao, ja que o EntityManager esta fechado, eu so venho, aqui, entao, ja que eu estou com o EntityManagerFactory, aqui, eu crio um novo EntityManager',
+
+    em.close();
+    em = emf.createEntityManager();
+
+14. Bah, beleza, nao eh?, vamos ver se isso daqui vai dar certo?
+
+Saldo da conta1: 1000.00. Saldo da conta2: 1000.00
+--------------------------------------------------------
+Digite o valor a retirar da conta 1 e depositar na conta 2: 
+
+15. O que que voce acha, hein? Entao, olha la, cada um esta com 100,00. Vou tentar, aqui, oh, tirar 300,00 de uma conta e colocar na outra.
+
+16. Ele falou que a transferencia deu certo. Vamos la no banco de dados, dar uma conferida?
+
+17. Se eu mandar executar,
+
+select * from conta;
+
+codigo          saldo
+1               1000
+2               1000
+
+18. Ue, falou que deu certo, que transferiu, mas por que que nao transferiu? O que que aconteceu?
+
+19. Vamos la, la, o EntityManager, getTransaction().begin(),..., deu commit(),...
+
+20. Por que nao funcionou?
+
+21. Acontece que esses objetos Conta's, ou seja, conta1, conta2, eles foram gerenciados pelo EntityManager, aqui, de cima,
+
+		EntityManagerFactory emf = Persistence.createEntityManagerFactory("bancoTabajaraPU");
+		>>> EntityManager em = emf.createEntityManager(); <<<
+
+, esse aqui, agora,
+
+    em.close();
+    em = emf.createEntityManager();
+
+22. eh um Novo Entity Manager.
+
+23. Essas contas, aqui, a conta1, e a conta2, nao sao contas mais gerenciadas por esse Novo Entity Manager,
+
+    em.close();
+    >>> em = emf.createEntityManager(); <<<
+
+, aqui, eh que como se fosse um Outro Objeto Entity Manager, que foi criado, certo?
+
+24. Entao, ele nao tem mais, ele nao conhece mais esses objetos conta1 e conta2,
+
+    em.getTransaction().begin();
+    conta1.setSaldo(>>> conta1 <<< .getSaldo().subtract(valorTransferencia));
+    conta2.setSaldo(>>> conta2 <<< .getSaldo().add(valorTransferencia));
+
+25. Entao, qualquer alteracao que voce esteja fazendo, aqui, 
+
+    em.getTransaction().begin();
+    conta1.setSaldo(>>> conta1 <<< .getSaldo().subtract(valorTransferencia));
+    conta2.setSaldo(>>> conta2 <<< .getSaldo().add(valorTransferencia));
+
+, voce esta fazendo sobre um objeto, o Entity Manager nao quer nem saber disso daqui,
+
+    em.getTransaction().begin();
+    conta1.setSaldo(>>> conta1 <<< .getSaldo().subtract(valorTransferencia));
+    conta2.setSaldo(>>> conta2 <<< .getSaldo().add(valorTransferencia));
+
+26. Ta certo?
+
+27. Entao, para voce poder colocar essas contas, aqui, de novo, para esse Entity Manager,
+
+    em.close();
+    >>> em = emf.createEntityManager(); <<<
+
+, existe um metodo, aqui, depois que voce fizer essa alteracao, 
+
+    em.getTransaction().begin();
+    >>>> conta1.setSaldo(conta1.getSaldo().subtract(valorTransferencia));
+    >>> conta2.setSaldo(conta2.getSaldo().add(valorTransferencia));
+
+voce pode vir aqui e falar, 'Faz um merge, ai, para mim. Pega essas alteracoes que tem na conta 1 e na conta 2 e eu quero que voce, entao, conecte esses objetos e pegue esses valores, ai, que estao alterados e faca essa alteracao, faca esse merge, ai, essa mistura, ai, com esse Entity Manager e, consequentemente, para o banco de dados',
+
+    em.getTransaction().begin();
+    conta1.setSaldo(conta1.getSaldo().subtract(valorTransferencia));
+    conta2.setSaldo(conta2.getSaldo().add(valorTransferencia));
+
+    em.merge(conta1);
+    em.merge(conta2);
+
+28. Como eu disse, no nosso Sistema, a gente vai ver mais detalhes sobre isso ai.
+
+29. Vamos executar, aqui, mais uma vez, olha la, os saldos estao 1000,00, eu vou tirar, aqui, sei la, 350,00, da conta 1 e colocar na conta 2, vamos ver se deu certo a transferencia no banco de dados,
+
+select * from conta;
+
+codigo          saldo
+1               650         
+2               1350
+
+30. Agora, sim, tirou 350,00 de uma conta e passou para outra.
+
+31. Legal, nao eh? Ta vendo que, com o Entity Manager, tem alguns segredinhos, nao eh?, o JPA comeca simplezinho, e a gente fala, 'Po, mas estava muito facil, muito facil', comecam a aparecer alguns segredinhos, mas, aos poucos, a gente vai desvendando esses segredos.
+
+32. Fim da Aula 02.008. Fechando o Entity Manager.
+
+
+
+
+
+
+
+-->

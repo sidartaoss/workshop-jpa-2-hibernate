@@ -1,0 +1,150 @@
+<!--
+    Aula 05.007. Adicionando mais Uma Enumeracao.
+
+1. Por favor, me ajude a terminar esse sistema. Vou deixar por sua conta adicionar o Sexo no momento do Cadastro de Funcionario e Motorista. Certo?
+
+2. Mas, atencao - eh uma propriedade comum a ambas as entidades, o que significa que sera adicionada na Entidade Pessoa. Certo?
+
+3. Abaixo esta o codigo JSF necessario para fazer o Cadastro de Funcionario, o resto eh com voce.
+
+4. No CadastroFuncionario.xhtml, logo abaixo da entrada de CPF, adicione o trecho abaixo,
+
+<p:outputLabel value="Sexo" for="sexo" />
+<p:selectOneMenu id="sexo" value="#{cadastroFuncionarioBean.funcionario.sexo}">
+    <f:selectItem itemLabel="Selecione o sexo" />
+    <f:selectItems value="#{cadastroFuncionarioBean.sexos}" var="sexo"
+            itemLabel="#{sexo.descricao}" itemValue="#{sexo}"
+</p:selectOneMenu>
+
+5. Repare que precisamos ter uma lista de sexo no Managed Bean CadastroFuncionarioBean.java. Portanto, edite-o e adicione os trechos abaixo,
+
+private List<Sexo> sexos;
+
+    /** No metodo inicializar(), adicione a linha abaixo **/
+    this.sexos = Arrays.asList(Sexo.values());
+
+
+    /** Finalmente, o Getter para sexos, **/
+    public List<Sexo> getSexos() {
+        return sexos;    
+    }
+
+6. Na tela PesquisaFuncionario.xhtml, so precisamos adicionar mais uma coluna no dataTable,
+
+		    		<p:column headerText="Sexo">
+		    			<h:outputText value="#{funcionario.sexo}" />
+                    </p:column>
+                    
+7. Em Motorista, eh bem parecido, o que muda, basicamente, sao os arquivos que iremos alterar.
+
+8. Em CadastroMotorista.xhtml, adicione o trecho abaixo, logo abaixo de CPF.
+
+9. As alteracoes em CadastroMotoristaBean.java sao as mesmas que voce acabou de fazer em CadastroFuncionarioBean.java.
+
+10. Ao Cadastrar Motorista, retornou no Log do Servidor,
+
+Hibernate: 
+    insert 
+    into
+        Pessoa
+        (cpf, data_nascimento, nome, sexo) 
+    values
+        (?, ?, ?, ?)
+Hibernate: 
+    insert 
+    into
+        Motorista
+        (numero_cnh, codigo) 
+    values
+        (?, ?)
+
+11. Ao clicar em Pesquisa, retornou, no Log do Servidor, 
+
+Hibernate: 
+    select
+        motorista0_.codigo as codigo1_7_,
+        motorista0_1_.cpf as cpf2_7_,
+        motorista0_1_.data_nascimento as data3_7_,
+        motorista0_1_.nome as nome4_7_,
+        motorista0_1_.sexo as sexo5_7_,
+        motorista0_.numero_cnh as numero1_6_ 
+    from
+        Motorista motorista0_ 
+    inner join
+        Pessoa motorista0_1_ 
+            on motorista0_.codigo=motorista0_1_.codigo
+
+12. Foi criado, no banco de dados, a Pessoa de codigo 3,
+
+select * from pessoa;
+
+# codigo, cpf, data_nascimento, nome, sexo
+1, 11111111111, 2019-01-01, Pedro Santos, 
+2, 22222222222, 2019-01-01, Pedro Santos, 
+3, 91111111111, 1981-01-08, Mara Maravilha, FEMININO
+
+
+13. Foi criado, no banco de dados, o Motorista de codigo 3,
+
+select * from motorista;
+
+# numero_cnh, codigo
+45454545, 1
+78787878, 3
+
+
+14. Ao Cadastrar um novo Funcionario, retornou, no Log do Servidor,
+
+Hibernate: 
+    insert 
+    into
+        Pessoa
+        (cpf, data_nascimento, nome, sexo) 
+    values
+        (?, ?, ?, ?)
+Hibernate: 
+    insert 
+    into
+        Funcionario
+        (matricula, codigo) 
+    values
+        (?, ?)
+
+15. Foi criado, no banco de dados, a Pessoa de codigo 4,
+
+select * from pessoa;
+
+# codigo, cpf, data_nascimento, nome, sexo
+1, 11111111111, 2019-01-01, Pedro Santos, 
+2, 22222222222, 2019-01-01, Pedro Santos, 
+3, 91111111111, 1981-01-08, Mara Maravilha, FEMININO
+4, 82545454589, 1959-09-03, Almir Santos , MASCULINO
+
+16. Foi criado, no banco de dados, o Motorista de codigo 3,
+
+select * from funcionario;
+ 
+# matricula, codigo
+78787878, 2
+79451245, 4
+
+17. Ao clicar no botao de Pesquisa, retornou, no Log do Servidor,
+
+Hibernate: 
+    select
+        funcionari0_.codigo as codigo1_7_,
+        funcionari0_1_.cpf as cpf2_7_,
+        funcionari0_1_.data_nascimento as data3_7_,
+        funcionari0_1_.nome as nome4_7_,
+        funcionari0_1_.sexo as sexo5_7_,
+        funcionari0_.matricula as matricul1_4_ 
+    from
+        Funcionario funcionari0_ 
+    inner join
+        Pessoa funcionari0_1_ 
+            on funcionari0_.codigo=funcionari0_1_.codigo
+
+17. Fim da     Aula 05.007. Adicionando mais Uma Enumeracao.
+
+
+-->

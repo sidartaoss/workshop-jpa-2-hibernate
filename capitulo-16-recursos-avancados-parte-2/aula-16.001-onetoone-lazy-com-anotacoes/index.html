@@ -1,0 +1,749 @@
+<!--
+    Aula 16.001. OneToOne Lazy - Com anotacoes
+
+1. Deixa eu te mostrar uma situacao bem interessante, aqui, que eh um problema, eu nao sei se eh um problema, se eh uma caracteristica, da anotacao OneToOne do Hibernate.
+
+2. Okay?
+
+3. Eh que vai ser o seguinte, a gente vai fazer o SELECT so em uma tabela e ele vai fazer na outra, sempre. Independente se voce colocou Lazy ou nao.
+
+4. Eu vou te mostrar como eh que eh, nesse Sisteminha, aqui, bem simples, a gente vai fazer com Teste de Integracao, para fazer rapido as Consultas, aqui.
+
+5. Olha so. O Sistema tem duas tabelas, Usuario e Endereco, duas Entidades.
+
+6. O Usuario possui Endereco, oh, anotacao OneToOne,
+
+@Entity
+@Table(name = "usuario")
+public class Usuario implements Serializable {
+
+    ...
+     
+    @OneToOne(mappedBy = "usuario")
+    public Endereco getEndereco() {
+        return endereco;
+    }
+
+    public void setEndereco(Endereco endereco) {
+        this.endereco = endereco;
+    }
+
+    ...
+}
+
+, assim como Endereco tambem possui o Usuario,
+
+@Entity
+@Table(name = "endereco")
+public class Endereco implements Serializable {
+
+    ...
+
+    @OneToOne
+    @JoinColumn(name = "codigo_usuario")
+    public Usuario getUsuario() {
+        return usuario;
+    }
+
+    ...
+}
+
+, okay? La, a anotacao @OneToOne.
+
+7. No meu Teste de Integracao, oh, para voce gerar as tabelas, toda vez que voce executar esse metodo main, aqui, da classe GeradorTabelas, ele vai pegar o persistence.xml, aqui, oh, eu criei esse schema, exemplo_lazy_one_to_one, ai, ele criara as tabelas, la, para voce.
+
+8. Okay?
+
+9. Quando ele estiver subindo, no Teste, vai ser esse Teste, aqui, TesteConsultas,
+
+package com.algaworks.exemplo;
+
+public class TesteConsultas {
+
+    private JIntegrity helper;
+    private EntityManager manager;
+
+    @Before
+    private void init() {
+        this.helper = new JIntegrity();
+        this.helper.useMySQL();
+        this.helper.cleanAndInsert();
+        this.manager = JPAHelper.currentEntityManager();
+    }
+
+    @Test
+    private void deveRetornarUsuario() {
+        Usuario usuario = this.manager.find(Usuario.class, 1L);
+        assertEquals("Joao", usuario.getNome());
+    }
+
+}
+
+, ele vai inserir Endereco,
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<dataset>
+    <endereco codigo="1" rua="Rua X, nro 10" codigo_usuario="1" />
+</dataset>
+
+, e Enderero e Usuario, oh,
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<dataset>
+    <usuario codigo="1" nome="João" />
+    <usuario codiog="2" nome="Maria" />
+</dataset>
+
+10. Sao 2 Usuarios, Joao e Maria. Endereco eu coloquei so 1, aqui, oh, para o Usuario 1.
+
+11. Okay?
+
+12. Eh assim que esta o Sisteminha, la.
+
+13. Bom, os dados vao ser assim.
+
+14. Okay, olha la, deveRetornarUsuario(). 
+
+15. Olha so, pode ter determinada hora, la, no seu Sistema, concorda que isso, aqui, eh uma situacao muito comum, nao eh?, voce vai fazer Um Select em Usuario, e voce quer, as vezes, so o nome, quer so o e-mail, quer so o telefone do Usuario. Quer o endereco dele.
+
+16. E, ai, voce vai fazer essa consulta, aqui, buscar o Usuario,
+
+    Usuario u = this.manager.find(Usuario.class, 1L);
+
+17. E, aqui,
+
+    assertEquals("Joao", u.getNome());
+
+, eu estou fazendo so um assertEquals(), se o nome desse usuario eh Joao, de Codigo 1, eh o Joao.
+
+18. E a gente vai dar uma olhada no SQL que ele gerou aqui, pra gente.
+
+19. Okay?
+
+20. Entao, vamos la.
+
+21. Vamos mandar executar esse Cara, aqui, como Teste, e analisar. Olha so, deu certinho, ele retornou o Joao,
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        endereco1_.codigo as codigo1_0_1_,
+        endereco1_.rua as rua2_0_1_,
+        endereco1_.codigo_usuario as codigo_u3_0_1_ 
+    from
+        usuario usuario0_ 
+    left outer join
+        endereco endereco1_ 
+            on usuario0_.codigo=endereco1_.codigo_usuario 
+    where
+        usuario0_.codigo=?
+
+, mas olha o SELECT que ele fez.
+
+22. Ele fez o SELECT, e trouxe o Endereco tambem.
+
+23. Repara, oh, ele fez, aqui, o Join com Endereco, para trazer o Endereco. 
+
+24. Mesmo se eu fizer o codigo 2, aqui, oh,
+
+        Usuario u = this.manager.find(Usuario.class, 2L);
+        assertEquals("Maria", u.getNome());
+
+, que eh o Usuario "Maria", testar aqui, ele tambem vai fazer esse SELECT, la.
+
+25. Retornou,
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        endereco1_.codigo as codigo1_0_1_,
+        endereco1_.rua as rua2_0_1_,
+        endereco1_.codigo_usuario as codigo_u3_0_1_ 
+    from
+        usuario usuario0_ 
+    left outer join
+        endereco endereco1_ 
+            on usuario0_.codigo=endereco1_.codigo_usuario 
+    where
+        usuario0_.codigo=?
+
+26. Ou seja, mesmo, la no Banco de dados, nao tendo o Endereco para o Usuario de Codigo 2.
+
+27. Mas, isso, eh claro, nao eh?, se voce pensar como eh que o Hibernate vai saber que esse atributo, aqui, 
+
+public class Usuario implements Serializable {
+
+
+    ...
+
+    private Endereco >>> endereco <<<;
+
+    ...
+    @OneToOne(mappedBy = "usuario")
+    public Endereco getEndereco() {
+        return endereco;
+    }
+    ...
+}
+
+, eh null ou nao?
+
+28. Na verdade, o que ele faz, o Hibernate, quando tem uma Colecao, ele usa um objeto proxy em cima de uma Colecao, por isso que ele nao busca Colecao.
+
+29. Quando a gente tem uma Colecao, aqui, vamos supor que fosse uma anotacao @OneToMany, ou ManyToMany, fosse uma Lista de Enderecos, 
+
+@OneToMany(mappedBy = "usuario")
+public List<Endereco> getEnderecos() {
+    return enderecos;    
+}
+
+, ai, ele nao buscaria, por que?
+
+30. Ele colocaria outra classe, nesse lugar,
+
+@OneToMany(mappedBy = "usuario")
+public >>> List<Endereco> <<< getEnderecos() {
+    return enderecos;    
+}
+
+31. Agora, aqui, 
+
+@OneToOne(mappedBy = "usuario")
+private >>> Endereco <<< endereco
+
+, nao tem como ele fazer isso.
+
+32. Na verdade, ele nao faz, isso, ele nao coloca esse proxy, aqui, nesse local,
+
+@OneToOne(mappedBy = "usuario")
+private >>> Endereco <<< endereco
+
+, Entao, para saber se esse cara eh nulo, ele tem que ir la no banco de dados, para saber se eh ou nao nulo.
+
+33. Entao, ele vai la fazer esse select,
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        endereco1_.codigo as codigo1_0_1_,
+        endereco1_.rua as rua2_0_1_,
+        endereco1_.codigo_usuario as codigo_u3_0_1_ 
+    from
+        usuario usuario0_ 
+    left outer join
+        endereco endereco1_ 
+            on usuario0_.codigo=endereco1_.codigo_usuario 
+    where
+        usuario0_.codigo=?
+
+34. No caso, aqui, a Maria, nao tem Endereco. Mas, ele foi la no banco para descobrir isso.
+
+35. E isso pode ser um problema, no seu Sistema, se voce ficar fazendo esses Join's, aqui, nao eh?, dependendo do que essa tabela,..., essa tabela, aqui, Endereco, esta simples, mas, imagina uma tabela maior, com mais campos.
+
+36. Nao eh? Isso poderia ser um problema de performance no seu sistema.
+
+37. Entao, eu vou te mostrar, como eh que a gente faz, para nao buscar isso, aqui, para o Usuario de Codigo 1, o Joao.
+
+38. Para ele fazer a Consulta, apenas em Usuario.
+
+39. Okay?
+
+40. Entao, vamos la.
+
+41. Se voce olhar, aqui, na Entidade Usuario, no relacionamento com Endereco,
+
+    @OneToOne(mappedBy = "usuario")
+    private Endereco endereco;
+
+    public Endereco getEndereco() {
+        return endereco;
+    }
+
+, ai, voce vai falar, "Ah, Normandes, voce nao colocou, ai, o fetch, voce deu bobeira, voce se esqueceu do FetchType.LAZY".
+
+42. Vamos ver? Vamos colocar o FetchType.LAZY, aqui,
+
+43. 
+
+@Entity
+@Table(name = "usuario")
+public class Usuario implements Serializable {
+
+    ...
+    @OneToOne(mappedBy = "usuario", fetch = FetchType.LAZY)
+    private Endereco endereco;
+
+    ...
+
+}
+
+44. Vamos ver o que que ele faz de diferente?
+
+45. Vamos, la, executar deveRetornarUsuario(), mais uma vez.
+
+46. Retornou,
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+Hibernate: 
+    select
+        endereco0_.codigo as codigo1_0_1_,
+        endereco0_.rua as rua2_0_1_,
+        endereco0_.codigo_usuario as codigo_u3_0_1_,
+        usuario1_.codigo as codigo1_1_0_,
+        usuario1_.nome as nome2_1_0_ 
+    from
+        endereco endereco0_ 
+    left outer join
+        usuario usuario1_ 
+            on endereco0_.codigo_usuario=usuario1_.codigo 
+    where
+        endereco0_.codigo_usuario=?
+
+47. Olha so, ele fez o SELECT somente no Usuario, 
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+
+, mas, olha so, depois, ele tambem fez o SELECT so do Endereco,
+
+Hibernate: 
+    select
+        endereco0_.codigo as codigo1_0_1_,
+        endereco0_.rua as rua2_0_1_,
+        endereco0_.codigo_usuario as codigo_u3_0_1_,
+        usuario1_.codigo as codigo1_1_0_,
+        usuario1_.nome as nome2_1_0_ 
+    from
+        endereco endereco0_ 
+    left outer join
+        usuario usuario1_ 
+            on endereco0_.codigo_usuario=usuario1_.codigo 
+    where
+        endereco0_.codigo_usuario=?
+
+48. Entao, a unica coisa que a gente colocou, la, ou seja, adicionar o FetchType.LAZY, que ficou de diferente, ou seja, 
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+
+, ele fez um outro SELECT, 
+
+Hibernate: 
+    select
+        endereco0_.codigo as codigo1_0_1_,
+        endereco0_.rua as rua2_0_1_,
+        endereco0_.codigo_usuario as codigo_u3_0_1_,
+        usuario1_.codigo as codigo1_1_0_,
+        usuario1_.nome as nome2_1_0_ 
+    from
+        endereco endereco0_ 
+    left outer join
+        usuario usuario1_ 
+            on endereco0_.codigo_usuario=usuario1_.codigo 
+    where
+        endereco0_.codigo_usuario=?
+
+49. Ficou, ate, pior, nao eh?
+
+50. Antes, ele fazia 1 SELECT, agora, esta fazendo em 2 SELECT's, nao eh? Esta indo duas vezes no Banco de Dados.
+
+51. Nao eh? Piorou mais ainda.
+
+52. Okay:
+
+53. Entao, isso, daqui,
+
+@Entity
+@Table(name = "usuario")
+public class Usuario implements Serializable {
+
+    ...
+    @OneToOne(mappedBy = "usuario", >>> fetch = FetchType.LAZY <<<)
+    private Endereco endereco;
+
+
+    ...
+
+}
+
+, nao adiantou.
+
+54. Como eu disse, o Hibernate nao tem Um Proxy, Um Objeto para colocar nesse lugar, aqui,
+
+    ...
+    @OneToOne(mappedBy = "usuario", >>> fetch = FetchType.LAZY <<<)
+    private >>> Endereco<<<  endereco;
+
+
+    ...
+
+, nao eh?, para simular Como Se fosse Um Endereco. Ele nao tem.
+
+55. Entao, por isso que ele tem que ir no Banco, para saber se esse cara existe ou nao.
+
+56. Entao, vamos ver como eh que a gente fala para ele Nao ir la Banco buscar?
+
+57. A gente tem que dar uma enganada nele, aqui, na Entidade Usuario.
+
+58. A primeira coisa que eu preciso falar para ele: Eu nao quero que voce use Proxy, aqui,
+
+    @OneToOne(mappedBy = "usuario", fetch = FetchType.LAZY)
+    @Lazy
+    private Endereco endereco;
+
+59. Entao, nos vamos colocar o @LazyToOne, NO_PROXY, LazyToOneOption.NO_PROXY, do pacote org.hibernate.annotations,
+
+    @OneToOne(mappedBy = "usuario", fetch = FetchType.LAZY)
+    @LazyToOne(LazyToOneOption.NO_PROXY)
+    private Endereco endereco;
+
+60. Ou seja, ele Nao Usa Proxy. Esta forcando, aqui, falando que ele nao vai usar esse Proxy,
+    
+    @OneToOne(mappedBy = "usuario", fetch = FetchType.LAZY)
+    >>> @LazyToOne(LazyToOneOption.NO_PROXY) <<<
+    private Endereco endereco;
+
+
+61. Segundo, eu tenho que implementar uma interface, FieldHandled, do pacote org.hibernate.bytecode.internal.javassist,
+
+@Entity
+@Table(name = "usuario")
+public class Usuario implements Serializable, FieldHandled {
+
+}
+
+62. Ele vai me obrigar a implementar dois metodos, aqui,
+
+@Override
+public void setFieldHandler(FieldHandler handler) {
+
+}
+
+@Override
+public FieldHandler getFieldHandler() {
+    return null;
+}
+
+, que dizem o seguinte, "Quando eu tentar obter algum campo, ele vai setar esses caras, aqui, e, ai, como ele vai setar esses caras, aqui, eu vou conseguir verificar se ele esta buscando o field, ou seja, o atributo, nesse caso, endereco, ou nao."
+
+63. Entao, primeiro, eu preciso criar esse cara, aqui, para ficar no estado do objeto,
+
+...
+
+public class Usuario implements Serializable, FieldHandler {}
+
+    ...
+
+    >>> private FieldHandler handler; <<<
+
+    ...
+
+    @Override
+    public void setFieldHandler(FieldHandler handler) {
+        this.handler = handler;
+    }
+
+    @Override
+    public FieldHandler getFieldHandler() {
+        return handler;
+    }
+
+64. Okay. O que que significa aqui, agora?
+
+65. Quando ele tentar ler o Endereco, 
+
+    ...
+
+    public Endereco getEndereco() {
+        return endereco;
+    }
+
+, ai, ele ja esta vendo assim, oh, eu estou querendo ler o endereco, ai, ja eh,..., quando ele Construir o objeto eh uma coisa, quando ele tentar ler o atributo, o field, nao eh?, eh outra coisa.
+
+66. Entao, o que que eu vou fazer, oh?
+
+67. Se ele estiver tentando ler o endereco, e esse handler for diferente de null, 
+
+    ...
+    public Endereco getEndereco() {
+        if (this.handler != null) {
+
+        }
+        return endereco;
+    }
+
+    ...
+
+, ai, eu falo para ele que eh ele pode retornar o endereco,
+
+    ...
+    public Endereco getEndereco() {
+        if (this.handler != null) {
+            return (Endereco) this.handler.readObject(this, "endereco", endereco);
+        }
+        return endereco;
+    }
+
+    ...    
+
+68. Aqui, eu tenho que passar esses parametros para ele, o metodo readObject(), que sao: 1. A instancia a qual ele esta escrevendo, que foi envolvida? Ou seja, quando eu tentar ler esse objeto, ou seja, quando for invocado getEndereco(), ele vai falar, "Mas em qual objeto voce esta querendo ler?". Neste mesmo, this, neste objeto Usuario, okay? 2. Qual eh o nome do campo que a gente esta escrevendo? No caso, eh "endereco". 3. E qual que eh o valor antigo do campo, nao eh?, qual que eh o valor que estava aqui. No caso, eh o endereco.
+
+69. Quando eu for escrever, aqui,
+
+    ...
+
+    public void setEndereco(Endereco endereco) {
+        this.endereco = endereco;
+    }
+
+    ...
+
+, eu tambem vou verificar se o handler for diferente de null,
+
+    ...
+
+    public void setEndereco(Endereco endereco) {
+        if (this.handler != null) {
+
+        }
+        this.endereco = endereco;        
+    }
+
+    ...
+
+, e, aqui, eu vou escrever, aqui, oh, neste objeto, ou seja, this, qual eh o nome que eu coloquei la, ou seja, "endereco", qual que eh o valor antigo, ou seja, this.endereco, e qual que eh o valor novo?, ou seja, eh o valor que eu estou recebendo, aqui, como parametro,
+
+    ...
+
+    public void setEndereco(Endereco endereco) {
+        if (this.handler != null) {
+            this.endereco = (Endereco) this.handler.writeObject(this, "endereco", this.endereco, endereco);
+        }
+        this.endereco = endereco;
+    }
+
+    ...
+
+70. Beleza? Eh isso, daqui, que a gente tem que fazer, a gente tem que setar o handler, e explicar, nao eh?, como ele vai ler e escrever esses atributos, agora.
+
+71. Quando ele estiver criando o objeto, eh de uma forma, quando estiver acessando o atributo, eh de outra forma, ele vai passar por esse handler,
+
+       ...
+
+    public void setEndereco(Endereco endereco) {
+        >>> if (this.handler != null) { <<<
+            this.endereco = (Endereco) this.handler.writeObject(this, "endereco", this.endereco, endereco);
+        }
+        this.endereco = endereco;
+    }
+
+    ... 
+
+, aqui, primeiro.
+
+72. Okay?
+
+73. Entao, eh isso, daqui. Eh, simplesmente, isso.
+
+74. Se eu executar novamente, aqui, oh, vamos ver qual consulta que ele faz?
+
+75. Olha la, agora, ele fez, somente, a consulta em Usuario,
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+
+76. Era, exatamente, o que a gente queria, nao eh?
+
+77. Era so buscar o Usuario, a gente nao queria que ele fosse a toa la na Tabela Endereco.
+
+78. Okay?
+
+79. Ele so vai na tabela Endereco se eu vier, aqui, oh, 
+
+80. Se eu, simplesmente, acessar, aqui, oh
+
+    @Test
+    private void deveRetornarUsuario() {
+        Usuario u = this.manager.find(Usuario.class, 1L);
+        assertEquals("Joao", u.getNome());
+
+        >>> u.getEndereco();
+    }
+
+, com o EntityManager aberto, oh, repara que o EntityManager esta aberto. Entao, se o EntityManager esta aberto, ele vai conseguir buscar, porque esse Objeto esta sendo Gerenciado.
+
+81. Olha la, 
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+Hibernate: 
+    select
+        endereco0_.codigo as codigo1_0_1_,
+        endereco0_.rua as rua2_0_1_,
+        endereco0_.codigo_usuario as codigo_u3_0_1_,
+        usuario1_.codigo as codigo1_1_0_,
+        usuario1_.nome as nome2_1_0_ 
+    from
+        endereco endereco0_ 
+    left outer join
+        usuario usuario1_ 
+            on endereco0_.codigo_usuario=usuario1_.codigo 
+    where
+        endereco0_.codigo_usuario=?
+
+, buscou, la, o Usuario e, depois, ele foi la e buscou o Endereco.
+
+82. Beleza?
+
+83. Ai, voce pode falar, 'Ah, Normandes, mas eu queria que, mesmo com o EntityManager aberto, ele nao fosse buscar o Endereco'.
+
+84. Nao eh uma situacao muito comum, nao, nao eh?, nao seria, porque, se voce esta tentando acessar, eh porque voce quer que ele va la tentar buscar, nao eh?
+
+85. Mas, voce poderia utilizar, aqui, oh, o Beanlib, aqui, essa biblioteca,
+
+    <-- Beanlib --
+    <dependency>
+        <groupId>net.sf.beanlib</groupId>
+        <artifactId>beanlib-hibernate</artifactId>
+        <version>5.0.2beta</version>     
+    </dependency>    
+
+, para fazer uma copia desse objeto desconectado do EntityManager.
+
+86. Eh o Hibernate3DtoCopier copiador = new Hibernate3DtoCopier(); Usuario, eu vou chamar, aqui, de copia, = copiador.hibernate2dto(), e aqui, eu vou passar o "u",
+
+        Hibernate3DtoCopier copiador = new Hibernate3DtoCopier();
+        Usuario copia = copiador.hibernate2dto(u);
+
+87. Nessa "copia", aqui, eu vou, ate, colocar um novo teste, aqui, assertNull(copia.getEndereco());
+
+88. Nessa "copia", aqui, 
+
+        assertNull(copia.getEndereco());
+
+, ele nao vai buscar e vai retornar nulo. Tanto que vai retornar nulo, que o meu Teste vai ficar Verde, na Guia do JUnit.
+
+89. Vamos ver?
+
+90. Vamos executar novamente.
+
+91. Ai, oh, o Teste ficou Verde e olha la, ele nao fez a Consulta no Endereco,
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+
+92. Okay?
+
+93. Bom, era isso, daqui, que eu queria mostrar para voce, se voce tiver essa situacao, ai, eh assim que voce resolve. 
+
+94. Implementa essa interface,
+
+@Entity
+@Table(name = "usuario")
+public class Usuario implements Serializable, >>> FieldHandler <<< {
+
+
+    ...
+}
+
+, coloca o handler,
+
+@Entity
+@Table(name = "usuario")
+public class Usuario implements Serializable, FieldHandler {
+
+    ...
+
+    >>> private FieldHandler handler; <<<
+
+    ...
+}
+
+, adiciona a anotacao LazyToOne, ai,
+
+@Entity
+@Table(name = "usuario")
+public class Usuario implements Serializable, FieldHandler {
+
+    ...
+
+    private FieldHandler handler;
+
+    @OneToOne(mappedBy = "usuario", fetch = FetchType.LAZY)
+    >>> @LazyToOne(LazyToOneOption.NO_PROXY) <<<
+    private Endereco endereco;
+
+    ...
+}
+
+95. Faz essa modificacao, ai, no Getter e no Setter, no atributo que voce quer, do @OneToOne, okay?
+
+    public Endereco getEndereco() {
+        if (this.handler != null) {
+            return (Endereco) this.handler.readObject(this, "endereco", endereco);
+        }
+        return endereco;
+    }
+
+    public void setEndereco(Endereco endereco) {
+        if (this.handler != null) {
+            this.endereco = (Endereco) this.handler.writeObject(this, "endereco", this.endereco, endereco);
+        }
+        this.endereco = endereco;
+    }
+
+96. So tem um atributo handler, 
+
+    ...
+
+    private FieldHandler handler;
+
+    ...
+
+, voce vai poder fazer em um atributo por vez. 
+
+97. Fim da     Aula 16.001. OneToOne Lazy - Com anotacoes
+
+-->

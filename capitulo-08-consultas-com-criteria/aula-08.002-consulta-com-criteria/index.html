@@ -1,0 +1,769 @@
+<!--
+
+    Aula 08.002. Consulta com Criteria
+
+1. Vamos entrar, aqui, agora, nessa parte que eu chamei de Relatorios, aqui, em cima, oh, para a gente construir algumas Consultas, porem, agora, utilizando Criteria.
+
+2. Bom, como eh que vai ficar? Agora, a gente vai passar um Filtro no momento da Pesquisa. Eh mais uma Pesquisa, mesmo, nao vamos gerar Relatorio em PDF, nada disso, nao, nao eh o objetivo, aqui, do curso, o objetivo eh a gente treinar o JPA, certo?
+
+3. Entao, aqui, eu vou passar, eu criei, aqui, oh, essa telinha, aqui, oh, de Pesquisa de Aluguel, para a gente passar alguns filtros e, ai, a gente ve uma questao muito legal do Criteria, que sao as Queries Dinamicas, que sao as Consultas em que voce nao sabe como eh a Consulta ainda. 
+
+4. A gente vai montando o objeto, e, ai, la no final, a Consulta vai sair pronta para voce, mas a gente esta trabalhando so em Objeto, a gente nao precisa trabalhar com JPA, ficar concatenando String, baseado no que vem, aqui, nos parametros, porque, as vezes, eu posso falar qual que foi a Data de Entrega, as vezes, eu posso selecionar, aqui, qual que foi o Modelo do Carro, okay?, entao, se eu nao selecionar nenhum, eu vou trazer todos, se eu selecionar a Data de Entrega, vai trazer somente daquela data.
+
+5. Entao, esse tipo de pesquisa eh muito comum em Sistemas, nao eh verdade? Entao, a gente vai fazer, vamos treinar um pouquinho disso dai, e eu vou te mostrar mais alguns detalhes da API do Criteria.
+
+6. Aqui, o codigozinho daquela pagina, la, que eu fiz, uma pagina bem, bem simples. Ela tem, la, o botao Pesquisar, que vai chamar o metodo pesquisar, no PesquisaAluguelBean, que eu tambem acabei de criar, aqui, vamos dar uma olhada, nele, aqui, para voce ver como ele eh simples.
+
+7. PesquisaAluguelBean, ele tem, la, uma Lista com os Modelos de Carro. Para que essa Lista?
+
+8. Para mostrar aqui, oh, a Lista dos Modelos de Carro, okay?
+
+9. Que mais que ela tem aqui?
+
+10. Ela tem o Aluguel, eu coloquei o aluguel, aqui, na Pagina de Pesquisa, coloco selecionando a Data de Entrega dentro do Aluguel, 
+
+    <p:calendar id="dataEntrega" size="20" value="#{pesquisaAluguelBean.aluguel.dataEntrega}" pattern="dd/MM/yyyy" />
+
+, coloquei ela aqui, porque, se a gente quiser adicionar algum outro filtro, depois, se voce quiser brincar, ai, nao eh?, adicionar outros filtros, ate recomendo voce fazer isso, fala, 'Ah, nao, eu quero colocar, aqui, tambem, a outra data, la, fazer pelo valor,...', entao, a gente ja esta com o objeto aluguel, aqui, selecionado, okay?, para a gente poder selecionar a data, aqui,
+
+public class PesquisaAluguelBean implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    ...
+    >>> private Aluguel aluguel;
+    private Carro carro;
+}
+
+11. O Carro, esta aqui, por que? O carro esta, aqui, por conta do modelo.
+
+12. Para a gente selecionar o Modelo, tambem foi para dentro de Carro,
+ 
+    <p:selectOneMenu id="modeloCarro" value="#{pesquisaAluguelBean. >>> carro <<< .modelo}">
+        ...
+
+13. Tambem deixei, aqui, o Carro para te mostrar como eh que a gente navega. Na hora da consulta, eu quero chegar la em Modelo, entao, como eh que eu faco isso com Criteria?
+
+14. Entao, voce vai ver, tambem, que eh bem simples eu chegar la no Modelo a partir do Aluguel, okay?, e deixei, aqui, o Carro,
+
+    <p:selectOneMenu id="modeloCarro" value="#{pesquisaAluguelBean. >>> carro <<< .modelo}">
+        ...
+
+, porque, mais uma vez, se voce quiser adicionar a pesquisa por outra parte do Carro, pela placa do Carro, por exemplo, aqui, eu resolvi fazer pelo Modelo, mas, se voce quiser brincar, ai, fazer pela Placa do Carro, tambem eh possivel.
+
+15. Okay?
+
+16. Aqui, 
+
+
+public class PesquisaAluguelBean implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    ...
+    private Aluguel aluguel;
+    private Carro carro;
+
+    >>> private List<Aluguel> alugueis;
+}
+
+, vai ser quando a gente fizer a Consulta, vai jogar nessa Lista de Aluguel.
+
+17. Aqui, eu injetei ModeloCarroDAO, 
+
+public class PesquisaAluguelBean implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    ...
+    private Aluguel aluguel;
+    private Carro carro;
+
+    private List<Aluguel> alugueis;
+
+    @Inject
+    >>> private ModeloCarroDAO modeloCarroDAO;
+}
+
+, justamente, para trazer todos esses modelos, aqui, na tela de Pesquisa de Aluguel, ele ja faz a Consulta, la, para mim. Onde? No metodo inicializar(). Aqui, oh, eu estou inicializando modelosCarros,
+
+@PostConstruct
+public void inicializar() {
+
+    this.aluguel = new Aluguel();
+    this.carro = new Carro();
+    >>> this.modelosCarros = this.modeloCarroDAO.buscarTodos();
+
+    this.alugueis = new ArrayList<>();
+
+}
+
+18. Aqui, no metodo inicializar(), eu crio, la, o novo Aluguel, o novo Carro, para limpar a tela, certo?, e inicializo, aqui, tambem, o ArrayList de alugueis.
+
+19. Tranquilo?
+
+20. Bom, no botao de Pesquisar, antes, aqui, tem os Getters And Setters, para a gente poder acessar.
+
+21. No botao Pesquisar, ele vai chamar o metodo pesquisar(), que vai inicializar, justamente, o nosso ArrayList alugueis, que vai preencher essa tabela, aqui, na tela, okay?
+
+22. Bom, e, ai, a gente vai chamar, la no AluguelDAO, o metodo que nao existe, por isso que ele esta vermelho, aqui, e, ai, a gente vai implementar, junto, agora, buscarPorDataDeEntregaEModeloCarro, e, ai, eu passei a data da entrega e o modelo do carro selecionado, ali.
+
+23. Okay? Bom, o que eu adicionei foi apenas isso. Vamos, la, entao, implementar, aqui, o metodo no nosso AluguelDAO.
+
+24. Bom, vamos la, vamos implementar o metodo, aqui, no DAO, usando Criteria, nos nao vamos usar JPQL, nao.
+
+25. Bom, a gente viu, na ultima aula, que a gente precisa do CriteriaBuilder, que eh o carinha que vai criar um monte de coisa, ai, pra gente, pra gente montar a nossa Query, com Criteria, e ele vem, la, do EntityManager,
+
+public List<Aluguel> buscarPorDataEntregaEModeloCarro(Date dataEntrega, ModeloCarro modelo) {
+
+    CriteriaBuilder builder = manager.getCriteriaBuilder();
+
+    return null;
+}
+
+26. Okay, pegamos, aqui, o builder.
+
+27. A gente viu, tambem, que a gente precisa pegar a CriteriaQuery, em cima da Entidade que a gente quer pesquisar, no nosso caso, Aluguel, e ela vem do builder, e a gente passa, aqui, a Entidade principal que a gente quer fazer a pesquisa,
+
+public List<Aluguel> buscarPorDataEntregaEModeloCarro(Date dataEntrega, ModeloCarro modelo) {
+
+    CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+    CriteriaQuery<Aluguel> criteriaQuery = builder.createQuery(Aluguel.class);
+
+    return null;
+
+}
+
+28. Bom, depois disso, a gente viu que, depois que, quando a gente faz o 'from', a gente vai criar, aqui, o criteriaQuery.from(), em Aluguel.class, e ele nos devolve um Root<X>, de Aluguel, que eh como se fosse o nosso objeto, la, vou chamar, aqui, de 'a', que eh o, imagine se a gente estivesse fazendo com JPQL, seria // select a from Aluguel a,
+
+public List<Aluguel> buscarPorDataEntregaEModeloCarro(Date dataEntrega, ModeloCarro modelo) {
+
+    CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+    CriteriaQuery<Aluguel> criteriaQuery = builder.createQuery(Aluguel.class);
+
+    // select a from Aluguel a
+    Root<Aluguel> a = criteriaQuery.from(Aluguel.class);
+
+
+    return null;
+
+}
+
+29. So que esta faltando a gente fazer esse selectzinho aqui,
+
+// >>> select <<< a from Aluguel a
+
+, nao eh? Entao, vamos fazer ele aqui?
+
+30. Como eh que a gente faz?
+
+31. criteriaQuery.select(a);
+
+
+
+
+    CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+    CriteriaQuery<Aluguel> criteriaQuery = builder.createQuery(Aluguel.class);
+    
+    // from Aluguel a
+    Root<X> a = criteriaQuery.from(Aluguel.class);
+    // select a from Aluguel a
+    criteriaQuery.select(a);
+
+
+32. Bom, agora, vamos fazer uma coisinha que a gente nao fez la na ultima aula, que eh o seguinte: as condicoes, todas la, as expressoes, where, alguma coisa eh igual a outra coisa, alguma coisa esta entre outra coisa, todas aquelas clausulas do where, aqui, a gente vai chamar de predicados.
+
+33. Entao, nos vamos criar uma Lista de Predicados, List<Predicate>, do javax.persistence, cuidado, ai, para voce importar, eh tudo javax.persistence, oh, javax.persistence.criteria.Predicate, javax.persistence.criteria.Root, okay?, eh tudo do javax.persistence,
+
+        CriteriaBuilder builder = this.em.getCriteriaBuilder();
+        CriteriaQuery<Aluguel> criteriaQuery = builder.createQuery(Aluguel.class);
+
+        // from Aluguel a
+        Root<Aluguel> a = criteriaQuery.from(Aluguel.class);
+        // select a from Aluguel a
+        criteriaQuery.select(a);
+
+        List<Predicate> 
+
+34. Vamos la, entao, aqui, o Predicate, nos vamos criar, entao, essa Lista de Predicados, 
+
+            List<Predicate> predicates = new ArrayList<>();
+
+35. O que que eh isso, Normandes?
+
+36. Aguenta, ai, um pouquinho, que voce ja vai ver o que que esse cara, aqui, esta fazendo.
+
+37. Bom, e, ai, agora, a gente, como eu disse, pode ser que a gente informe a Data da entrega, ou nao.
+
+38. Se a gente informar a Data da entrega, ou seja, se a dataEntrega for != null, ai, a gente vai criar uma Expressao,
+
+                List<Predicate> predicates = new ArrayList<>();
+                if (dataEntrega != null) {
+
+                }
+
+39. Que expressao que eh essa?
+
+40. Eh a expressao da consulta.
+
+41. A gente vai fazer o seguinte, no final das contas, oh, predicates.add(), ai, a gente vai no builder para criar o between(),
+
+                List<Predicate> predicates = new ArrayList<>();
+                if (dataEntrega != null) {
+
+
+                    predicates.add(builder.between(v, x, y))
+
+                }
+
+42. Por que que a gente vai usar between(), Normandes?
+
+43. Porque, no Aluguel, se a gente olhar, aqui, a dataEntrega, na Entidade, ela eh um Timestamp,
+
+            @Temporal(TemporalType. >>> TIMESTAMP <<< )
+            public Date getDataEntrega() {
+                return dataEntrega;
+            }
+
+44. Okay? Entao, ele pode ter escolhido, la, para entregar o Carro as 3 horas da tarde. Entao, quando a gente for fazer a consulta, eu vou colocar que a data Inicial eh a data que o cara informou, so que comecando 0 horas, e a data final naquele dia, so que terminando 23 horas e 59 minutos.
+
+45. Okay? Entao, por isso que a gente vai usar o between().
+
+46. E o between(), se a gente for la no nosso azinho, a gente nao tem que selecionar qual que eh o atributo que eu quero selecionar?
+
+47. Entao, eu vou usar o a.get(), e vou selecionar, aqui, o nome da propriedade que a gente esta querendo, no caso, eh a dataEntrega,
+
+            List<Predicate> predicates = new ArryList<>();
+
+            if (dataEntrega != null) {
+
+
+                predicates.add(builder.between(a.get("dataEntrega"), ));
+
+            }
+
+, so que o between espera um camarada desse do tipo Date, entao, a gente poe, aqui, um Generics, do tipo Date,
+
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (dataEntrega != null) {
+
+
+
+                predicates.add(builder.between(a.<Date>get("dataEntrega"), x, y));
+            }
+
+48. E, ai, o que que eh esse x e o que que eh esse y?
+
+49. Nao seria a Data da entrega?
+
+50. Seria a Data da entrega, uma Data da entrega que eu vou chamar, aqui, de inicial, e a Data da entrega final,
+
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (dataEntrega != null) {
+
+
+
+                predicates.add(builder.between(a.<Date>get("dataEntrega"), dataEntregaInicial, dataEntregaFinal));
+            }
+
+51. O que que eh essa dataEntregaInicia e dataEntregaFinal, Normandes?
+
+52. Nao seria, simplesmente, a gente colocar esse cara?
+
+            List<Predicate> predicates = new ArrayList<>();
+            if (>>> dataEntrega <<< != null) {
+            
+                
+                ...
+            }
+
+53. Entao. Na verdade, nao, porque a gente precisa esse parametro, aqui, between,
+
+
+            predicates.add(builder.>>> between <<< (a.get("dataEntrega"), dataEntregaInicial, dataEntregaFinal));
+
+, ele esta esperando um objeto do tipo ParameterExpression. Entao, nos vamos criar esse cara da seguint forma, ParameterExpression, ele eh do tipo Date, e, ai, eu vou chamar ele de dataEntregaInicial. E, ai nos vamos usar o builder para criar ele, builder.parameter(). De que tipo que eh? Do tipo java.util.Date, e, ai, eu vou chamar de "dataEntregaInicial",
+
+        ParameterExpression<Date> dataEntregaInicial = builder.parameter(Date.class, "dataEntregaInicial");
+        
+        predicates.add(builder.between(a.<Date>get("dataEntrega"), dataEntregaInicial, dataEntregaFinal));
+
+54. Essa String que eu estou colocando, aqui, "dataEntregaInicial", eh para dar um nome para essa variavel,
+
+        ParameterExpression<Date> >>> dataEntregaInicial <<< = builder.parameter(Date.class, "dataEntregaInicial");
+
+, que a gente vai substituir la na frente com o valor, realmente, da Data de entrega,
+
+        if (>>> dataEntrega <<< != null) {
+
+            ParameterExpression<Date> dataEntregaInicial = builder.parameter(Date.class, "dataEntregaInicial");
+
+            ...
+        }
+
+55. Aguenta um pouquinho que voce vai ver.
+
+56.
+
+        if (dataEntrega != null) {
+
+            ParameterExpression<Date> dataEntregaInicial = builder.parameter<Date.class, "dataEntregaInicial");
+            ParameterExpression<Date> dataEntregaFinal = builder.parameter<Date.class, "dataEntregaFinal");
+
+            
+            predicates.add(builder.between(a.<Date> get("dataEntrega"), dataEntregaInicial, dataEntregaFinal));
+
+
+        }
+
+57. Parece que eh bem confuso isso, nao eh? Eu tenho que concordar que comeca a ficar meio, eh muita coisinha, eh muito detalhe.
+
+58. Mas repare que a gente nao esta concatenando String, a gente nao precisa ficar escrevendo concatenacoes de Strings quando a gente esta fazendo uma Query dinamica, a gente so vai criando objetos.
+
+59. Beleza?
+
+60. E o Modelo?
+
+61. E, se, na hora que a gente estiver fazendo a pesquisa, a gente informar o modelo?
+
+        if (dataEntrega != null) {
+
+            ...
+        }
+        if (modelo != null) {
+
+
+
+        }
+
+62. Entao, se o modelo for diferente de null, a gente vai fazer a mesma coisa. Nos temos que adicionar, aqui, no predicates, o builder, so que, agora, eh igual,
+
+        if (modelo != null) {
+
+            predicates.add(builder.equals(x, y));
+        }
+
+63. Quando for igual o que? O a.get(""), qual que eh o nome do atributo la? Vamos dar uma olhada, aqui, do Carro, na Entidade Aluguel, 
+
+        @ManyToOne
+        @JoinColumn(name = "codigo_carro")
+        public Carro getCarro() {
+            return carro;
+        }
+
+64. E carro, nao eh? Eu quero chegar no modelo. Entao, tem que ir, primeiro, no Carro. E, ai, do Carro, eu chego no modelo. Entao, estou no carro, nao eh verdade?, a.get("carro"), entao, quero ir no modelo, a.get("carro").get("modelo"),
+
+        if (modelo != null) {
+
+            predicates.add(builder.equals(a.get("carro").get("modelo"), y));
+
+        }
+
+65. Legal, nao eh?
+
+66. E, aqui, no 'y', ele esta esperando, tambem, um ParameterExpression, que eu vou chamar, aqui, de modeloExpression,
+
+        if (modelo != null) {
+
+
+            predicates.add(builder.equals(a.get("carro").get("modelo"), modeloExpression));
+        }
+
+67. E, ai, entao, a gente vai criar, aqui, entao, ParameterExpression, e eh do tipo ModeloCarro, porque ele ja vai saber o que ele tem que fazer pelo ID, nao eh?, ele ja vai saber, nao eh?, olha, qual que eh o ID que eu vou fazer essa consulta,
+
+        if (modelo != null) {
+
+            ParameterExpression<ModeloCarro> modeloExpression = 
+
+            predicates.add(builder.equals(a.get("carro").get("modelo"), modeloExpression));
+        }
+
+68. Entao, como ele ja eh um objeto, ele vai la e pega o ID, que esta anotado com @ID, e ja monta a consulta para a gente, de forma bem simplezinha. Qual que eh o tipo, aqui, desse parametro, ModeloCarro.class, eu vou chamar essa String, aqui, de 'modelo',
+
+
+        if (modelo != null) {
+
+            ParameterExpression<ModeloCarro> modeloExpression = builder.parameter(ModeloCarro.class, "modelo");
+
+            predicates.add(builder.equals(a.get("carro").get("modelo"), modeloExpression));
+
+         }
+
+69. Esses nomes que eu estou dando, aqui, "dataEntregaInicial", "dataEntregaFinal", "modelo", eh como se fosse o nome, sabe como a gente fazia, la, no JPQL? A gente fazia assim, oh, 
+
+    select a from Aluguel a where a.dataEntrega between :dataEntregaInicial and :dataEntregaFinal
+
+70. Depois, a gente substituiria isso daqui,
+
+    select a from Aluguel a where a.dataEntrega between >>> :dataEntregaInicial <<< and >>> :dataEntregaFinal <<<
+
+, como se fosse uma variavel dentro da Query, nao eh isso?
+
+71. Eh a mesma coisa esse cara, aqui, oh,
+
+         ParameterExpression<Date> dataEntregaInicial = builder.parameter(Date.class, >>> "dataEntregaInicial" <<<);
+
+
+, eh a variavel dentro da Consulta que a gente esta criando, para a gente substiuir, la na frente, por um valor.
+
+72. Okay?
+
+73. Bom, agora que a gente ja populou o nosso predicates, aqui, o nosso ArrayList de Predicate, a gente ja pode passar ele para a nossa Consulta.
+
+74. Entao, a gente pode pegar a nossa CriteriaQuery, e colocar onde, where(), agora, a gente vai ter que passar, aqui, oh, predicates.toArray(), vamos transformar em um array, aqui, new Predicate[0];
+
+        criteriaQuery.where(predicates.toArray(new Predicate[0]));
+
+75. Okay?
+
+76. Porque ele esta esperando, aqui, um array de Predicate's. Entao, a gente transforma ele em um array, aqui dentro.
+
+77. Agora, a gente ja pode criar a TypedQuery, que vai conseguir fazer a execucao. Ou seja, a gente vai executar, la, o getResultList(), em cima de TypedQuery. E ja vai devolver, inclusive, em cima de Aluguel, eu vou chamar esse cara, aqui, de query, a gente usa o EntityManager, para criar essa Query, e a gente passa o CriteriaQuery, que a gente criou,
+
+            criteriaQuery.where(predicates.toArra(new Predicate[0]));
+
+            TypedQuery<Aluguel> query = this.em.createQuery(criteriaQuery);
+
+78. Bom, vamos dar mais uma olhada aqui.
+
+79. A gente criou os parametros la dentro da nossa Consulta,
+
+                if (dataEntrega != null) {
+
+                    ...
+                }
+                if (modelo != null) {
+
+                    ...
+                }
+
+80. A gente passou, aqui, os predicados para la,
+
+                criteriaQuery.where(predicates.toArray(new Predicate[0]));
+
+81. Porem, a gente nao definiu os valores, se eu nao passar, aqui, oh, os valores de "dataEntregaInicial" e "dataEntregaFinal", ele nao vai fazer.
+
+82. Okay?
+
+83. Entao, o que que a gente vai fazer, aqui, agora?
+
+84. Nos vamos, entao, Se, mais uma vez, Eu passei a Data da entrega, entao, o que que a gente vai fazer aqui, agora?
+
+                if (dataEntrega != null) {
+
+                }
+
+85. Eu preciso, agora, a "dataEntregaInicial" tem que ser 0 horas, porque a gente vai fazer um between, entre a entrega inicial e a entrega final.
+
+86. Entao, como essa data, aqui,
+
+                if (>>> dataEntrega <<< != null) {
+
+                }
+
+, eu vou configurar ela a hora do dia, o minuto e segundo 0, antes de passar ela, realmente, como parametro.
+
+87. Entao, o que que eu vou fazer? Eu vou usar, aqui, a Calendar, vou chamar dataEntregaInicial, Calendar.getInstance(), dataEntregaInicial.setTime(dataEntrega), ou seja, eu vou configurar com o valor que eu configurar, aqui, o time com o valor que nos informamos la na tela de pesquisa, porem, eu preciso configurar a hora do dia para 0 e preciso configurar minuto para 0, tambem, e os segundos, tambem, eu vou configurar para 0. Okay? Vamos fazer a mesma coisa para dataEntregaFinal, porem, Hora/Minuto/Segundo vai ser 23:59:59,
+
+                if (dataEntrega != null) {
+
+                    Calendar dataEntregaInicial = Calendar.getInstance();
+                    dataEntregaInicial.setTime(dateEntrega);
+                    dataEntregaInicial.set(Calendar.HOUR_OF_DAY, 0);
+                    dataEntregaInicial.set(Calendar.MINUTE, 0);
+                    dataEntregaInicial.set(Calendar.SECOND, 0);
+
+                    Calendar dataEntregaFinal = Calendar.getInstance();
+                    dataEntregaFinal.setTime(dataEntrega);
+                    dataEntregaFinal.set(Calendar.HOUR_OF_DAY, 23);
+                    dataEntregaFinal.set(Calendar.MINUTE, 59);
+                    dataEntregaFinal.set(Calendar.SECOND, 59);
+
+                }
+
+88. Agora, sim, o nosso between vai funcionar sem problemas.
+
+89. E, ai, agora, a gente pode ir na nossa Query e falar que a Data da entrega inicial tem o valor da dataEntregaInicial, que a gente acabou de configurar,
+
+
+        if (dataEntrega != null) {
+
+            Calendar dataEntregaInicial = Calendar.getInstance();
+            dataEntregaInicial.setTime(dateEntrega);
+            dataEntregaInicial.set(Calendar.HOUR_OF_DAY, 0);
+            dataEntregaInicial.set(Calendar.MINUTE, 0);
+            dataEntregaInicial.set(Calendar.SECOND, 0);
+
+            Calendar dataEntregaFinal = Calendar.getInstance();
+            dataEntregaFinal.setTime(dataEntrega);
+            dataEntregaFinal.set(Calendar.HOUR_OF_DAY, 23);
+            dataEntregaFinal.set(Calendar.MINUTE, 59);
+            dataEntregaFinal.set(Calendar.SECOND, 59);
+
+            query.setParameter("dataEntregaInicial", dataEntregaInicial);
+
+        }
+
+, que eh, justamente, esse nome que a gente deu aqui, oh,
+
+        ParameterExpression<Date> dataEntregaInicial = builder.parameter(Date.class, >>> "dataEntregaInicial" <<< );
+
+90. E dataEntregaFinal, agora, vai receber o valor da dataEntregaFinal que a gente acabou de configurar, aqui, tambem,
+
+                if (dataEntrega != null) {
+
+                    Calendar dataEntregaInicial = Calendar.getInstance();
+                    dataEntregaInicial.setTime(dateEntrega);
+                    dataEntregaInicial.set(Calendar.HOUR_OF_DAY, 0);
+                    dataEntregaInicial.set(Calendar.MINUTE, 0);
+                    dataEntregaInicial.set(Calendar.SECOND, 0);
+
+                    Calendar dataEntregaFinal = Calendar.getInstance();
+                    dataEntregaFinal.setTime(dataEntrega);
+                    dataEntregaFinal.set(Calendar.HOUR_OF_DAY, 23);
+                    dataEntregaFinal.set(Calendar.MINUTE, 59);
+                    dataEntregaFinal.set(Calendar.SECOND, 59);
+
+                    query.setParameter("dataEntregaInicial", dataEntregaInicial);
+                    query.setParameter("dataEntregaFinal", dataEntregaFinal);
+
+                }
+
+91. Beleza? Bom, o Modelo vai ser mais simples. Se o modelo, se a gente tiver informando o modelo, eu so preciso informar que o modelo eh o modelo que foi passado para a gente, como parametro do metodo,
+
+                if (dataEntrega != null) {
+
+                    ...
+                }
+
+                if (modelo != null) {
+                    query.setParameter("modelo", modelo);
+                }
+
+92. Bom, agora, a gente ja pode mandar executar a query, 
+
+                return query.getResultList();, e, se eu nao digitei nada errado, acredito que ja esta funcionando.
+
+93. Okay. Vamos reiniciar o Servidor e testar, http://localhost:8080/locadora-veiculo-web/aluguel/PesquisaAluguel.xhtml
+
+94. Okay, carregou o Hibernate, fez a Consulta, trouxe os Modelos, aqui, que eu ja tenho cadastrado, nao vou informar nenhum filtro e vou clicar aqui no botao de Pesquisa. Antes disso, deixa eu limpar, aqui, o Log do Console, no Eclipse. Vou clicar, aqui, na Pesquisa. 
+
+95. Oh, ele trouxe todos os alugueis que a gente fez.
+
+96. E, se a gente voltar, aqui, no Log do Console, e dar uma olhada, aqui, na Consulta que ele fez, olha so, ele fez, exatamente, essa consulta, aqui,
+
+Hibernate: 
+    select
+        aluguel0_.codigo as codigo1_1_,
+        aluguel0_.codigo_apolice_seguro as codigo6_1_,
+        aluguel0_.codigo_carro as codigo7_1_,
+        aluguel0_.data_devolucao as data2_1_,
+        aluguel0_.data_entrega as data3_1_,
+        aluguel0_.data_pedido as data4_1_,
+        aluguel0_.codigo_motorista as codigo8_1_,
+        aluguel0_.valor_total as valor5_1_ 
+    from
+        Aluguel aluguel0_ 
+    where
+        1=1
+
+, onde 1 = 1.
+
+97. Por que que ele colocou esse 1 = 1, aqui?
+
+98. Como a gente nao passou nenhum filtro, eu coloquei, aqui, o Predicate,
+
+                criteriaQuery.where(predicates.toArray(new Predicate[0]));
+
+, mas, nao configurei nada, ele vai passar esse 1 = 1, porque, se eu passar esse parametro,
+
+                if (dataEntrega != null) {
+
+                    ...
+                }
+
+, e eu passar esse,
+
+                if (modelo != null) {
+
+                    ...
+                }
+
+, para ele nao precisar saber se tem que colocar o where aqui,
+
+                if (dataEntrega != null) {
+
+                    ...
+                }
+
+, ou aqui,
+
+                if (modelo != null) {
+
+                    ...
+                }
+
+, entao, ele coloca 1 = 1, e, ai, nao tem problema. Ta vendo que, se eu entrar aqui,
+
+                if (dataEntrega != null) {
+
+                    ...
+                }
+
+, vamos supor que eu nao tivesse colocado aquele 1 = 1, se ele nao fosse esperto, nao fizesse isso para a gente, se ele tivesse que colocar o where aqui,
+
+                if (dataEntrega != null) {
+
+                    ...
+                }
+
+, beleza, se tivesse esse,
+
+                if (modelo != null) {
+
+                    ...
+                }
+
+, colocaria o 'and' na Consulta.
+
+99. Mas, ai, a gente nao passou a dataEntrega, ai, aqui,
+
+                if (modelo != null) {
+
+                    ...
+                }
+
+, iria vir so com o 'and', se a gente colocasse alguma coisa, aqui, para falar, 'Eu quero que voce coloque, aqui, so and',
+
+                if (modelo != null) {
+
+                    ...
+                }
+
+, iria dar problema na nossa consulta.
+
+100. Nao eh? Entao, ele ja eh esperto o suficiente para colocar esse 1 = 1, aqui,
+
+Hibernate: 
+    select
+        aluguel0_.codigo as codigo1_1_,
+        aluguel0_.codigo_apolice_seguro as codigo6_1_,
+        aluguel0_.codigo_carro as codigo7_1_,
+        aluguel0_.data_devolucao as data2_1_,
+        aluguel0_.data_entrega as data3_1_,
+        aluguel0_.data_pedido as data4_1_,
+        aluguel0_.codigo_motorista as codigo8_1_,
+        aluguel0_.valor_total as valor5_1_ 
+    from
+        Aluguel aluguel0_ 
+    where
+        1=1
+
+101. Bom, olha so o que que eu vou passar, agora. Vamos pegar, aqui, oh, Data de entrega, essa coluna, aqui, na Tela de Pesquisa de Alugueis.
+
+102. Vou colocar aqui, oh, no dia 21/01/2019, por exemplo, eu vou selecionar aqui, na tela, 21/01/2019, e mandar a Pesquisa. Vamos la, deve ter dado algum probleminha,
+
+Caused by: java.lang.IllegalArgumentException: Named parameter [dataEntregaInicial] type mismatch; expecting [java.util.Date], found [java.util.GregorianCalendar]
+
+103. Data entrega inicial. Ah, sim, olha so, ele esta esperando um Date, e eu passei um GregorianCalendar, porque eh do tipo Date.
+
+104. Entao, se eu passei o Calendar, nao vai dar certo, vamos dar, aqui, um getTime(), para a gente transformar para o tipo Date,
+
+                query.serParameter("dataEntregaInicial", dataEntregaInicial.getTime());
+                query.setParameter("dataEntregaFinal", dataEntregaFinal.getTime());
+
+105. Vamos reiniciar o Servidor, Acessar http://localhost:8080/locadora-veiculo-web/aluguel/PesquisaAluguel.xhtml, esta carregando, okay, ja fez a Consulta.
+
+106. Vamos la, mais uma vez, vou passar nada e clicar em Pesquisar, okay.
+
+107. E vou passar, aqui, agora, 21/01/2019 e clicar em Pesquisar. Mandei a pesquisa, agora, sim, funcionou. Se a gente olhar a consulta que ele fez, aqui, agora, olha la, 
+
+Hibernate: 
+    select
+        aluguel0_.codigo as codigo1_1_,
+        aluguel0_.codigo_apolice_seguro as codigo6_1_,
+        aluguel0_.codigo_carro as codigo7_1_,
+        aluguel0_.data_devolucao as data2_1_,
+        aluguel0_.data_entrega as data3_1_,
+        aluguel0_.data_pedido as data4_1_,
+        aluguel0_.codigo_motorista as codigo8_1_,
+        aluguel0_.valor_total as valor5_1_ 
+    from
+        Aluguel aluguel0_ 
+    where
+        aluguel0_.data_entrega between ? and ?
+
+, ele passou, entao, ja, uma clausula, entao, ele ja coloca la, 'onde aluguel.dataEntrega esta entre as datas que a gente configurou aqui',
+
+                query.serParameter("dataEntregaInicial", dataEntregaInicial.getTime());
+                query.setParameter("dataEntregaFinal", dataEntregaFinal.getTime());
+
+, e ele consegue trazer sem problema.
+
+108. Legal, nao eh?
+
+109. Vou apagar, aqui, na Tela de Pesquisa de Aluguel.
+
+110. Vou fazer a Pesquisa de novo, vamos ver aqui, oh, vamos trazer so os modelos Fit, clicar em Pesquisa.
+
+111. Olha la, trouxe somente os Fit's. Se a gente olhar, aqui, mais uma vez, a query gerada, olha so, o tanto, tambem, que ele eh esperto, ele viu que a gente fez essa navegacao entre os objetos, entao, ele, 'Opa, ja vamos fazer o join, entao, la, entre ALUGUEL e CARRO', e ja faz o filtro em cima do codigo do modelo do carro,
+
+Hibernate: 
+    select
+        aluguel0_.codigo as codigo1_1_,
+        aluguel0_.codigo_apolice_seguro as codigo6_1_,
+        aluguel0_.codigo_carro as codigo7_1_,
+        aluguel0_.data_devolucao as data2_1_,
+        aluguel0_.data_entrega as data3_1_,
+        aluguel0_.data_pedido as data4_1_,
+        aluguel0_.codigo_motorista as codigo8_1_,
+        aluguel0_.valor_total as valor5_1_ 
+    from
+        Aluguel aluguel0_ cross 
+    join
+        Carro carro1_ 
+    where
+        aluguel0_.codigo_carro=carro1_.codigo 
+        and carro1_.codigo_modelo=?
+
+112. Bom, e vamos filtrar, aqui, os dois juntos, deixa eu limpar, aqui o Log do Console, e vamos colocar, aqui, entao, na Tela de Pesquisa de Aluguel, vamos selecionar o Modelo Cruze, e a Data de entrega 25/01/2019, entao, Cruze so no dia 25/01, clicar em Pesquisa.
+
+113. Olha la, trouxe o Cruze, do dia 25/01/2019. Se a gente olhar, la, no Log do Console do Servidor, mais uma vez, a Consulta, agora, ele colocou, la, no where, o codigo do Modelo, nao eh?, o codigo do Carro, la, que a gente selecionou, e, aqui, fez o between na data de entrega,
+
+Hibernate: 
+    select
+        aluguel0_.codigo as codigo1_1_,
+        aluguel0_.codigo_apolice_seguro as codigo6_1_,
+        aluguel0_.codigo_carro as codigo7_1_,
+        aluguel0_.data_devolucao as data2_1_,
+        aluguel0_.data_entrega as data3_1_,
+        aluguel0_.data_pedido as data4_1_,
+        aluguel0_.codigo_motorista as codigo8_1_,
+        aluguel0_.valor_total as valor5_1_ 
+    from
+        Aluguel aluguel0_ cross 
+    join
+        Carro carro1_ 
+    where
+        aluguel0_.codigo_carro=carro1_.codigo 
+        and (
+            aluguel0_.data_entrega between ? and ?
+        ) 
+        and carro1_.codigo_modelo=?
+
+114. Okay?
+
+115. Interessante, nao eh?
+
+116. Bom, como eu disse, parece que, no inicio, fica mais complicado fazer esse tanto de coisa, mas, repara que a gente so esta trabalhando em nivel de objeto, nao eh?, a gente nao mexeu em nenhum momento com Consulta. Tem metodos, agora, oh, o CriteriaBuilder.equal(), o CriteriaBuilder.between(), no CriteriaBuilder, para representar os varios metodos que a gente tem em uma Consulta.
+
+117. Okay?
+
+118. Depois, a gente ve mais alguns deles, ai.
+
+119. Fim da     Aula 08.002. Consulta com Criteria.
+
+
+-->

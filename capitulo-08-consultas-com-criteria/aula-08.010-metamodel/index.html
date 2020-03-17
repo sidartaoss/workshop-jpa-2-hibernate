@@ -1,0 +1,411 @@
+<!--
+
+    Aula 08.010. Metamodel
+
+1. 
+
+    @Test
+    public void exemploMetamodel() {
+        CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+
+        CriteriaQuery<Carro> criteriaQuery = builder.createQuery(Carro.class);
+
+        Root<Carro> c = criteriaQuery.from(Carro.class);
+
+        Join<Carro, ModeloCarro> modelo = (Join) c.fetch("modelo");
+
+        criteriaQuery.select(c);
+
+        criteriaQuery.where(builder.equal(modelo.get("descricao"), "Fit"));
+
+        TypedQuery<Carro> query = this.manager.createQuery(criteriaQuery);
+
+        List<Carro> resultado = query.getResultList();
+
+        for (Carro carro : resultado) {
+            System.out.println(carro.getPlaca() + " - " + carro.getModelo().getDesc());
+        }
+    }
+
+2. Nao sei se voce percebeu, mas existe uma situacao chata que, quando a gente esta trabalhando, se a gente mudar alguma propriedade no nosso modelo.
+
+3. Se a gente for la, por exemplo, em ModeloCarro, mudar, aqui, o nome descricao, por exemplo, isso vai dar um trabalho danado no nosso Sistema.
+
+4. Beleza, mas vai dar um trabalho grande, tambem, aqui, oh, no nosso Criteria, porque, olha so, a gente trabalha com String, para pegar o nome, la, da propriedade,
+
+    criteriaQuery.where(builder.equal(modelo.get(>>> "descricao"), "Fit"));
+
+5. Entao, aqui, oh, descricao, eu estou pegando como String, esta referenciando essa 'descricao', aqui, em ModeloCarro, certo?
+
+6. So que, se eu alterar esse cara, aqui,
+
+public class ModeloCarro {
+
+    ...
+    private String descricao;
+
+    ...
+}
+
+, para qualquer outra coisa, sei la, a gente, eh bem feio fazer isso, aqui, mas, por exemplo, a gente abreviou o nome, 'descricao' estava grande, 
+
+public class ModeloCarro {
+
+    ...
+    private String desc;
+
+    ...
+}
+
+7. Ou, entao, a gente pensou em um nome melhor. Beleza, vai dar alguns erros de compilacao, aqui, nao eh?, a gente vai corrigir esses erros de compilacao, na classe ModeloCarro, okay, mas, repara so,
+
+    criteriaQuery.where(builder.equal(modelo.get("descricao"), "Fit"));
+
+, que essa consulta, aqui, ela so vai dar problema na hora da execucao.
+
+8. Somente na hora em que voce estiver executando, que voce vai ver esse problema.
+
+9. Entao, se voce esqueceu dessa consulta, aqui, 
+
+    criteriaQuery.where(builder.equal(modelo.get("descricao"), "Fit"));
+
+, so vai dar problema em tempo de execucao.
+
+10. Isso pode ser ruim, porque, as vezes, voce fez alguns testes, mas nao significa que voce executou todos os testes, sei la, voce nao fez todos os testes de integracao, ai, esqueceu dessa consulta, jogou o sistema em producao, esta la, funcionando, alguem executou essa parte que vai executar essa consulta: 'Ih, deu errado'. Nao eh?, vai falar que nao conseguiu encontrar essa propriedade descricao.
+
+11. Para isso que tem o Metamodel. E eu vou te explicar, aqui, agora, para a gente resolver esse probleminha.
+
+12. Para se, a gente mudar algum nome desses daqui,
+
+public class ModeloCarro {
+
+    ...
+    private String desc;
+
+    ...
+}
+
+, nao ter nenhum problema.
+
+13. E mesmo nao so mudar, mas voce pode digitar errado, nao eh?, as vezes, esta digitando, aqui, rapido, e esqueceu do 'i',
+
+    criteriaQuery.where(builder.equal(modelo.get("descrcao"), "Fit"));
+
+, por exemplo, isso, voce so vai ver esse erro, mais uma vez, em tempo de execucao, okay?
+
+14. Entao, vamos la. Vou pegar essa Consulta, aqui, como exemplo, para a gente tirar, entao, tanto aqui, oh, quando a gente esta fazendo o fetch() em cima da propriedade modelo, de carro, 
+
+    Join<Carro, ModeloCarro> join = (Join) c.fetch("modelo");
+
+, quanto, aqui, 'descrica',
+
+    criteriaQuery.where(builder.equal(modelo.get("descricao"), "Fit"));
+
+, em cima de ModeloCarro, ele vai servir para todas as outras propriedades, voce vai conseguir usar o MetaModel.
+
+15. Bom, a primeira coisa, como o nosso projeto eh Maven, nos vamos adicionar algumas coisas aqui, em pom.xml.
+
+16. A primeira coisa delas eh adicionar, aqui, oh, eu coloquei, aqui, ja, para voce, essa dependencia. Essa, aqui, eh a dependencia do MetaModel, ai, do Hibernate, para JPA,
+
+    <!-- Metamodel --
+    <dependency>
+        <groupId>org.hibernate</groupId>
+        <artifactId>hibernate-jpamodelgen</artifactId>
+        <version>1.3.0.Final</version>
+        <scope>compile</scope>
+    </dependency>
+
+17. Entao, voce coloca, ai, JPA-METAMODEL, essa dependencia, vamos colocar, aqui, oh, Metamodel, okay, so para a gente saber que essa, aqui, eh a dependencia do Metamodel.
+
+18. Bom, depois que a gente adicionou a dependencia, a gente precisa fazer algumas configuracoezinhas. A primeira delas, aqui, eh adicionar um argumento para ele nao processar as anotacoes, aqui, na hora da gente mandar executar o maven-compiler-plugin,
+
+<plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.1</version>
+        <configuration>
+            <source>1.7</source>
+            <target>1.7</target>
+            <compilerArgument>-proc:none</compilerArgument>
+        </configuration>
+</plugin>
+
+, porque, senao, ele vai dar erro de duplicacao de codigo.
+
+19. E os outros plugins que a gente precisa configurar, logo abaixo, aqui, de <plugin>, vou colar, aqui, sao esses camaradas, aqui,
+
+<plugin>
+    <groupId>org.bsc.maven</groupId>
+    <artifactId>maven-processor-plugin</artifactId>
+    <version>2.2.4</version>
+    <executions>
+        <execution>
+            <id>process</id>
+            <goals>
+                <goal>process</goal>
+            </goals>
+            <phase>generate-sources</phase>
+            <configuration>
+                <outputDirectory>target/metamodel</outputDirectory>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+
+, o maven-processor-plugin, ele vai gerar, la, em target/metamodel, as classes que vao ser usadas, aqui, nas Consultas, em ExemploCriteria, para a gente substituir isso.
+
+20. Okay? Entao, no fim das contas, o que que eh o Metamodel? Ele vai gerar algumas classes para a gente, que, ao inves de eu trabalhar com a String,
+
+    Join<Carro, ModeloCarro> modelo = (Join) c.fetch(>>> "modelo");
+
+, eu vou usar essas classes geradas. E, ai, toda vez que eu mandar executar o meu Projeto, aqui, atraves do Maven, ele vai gerar essas classes, se a gente mudou alguma coisa, vai dar um erro em tempo de execucao.
+
+21. Eu vou te mostra isso, aqui, agora, funcionando.
+
+22. Vamos la, okay.
+
+23. Ja configurei, la, no pom.xml, agora, eu vou mandar executar o meu Projeto. Eu poderia vir, aqui, em Raiz do Projeto. O que que esta vermelhinho aqui, no pom.xml? O Maven esta reclamando, aqui, dessa tag <execution>, mas nao vai dar problema, nao. A gente pode mandar ele, simplesmente, corrigir, aqui, ele vai adicionar alguma propriedades, aqui, no Maven. Vamos executar assim, so para voce ver que vai funcionar. Depois, eu conserto, aqui.
+
+24. Vamos la. Botao direito na Raiz do Projeto / Run As / Maven build...
+
+25. Goals: clean install / Apply
+
+26. Run. E vamos esperar ele executar, aqui.
+
+27. Okay, sucesso.
+
+29. Nesse momento, ele gerou, aqui, para mim, em target/metamodel, oh, ele gerou algumas classes, aqui, do modelo com o underline la no finalzinho.
+
+30. E, ai, o que que eu vou fazer?
+
+31. Para eu poder usar essas classes la no projeto, botao direito, aqui, na Raiz do Projeto / Properties, aqui, no Source, eu vou adicionar aquele pacote, oh, Add Folder... / target/metamodel / OK. Vou adicionar o metamodel, aqui, tambem, como uma source folder, para a gente poder ter acesso as classes, la.
+
+32. Okay. Agora, sim, esse modelo, de carro, 
+
+    Join<Carro, ModeloCarro> modelo = (Join) c.fetch("modelo");
+
+, olha so o que que eu vou fazer.
+
+33. Eu vou tirar essa String, aqui, colocar, em Carro_, nao eh?, Carro_., aqui, a gente estava com modelo, ou seja, ja faz o fetch, ai, em modelo,
+
+    Join<Carro, ModeloCarro> modelo = (Join) c.fetch(Carro_.modelo);
+
+34. Olha a 'descricao'.
+
+35. Descricao nao eh em cima de modelo? Entao, oh, eu vou pegar e escrever ModeloCarro_, repara que aparecem 2, agora, oh, um com underline no final, com underline, no final, que eu vou usar descricao,
+
+    criteriaQuery.where(builder.equal(modelo.get(ModeloCarro_.descricao), "Fit"));
+
+36. Okay. Fiz esse camarada, aqui. Se eu mandar executar, voce vai ver que vai funcionar essa minha Consulta.
+
+37. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_0_,
+        modelocarr1_.codigo as codigo1_7_1_,
+        carro0_.chassi as chassi2_3_0_,
+        carro0_.cor as cor3_3_0_,
+        carro0_.data_criacao as data_cri4_3_0_,
+        carro0_.data_modificacao as data_mod5_3_0_,
+        carro0_.codigo_modelo as codigo_m8_3_0_,
+        carro0_.placa as placa6_3_0_,
+        carro0_.valor_diaria as valor_di7_3_0_,
+        modelocarr1_.categoria as categori2_7_1_,
+        modelocarr1_.descricao as descrica3_7_1_,
+        modelocarr1_.codigo_fabricante as codigo_f4_7_1_ 
+    from
+        Carro carro0_ 
+    inner join
+        ModeloCarro modelocarr1_ 
+            on carro0_.codigo_modelo=modelocarr1_.codigo 
+    where
+        modelocarr1_.descricao=?
+BBB-2222 - Fit
+AAA-9999 - Fit
+DDD-1234 - Fit
+
+38. Ou seja, entao, ele executou a nossa Consulta, da mesma forma que a gente estava fazendo, antes, nao eh?, eu estava usando a String, so que, agora, eu estou usando o Metamodel.
+
+39. Oh, Normandes, mas qual que eh a vantagem disso, ai, ainda?
+
+40. Vamos la. Vamos simular, vamos pensar, entao, que a gente trocou, la, a propriedade descricao da classe ModeloCarro.
+
+41. Entao, a gente foi la e, o chefe nao gostou de 'descricao', sei la, e a gente trocou, aqui, para 'desc'.
+
+42. Eu sei que tem formas mais faceis de a gente fazer isso, mas vamos fazer, aqui, so para a gente simular.
+
+43. Colocamos, aqui, desc, no Getter And Setter, tambem setDesc() e getDesc().
+
+44. Vai dar erro, aqui, em algumas partes, 'Ah, vamos la, a gente sai corrigindo.'
+
+45. Vamos fazer o Refactory, que eh mais facil. Vamos em getDescricao, dentro da classe ModeloCarro, botao direito / Refactor / Rename...
+
+46. Renomeamos para getDesc(), ja vai alterar no sistema inteiro.
+
+47. Mesma coisa, aqui, para setDesc(), em setDescricao(), botao Direito / Refactor / Rename...
+
+48. Bom, entao, a gente passou o nosso Sistema inteiro, esta compilando, por enquanto.
+
+49. Okay? O nosso sistema inteiro esta compilando, por enquanto.
+
+50. Quando eu mandar dar o build com o Maven, novamente, oh, beleza, acabei, aqui, fiz as alteracoes. Oh, repare que eu nao alterei, aqui, o descricao,
+
+    criteriaQuery.where(builder.equal(modelo.get(ModeloCarro_.descricao), "Fit"));
+
+51. Ai, eu vou mandar executar pelo Maven, aqui, de novo, o meu Projeto.
+
+52. Ou seja, dou um clean install com o Maven, a gente estava gerando uma versao, mandando compilar com o Maven. Repara o que que ele vai fazer, vai dar um erro, aqui.
+
+53. 
+
+[ERROR] COMPILATION ERROR : 
+[INFO] -------------------------------------------------------------
+[ERROR] /C:/Users/SEMPR/workshop-jpa-2-hibernate/capitulo-08-consultas-com-criteria/aula-08.010-metamodel/locadora-veiculo-web/src/test/java/com/algaworks/curso/jpa2/criteria/ExemplosCriteria.java:[310,74] cannot find symbol
+  symbol:   variable descricao
+  location: class com.algaworks.curso.jpa2.modelo.ModeloCarro_
+[INFO] 1 error
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+
+54. Vai falar: Ele nao conhece a variavel descricao em ModeloCarro_.java.
+
+55. E, agora, ele acabou de gerar de novo as classes, se a gente der um F5, aqui, em cima do nome do Projeto, e vier, aqui, em ExemplosCritera.java, olha so, ja parou de compilar, ja fica vermelho em .descricao,
+
+    criteriaQuery.where(builder.equal(modelo.get(ModeloCarro_. >>> descricao), "Fit"));
+
+56. Ou seja, eu precisaria vir, aqui, e colocar .desc,
+
+    criteriaQuery.where(builder.equal(modelo.get(ModeloCarro_. >>> desc), "Fit"));
+
+, e vai voltar a compilar.
+
+57. Legal, nao eh nao? Entao, assim, voce, se voce mandar fazer o build com o Maven, de novo, voce vai ver que voce nao vai cometer mais erros de digitar propriedades erradas, ai, nas suas Criterias.
+
+58. Olha so, agora, ele vai passar com sucesso,
+
+[INFO] --- maven-install-plugin:2.4:install (default-install) @ locadora-veiculo-web ---
+[INFO] Installing C:\Users\SEMPR\workshop-jpa-2-hibernate\capitulo-08-consultas-com-criteria\aula-08.010-metamodel\locadora-veiculo-web\target\locadora-veiculo-web.war to C:\Users\SEMPR\.m2\repository\com\algaworks\locadora-veiculo-web\1.0.0-SNAPSHOT\locadora-veiculo-web-1.0.0-SNAPSHOT.war
+[INFO] Installing C:\Users\SEMPR\workshop-jpa-2-hibernate\capitulo-08-consultas-com-criteria\aula-08.010-metamodel\locadora-veiculo-web\pom.xml to C:\Users\SEMPR\.m2\repository\com\algaworks\locadora-veiculo-web\1.0.0-SNAPSHOT\locadora-veiculo-web-1.0.0-SNAPSHOT.pom
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 20.059 s
+[INFO] Finished at: 2019-02-19T09:32:04-03:00
+[INFO] ------------------------------------------------------------------------
+
+59. Ai, compilou com sucesso, gerou o nosso pacote para mandar para Producao.
+
+60. Bom, o que que eu vou fazer aqui?
+
+61. Vamos voltar, primeiro aqui, em ModeloCarro.java.
+
+62. Vou deixar, aqui, descricao, em ModeloCarro.java, vamos dar um Refactor, aqui, ALT+SHIFT+R,
+
+public class ModeloCarrro {
+
+    ...
+
+    private String descricao;
+
+    public String getDescricao() {
+        return descricao;
+    }
+
+    public void setDescricao(String descricao) {
+        this.descricao = descricao;
+    }
+
+    ...
+
+}
+
+63. Se eu mandar compilar, com o build do Maven, clean install, vai dar errado, mais uma vez,
+
+[INFO] 1 error
+[INFO] -------------------------------------------------------------
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time: 5.898 s
+[INFO] Finished at: 2019-02-19T09:40:39-03:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.1:testCompile (default-testCompile) on project locadora-veiculo-web: Compilation failure
+[ERROR] /C:/Users/SEMPR/workshop-jpa-2-hibernate/capitulo-08-consultas-com-criteria/aula-08.010-metamodel/locadora-veiculo-web/src/test/java/com/algaworks/curso/jpa2/criteria/ExemplosCriteria.java:[311,74] cannot find symbol
+[ERROR]   symbol:   variable desc
+[ERROR]   location: class com.algaworks.curso.jpa2.modelo.ModeloCarro_
+[ERROR] -> [Help 1]
+
+, porque ele vai ter que gerar de novo o Metamodel, e, ai, ele vai falar que nao eh desc, mais, agora, eh descricao. Deu errado, esta dizendo, 'Nao conheco o desc'.
+
+64. A gente vem, aqui, na Raiz do Projeto / F5, aqui, para dar uma atualizada, ficou vermelho em .desc, a gente muda para .descricao, para compilar,
+
+    criteriaQuery.where(builder.equal(modelo.get("ModeloCarro_.descricao"), "Fit"));
+
+65. Beleza, o projeto voltou a funcionar.
+
+66. Vamos resolver esse casinho, aqui, do Maven?
+
+67. Isso, aqui, eh voce clicar, aqui, nesse vermelhinho, aqui, clica em cima, aqui, da um CTRL+1, pode falar, ai, oh, clicar na segunda opcao, para ele marcar isso como, para ele ignorar esse erro, 'Mark goal process as ignored in pom.xml', ai, da um OK,
+
+    <executions>
+        <execution>
+            ...
+
+68. E, aqui, abaixo, tambem, a mesma coisa, CTRL+1, seleciona a segunda opcao, 'Mark goal add-source as ignored in pom.xml', da um OK, okay, para sair os errinhos, ai, do seu projeto.
+
+69. Aqui, na Raiz do Projeto, ele ainda esta com um Probleminha, ali, eh erro de..., eh so dar um Update, pode clicar, aqui, na abinha de Problems, CTRL+1, da um Finish, e, ai, vai dar uma atualizada geral, ai, tira os erros e, ai, repara que isso que a gente acabou de fazer, ele vai gerar esse <pluginManagement>, aqui, para ignorar esse erro que estava dando, aqui, no pom.xml,
+
+		<pluginManagement>
+			<plugins>
+				<--This plugin's configuration is used to store Eclipse m2e settings only. It has no influence on the Maven build itself.--
+				<plugin>
+                        <groupId>org.eclipse.m2e</groupId>
+                        <artifactId>lifecycle-mapping</artifactId>
+                        <version>1.0.0</version>
+                        <configuration>
+                            <lifecycleMappingMetadata>
+                                <pluginExecutions>
+                                    <pluginExecution>
+                                        <pluginExecutionFilter>
+                                            <groupId>org.bsc.maven</groupId>
+                                            <artifactId>
+                                                maven-processor-plugin
+                                            </artifactId>
+                                            <versionRange>
+                                                [2.2.4,)
+                                            </versionRange>
+                                            <goals>
+                                                <goal>process</goal>
+                                            </goals>
+                                        </pluginExecutionFilter>
+                                        <action>
+                                            <ignore></ignore>
+                                        </action>
+                                    </pluginExecution>
+                                </pluginExecutions>
+                            </lifecycleMappingMetadata>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </pluginManagement>
+
+70. Okay?
+
+71. Bom, eh isso daqui. So para confirmar, o nosso projeto esta compilando, vamos refazer o build com o Maven, clean install, esta conseguindo gerar o .war para a gente implantar ele em Producao, e, se voce trocar qualquer propriedade, voce, agora, vai ter um Erro em Tempo de Compilacao, e voce nao vai mais cometer o erro de jogar alguma propriedade errada em Producao, e so ver o erro acontecendo em Producao,
+
+            Join<Carro, ModeloCarro> modelo = (Join) c.filter(Carro_.modelo);
+
+            criteriaQuery.select(c);
+
+            criteriaQuery.where(builder.equal(modelo.get(ModeloCarro_.descricao), "Fit"));
+
+72. Fim da     Aula 08.010. Metamodel.
+
+
+
+-->
+
+
+

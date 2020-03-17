@@ -1,0 +1,480 @@
+<!--
+
+    Aula 07.003. Ciclo de Vida e Estados dos Objetos
+
+1. Bom, vamos ver essa parte muito importante do JPA, entender o ciclo de vida, o estado dos objetos, e ver, tambem, alguns metodos que a gente consegue adicionar comportamento enquanto o objeto esta navegando por esse ciclo de vida.
+
+2. Entao, vamos la. Essa bolinha preta, aqui, representa, pra gente, o inicio, quando tem la, o seu programa, voce comecou a escrever o seu programa.
+
+3. E, ai, se voce der um 'new' no objeto, esse objeto vai para o Estado de New,
+
+                new           |----------|
+ Objeto O-------------------|>|   New    |
+                              |----------|
+
+, nao eh?, o Estado normal, ou seja, eh um Estado 'acabou de criar aquele objeto', nao tem nada relacionado ao JPA, propriamente dito, a gente so deu um 'new' em um objeto simples, okay?
+
+4. Quando a gente pegar esse objeto simples e chamar um persist() ou merge(),
+
+                new           |----------|
+ Objeto O-------------------|>|   New    |
+                              |----------|
+                                   |
+                                   | persist()
+                                   | merge()
+                                   v
+                              |----------|
+                              |  Managed |
+                              |----------|
+                                   
+, esse objeto, ele vai para o Estado de Gerenciado, certo? Entao, se a gente chamar tanto o persist() quanto o merge(), tanto faz, ele vai entrar no Estado Gerenciado, e, ai, agora, o Entity Manager toma conta desse objeto pra gente.
+
+5. Okay?
+
+6. Bom, uma outra situacao esta la, tambem, no Estado Inicial, e a gente faz uma Consulta,
+
+                Consultas...            |----------|
+ Objeto O-----------------------------|>| Managed  |
+                                        |----------|
+
+7. Entao, se a gente faz uma Consulta, aquele objeto tambem passa a ser Gerenciado pelo Entity Manager. Okay? Entao, a gente viu, aqui, que a gente tem duas formas de entrar no Estado Gerenciado, 
+
+                new            |----------|
+ Objeto O--------------------|>|   New    |
+        |                      |----------|
+        |                           |
+        |                           | persist()
+        |                           | merge()
+        |                           v
+        |      Consultas...    |----------|
+        |--------------------|>|  Managed |
+                               |----------|
+
+, ou a gente vai por uma Consulta, ou a gente faz o persist(), o merge(), e, dentro daquele EntityManager, o nosso objeto esta sendo Gerenciado.
+
+8. Beleza? Bom, agora, a partir de um objeto Gerenciado,
+
+    |----------|
+    |  Managed |
+    |----------|
+
+9. Se a gente esta com o objeto Gerenciado, e a gente chama o metodo remove(), passando aquele objeto, no EntityManager,
+
+    |----------|          remove()              
+    |  Managed |------------------------------|>
+    |----------|                                
+
+, o que que vai acontecer? Ele vai para o Estado de Removido.
+
+    |----------|          remove()              |----------|
+    |  Managed |------------------------------|>| Removed  |
+    |----------|                                |----------|
+
+10. Ele esta ali, aquela variavel apontando para um objeto que esta em um Estado de Removido.
+
+11. Se a gente chamar o persist() ou merge() de novo, passando esse objeto Removido, ele volta a ser um objeto Gerenciado,
+
+                            persist() merge()
+            |---------------------------------------------------|
+            |                                                   |
+            v                                                   |
+    |----------|          remove()              |----------|    |
+    |  Managed |------------------------------|>| Removed  |----|
+    |----------|                                |----------|
+
+
+12. Se a gente chamar o metodo detach(), passando o objeto, ou a gente fechar o EntityManager, o nosso objeto vai para um Estado Detached, ou seja, ele esta Desatachado,
+
+                                    |----------|
+                         |----------|  Managed |
+                         |          |----------|
+                         |
+                         |
+                         | detach()
+                         | EntityManager eh fechado
+                         |
+                         |
+                         |
+                         |
+                         v
+                    |----------|
+                    | Detached |
+                    |----------|
+
+13. Ou seja, nao esta mais sendo gerenciado pelo EntityManager.
+
+14. A gente viu situacoes dessas, aqui, acontecendo em que, quando o EntityManager eh fechado e, ai, a gente tenta alterar alguma coisa em um objeto, que esta em um estado Detached. O que que vai acontecer? Da aquelas excecoes de Lazy Loading, por exemplo, podem acontecer quando um objeto esta Desatachado.
+
+15. Okay?
+
+16. Bom, uma outra situacao, para a gente faze ele voltar, eh chamar o merge(), que volta em cima desse objeto Desatachado, ele volta a ser um objeto Gerenciado pelo EntityManager,
+
+                                    |----------|
+                         |----------|  Managed |<------------|
+                         |          |----------|             |
+                         |                                   |
+                         |                                   |
+                         | detach()                          |
+                         | EntityManager eh fechado          | merge()
+                         |                                   |
+                         |                                   |
+                         |                                   |
+                         |                                   |
+                         v                                   |
+                    |----------|                             |
+                    | Detached |------------------------------
+                    |----------|
+
+
+17. Bom, entao, esse eh o ciclo de vida completo, ai, que o objeto pode passar. Ele pode: 1. Nascer; 2. Passar para ser Gerenciado; 3. Ele pode ser Desatachado; 4. Voltar a ser Gerenciado; 5. Pode ser Removido; 6. Voltar a ser Gerenciado.
+
+18. So objetos que sao Gerenciados que sao Enviados para o Banco de Dados.
+
+19. Entao, quando a gente tem o Objeto Gerenciado e a gente faz alguma alteracao, por exemplo, essa alteracao vai para o banco de dados.
+
+20. Bom, tranquilo essa parte, aqui?
+
+21. Essa eh so por onde a gente navega, onde que os nossos objetos podem estar, dentro do JPA, dentro do EntityManager, ai.
+
+22. Okay? E o legal eh que a gente consegue saber algumas informacoes, aqui, como, por exemplo, executar algumas acoes, como, por exemplo, antes de ele se tornar Gerenciado, aqui, pelo metodo persist(), por exemplo, eu consigo executar alguma acao. E, depois que ele tiver sido persistido, eu tambem consigo executar alguma acao.
+
+23. Como isso, Normandes?
+
+24. Existem, entao, os CallBacks, os metodos de CallBack, que a gente vai executar. Entao, existe o PrePersit, ou seja, Antes de ele ser Persistido.
+
+25. Existe o PostPersist, ou seja, logo depois de o Persist ser chamado, esse metodo vai ser executado. O PreRemove, antes de ele ser Removido, e o PostRemove, logo depois de ele ser Removido.
+
+26. PreUpdate e PostUpdate, Antes e Depois de ele ser atualizado, normalmente, com o merge(). Ou, se voce esta com o objeto Gerenciado, e ele foi alterado, o PreUpdate e o PostUpdate tambem vao ser executados.
+
+27. E o outro que existe, so a versao PostLoad, eh o PostLoad, que eh a versao Depois, nao existe a versao Antes, que eh o PostLoad. Por que que nao existe a versao Antes? 
+
+28. Ueh, nao faz sentido, nao tem nada para ser executado antes de um cara ser Carregado, nao tem tanto sentido,
+
+    PrePersist                  PreRemove                   PreUpdate
+    PostPersist                 PostRemove                  PostUpdate
+
+
+                                PostLoad
+
+29. Entao, depois que ele foi Carregado, depois que voce buscou aquele objeto, aquela Entidade, o PostLoad vai ser executado.
+
+30. Como assim, Normandes, vai ser executado onde? O que que eh isso?
+
+31. Entao, vamos la, vamos voltar para o nosso exemplo, aqui, e vamos imaginar o seguinte.
+
+32. Vamos imaginar que a gente precisa, aqui na nossa classe Carro, de 2 atributos de data. Para o que? Toda vez que a gente salvar o objeto, eu quero saber o dia em que ele foi salvo, o dia e a hora em que ele foi salvo.
+
+33. E tambem quero saber o dia e a hora em que ele foi alterado.
+
+34. Ai, voce pode falar, 'Ah, Normandes, beleza, a gente vai la no Servico e coloca isso la'.
+
+35. Ou seja, a gente vai la no CadastroCarroService e coloca, na hora em que estiver salvando,... 
+
+36. Eh, tem jeito, sim. Mas, vamos fazer de uma forma mais legal, mais facil de dar manutencao?
+
+37. Voce nao precisa ficar lembrando de fazer isso, no metodo salvar(),
+
+public class CadastroCarroService implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    @Inject
+    private CarroDAO dao;
+
+    @Transactional
+    public void salvar(Carro carro) throws NegocioException {
+
+        ...
+        this.dao.salvar(carro);
+    }
+}
+
+, ou seja, quando voce escreveu a Entidade Carro, isso ja vai estar pronto, nao precisa passar essa responsabilidade para frente.
+
+38. Okay? Entao, vamos la.
+
+39. Vamos colocar aqui, oh, um atributo do tipo Date, e, aqui, nos vamos colocar dataCriacao. E outro Date, aqui, nos vamos chamar de dataModificacao;
+
+import java.util.Date;
+
+@Entity
+public class Carro {
+
+    ...
+    private Date dataCriacao;
+    private Date dataModificacao;
+    ...
+
+
+}
+
+40. Okay? Entao, aqui, quando criou e aqui, quando foi modificado,
+
+@Entity
+public class Carro {
+
+    ...
+    >>> private Date dataCriacao;
+    >>> private Date dataModificacao;
+    ...
+
+
+}
+
+41. E, ai, a gente vai criar os Getters And Setters,
+
+	public Date getDataCriacao() {
+		return dataCriacao;
+	}
+	
+	public void setDataCriacao(Date dataCriacao) {
+		this.dataCriacao = dataCriacao;
+	}
+	
+	public Date getDataModificacao() {
+		return dataModificacao;
+	}
+	
+	public void setDataModificacao(Date dataModificacao) {
+		this.dataModificacao = dataModificacao;
+	}
+
+42. E vamos mapear,
+
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+
+@Entity
+public class Carro {
+
+    ...
+
+    @Temporal(TemporalType.TIMESTAMP)
+    public Date getDataCriacao() {
+        return dataCriacao;
+    }
+
+    @Temporal(TemporalType.TIMESTAMP)
+    public Date getDataModificacao() {
+        return dataModificaca;
+    }
+
+}
+
+43. @Temporal(TemporalType.TIMESTAMP), porque eu quero tanto a hora quanto a data.
+
+44. Beleza? Bom, e agora? Como eh que a gente trabalha com esses metodos de CallBack, para a gente entrar no Ciclo de Vida?
+
+45. Nos vamos colocar o seguinte. Toda vez, entao, que o objeto for, Antes dele Persistir (PrePersist), ou, Antes dele ser Atualizado (PreUpdate), eu vou executar o metodo, ali, na Entidade. 
+
+46. Existem varios casos em que a gente poderia usar o PostPersist, o PostRemove, o PostUpdate, PreRemove, PostLoad, esse eh so um exemplo, no seu dia-a-dia, ai, como desenvolvedor JPA, voce vai vendo essa necessidade, uma hora la vai chegar um Requisito que voce fala, 'Hum, antes de remover, eu tenho que enviar, sei la, algum SMS, enviar um e-mail, fazer alguma coisa dessa forma nessa Entidade'. Entao, vamos colocar isso no PreRemove, no PostRemove, okay?, coisas desse tipo.
+
+47. Entao, vamos la. A gente pode vir, aqui, entao, e criar um metodo, ele tem que ser 'public void', vamos chamar, aqui, configuraDatasCriacaoAlteracao(), algo assim,
+
+@Entity
+public class Carro {
+
+
+    ...
+    public void configuraDatasCriacaoAlteracao() {
+
+    }
+}
+
+, e, ai, a gente vai anotar ele, aqui, oh, como @PrePersist e @PreUpdate,
+
+@Entitly
+public class Carro {
+
+
+    ...
+    @PrePersist
+    @PreUpdate
+    public void configuraDatasCriacaoAlteracao() {
+
+    }
+}
+
+48. Coloquei essas duas anotacoes aqui, esse metodo ja vai ser executado Antes de ser Persistido e Antes de ser Atualizado. Simples, nao?
+
+49. E, ai, o que que a gente pode fazer aqui, oh?
+
+50. A data de modificacao sempre vai ser instanciada com new Date(), porque a data de modificacao, toda vez eu estou alterando. Agora, a data de criacao, nos vamos fazer o seguinte, se a data de criacao for igual a null, ai, sim, a gente cria um novo objeto Date. Por que? Quando ela for null, eh porque o objeto esta sendo criado agora, nao eh verdade? Se ela nao for null, ja existe o objeto e a gente nao precisa alterar a data de criacao, ja buscou do banco de dados, algo assim,
+
+    ...
+    @PrePersist
+    @PreUpdate
+    public void configuraDatasCriacaoAlteracao() {
+        this.dataModificacao = new Date();
+        if (this.dataCriacao == null) {
+            this.dataCriacao = new Date();
+        }
+    }
+
+51. So isso aqui, Normandes?
+
+    ...
+    @PrePersist
+    @PreUpdate
+    public void configuraDatasCriacaoAlteracao() {
+        this.dataModificacao = new Date();
+        if (this.dataCriacao == null) {
+            this.dataCriacao = new Date();
+        }
+    }
+
+52. So isso aqui. Simples, nao eh? Aqui, nos poderiamos escrever o nosso codigo no PrePersist, no PreUpdate, poderiamos escrever outros metodos, aqui, poderiamos ter varios metodos, aqui, como o @PostRemove, a gente faz alguma acao depois que ele foi removido, a gente colocaria outro metodo, aqui, e assim por diante.
+
+53. Okay?
+
+54. Bom, vamos la? Vamos testar isso daqui? Vamos ver se isso daqui esta funcionando, se nao tem mais nenhum errinho que eu esqueci aqui, vamos la.
+
+55. Entao, vou iniciar o Servidor, e nos vamos carregar o sistema, aqui, novamene, http://localhost:8080/locadora-veiculo-web/.
+
+56. Vamos la no Cadastro de Carro, http://localhost:8080/locadora-veiculo-web/carro/PesquisaCarros.xhtml, vamos esperar, aqui, o JPA iniciar, ele vai fazer as alteracoes na nossa tabela, certo?, porque, agora, a nossa tabela CARRO tem mais 2 colunas. Okay, estamos, aqui, com a Pesquisa de Carro, e, ai, vamos supor que a gente quer atualizar, aqui, o Valor diaria do Cruze, que esta 200,00, nos vamos clicar, aqui, em Editar, e vamos colocar, aqui, em Valor diaria, 210,00, por exemplo. Subiu o valor do Cruze.
+
+57. Vamos Salvar, Opa, deu um probleminha,
+
+org.hibernate.LazyInitializationException: failed to lazily initialize a collection, could not initialize proxy - no Session
+
+58. Vamos ver que problema que eh esse aqui. Ah, sim, essa questao dessa colecao eh um probleminha que tem, ai, no JSF. Ai, eu acredito que eles vao resolver isso daqui um tempo. Entao, vamos la, deixa eu mostrar como eh que a gente corrige isso.
+
+59. Nos vamos, aqui, abrir o CadastroCarro.xhtml. E, aqui na Colecao de Acessorios, o probleminha que acontece eh que ele nao entende o tipo da colecao que esta aqui,
+
+    <p:outputLabel value="Acessorios" for="acessorios" />
+    <p:selectManyCheckbox id="acessorios" styleClass="many-checkbox"
+                value="#{cadastroCarroBean.carro.acessorios}" converter="acessorioConverter">
+    
+
+                <f:selectItems value="#{cadastroCarroBean.acessorios}" var="acessorio"
+                        itemLabel="#{acessorio.descricao}" itemValue="#{acessorio}" />
+    </p:selectManyCheckbox>
+
+60. Entao, nos vamos falar para ele, 'Olha,...', vamos escrever aqui, entao, falando, 'Olha, o seu tipo de colecao, que a gente esta trabalhando, aqui, eh um java.util.ArrayList',
+
+    <p:outputLabel value="Acessorios" for="acessorios" />
+    <p:selectManyCheckbox id="acessorios" styleClass="many-checkbox"
+                value="#{cadastroCarroBean.carro.acessorios}" converter="acessorioConverter">
+    
+                <f:attribute name="collectionType" value="java.util.ArrayList" />
+
+                <f:selectItems value="#{cadastroCarroBean.acessorios}" var="acessorio"
+                        itemLabel="#{acessorio.descricao}" itemValue="#{acessorio}" />
+    </p:selectManyCheckbox>
+
+61. Tem que falar isso daqui,
+
+    <p:outputLabel value="Acessorios" for="acessorios" />
+    <p:selectManyCheckbox id="acessorios" styleClass="many-checkbox"
+                value="#{cadastroCarroBean.carro.acessorios}" converter="acessorioConverter">
+    
+                >>> <f:attribute name="collectionType" value="java.util.ArrayList" />
+
+                <f:selectItems value="#{cadastroCarroBean.acessorios}" var="acessorio"
+                        itemLabel="#{acessorio.descricao}" itemValue="#{acessorio}" />
+    </p:selectManyCheckbox>
+
+, nesse tipo de colecao, que eh desatachada, no caso, nos acessorios, ela foi desatachada no momento da edicao, ali, nao eh? Entao, eu tenho que falar para ele, aqui, qual eh o tipo da minha colecao, eh problema de JSF.
+
+62. Vamos iniciar novamente o Servidor, http://localhost:8080/locadora-veiculo-web/carro/PesquisaCarros.xhtml.
+
+63. Vamos ver se a gente consegue. Okay, vamos la no Cadastro de Carro, esperar o Hibernate inicar a primeira vez, demora, okay.
+
+64. Aqui, aproveitando que a gente teve esse contratempo, vamos fazer um select la na tabela CARRO, so para a gente ver as nossas novas colunas,
+
+select * from carro;
+
+# codigo, chassi, cor, placa, valor_diaria, codigo_modelo, data_criacao, data_modificacao
+1, , Branco, AAA-1234, 200.00, 1, , 
+2, , Prata, BBB-2222, 100.00, 3, , 
+3, , Prata, AAA-9999, 120.00, 3, , 
+4, , Branco, BBB-8888, 250.00, 1, , 
+5, , Azul, AAA-7788, 230.00, 2, , 
+6, , Prata, DDD-1234, 130.00, 3, , 
+7, , Preto, FFF-1212, 200.00, 1, , 
+8, , Prata, XXX-1111, 200.00, 2, , 
+9, , Prata, ADD-8989, 200.00, 14, , 
+10, , Vermelho, YNP-5588, 230.00, 13, , 
+
+65. Eh logico que data_criacao vai ser alterada, porque, nesse registro criado, porque a coluna ainda esta null, nao eh? E a data_modificacao, depois, a gente edita novamente e a gente ve so a data_modificacao sendo alterada.
+
+66. Entao, vamos la. Vamos editar o registro de codigo 1. Esse carro, aqui, agora, a gente passou o Valor diaria para 210,00, e vamos Salvar o Carro.
+
+67. Retornou,
+
+Hibernate: 
+    update
+        Carro 
+    set
+        chassi=?,
+        cor=?,
+        data_criacao=?,
+        data_modificacao=?,
+        codigo_modelo=?,
+        placa=?,
+        valor_diaria=? 
+    where
+        codigo=?
+
+68. E, no Workbench,
+
+select * from carro;
+
+# codigo, chassi, cor, placa, valor_diaria, codigo_modelo, data_criacao, data_modificacao
+1, , Branco, AAA-1234, 210.00, 1, 2019-02-02 17:15:27, 2019-02-02 17:15:27
+2, , Prata, BBB-2222, 100.00, 3, , 
+3, , Prata, AAA-9999, 120.00, 3, , 
+4, , Branco, BBB-8888, 250.00, 1, , 
+5, , Azul, AAA-7788, 230.00, 2, , 
+6, , Prata, DDD-1234, 130.00, 3, , 
+7, , Preto, FFF-1212, 200.00, 1, , 
+8, , Prata, XXX-1111, 200.00, 2, , 
+9, , Prata, ADD-8989, 200.00, 14, , 
+10, , Vermelho, YNP-5588, 230.00, 13, , 
+
+69. Agora, o Carro foi salvo com sucesso, vamos fazer o select, aqui, no Workbench, de novo, e ver la, oh, o valor_diaria, foi para 210,00, e, aqui, oh, a gente ve as 2 datas sendo alteradas, oh, data_criacao e data_modificacao.
+
+70. Vamos fazer o seguinte, agora. Vamos alterar ele de novo. Vamos la na Pesquisa do Carro, e vamos alterar mais uma vez, para a gente ver, agora, apenas a data_modificacao sendo alterada, alterei o Valor diaria para 205, vamos Salvar de novo, okay, Carro salvo com sucesso.
+
+71. Okay, 
+
+select * from carro;
+
+# codigo, chassi, cor, placa, valor_diaria, codigo_modelo, data_criacao, data_modificacao
+1, , Branco, AAA-1234, 205.00, 1, 2019-02-02 17:15:27, 2019-02-02 17:25:31
+2, , Prata, BBB-2222, 100.00, 3, , 
+3, , Prata, AAA-9999, 120.00, 3, , 
+4, , Branco, BBB-8888, 250.00, 1, , 
+5, , Azul, AAA-7788, 230.00, 2, , 
+6, , Prata, DDD-1234, 130.00, 3, , 
+7, , Preto, FFF-1212, 200.00, 1, , 
+8, , Prata, XXX-1111, 200.00, 2, , 
+9, , Prata, ADD-8989, 200.00, 14, , 
+10, , Vermelho, YNP-5588, 230.00, 13, , 
+
+, agora, repare, oh, que foi alterado somente na coluna data_modificacao, ou seja, so a coluna data_modificacao que foi alterada.
+
+72. Entao, com esses metodos de CallBack, os chamados metodos de CallBack, aqui,
+
+@PrePersist
+@PreUpdate
+public void configuraDatasCriacaoAlteracao() {
+    this.dataModificacao = new Date();
+    if (this.dataCriacao == null) {
+        this.dataCriacao = new Date();
+    }
+}
+
+, a gente consegue, entao, interferir, fazer alguma acao antes e depois de varias acoes. Recapitulando, Antes e Depois de fazer o Persist, Antes e Depois de fazer alguma Alteracao no objeto. Antes e Depois de Remover e alguma coisa Depois dele Carregar aquela Entidade,
+
+        PrePersist                      PreRemove                       PreUpdate
+        PostPersist                     PostRemove                      PostUpdate
+
+
+                                        PostLoad
+
+73. Fim da     Aula 07.003. Ciclo de Vida e Estados dos Objetos.
+
+
+
+-->

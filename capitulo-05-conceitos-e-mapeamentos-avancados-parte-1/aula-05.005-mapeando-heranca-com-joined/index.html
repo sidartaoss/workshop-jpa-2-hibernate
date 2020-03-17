@@ -1,0 +1,131 @@
+<!--
+    Aula 05.005. Mapeando Heranca com Joined
+
+1. Quer aprender outra forma de mapear heranca? A segunda opcao que temos eh usando a estrategia "Joined".
+
+2. Nessa estrategia, cada Entidade tera sua propria tabela. Parece que faz mais sentido, nao eh verdade? O modelo no banco ira ficar mais organizado (normalizado), pois nao teremos colunas extras e nem valores nulos.
+
+3. O maior problema eh que fica complicado para o Hibernate fazer os INSERTs e os SELECTs, o que deixa um pouco mais lento. E tambem o banco de dados, que ira fazer JOIN entre as tabelas, fazendo as consultas serem um pouco mais lentas tambem.
+
+4. Mas, se isso nao for um problema para voce, vamos aprender a fazer!
+
+5. Antes de mais nada, te aconselho a apagar a tabela "pessoa" do banco de dados, pois os dados que ja estao salvos poderao te confundir um pouco.
+
+6. Vamos comecar na nossa classe Pessoa.
+
+7. Vamos alterar a estrategia para JOINED,
+
+@Entity
+@Inheritance(strategy = InheritanceType.JOINED)
+public abstract class Pessoa {
+
+    ...
+}
+
+, e o tipo do discriminador para Integer,
+
+@Entity
+@Inheritance(strategy = InheritanceType.JOINED)
+@DiscriminatorColumn(name = "tipo_pessoa", discriminatorType = DiscriminatorType.INTEGER)
+public abstract class Pessoa {
+    
+    ...
+}
+
+8. Agora, na classe Motorista, vamos colocar um valor inteiro, mesmo que esteja entre aspas duplas, para representar Um Motorista, atraves da anotacao @DiscriminatorValue,
+
+@Entity
+@DiscriminatorValue("1")
+public class Motorista extends Pessoa {
+
+    private String numeroCNH;
+
+    ...
+}
+
+9. Pronto! Inicie o Tomcat e faca o cadastro de um Motorista.
+
+10. De uma olhada nas duas tabelas criadas no banco de dados.
+
+11. Ao acessar a Pagina http://localhost:8080/locadora-veiculo-web/motorista/PesquisaMotorista.xhtml, retornou, no Log do Servidor,
+
+Hibernate: 
+    select
+        motorista0_.codigo as codigo1_6_,
+        motorista0_1_.cpf as cpf2_6_,
+        motorista0_1_.data_nascimento as data3_6_,
+        motorista0_1_.nome as nome4_6_,
+        motorista0_.numero_cnh as numero1_5_ 
+    from
+        Motorista motorista0_ 
+    inner join
+        Pessoa motorista0_1_ 
+            on motorista0_.codigo=motorista0_1_.codigo
+
+12. Ao clicar em Salvar, na tela de Cadastro de Motorista, retornou 'Motorsita salvo com sucesso!', no Log do Servidor,
+
+Hibernate: 
+    insert 
+    into
+        Pessoa
+        (cpf, data_nascimento, nome) 
+    values
+        (?, ?, ?)
+Hibernate: 
+    insert 
+    into
+        Motorista
+        (numero_cnh, codigo) 
+    values
+        (?, ?)
+
+13. Ao examinarmos os dados no banco de dados, 
+
+select * from pessoa;
+
+# codigo,   cpf,                data_nascimento,            nome
+    1,      11111111111,        2019-01-01,                 Pedro Santos
+
+
+select * from motorista;
+
+# numero_cnh,           codigo
+    45454545,           1
+
+
+14. Repare que a tabela Pessoa tem as colunas codigo, cpf, data_nascimento e nome. E a tabela Motorista tem as colunas numero_cnh e codigo. 
+
+15. Nao viu nada relacionado ao tipo_pessoa nas tabelas?
+
+16. Isso eh porque o Hibernate nao precisa dele, mas pode ser que algum outro famework utilize, entao, deixe la, nao ira te incomodar muito, nao eh?
+
+17. O detalhe mais importante que temos que observar eh o codigo na tabela Motorista. Ele eh uma chave estrangeira (foreign key) para a tabela Pessoa.
+
+18. Se voce entrar na tela de Consulta de Motorista, 
+
+Hibernate: 
+    select
+        motorista0_.codigo as codigo1_6_,
+        motorista0_1_.cpf as cpf2_6_,
+        motorista0_1_.data_nascimento as data3_6_,
+        motorista0_1_.nome as nome4_6_,
+        motorista0_.numero_cnh as numero1_5_ 
+    from
+        Motorista motorista0_ 
+    inner join
+        Pessoa motorista0_1_ 
+            on motorista0_.codigo=motorista0_1_.codigo
+
+, e olhar os logs gerados pelo Hibernate no console do Eclipse, ira ver o Select sendo feito com Join entre a tabela Pessoa e Motorista.
+
+19. O que achou dessa forma de Mapeamento? Implementar eh facil, nao eh mesmo?
+
+20. Qual estrategia voce gostou mais? Usando "JOINED" ou "SINGLE_TABLE"?
+
+21. Ainda existem outras formas que iremos ver ao longo do curso. Fique tranquilo, pois nao acabou.
+
+22. Fim da     Aula 05.005. Mapeando Heranca com Joined.
+
+
+-->
+

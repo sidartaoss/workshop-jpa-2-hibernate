@@ -1,0 +1,967 @@
+<!--
+    Aula 16.006. Multi-Tenancy com Bancos Separados
+
+1. Deixa eu te mostrar, agora, como eh que a gente faz para implementar o Multi-Tenant na Estrategia de Separar o Banco de Dados.
+
+2. Okay?
+
+3. Eu nao instalei, aqui, outras instancias de Banco de Dados, mas eu vou simular essa ideia.
+
+4. Como?
+
+5. Eu cadastrei, no meu hosts, C:\Windows\System32\Drivers\etc\hosts, aqui, duas URL's, para a gente simular Duas Empresas,
+
+# Copyright (c) 1993-2009 Microsoft Corp.
+#
+# This is a sample HOSTS file used by Microsoft TCP/IP for Windows.
+#
+# This file contains the mappings of IP addresses to host names. Each
+# entry should be kept on an individual line. The IP address should
+# be placed in the first column followed by the corresponding host name.
+# The IP address and the host name should be separated by at least one
+# space.
+#
+# Additionally, comments (such as these) may be inserted on individual
+# lines or following the machine name denoted by a '#' symbol.
+#
+# For example:
+#
+#      102.54.94.97     rhino.acme.com          # source server
+#       38.25.63.10     x.acme.com              # x client host
+
+# localhost name resolution is handled within DNS itself.
+#	127.0.0.1       localhost
+#	::1             localhost
+
+127.0.0.1       imperio-rodas.localhost
+127.0.0.1       padaria-real.localhost
+
+6. A primeira empresa eu chamei de imperio-rodas, e a URL que a gente vai acessar, ai, oh, imperio-rodas.localhost, que eh uma coisa bem comum que se faz, hoje em dia, nao eh?
+
+7. As vezes, quando voce cria Conta, em varios servicos na Internet, voce ganha uma URL so sua.
+
+8. Okay? Essa eh a URL que eu vou usar para recuperar o Tenant, ai. Esse imperio-rodas, vai ser o meu Tenant, vai ser o identificador, o TenantID.
+
+9. Beleza?
+
+10. Entao, se eu der um ping, ai, 
+
+> ping imperio-rodas.localhost
+
+, repara que ele resolve, oh, 127.0.0.1.
+
+11. E a outra empresa, essa eh a imperio-rodas, a outra eu chamei de padaria-real, 
+
+> ping padaria-real.localhost
+
+, okay?
+
+12. Entao, essas duas URL's, apontam para 127.0.0.1. Beleza?
+
+13. Obviamente, isso, aqui, imperio-rodas.localhost e padaria-real.localhost, poderia ser um IP diferente, poderia estar resolvendo para outro IP, para cair em outro Banco. Nao eh essa a questao.
+
+14. Entao, vamos la.
+
+15. Qual eh o Sistema que eu peguei?
+
+16. Eu peguei o gerenciador-acesso, la, que eh um sisteminha simples, nao eh?, para a gente poder brincar com ele, tem Consulta, tem Cadastro, nele, nao eh?, e a gente vai ver ele cadastrando e consultando em bancos diferentes, na verdade, o mesmo, eh,..., vamos falar de bancos diferentes, nao eh?, no meu caso, eu tenho o mesmo MySQL instalado, so que eu estou simulando ele acessar em dois bancos diferentes.
+
+17. Eu vou comecar te mostrando por isso, oh.
+
+18. Eu criei, aqui, no context.xml, ou seja, em src/main/webapp/META-INF/context.xml, 
+
+    <Resource auth="Container"
+            driverClass="com.mysql.jdbc.Driver"
+            maxPoolSize="4"
+            minPoolSize="2"
+            acquireIncrement="1"
+            name="jdbc/imperio-rodas"
+            user="root"
+            password="admin"
+            factory="org.apache.naming.factory.BeanFactory"
+            type="com.mchange.v2.c3p0.ComboPooledDataSource"
+            jdbcUrl="jdbc:mysql://imperio-rodas.localhost:3306/gerenciador_acesso" />
+
+    <Resource auth="Container"
+            driverClass="com.mysql.jdbc.Driver"
+            maxPoolSize="4"
+            minPoolSize="2"
+            acquireIncrement="1"
+            name="jdbc/padaria-real"
+            user="root"
+            password="admin"
+            factory="org.apache.naming.factory.BeanFactory"
+            type="com.mchange.v2.c3p0.ComboPooledDataSource"
+            jdbcUrl="jdbc:mysql://padaria-real.localhost:3306/gerenciador_acesso2" />
+
+, olha so, eu tenho imperio-rodas.localhost, 
+
+
+        jdbcUrl="jdbc:mysql://imperio-rodas.localhost:3306/gerenciador_acesso" />
+
+, entao, imagina, isso, aqui,
+
+        jdbcUrl="jdbc:mysql://>>> imperio-rodas.localhost <<< :3306/gerenciador_acesso" />
+
+, poderia ser um IP, diferente desse, aqui, oh,
+
+
+        jdbcUrl="jdbc:mysql:// >>> padaria-real.localhost <<< :3306/gerenciador_acesso2" />
+
+, beleza? E, ai, eu coloquei em schemas diferentes, ou seja, gerenciador_acesso e gerenciador_acesso2, aqui, porque, na verdade, o meu Banco eh o mesmo, mas, se fosse um Banco de dados separado, obviamente, esse schema, ou seja, gerenciador_acesso, aqui, para imperio-rodase e padaria-real, beleza?, porque ja estariam em IP's totalmente diferentes.
+
+19. E o nome do jdbc, olha so, sao os nomes dos Tenant's. Esse nome, aqui,
+
+            name="jdbc/  >>> imperio-rodas <<< "
+
+, que a gente vai utilizar para chegar aqui.
+
+20. Entao, o TenantID vai ser passado, aqui,
+
+
+            name="jdbc/imperio-rodas"
+
+, na hora em que eu for fazer lookup, eu nao, o Hibernate vai fazer isso sozinho, voce vai ver, ele, na hora em que ele for fazer o lookup, ai, ele vem, aqui, passa esse nome, eu vou passar esse nome, ele consegue saber, 'Ah, beleza, esse, aqui, eh o Tenant imperio-rodas, ele quer fazer, salvar, consultar, nesse Banco, aqui: jdbcUrl="jdbc:mysql://padaria-real.localhost:3306/gerenciador_acesso2" /> '
+
+21. Quando ele passar o padaria-real,
+
+            name="jdbc/padaria-real"
+
+, ele vai acessar esse outro banco, aqui,
+
+            jdbcUrl="jdbc:mysql://padaria-real.localhost:3306/gerenciador_acesso2" />
+
+
+22. Beleza?
+
+23. Entao, eh assim que funciona. Se voce quiser outra empresa, adiciona outro DataSource, aqui, em context.xml.
+
+24. Beleza?
+
+25. Lembrando que, adicionou aqui, tem que adicionar aqui, no web.xml, tambem,
+
+    <display-name>gerenciador-acesso</display-name>
+
+    <resource-ref>
+        <res-ref-name>jdbc/imperio-rodas</res-ref-name>
+        <res-type>javax.sql.DataSource</res-type>
+        <res-auth>Container</res-auth>
+    </resource-ref>
+    <resource-ref>
+        <res-ref-name>jdbc/padaria-real</res-ref-name>
+        <res-type>javax.sql.DataSource</res-type>
+        <res-auth>Container</res-auth>
+    </resource-ref>
+
+    <listener>
+        <listener-class>org.jboss.weld.environment.servlet.Listener</listener-class>
+    </listener>
+
+26. OKay? Nao podemos esquecer disso, dai.
+
+27. Bom, ja te mostrei, ali, que eu tenho as duas Conexoes no meu context.xml, ja te mostrei o web.xml, vamos dar uma olhada no persistence.xml?
+
+    <persistence-unit name="gerenciadorAcessoPU" transaction-type="RESOURCE_LOCAL" >
+
+        <non-jta-data-source>java:comp/env/jdbc/imperio-rodas</non-jta-data-source>
+
+        <properties>
+            <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect" />
+
+            <property name="hibernate.show_sql" value="true" />
+            <property name="hibernate.format_sql" value="true" />
+
+        </properties>
+
+    </persistence-unit>
+
+28. Olha so. No meu persistence.xml, eu estou usando o primeiro DataSource, aqui,
+
+    <non-jta-data-source>java:comp/env/jdbc/imperio-rodas</non-jta-data-source>
+
+, e a gente precisa desse DataSource configurado, desse primeiro DataSource, aqui, configurado. Okay?
+
+29. A gente nao consegue, se voce tirar Um, ele nao vai funcionar. O Hibernate precisa dele para iniciar algumas coisas, ele precisa fazer uma conexao, ali, para iniciar ele, para ver se esta tudo certo. Entao, ele precisa tentar conectar em um Banco. Ele chama esse banco, ai, de 'any', eh um Banco qualquer.
+
+30. Okay?
+
+31. Entao, tem que ser esse cara, voce coloca Um, Um dos seus Bancos, ai, Um DataSource, para ele poder acessar. Okay?
+
+32. Bom, Normandes, e cade? Tem que fazer alguma configuracao, ai, no persistence.xml?
+
+33. Tem sim. 
+
+34. Deixa eu te mostrar, aqui.
+
+35. Nos vamos adicionar isso, daqui, oh, 
+
+
+    <property name="hibernate.multiTenancy" value="DATABASE" />
+
+36. hibernate.multiTenancy, e o esquema eh o DATABASE. Para esse caso, aqui, a gente so precisa fazer isso. Adicionei DATABASE, aqui, pronto.
+
+37. Vamos la.
+
+38. O Produtor, ou seja, HibernateSessionProducer.java,..., ah, so lembrando, aqui, no persistence.xml, eu tirei Cache, tirei tudo. No Gerenciador de Acesso, a gente tinha colocado Cache, essas coisas, eu arranquei tudo, esta uma aplicacao, simples, direta.
+
+39. Okay?
+
+40. Entao, olha so.
+
+41. Vamos la no HibernateSessionProducer.
+
+42. Ueh, Normandes, que classe eh essa?
+
+43. Antes, nao era EntityManagerProducer?
+
+44. Eh, para a gente poder trabalhar com o Multi-Tenancy, a gente precisa trabalhar com o SessionFactory, do Hibernate, nao no EntityManager. Quem da suporte a isso, eh o Hibernate, e nao eh o EntityManager, nao esta no JPA.
+
+45. Okay?
+
+46. Eh uma aula mais de Hibernate do que de JPA,
+
+package com.algaworks.gerenciador.util.jpa;
+
+@ApplicationScoped
+public class HibernateSessionProducer {
+
+    private EntityManagerFactory factory;
+    private SessionFactory sessionFactory;
+
+    public HibernateSessionProducer() {
+        this.factory = Persistence.createEntityManagerFactory("gerenciadorAcessoPU");
+        this.sessionFactory = factory.unwrap(SessionFactory.class);
+    }
+
+    @Produces
+    @RequestScoped
+    public Session create() {
+        return sessionFactory.openSession();
+    }
+
+    public void close(@Disposes Session session) {
+        session.close();
+    }
+
+}
+
+47. Entao, como eh que a gente faz?
+
+48. A gente inicializa a Factory do mesmo jeito, a EntityManagerFactory do mesmo jeito, so que eu preciso do SessionFactory, para, depois, a gente criar a Session do Hibernate.
+
+49. Entao, eu dou um unwrap(), no SessionFactory, ai, sim eu consigo criar o meu SessionFactory.
+
+50. Na verdade, aqui, 
+
+        private EntityManagerFactory factory;
+
+, eu posso deixar esse cara, assim, nao eh?,
+
+    public HibernateSessionProducer() {
+        EntityManagerFactory factory = Persistence.createEntityManagerFactory("gerenciadorAcessoPU");
+        this.sessionFactory = factory.unwrap(SessionFactory.class);
+    }
+
+51. Vamos deixar nessa forma, aqui.
+
+52. Okay?
+
+53. Beleza.
+
+54. Na hora de Produzir,
+
+    @Produces
+    @RequestScoped
+    public Session create() {
+        return this.sessionFactory.openSession();
+    }
+
+, aqui, o meu Session, a Session que vai ser, vamos dar uma olhada, aqui, oh, CadastroUsuarioBean.java, por exemplo, oh, a Session, eu preciso injetar a Session, entao, esse cara, aqui, a classe do CDI, ou seja, a classe HibernateSessionProducer, que a gente esta usando como CDI, o Produtor do CDI, para criar o Session, aqui, para a gente injetar o Session, aqui, pra gente,
+
+@Named
+@ViesScoped
+public class CadastroUsuarioBean implements Serializable {
+
+    ...
+
+    @Inject
+    private Session session;
+
+    private Usuario usuario = new Usuario();
+
+    ...
+}
+
+55. Porque, no Session, olha la,
+
+
+    public void salvar() {
+        try {
+            this.session.getTransaction().begin();
+            this.session.merge(this.usuario);
+            this.session.getTransaction().commit();
+            this.usuario = new Usuario();
+        } catch (Exception e) {
+            throw new RuntimeException("Erro salvando usuario", e);
+        }
+    }
+
+, tem o getTransaction().begin(), tambem, da mesma forma, o session.merge(), o getTransaction().commit(), okay?
+
+56. Aqui, em PesquisaUsuarioBean, a gente esta usando,
+
+    public void pesquisar() {
+        this.usuario = (Usuario) this.session.createCriteria(Usuario.class)
+                                    .setFetchMode("grupos", FetchMode.JOIN)
+                                    .add(Restrictions.eq("codigo", this.codigoUsuario))
+                                    .setCacheable(true)
+                                    .uniqueResult();
+    }
+
+, a gente ja estava usando, nao eh?, o org.hibernate.Session, em algumas consultas, do Hibernate, para a gente fazer o Criteria do Hibernate, okay?
+
+57. No Converter, teve que mudar uma coisinha, ai,
+
+    @Override
+    public Object getAsObject(FacesContext context, UIComponent component, String value) {
+        Usuario retorno = null;
+
+        if (value != null) {
+            retorno = (Usuario) this.session.get(Usuario.class, Long.valueOf(value));
+        }
+
+        return retorno;
+    }
+
+, ao inves de find(), eh get(), que o Session usa.
+
+58. Okay?
+
+59. Entao, eu estou passando, ai, para te mostrar que a gente esta usando o Session, ali.
+
+60. Bom, mas, ai, esse Session, do jeito que esta o Projeto, ele vai consultar em qual Banco?
+
+61. Nesse Banco, aqui, sempre,
+
+    <non-jta-data-source>java:comp/env/jdbc/imperio-rodas</non-jta-data-source>
+
+62. Nao eh?
+
+63. Eu preciso passar o TenantID, ou seja, eu preciso passar o Tenant na hora de criar o Session, ou seja, em, HibernateSessionProducer, no metodo create,
+
+    @Produces
+    @RequestScoped
+    public Session create() {
+        return sessionFactory.openSession();
+    }
+
+, para ele saber, ja, consultar no Banco correto.
+
+64. Ou seja, essa Session, aqui,
+
+    @Produces
+    @RequestScoped
+    public >>> Session <<< create() {
+        return sessionFactory.openSession();
+    }
+
+, vai ser, ora, uma Session para o Banco "jdbc/imperio-rodas", ora esse Session vai estar relacionado ao "jdbc/padaria-real".
+
+65. Okay?
+
+66. Entao, eh na hora de eu criar esse Session,
+
+    @Produces
+    @RequestScoped
+    public >>> Session <<< create() {
+        return sessionFactory.openSession();
+    }
+
+, que eu tenho que falar isso.
+
+67. E como eh que isso funciona?
+
+68. return sessionFactory()
+                .withOptions()
+                .tenantIdentifier("")
+                .openSession();
+
+, e, aqui, em .tenantIdentifier(""), ele recebe uma String, que eh o ID, o TenantID. Beleza?
+
+69. E, aqui, eu vou fazer de uma forma que a gente vai digitar, la na URL imperio-rodas.localhost, eu vou pegar esse imperio-rodas, em imperio-rodas.localhost, eu vou passar esse imperio-rodas, aqui, oh, vai ser dinamico, isso daqui,
+
+    return sessionFactory()
+                .withOptions()
+                .tenantIdentifier("imperio-rodas")
+                .openSession();
+
+, ele vai retornar um Session, que conecta no Banco "jdbc/imperio-rodas", que eh esse Banco, aqui, em context.xml,
+
+    jdbcUrl="jdbc:mysql://imperio-rodas.localhost:3306/gerenciador_acesso" />
+
+70. Quando eu passar, aqui, em HibernateSessionProducer, metodo create(),
+
+    return sessionFactory()
+                .withOptions()
+                .tenantIdentifier("padaria-real")
+                .openSession();
+
+, ele vai conectar, ele vai ver, em context.xml, que eh esse nome, aqui,
+
+
+                name="jdbc/padaria-real"
+
+, e vai conectar nesse outro Banco,
+
+
+            jdbcUrl="jdbc:mysql://padaria-real.localhost:3306/gerenciador_acesso2" />
+
+
+71. Beleza?
+
+72. Entao, vao ser 2 bancos diferentes.
+
+73. Entao, eu preciso de uma forma de recuperar esse nome, aqui, em metodo create(), da URL.
+
+
+        return sessionFactory()
+                        .withOptions()
+                        .tenantIdentifier(" >>> <<<")
+                        .openSession();
+
+74. O que eu estou falando para voce, que eu quero fazer, vai ser o seguinte.
+
+75. Eu vou colocar, aqui, oh, no Browser, http://padaria-real.localhost:8080/gerenciador-acesso/CadastroUsuario.xml, por exemplo, esta parado o Tomcat, ali.
+
+76. E vou colocar, numa outra aba do Chrome, http://imperio-rodas.localhost:8080/gerenciador-acesso/CadastroUsuario.xml
+
+77. Eu vou dar um jeito de pegar esse cara, aqui,
+
+http:// >>> padaria-real <<<.localhost:8080/gerenciador-acesso/CadastroUsuario.xml
+
+, agora. Ai, isso, daqui, ja vai fazer mais parte de como a gente vai recuperar isso da parte Web. Ai, depende, se voce estiver usando outro framework, nao eh?, vai ser de uma outra forma.
+
+78. Beleza?
+
+79. Mas, o Tenant, o Multi-Tenant, do Hibernate, para fazer o Banco de Dados, eh, basicamente, isso daqui.
+
+80. Nao precisa de mais muita coisa nao.
+
+81. Eh verdade.
+
+82. Okay?
+
+83. Se voce olhar a Documentacao dele, eh horrivel, terrivel, nao eh muito boa, nao explica, nao tem Um exemplo, pratico, direto, para voce fazer, mas, dessa forma, aqui, eh uma forma que funciona.
+
+84. Beleza?
+
+85. Vamos la.
+
+86. Para eu criar, pegar esse cara, aqui, 
+
+        return sessionFactory()
+                        .withOptions()
+                        .tenantIdentifier(" >>> <<<")
+                        .openSession();
+
+
+, eu vou criar, eu vou usar Recursos, ai, do CDI, do JSF, okay?
+
+87. A primeira coisa que eu vou criar, aqui, eu vou criar uma Classe, no pacote .util.jpa, que eu vou chamar essa classe de Tenant,
+
+package com.algaworks.gerenciador.util.jpa;
+
+public class Tenant implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+
+
+}
+
+88. E vou colocar nela, aqui, uma String id,
+
+public class Tenant implements Serializable {
+
+    ...
+
+    private String id;
+
+
+}
+
+89. Esse atributo vai ser o TenantID.
+
+90. Beleza? Eu vou criar esse cara, aqui, eu vou gerar o Construtor, aqui, para ela, eu vou gerar o Construtor sem argumentos, tambem. Okay. Gerar o Getter e o Setter.
+
+public class Tenant implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private String id;
+
+    public Tenant(String id) {
+        this.id = id;
+    }
+
+    public Tenant() {
+
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+
+}
+
+91. E vamos gerar o hashcode() e o equals(), tambem.
+
+92. Essa classe Tenant vai representar, aqui, eu so estou colocando o ID, se voce quiser colocar mais coisas dentro do Tenant, fica a vontade. Beleza?
+
+93. O que que eu vou fazer, entao?
+
+94. Na hora em que eu criar esse objeto, eu vou pegar essa String, aqui,
+
+http:// >>> padaria-real <<<.localhost:8080/gerenciador-acesso/CadastroUsuario.xml
+
+, e colocar, dentro desse id,
+
+public class Tenant implements Serializable {
+
+    ...
+
+    private String >>> id <<<;
+
+
+    ...
+}
+
+, okay?
+
+95. Bom, como eh que eu faco para gerar essa classe Tenant, entao?
+
+96. Nos vamos criar um TenantProducer. Para gerar esse cara para a gente,
+
+package com.algaworks.gerenciador.util.jpa;
+
+public class TenantProducer {
+
+
+}
+
+97. Esse TenantProducer vai ser um Escopo de Requisicao,
+
+package com.algaworks.gerenciador.util.jpa;
+
+@RequestScoped
+public class TenantProducer {
+
+
+
+}
+
+98. Ou seja, toda vez que tiver uma Requisicao, vai ser chamado.
+
+99. Ele vai Produzir, noi Escopo de Requisicao, um Tenant,
+
+@RequestScoped
+public class TenantProducer {
+
+
+    @Produces
+    @RequestScoped
+    public Tenant create() {
+
+    }
+
+}
+
+100. E, aqui, a gente vai criar o Tenant, baseado, vamos pegar, la do JSF, o HttpServletRequest, e a gente vai criar o Tenant e retornar ele.
+
+101. Para eu fazer isso, daqui, eu vou criar, tambem, um Qualificador para esse Tenant,
+
+    @Produces
+    @RequestScoped
+    public >>> Tenant <<< create() {
+
+    }
+
+102. Entao, vamos la.
+
+103. Vamos criar uma anotacao, aqui, dentro do pacote util.jpa. Eu vou chamar essa anotacao de TenantInject,
+
+package com.algaworks.gerenciador.util.jpa;
+
+public @interface TenantInject {
+
+
+}
+
+104. O que que vai ter nesse cara?
+
+package com.algaworks.gerenciador.util.jpa;
+
+import java.lang.annotation.Retention;
+
+import java.lang.annotation.Target;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
+import static java.lang.annotation.ElementType.METHOD;
+import static java.lang.annotation.ElementType.FIELD;
+import static java.lang.annotation.ElementType.CONSTRUCTOR;
+
+import javax.inject.Qualifier;
+
+@Qualifier
+@Retention(RUNTIME)
+@Target({ METHOD, FIELD, CONSTRUCTOR })
+public @interface TenantInject {
+
+
+}
+
+105. Vai ser um Qualificador, para eu poder falar assim, oh, "Eu quero que voce injete um Tenant para mim".
+
+106. Okay?
+
+107. Entao, em TenantProducer, eu preciso colocar, aqui, tambem, @TenantInject
+
+package com.algaworks.gerador.util.jpa;
+
+@RequestScoped
+public class TenantProducer {
+
+    @Produces
+    @RequestScoped
+    @TenantInject
+    public Tenant create() {
+
+    }
+}
+
+108. Bom, vamos la. Como eh que eu recupero, aqui, no JSF, aquela URL?
+
+109. Vamos fazer o seguinte, eu vou criar um metodo, aqui, que vai me retornar um HttpServletRequest, em que a gente vai recuperar ela, a gente faz dessa forma, oh, eu preciso do FacesContext, que eu recupero a partir do metodo estatico, aqui, FacesContext context = FacesContext.getCurrentInstance();, e, aqui, eu consigo retornar, ja, return context.getExternalContext().getRequest(), so fazer um Cast, agora, (HttpServletRequest) context.getExternalContext().getRequest();
+
+110. Vamos la,
+
+    private HttpServletRequest getRequest() {
+        FacesContext context = FacesContext.getCurrentInstace();
+        return (HttpServletRequest) context.getExternalContext().getRequest();
+    }
+
+111. O que que eu vou fazer, aqui, agora?
+
+112. Eu vou pegar a URL de Requisicao, aqui, oh, Strin requestURL = this.getRequest().getRequestURL(), ele devolve um StringBuffer, eu vou dar um toString(), aqui,
+
+    @Produces
+    @RequestScoped
+    @TenantInject
+    public Tenant create( {
+        String requestURL = this.getRequest().getRequestURL().toString();
+    }
+
+113. Entao, o que que esse metodo, aqui, 
+
+    String requestURL = this.getRequest().getRequestURL().toString();
+
+, esta me retornando toda essa String, aqui, oh,
+
+http://padaria-real.localhost:8080/gerenciador-acesso/CadastroUsuario.xhtml
+
+114. O que que eu vou fazer?
+
+115. Eu vou colocar, aqui, eu vou pegar, aqui, o TenantID, vai ser essa requisicao, usando o metodo String.substring(), substring(7), para tirar o http://, falo para ele pegar a partir da posicao 7, String.replaceAll, vou colocar uma expressao regular, aqui, e eu vou falar o seguinte, essa expressao regular significa o que? A partir do ponto,
+
+http://padaria-real >>> . <<< localhost:8080/gerenciador-acesso/CadastroUsuario.xhtml
+
+, remove tudo que esta para la, ou seja, do lado direito.
+
+String tenantId = requestURL.substring(7),replaceAll("\\", );
+
+116. Beleza?
+
+117. A partir do ponto, remove tudo que esta para o lado direito, vai substituir por uma String vazia,
+
+118. 
+
+String requestURL = this.getRequest().getRequestURL().toString();
+String tenantId = requestURL.substring(7),replaceAll("\\..+", "");
+
+119. Entao, aqui, agora, a gente ja pode criar o Tenant, passando, aqui, o tenantId,
+
+        return new Tenant(tenantId);
+
+120. Entao, a classe Tenant, quando a gente fizer o Tenant.getId(), eu estou recuperando essa parte inicial, aqui,
+
+http://>>> padaria-real <<< .localhost:8080/gerenciador-acesso/CadastroUsuario.xhtml
+
+121. Okay, em TenantProducer, ja esta no Escopo de Requisicao,
+
+    @Produces
+    >>> @RequestScoped <<<
+    @TenantInject
+    public Tenant create() {
+
+        ...
+    }
+
+, ja tem um Qualificador, aqui,
+
+    @Produces
+    @RequestScoped 
+    >>> @TenantInject <<<
+    public Tenant create() {
+
+        ...
+    }
+
+122. Agora, eu ja posso injetar, na minha classe do Produtor do Hibernate Session, nao eh?, eu nao vou, mais, aqui, passar essa String fixa, em HibernateSessionProducer, metodo create(),
+
+    @Produces
+    @RequestScoped
+    public Session create() {
+        return sessionFactory()
+                .withOptions()
+                .tenantIdentifier("padaria-real")
+                .openSession();
+    }
+
+123. O que que eu vou fazer, agora?
+
+124. Eu vou receber, aqui, o Tenant.
+
+125. Para eu receber o Tenant, eu vou fazer o seguinte, oh.
+
+126. private Tenant tenant;, aqui, eu vou falar para ele injetar, com @Inject, o Tenant, usando esse Qualificador, ou seja, o @TenantInject,
+
+@ApplicationScoped
+public HibernateSessionProducer {
+
+    private SessionFactory sessionFactory;
+
+    @Inject
+    @TenantInject
+    private Tenant tenant;
+
+
+}
+
+127. E, aqui, no metodo create(), eu posso, entao, passar tenant.getId(),
+
+    @Produces
+    @RequestScoped
+    public Session create() {
+        return this.sessionFactory
+                .withOptions()
+                .tenantIdentifier(this.tenant.getId())
+                .openSession();
+    }
+
+128. E, ai, o Hibernate, sozinho, ja vai saber que, quando for essa URL, aqui, 
+
+http://>>> padaria-real <<< .localhost:8080/gerenciador-acesso/CadastroUsuario.xhtml
+
+, vai para um Banco de Dados. Quando for essa outra URL,
+
+http://>>> imperio-rodas <<< .localhost:8080/gerenciador-acesso/CadastroUsuario.xhtml
+
+, vai para outro Banco de Dados.
+
+129. Beleza? Vai saber fazer isso sozinho.
+
+130. Repara que eu nao coloquei nada, oh, na Session, aqui, em CadastroUsuarioBean, ou seja, na Camada de Visao, na hora de salvar, eu nao preciso ficar sabendo, ficar fazendo if, aqui, dentro, para clientes diferentes,
+
+    public void salvar() {
+        try {
+            this.session.getTransaction().begin();
+            this.session.merge(this.usuario);
+            this.session.getTransaction().commit();
+            this.usuario = new Usuario();
+        } catch (Exception e) {
+            throw new RuntimeException("Erro salvando usuario", e);
+        }
+    }
+
+131. Eu nao coloquei if nenhum, nao eh?
+
+132. Para fazer uma Consulta, em PesquisaUsuarioBean,
+
+    public void pesquisar() {
+        this.usuario = (Usuario) this.session.createCriteria(Usuario.class)
+                                    .setFetchMode("grupos", FetchMode.JOIN)
+                                    .add(Restrictions.eq("codigo", this.codigoUsuario))
+                                    .setCacheable(true)
+                                    .uniqueResult();
+    }
+
+, voces vao ver que ele vai conseguir separar essas Consultas em cada um desses Bancos.
+
+133. Okay?
+
+134. Bom, se eu nao esqueci nada, aqui, eu acho que vai funcionar.
+
+135. Vamos testar?
+
+136. Primeiramente, gerar e popular as tabelas, executando GeradorTabelas.java,
+
+- peristence.xml para padaria-real:
+
+<?xml version="1.0" encoding="UTF-8"?>
+	
+<persistence version="2.1"
+  xmlns="http://xmlns.jcp.org/xml/ns/persistence" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence 
+  http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
+
+  <persistence-unit name="gerenciadorAcessoPU" transaction-type="RESOURCE_LOCAL">
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:mysql://padaria-real.localhost:3306/gerenciador_acesso2" />
+      <property name="javax.persistence.jdbc.user" value="root" />
+      <property name="javax.persistence.jdbc.password" value="admin" />
+      <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver" />
+      
+	  <property name="javax.persistence.schema-generation.database.action" value="drop-and-create" />
+	  
+	  <property name="javax.persistence.schema-generation.create-source" value="metadata" />
+	  <property name="javax.persistence.schema-generation.drop-source" value="metadata" />
+	  
+	  <property name="javax.persistence.sql-load-script-source" value="META-INF/sql/carregar-dados.sql" />
+
+      <-- property name="hibernate.hbm2ddl.auto" value="update"/--
+      <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect" />
+      <property name="hibernate.show_sql" value="true" />
+      <property name="hibernate.format_sql" value="true" />
+    </properties>
+  </persistence-unit>	
+
+</persistence>
+
+
+- persistence.xml para imperio-rodas
+
+<persistence version="2.1"
+  xmlns="http://xmlns.jcp.org/xml/ns/persistence" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence 
+  http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
+
+  <persistence-unit name="gerenciadorAcessoPU" transaction-type="RESOURCE_LOCAL">
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:mysql://imperio-rodas.localhost:3306/gerenciador_acesso" />
+      <property name="javax.persistence.jdbc.user" value="root" />
+      <property name="javax.persistence.jdbc.password" value="admin" />
+      <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver" />
+      
+	  <property name="javax.persistence.schema-generation.database.action" value="drop-and-create" />
+	  
+	  <property name="javax.persistence.schema-generation.create-source" value="metadata" />
+	  <property name="javax.persistence.schema-generation.drop-source" value="metadata" />
+	  
+	  <property name="javax.persistence.sql-load-script-source" value="META-INF/sql/carregar-dados.sql" />
+
+      <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect" />
+      <property name="hibernate.show_sql" value="true" />
+      <property name="hibernate.format_sql" value="true" />
+    </properties>
+  </persistence-unit>	
+
+</persistence>
+
+
+137. Vamos iniciar o Tomcat.
+
+138. O Tomcat subiu sem erro.
+
+139. Vamos la, vamos acessar, aqui, oh, http://padaria-real.localhost:8080/gerenciador-acesso/CadastroUsuario.xhtml.
+
+140. Ele vai comecar a iniciar o Hibernate, aqui. Okay, fez uma consulta, la,
+
+Hibernate: 
+    select
+        count(usuario0_.codigo) as col_0_0_ 
+    from
+        usuario usuario0_
+mar 17, 2019 9:52:41 AM com.mchange.v2.c3p0.impl.AbstractPoolBackedDataSource 
+INFORMAÇÕES: Initializing c3p0 pool... com.mchange.v2.c3p0.ComboPooledDataSource [ acquireIncrement -> 1, acquireRetryAttempts -> 30, acquireRetryDelay -> 1000, autoCommitOnClose -> false, automaticTestTable -> null, breakAfterAcquireFailure -> false, checkoutTimeout -> 0, connectionCustomizerClassName -> null, connectionTesterClassName -> com.mchange.v2.c3p0.impl.DefaultConnectionTester, contextClassLoaderSource -> caller, dataSourceName -> 1hge0w6a112rja141ff2kub|2887e6b2, debugUnreturnedConnectionStackTraces -> false, description -> null, driverClass -> com.mysql.jdbc.Driver, extensions -> {}, factoryClassLocation -> null, forceIgnoreUnresolvedTransactions -> false, forceSynchronousCheckins -> false, forceUseNamedDriverClass -> false, identityToken -> 1hge0w6a112rja141ff2kub|2887e6b2, idleConnectionTestPeriod -> 0, initialPoolSize -> 3, jdbcUrl -> jdbc:mysql://padaria-real.localhost:3306/gerenciador_acesso2, maxAdministrativeTaskTime -> 0, maxConnectionAge -> 0, maxIdleTime -> 0, maxIdleTimeExcessConnections -> 0, maxPoolSize -> 4, maxStatements -> 0, maxStatementsPerConnection -> 0, minPoolSize -> 2, numHelperThreads -> 3, preferredTestQuery -> null, privilegeSpawnedThreads -> false, properties -> {user=******, password=******}, propertyCycle -> 0, statementCacheNumDeferredCloseThreads -> 0, testConnectionOnCheckin -> false, testConnectionOnCheckout -> false, unreturnedConnectionTimeout -> 0, userOverrides -> {}, usesTraditionalReflectiveProxies -> false ]
+Hibernate: 
+    select
+        count(this_.codigo) as y0_ 
+    from
+        usuario this_ 
+    where
+        this_.status=?
+
+141. Vamos voltar, aqui, em imperio-rodas, fazer ele aparecer a telinha, tambem,
+
+http://imperio-rodas.localhost:8080/gerenciador-acesso/CadastroUsuario.xhtml
+
+142. Ja funcionou. 
+
+143. Eu ja vou te mostrar como eh que eu sei que funcinou.
+
+144. Olha so. Total de Usuarios, aqui, nesse padaria-real,
+
+Total usuários: 1 
+Usuários ativos: 1
+
+145. Apareceu, aqui, Total usuarios: 1, e Usuarios ativos: 1
+
+146. Olha no Cadastro de Usuario do imperio-rodas,
+
+Total usuários: 3 
+Usuários ativos: 2
+
+147. Apareceu Total usuarios: 3, Usuarios ativos: 2.
+
+148. Eu sei disso, porque la no Banco, no Workbench, se eu fizer, aqui, oh, para o Schema gerenciador_acesso, 
+
+select * from usuario;
+
+# codigo, nome, status
+1, João, ATIVO
+2, Maria, INATIVO
+3, Ricardo, ATIVO
+
+, eu tenho 3 Usuarios, sendo que Um esta Inativo.
+
+149. No gerenciador_acesso2, 
+
+select * from usuario;
+
+# codigo, nome, status
+1, Felipe, ATIVO
+
+
+, eu tenho apenas Um Usuario.
+
+150. Okay? Entao, vamos la, vamos brincar, aqui, oh, fazer umas consultas, aqui.
+
+151. Eu vou inserir, aqui, em padaria-real, http://padaria-real.localhost:8080/gerenciador-acesso/CadastroUsuario.xhtml, um Novo Usuario. Vou colocar, aqui, "Sergio", colocar como INATIVO, Salvar. Olha la, 
+
+Total usuarios: 2
+Total ativos: 1
+
+152. Vamos ver se interferiu em imperio-rodas, http://imperio-rodas.localhost:8080/gerenciador-acesso/CadastroUsuario.xhtml?
+
+153. Oh, recarreguei a tela, continua:
+
+Total usuarios: 3
+Usuarios ativos: 2
+
+154. Ta vendo? Se eu vier, aqui, em Pesquisar, oh, http://imperio-rodas.localhost:8080/gerenciador-acesso/PesquisaUsuario.xhtml, Pesquisar pelo Codigo 3, tem o Ricardo, nao existe o Usuario de Codigo 4, o Usuario de Codigo 2 eh a Maria, o Usuario de Codigo 1 eh o Joao.
+
+155. Aqui, em padaria-real, http://padaria-real.localhost:8080/gerenciador-acesso/PesquisaUsuario.xhtml, o Usuario de Codigo 1 eh o Felipe.
+
+156. Entao, essa eh a ideia, eh assim que a gente implementa o Multi-Tenancy, ai, com mais de Um Banco de Dados.
+
+157. Fim da     Aula 16.006. Multi-Tenancy com Bancos Separados.
+
+
+
+-->

@@ -1,0 +1,322 @@
+<!--
+
+Aula 04.010. Relacionamento Muitos Para Muitos
+
+1. Para esse Relacionamento, Muitos Para Muitos, nos vamos, agora, cadastrar, o Carro com Acessorio, okay?
+
+2. Entao, vamos la, vamos dar uma analisada. Para isso, eu ja criei, aqui, o cadastro de Acessorio, que eh uma classe simples, tambem, o DAO, deixa eu te mostrar, aqui, modelo / Acessorio.java, voce ve que, em Acessorio.java, o mapeamento dela eh bem parecido, la, em Fabricante.java, nao tem nada de mais, @Entity, a geracao do ID, o equals() e o hashCode() e apenas o atributo descricao.
+
+3. Bom, o que mais que eu ja fiz, aqui?
+
+4. Eu aproveitei e coloquei a pesquisa do Modelo de Carro, que tambem nao tem nada de especial, so o select, la, no DAO do Carro, tem la o buscarTodos(), 'from Carro', que ja retorna a lista, entao, tem o excluir(), ai, tambem, da mesma forma que a gente ja tinha no Fabricante.
+
+5. Entao, no codigo-fonte desta aula que voce baixar, ja vao ter as telas do JSF, com isso ai pronto, okay?
+
+6. Bom, vamos la, entao, para a gente cadastrar o Carro com varios Acessorios, oh, entao, repara bem, um Carro, ele pode ter varios Acessorios. E um Acessorio pode pertencer a varios Carros, nao eh?, entao, vamos supor, o Carro, aqui, um Honda Civic. O Honda Civic tem ar condicionado? Tem. Eh um Acessorio? Vamos considerar que sim. Entao, eh um Acessorio? Eh. Entao, ele entra aqui, no Relacionamento. Tem Banco de Couro. Entao, poderia estar no Honda Civic. Mas, tambem, o Banco de Couro pode estar em outro Carro, por exemplo, no Chevrolet Onix, nao eh?, ele poderia estar nesse outro Carro tambem. Entao, por isso que eh um Relacioamento Muitos para Muitos, aqui.
+
+7. Okay?
+
+8. E como eh que funciona o Relacionamento Muitos-Para-Muitos no Banco de Dados? Como eh que vai acontecer?
+
+9. Entao, oh, se a gente der uma olhada aqui, so voltar aqui, no Carro, nos vamos mapear pouquinha coisa, no Carro. Vai ter apenas o codigo, a placa, a cor, o chassi e o valor da diaria, okay?
+
+10. Bom, essa parte, aqui, eh a parte simples do mapeamento,
+
+	private Long codigo;
+	private String placa;
+	private String chassi;
+	private String cor;
+    private BigDecimal valorDiaria;
+    
+11. Bom, o modelo do Carro eh um relacionamento que eu coloquei, aqui, tambem, porque Um Carro tem Um Modelo de Carro, entao o Relacionamento Muitos-Para-Um, nao eh?, entao, o Carro eh para Um Modelo de Carro, e Modelo de Carro, na volta, pode ter Muitos Carros, eh um Modelo, o Honda Civic, ele pode ter varios modelos Honda Civic na nossa Locadora, okay?, varios com placas diferentes, obviamente.
+
+12. Entao, o Mapeamento, aqui, do Modelo de Carro, eh simples, na classe Carro, @ManyToOne, como a gente ja viu. Vamos trocar o nome da coluna para codigo_modelo, @JoinColumn(name = "codigo_modelo").
+
+13. Okay. Vamos voltar, aqui, para a Teoria,
+
+Muitos-Para-Muitos
+
+Carro                                                   Acessorio
+Codigo          Placa                                   Codigo              Descricao
+1               AAA-1234                                1                   Ar Condicionado
+2               BBB-4321                                2                   Direcao Hidraulica
+
+14. Entao, a gente tem Um Carro, nao eh?, so estou representando, aqui, o Codigoe a Placa e o Acessorio, com o Codigo e a Descricao.
+
+15. Para eu conseguir fazer o Relacionamento Muitos-Para-Muitos, sabe o que que eu preciso?
+
+16. Eu preciso de uma tabela, aqui, no meio. Eu preciso dessa tabela, aqui, oh, Carro_Acessorio. E, ai, aqui, eu vou ter a coluna Codigo Carro, e Codigo do Acessorio. E, ai, a coluna Codigo Carro estara referenciando, eh uma chave estrangeira, apontando para o Codigo Carro na tabela Carro, e o Codigo do Acessorio esta apontando la para a Tabela Acessorio, para a coluna do Codigo do Acessorio,
+
+Carro                            Carro_Acessorio                 Acessorio
+Codigo          Placa            Cod_Carro  Cod_Acessorio        Codigo      Descricao
+1               AAA-1234            1       1                    1        Ar Condicionado
+2               BBB-4321            1       2                    2        Direcao Hidraulica
+                                    2       2
+
+17. Entao, aqui, eu consigo ter, oh, Um Carro, ai, esse Codigo de Carro pode estar varias vezes na Tabela Carro_Acessorio. E, ai, da mesma forma para a Tabela Acessorio, referente a coluna Cod_Acessorio, eu tambem posso ter esse Codigo de Acessorio repetido, aqui, na Tabela Carro_Acessorio, varias vezes. Entao, dessa forma, a gente consegue fazer um Relacionamento Muitos-Para-Muitos.
+
+18. Por exemplo, o Codigo 1, na Tabela Carro, eu tenho repetido 2 vezes na Tabela Carro_Acessorio, isso significa que, entao, o Codigo do Carro de Placa AAA-1234, ele tem Ar Condicionado e ele tambem tem o Cod_Acessorio 2, ou seja, Direcao Hidraulica.
+
+19. Ta vendo? Entao, o mesmo carro, eu tenho Ar Condicionado e Direcao Hidraulica. Ta percebendo?
+
+20. E ai, se voce perceber, Direcao Hidraulica tambem esta em outro carro, de Codigo 2. Entao, voce faz Muitos-Para-Muitos utilizando essa tabela, aqui, no meio, Carro_Acessorio.
+
+21. Beleza?
+
+22. Entao, se o Carro tem Muitos Acessorios, entao, eh uma Lista de Acessorios, como eh que voce acha que a gente mapeia isso aqui?
+
+    private List<Acessorio> acessorios;
+
+    @ManyToMany
+    public List<Acessorio> getAcessorios() {
+        return acessorios;
+    }
+
+    pubic void setAcessorios(List<Acessorio> acessorios) {
+        this.acessorios = acessorios;    
+    }
+
+23. So isso, Normandes?
+
+24. Bom, ai, a gente tem customizacoes, aqui, que eu vou te mostrar mais para a frente.
+
+25. A gente vai ter algumas tarefinhas para voce para a gente entender os outros detalhes dessa anotacao, como eh que a gente consegue customizar, trocar o nome de Tabela, etc.
+
+26. Por enquanto, eu vou deixar so esse @ManyToMany ai, e voce acredita que ja vai funcionar?
+
+27. Eh so isso daqui, mesmo.
+
+28. Entao, coloquei aqui, oh, @ManyToMany para acessorios, 
+
+    private List<Acessorio> acessorios;
+
+    >>> @ManyToMany <<<
+    public List<Acessorio> getAcessorios() {
+        return acessorios;
+    }
+
+    pubic void setAcessorios(List<Acessorio> acessorios) {
+        this.acessorios = acessorios;    
+    }
+
+, e, ai, la na telinha de Cadastro de Carro, no JSF, eu sei que nao eh o objetivo, aqui, nao vou te perturbar muito com isso, nao, mas nos vamos ter la, oh, um menuzinho, la, oh, para ele selecionar os Acessorios em varios checkboxes. Nesses checkboxes, eu vou selecionar quais os acessorios que eu quero. Entao, no Cadastro de Carro, eu vou ter uma lista de Acessorios retornada, entao, la no AcessorioDAO, eu ja tenho um buscarTodos(), eu retorno todos, e eh essa lista de acessorios que eu vou desenhar na tela.
+
+29. E, ai, a medida que eu for selecionando, o selectItems, aqui,
+
+    <f:selectItems value="#{cadastroCarroBean.acessorios}" var="acessorio" itemLabel="#{acessorio.descricao}" itemValue="#{acessorio}"
+
+, a medida que eu for selecionando esses caras, eu vou jogando ele para o .carro.acessorios, ou seja, para dentro da lista do .carro.acessorios,
+
+    <p:selectManyCheckbox id="acessorios" styleClass="many-checkbox" value="#{>>> cadastroCarroBean.carro.acessorios <<<}" converter="acessorioConverter">
+    ...
+    </p:selectManyCheckbox>
+
+, porque, ai, na hora que eu for salvar, ele ja vai saber quem que esta dentro daquela lista, okay?, quais acessorios estao dentro daquela lista, dentro do carro, .carro.acessorios, que foi, justamente, o que a gente acabou de mapear.
+
+30. Agora, vamos testar. Vamos subir o Servidor Tomcat.
+
+31. Okay, vamos em http://localhost:8080/locadora-veiculo-web/modeloCarro/PesquisaModeloCarro.xhtml, oh, ele ja falou, no Console do Servidor, que nao encontrou a Tabela Acessorio, a Tabela Carro, porque eu nao tinha subido, ainda, nenhuma vez.
+
+32. Olha so uma coisa aqui, oh, Table not found: Carro_Acessorio. Que Tabela que eh essa, Normandes?
+
+33. Eh, justamente, essa tabelinha aqui, oh, 
+
+Carro                            >>>Carro_Acessorio<<<           Acessorio
+Codigo          Placa            Cod_Carro  Cod_Acessorio        Codigo      Descricao
+1               AAA-1234            1       1                    1        Ar Condicionado
+2               BBB-4321            1       2                    2        Direcao Hidraulica
+                                    2       2
+
+34. Quando a gente anota, la, @ManyToMany, ele fala, 'Opa, tem um Relacionamento, entao, entre Carro e Acessorio, vamos criar essa Tabela no Meio'. E, ai, se voce for la no Workbenck, aparece a Tabela Carro_Acessorio, vamos fazer um Select, 
+
+select * from carro_acessorio,
+
+, aparece, la, 
+
+# Carro_codigo, acessorios_codigo
+NULL            NULL
+
+, ou seja, ele ja definiu, inclusive, nao eh?, a Foreign Key para a Tabela de Carro, Carro_codigo, e para a Tabela de Acessorio, acessorios_codigo.
+
+35. Depois, eu vou te ensinar como eh que a gente define o nome dessa Tabela, o nome dessas Colunas, aqui, okay?
+
+36. Agora, vamos la em Carro e vamos tentar cadastrar Um Carro.
+
+37. O Converter, mais uma vez, lembrando, eh o cara que vai converter tanto de Um objeto para o que eu tenho que representar, no caso, em uma Pagina, eu preciso do codigo para representar um objeto, uma Entidade em uma Pagina, e conseguir recuperar ela, depois, eu envio o codigo, entao, olha la, retorna o codigo, 
+
+	@Override
+	public String getAsString(FacesContext context, UIComponent component, Object value) {
+		if (value != null) {
+			Long codigo = ((ModeloCarro) value).getCodigo();
+			return codigo == null ? null : codigo.toString();
+		}
+		return "";
+    }
+    
+, depois, para recuperar essa Entidade a partir dessa mesma String, desse valor, eu busco pelo Codigo, entao, ele vai me devolver o codigo e eu vou buscar esse codigo la, 
+
+	@Override
+	public Object getAsObject(FacesContext context, UIComponent component, String value) {
+		ModeloCarro retorno = null;
+
+		if (value != null) {
+			retorno = this.modeloCarroDAO.buscarPeloCodigo(new Long(value));
+		}
+
+		return retorno;
+    }
+    
+38. Okay, agora que eu ja criei os dois Converters, aqui, vamos voltar aqui, http://localhost:8080/locadora-veiculo-web/carro/CadastroCarro.xhtml, okay, agora, a pagina entrou, ele trouxe, no Select, os modelos que tem cadastrados. Acessorios, eu nao tenho nenhum Acessorio cadastrado, deixa eu ir la, e vamos cadastrar, aqui, Ar Condicionado e Banco de Couro.
+
+39. Okay, vamos voltar, agora, em http://localhost:8080/locadora-veiculo-web/carro/CadastroCarro.xhtml.
+
+40. Beleza, agora, apareceram os acessorios.
+
+41. So para mostrar, la, novamente, no Cadastro de Carro, CadastroCarroBean.java, quando eu estou inicializando esse ManagedBean, aqui, eu vou la e chamo, oh, os acessorios, eu busco todos os acessorios, 
+
+	@PostConstruct
+	public void inicializar() {
+		this.limpar();
+		
+		>>> this.acessorios = this.acessorioDAO.buscarTodos(); <<<
+		this.modelosCarros = this.modeloCarroDAO.buscarTodos();
+	}
+
+, entao, eh esse objeto, aqui,
+
+	@PostConstruct
+	public void inicializar() {
+		this.limpar();
+		
+		>>> this.acessorios<<< = this.acessorioDAO.buscarTodos();
+		this.modelosCarros = this.modeloCarroDAO.buscarTodos();
+	}
+
+, que vai ser, ele eh usado para fazer, justamente, essa lista de checkboxes, na tela.
+
+42. Bom, vou selecionar os dois acessorios, aqui, na tela, vou selecionar um modelo de carro, a placa 'AAA-1234', a cor Branco, o Valor da Diaria, para esse carro, vou colocar 250. Nao estou usando mascara, aqui, nada, entao, tenta digitar o valor certinho, que nao eh o objetivo nosso formatar os valores, okay?
+
+43. Vamos salvar e vamos ver se tem alguma coisa errada aqui.
+
+44. Retornou,
+
+Hibernate: insert into Carro (chassi, cor, codigo_modelo, placa, valor_diaria) values (?, ?, ?, ?, ?)
+Hibernate: select acessorio0_.codigo as codigo1_0_0_, acessorio0_.descricao as descrica2_0_0_ from Acessorio acessorio0_ where acessorio0_.codigo=?
+Hibernate: select acessorio0_.codigo as codigo1_0_0_, acessorio0_.descricao as descrica2_0_0_ from Acessorio acessorio0_ where acessorio0_.codigo=?
+Hibernate: insert into Carro_Acessorio (Carro_codigo, acessorios_codigo) values (?, ?)
+Hibernate: insert into Carro_Acessorio (Carro_codigo, acessorios_codigo) values (?, ?)
+
+45. Oh, 'Carro salvo com sucesso!'.
+
+46. Se a gente voltar, aqui, e der uma olhadinha, 
+
+select * from carro_acessorio,
+
+# Carro_codigo, acessorios_codigo
+    1,              1
+    1,              2
+
+47. Olha so, 
+
+# Carro_codigo,
+1,
+1,
+
+, # acessorios_codigo
+1,
+2
+
+48. Ta vendo? Entao, ele ja fez esse mapeamento para a gente. Vou so te mostrar o DAO do Carro, oh, vamos voltar aqui, vamos seguir, no metodo salvar() do Managed Bean,
+
+	private Carro carro;
+
+	public void salvar() {
+		try {
+			this.cadastroCarroService.salvar(carro);
+			FacesUtil.addSuccessMessage("Carro salvo com sucesso!");	
+		} catch (NegocioException e) {
+			FacesUtil.addErrorMessage(e.getMessage());
+		} catch (Exception e) {
+			FacesUtil.addErrorMessage("Erro desconhecido. Contate o Administrador de Sistemas.");
+		}
+		this.limpar();
+    }
+    
+, quando eu clico no botao Salvar, na tela, depois de preencher as informacoes, o que que vai acontecer?
+
+49. O objeto carro vai vir aqui preenchido com os valores,
+
+    private Carro carro;
+    
+	public void salvar() {
+		try {
+			this.cadastroCarroService.salvar(>>> carro <<<);
+			FacesUtil.addSuccessMessage("Carro salvo com sucesso!");	
+		} catch (NegocioException e) {
+			FacesUtil.addErrorMessage(e.getMessage());
+		} catch (Exception e) {
+			FacesUtil.addErrorMessage("Erro desconhecido. Contate o Administrador de Sistemas.");
+		}
+		this.limpar();
+    }
+
+, okay? Entao, carro vai estar preenchido, aqui, como o modelo do carro, com a placa, com a cor, com o valor da diaria, e a lista com os acessorios. 
+
+50. Okay? Que sao esses acessorios, aqui,
+
+    private List<Acessorio> acessorios;
+
+	@PostConstruct
+	public void inicializar() {
+		this.limpar();
+		
+		>>> this.acessorios <<< = this.acessorioDAO.buscarTodos();
+		this.modelosCarros = this.modeloCarroDAO.buscarTodos();
+    }
+    
+, entao, ele ja vai vir com essa lista ja setada. Entao, independente do Framework que voce utilizar para apresentacao, se voce estiver utilizando Spring ou estiver utilizando somente JavaScript, ou Servlet, sei la, o que voce estiver usando ai, nao interessa, o importante eh voce estar com o objeto, o Java Bean, o nosso Modelo preenchido,
+
+private Carro carro;
+    
+	public void salvar() {
+		try {
+			this.cadastroCarroService.salvar(>>> carro <<<);
+			FacesUtil.addSuccessMessage("Carro salvo com sucesso!");	
+		} catch (NegocioException e) {
+			FacesUtil.addErrorMessage(e.getMessage());
+		} catch (Exception e) {
+			FacesUtil.addErrorMessage("Erro desconhecido. Contate o Administrador de Sistemas.");
+		}
+		this.limpar();
+    }
+
+, certo? E, ai, ele vai la, nesse metodo salvar(), dentro do Service,
+
+	@Transactional
+	public void salvar(Carro carro) throws NegocioException {
+		if (carro.getPlaca() == null || "".equals(carro.getPlaca().trim())) {
+			throw new NegocioException("A placa eh obrigatoria.");
+		}
+		this.dao.salvar(carro);
+    }
+    
+, o metodo salvar(), no Service, so esta fazendo uma validacao simples, aqui. Nos poderiamos colocar mais validacoes, nao eh? Eh um metodo Transacional, ou seja, nos precisamos abrir e finalizar uma Transacao, nao eh?, comitar a Transacao, eu vou te mostrar por que que isso aqui esta funcionando, mais para frente. Vamos la no metodo salvar(), do Carro?,
+
+	public void salvar(Carro carro) {
+		this.em.merge(carro);
+    }
+    
+51. Olha so, eu so dou um .merge(). So isso Normandes? Eh. Nao tem mais coisas. Ele nao precisa fazer insert nessa Tabela, fazer insert em outra Tabela, nao eh?, sei la, tem que fazer insert na tabela Carro, fazer insert na Tabela Carro_Acessorio, nao, nao. Voce salva so aquele objeto, que o JPA ja vai se encarregar de fazer todo esse Relacionamento para voce.
+
+52. Okay? Faca as brincadeiras ai, a Consulta a gente ainda nao implementou, eu vou te mostrar em outra aula como eh que a gente faz essa consulta, okay?
+
+53. Por enquanto, eh isso daqui.
+
+54. Fim da Aula 04.010. Relacionamento Muitos Para Muitos.
+
+
+
+
+
+
+-->

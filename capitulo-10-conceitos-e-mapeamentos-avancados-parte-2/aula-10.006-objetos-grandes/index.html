@@ -1,0 +1,376 @@
+<!--
+
+    Aula 10.006. Objetos Grandes
+
+1. Vou te mostrar, agora, como eh que a gente faz para Salvar, por exemplo, Uma Foto dentro do Banco de Dados, usando o JPA, como eh que funciona esse Mapeamento.
+
+2. E, ai, olha so o que eu fiz aqui.
+
+3. Eu tive que mexer algumas coisas no Projeto JSF, entao, eu ja deixei isso pronto para voce, para voce nao se preocupar com isso, eh so voce baixar no GitHub.
+
+4. Mas, eu vou te mostrar, ainda assim, o que que eu fiz, aqui, no JSF, okay?
+
+5. Mas, olha so, o que que eu adicionei?
+
+6. Quando a gente for cadastrar Um Carro, vamos la, eu vou selecionar, aqui, o Modelo do Carro, 'Cruze', uma Placa, aqui, sei la, 'MMM-1111', cor 'Branco', Valor da diaria 200,00, Escolher arquivo.
+
+7. Eu vou selecionar, eu baixei, aqui, a foto de um Cruze na Internet, uma foto de 9K, sei la, posso selecionar, aqui, mais alguma coisa, em Acessorios, beleza.
+
+8. Ou seja, tem, agora, uma foto, que eu vou salvar no banco de dados.
+
+9. Beleza?
+
+10. Entao, vamos ver como eh que isso fuciona, oh.
+
+11. Eu vou salvar, aqui, salvou, se eu for, aqui, no MySQL e fazer uma consulta, select * from carro, olha so, esse carro que eu acabei de cadastrar, o 'MMM-1111', olha so, apareceu, aqui, agora, uma nova coluna foto, e, aqui, oh, tem um BLOB. Esse BLOB eh o objeto grande que eu salvei aqui, dentro do banco de dados.
+
+12. Beleza? Vamos ver como eh que a gente faz isso, entao.
+
+13. Voce vai ver que eh bem simples.
+
+14. A primeira coisa que eu comecei mudando, aqui, foi no pom.xml, eu coloquei a dependencia do commons-fileupload, que a gente precisa,
+
+    <dependency>
+        <groupId>commons-fileupload</groupId>
+        <artifactId>commons-fileupload</artifactId>
+        <version>1.3</version>
+        <scope>compile</scope>
+    </dependency>
+
+15. No web.xml, adicionei o filtro do Primefaces para a gente conseguir fazer esse Upload, ou seja, ele que vai conseguir pegar esse Arquivo Binario para a gente e colocar la dentro do ManagedBean, em CadastroCarroBean.java,
+
+    <filter>
+        <filter-name>PrimeFaces FileUpload Filter</filter-name>
+        <filter-class>org.primefaces.webapp.filter.FileUploadFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>PrimeFaces FileUpload Filter</filter-name>
+        <servlet-name>Faces Servlet</servlet-name>
+    </filter-mapping>
+
+16. Como eh que ele coloca aqui, oh, em CadastroCarroBean.java?
+
+17. Eu crio um atributo UploadedFile, esse atributo eh do Primefaces, okay?, org.primefaces.model.UploadedFile, crio o Getter e o Setter para ele, prontinho, eh so isso. So isso, Normandes? Eh, depois, eh so colocar ali no metodo salvar(),
+
+    private UploadedFile uploadedFile;
+
+    // Getter and Setter
+    ...
+
+    public void salvar() {
+
+        ...
+
+        if (this.uploadedFile != null) {
+            this.carro.setFoto(this.uploadedFile.getContents());
+        }
+
+        ...
+    }
+
+18. Se voce selecionou algum arquivo para fazer o upload, o que que a gente vai fazer? this.carro.setFoto(this.uploadedFile.getContents());
+
+19. O que que eh esse getContents(), aqui?
+
+20. Antes de eu mostrar, aqui, no CadastroCarro.xhtml, eu adicionei, aqui, a tag do Primefaces, <p:fileUpload id="foto" value="#{cadastroCarroBean.uploadedFile}" mode="simple" />, mapeando para la, o modo simples, eu tirei o ajax, em <p:commandButton value="Salvar" id="botaoSalvar" action="#{cadastroCarroBean.salvar}" update="frmCadastro" ajax="false" />, para a gente fazer esse Upload, okay?, e, tambem, aqui, no form, <h:form id="fromCadastro" enctype="multipart/form-data"></h:form>, eu mudei o enctype, aqui, para o form-data. Beleza?
+
+21. Bom, la no Carro, o que que a gente tem que fazer, na nossa classe Carro, a parte que nos interessa?
+
+22. Eh um array de bytes,
+
+@Entity
+public class Carro {
+
+    ...
+    private byte[] foto;
+
+    ...
+}
+
+23. Uma foto, um arquivo, neste caso, eh um array de bytes.
+
+24. Entao, eu vou colocar esse cara, 
+
+@Entity
+public class Carro {
+
+    ...
+    private byte[] foto;
+
+    ...
+}
+
+, como um array de bytes, foto. E, como eh que a gente faz o mapeamento dele?
+
+25. Bem, bem simples, voce nem vai acreditar.
+
+26. Apenas adicionar a anotacao @Lob, do pacote javax.persistence,
+
+    @Lob
+    public byte[] getFoto() {
+        return foto;
+    }
+
+27. So isso Normandes?
+
+28. Pode acreditar. So isso.
+
+29. E o Getter e o Setter, coloca o @Lob.
+
+30. Ah, mas eu nao queria que o nome fosse foto da coluna no banco de dados.
+
+31. Voce pode trocar o nome da coluna, se voce quiser, voce pode vir, aqui, oh, o @Column, e colocar, aqui, o nome que voce quiser na coluna,
+
+    @Lob
+    @Column(name = "foto_carro")
+    public byte[] getFoto() {
+        return foto;
+    }
+
+, sei la. Se voce quiser mudar, ai, brincar com isso, dai. Okay? Mas, o importante ver aqui eh que a gente so precisa anotar com @Lob. O resto foi trabalho mais pesado, vamos chamar assim, do proprio Primefaces, que foi responsavel por pegar o arquivo, esse UploadedFile, e o getContents(), voce vai ver que ele retorna um array de bytes, que eh, justamente, o que a gente precisa,
+
+    try {
+
+        if (this.uploadedFile != null) {
+            this.carro.setFoto(this.uploadedFile.getContents());
+        }
+    }
+
+32. Okay? Assim, a gente esta conseguindo salvar a foto no nosso banco de dados.
+
+33. Depois, eu vou deixar um Exercicio para voce fazer uma Consulta simples e mostrar com JOptionPane, mesmo. Mas, depois, se voce quiser brincar mais com JSF, ai, fazer aparecer a foto na Consulta, fica como desafio para voce, ai.
+
+34. Ao acessar a Pagina de Pesquisa de Carro, http://localhost:8080/locadora-veiculo-web/carro/PesquisaCarros.xhtml, retornou,
+
+Hibernate: 
+    
+    alter table Carro 
+       add column foto longblob
+fev 24, 2019 11:17:32 AM org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator initiateService
+INFO: HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_0_,
+        modelocarr1_.codigo as codigo1_7_1_,
+        carro0_.chassi as chassi2_3_0_,
+        carro0_.cor as cor3_3_0_,
+        carro0_.data_criacao as data_cri4_3_0_,
+        carro0_.data_modificacao as data_mod5_3_0_,
+        carro0_.foto as foto6_3_0_,
+        carro0_.codigo_modelo as codigo_m9_3_0_,
+        carro0_.placa as placa7_3_0_,
+        carro0_.valor_diaria as valor_di8_3_0_,
+        modelocarr1_.categoria as categori2_7_1_,
+        modelocarr1_.descricao as descrica3_7_1_,
+        modelocarr1_.codigo_fabricante as codigo_f4_7_1_ 
+    from
+        Carro carro0_ 
+    inner join
+        ModeloCarro modelocarr1_ 
+            on carro0_.codigo_modelo=modelocarr1_.codigo limit ?
+Hibernate: 
+    select
+        count(carro0_.codigo) as col_0_0_ 
+    from
+        Carro carro0_
+
+35. Clicar no botao Novo para adicionar Um Novo Carro, Modelo 'Cruze', Placa 'AAA-1111', Cor 'Branco', Valor diaria '200,00', Foto 'cruze.jpg', Acessorios.
+
+36. Limpar o Log do Servidor, Clicar no botao Salvar.
+
+37. Retornou 'Carro salvo com sucesso!',
+
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+Hibernate: 
+    select
+        acessorio0_.codigo as codigo1_0_0_,
+        acessorio0_.descricao as descrica2_0_0_ 
+    from
+        Acessorio acessorio0_ 
+    where
+        acessorio0_.codigo=?
+Hibernate: 
+    select
+        acessorio0_.codigo as codigo1_0_0_,
+        acessorio0_.descricao as descrica2_0_0_ 
+    from
+        Acessorio acessorio0_ 
+    where
+        acessorio0_.codigo=?
+Hibernate: 
+    select
+        acessorio0_.codigo as codigo1_0_0_,
+        acessorio0_.descricao as descrica2_0_0_ 
+    from
+        Acessorio acessorio0_ 
+    where
+        acessorio0_.codigo=?
+Hibernate: 
+    select
+        acessorio0_.codigo as codigo1_0_0_,
+        acessorio0_.descricao as descrica2_0_0_ 
+    from
+        Acessorio acessorio0_ 
+    where
+        acessorio0_.codigo=?
+Hibernate: 
+    select
+        acessorio0_.codigo as codigo1_0_0_,
+        acessorio0_.descricao as descrica2_0_0_ 
+    from
+        Acessorio acessorio0_ 
+    where
+        acessorio0_.codigo=?
+Hibernate: 
+    select
+        acessorio0_.codigo as codigo1_0_0_,
+        acessorio0_.descricao as descrica2_0_0_ 
+    from
+        Acessorio acessorio0_ 
+    where
+        acessorio0_.codigo=?
+Hibernate: 
+    insert 
+    into
+        Carro
+        (chassi, cor, data_criacao, data_modificacao, foto, codigo_modelo, placa, valor_diaria) 
+    values
+        (?, ?, ?, ?, ?, ?, ?, ?)
+Hibernate: 
+    select
+        acessorio0_.codigo as codigo1_0_0_,
+        acessorio0_.descricao as descrica2_0_0_ 
+    from
+        Acessorio acessorio0_ 
+    where
+        acessorio0_.codigo=?
+Hibernate: 
+    select
+        acessorio0_.codigo as codigo1_0_0_,
+        acessorio0_.descricao as descrica2_0_0_ 
+    from
+        Acessorio acessorio0_ 
+    where
+        acessorio0_.codigo=?
+Hibernate: 
+    select
+        acessorio0_.codigo as codigo1_0_0_,
+        acessorio0_.descricao as descrica2_0_0_ 
+    from
+        Acessorio acessorio0_ 
+    where
+        acessorio0_.codigo=?
+Hibernate: 
+    select
+        acessorio0_.codigo as codigo1_0_0_,
+        acessorio0_.descricao as descrica2_0_0_ 
+    from
+        Acessorio acessorio0_ 
+    where
+        acessorio0_.codigo=?
+Hibernate: 
+    select
+        acessorio0_.codigo as codigo1_0_0_,
+        acessorio0_.descricao as descrica2_0_0_ 
+    from
+        Acessorio acessorio0_ 
+    where
+        acessorio0_.codigo=?
+Hibernate: 
+    select
+        acessorio0_.codigo as codigo1_0_0_,
+        acessorio0_.descricao as descrica2_0_0_ 
+    from
+        Acessorio acessorio0_ 
+    where
+        acessorio0_.codigo=?
+Hibernate: 
+    update
+        Carro 
+    set
+        chassi=?,
+        cor=?,
+        data_criacao=?,
+        data_modificacao=?,
+        foto=?,
+        codigo_modelo=?,
+        placa=?,
+        valor_diaria=? 
+    where
+        codigo=?
+Hibernate: 
+    insert 
+    into
+        carro_acessorio
+        (codigo_carro, codigo_acessorio) 
+    values
+        (?, ?)
+Hibernate: 
+    insert 
+    into
+        carro_acessorio
+        (codigo_carro, codigo_acessorio) 
+    values
+        (?, ?)
+Hibernate: 
+    insert 
+    into
+        carro_acessorio
+        (codigo_carro, codigo_acessorio) 
+    values
+        (?, ?)
+Hibernate: 
+    insert 
+    into
+        carro_acessorio
+        (codigo_carro, codigo_acessorio) 
+    values
+        (?, ?)
+Hibernate: 
+    insert 
+    into
+        carro_acessorio
+        (codigo_carro, codigo_acessorio) 
+    values
+        (?, ?)
+Hibernate: 
+    insert 
+    into
+        carro_acessorio
+        (codigo_carro, codigo_acessorio) 
+    values
+        (?, ?)
+
+38. Ao consultar no banco de dados, 
+
+select * from carro
+
+# codigo, chassi, cor, placa, valor_diaria, codigo_modelo, data_criacao, data_modificacao, foto
+1, , Branco, AAA-1234, 205.00, 1, 2019-02-02 17:15:27, 2019-02-02 17:25:31, 
+3, , Prata, AAA-9999, 120.00, 3, , , 
+4, , Branco, BBB-8888, 250.00, 1, , , 
+5, , Azul, AAA-7788, 230.00, 2, , , 
+6, , Prata, DDD-1234, 130.00, 3, , , 
+8, , Prata, XXX-1111, 200.00, 2, , , 
+9, , Prata, ADD-8989, 200.00, 14, , , 
+10, , Vermelho, YNP-5588, 230.00, 13, , , 
+12, , Preto, AAA-1111, , 16, 2019-02-19 18:24:45, 2019-02-19 18:24:45, 
+13, , Prata, ABC-1234, , , 2019-02-19 19:13:00, 2019-02-19 19:13:00, 
+14, , Branco, MMM-1111, 200.00, 1, 2019-02-24 14:23:24, 2019-02-24 14:23:24, BLOB
+
+, verificamos que foi adicionado o Registro de Codigo 14, com a coluna foto com o conteudo em BLOB.
+
+39. A parte do JPA eh bem simples de se fazer.
+
+40. Fim da     Aula 10.006. Objetos Grandes.
+
+-->

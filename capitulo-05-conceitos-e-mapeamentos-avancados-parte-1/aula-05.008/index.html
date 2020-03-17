@@ -1,0 +1,167 @@
+<!-- 
+
+    Aula 05.008. Implementando Mais Um Muitos-Para-Um
+
+1. E o relacionamento entre Aluguel e Motorista, voce pode faze-lo para mim?
+
+2. Neste momento, vamos fazer apenas no sentido de Aluguel para Motorista. Portanto, nao iremos alterar nada na classe Motorista.
+
+3. Vou deixar o codigo JSF aqui e deixar para sua conta o mapeamento e testes. Assim, quando formos fazer um novo Aluguel, ja teremos que selecionar o Motorista.
+
+4. Para lembrar do Relacionamento, veja o Diagrama UML abaixo.
+
+5. Veja que Aluguel tem Um Motorista apenas. Ja, Um Motorista, pode fazer varios Alugueis.
+
+6. Voce ira trabalhar no Mapeamento e nos DAOs necessarios para que, na tela de Novo Aluguel, um Select apresente todos os Motoristas cadastrados.
+
+7. Para isso, segue abaixo o codigo JSF para voce nao perder tempo com ele e focar no JPA.
+
+8. No arquivo NovoAluguel.xhtml, adicione o trecho abaixo logo apos o Select de Carro,
+
+<p:outputLabel value="Motorista" for="motorista" />
+<p:selectOneMenu id="motorista" value="#{novoAluguel.aluguel.motorista}">
+    <f:selectItem itemLabel="Selecione o motorista" />
+    <f:selectItems value="#{novoAluguel.motoristas}" var="motorista" itemLabel="#{motorista.nome}" itemValue="#{motorista}" />
+</p:selectOneMenu>
+
+9. Agora, vamos ao ManagedBean NovoAluguelBean,
+
+// Injete o MotoristaDAO
+@Inject
+private MotoristaDAO motoristaDAO;
+
+// Tambem crie uma lista de Motoristas necessaria para o select na tela
+private List<Motorista> motoristas;
+
+// Inicialize essa lista no metodo void inicializar()
+this.motoristas = this.motoristaDAO.buscartTodos();
+
+// E tambem crie o get para a lista
+public List<Motorista> getMotoristas() {
+    return motoristas;
+}
+
+10. Para que o Select de Motorista funcione, eh necessario criar o Converter do Motorista. Entao, crie a classe MotoristaConverter no pacote com.algaworks.curso.jpa2.converter.
+
+11. Muita atencao, agora. Quando criamos o Mapeamento de Pessoa, Motorista e Funcionario, faltou uma parte muito importante. Consegue descobrir o que eh?
+
+12. Ao tentar salvar, entao, um Novo Aluguel, retornou o erro,
+
+Motorista: Erro de validação: o valor não é válido
+
+13. Agora, consegue me dizer o motivo?
+
+14. Eh uma coisa muito, mas muito boba, que faz muita, muita diferenca!
+
+15. Faltou implementar o equals() e o hashCode()!
+
+16. Mande o Eclipse gerar esses metodos na classe Pessoa, utilizando o codigo como parametro. Assim, Motorista de Funcionario herdarao os metodos.
+
+17. Agora, reinicio o Servidor, vou em http://localhost:8080/locadora-veiculo-web/aluguel/NovoAluguel.xhtml, preencho os dados, ao Salvar, retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_2_2_,
+        carro0_.chassi as chassi2_2_2_,
+        carro0_.cor as cor3_2_2_,
+        carro0_.codigo_modelo as codigo6_2_2_,
+        carro0_.placa as placa4_2_2_,
+        carro0_.valor_diaria as valor5_2_2_,
+        modelocarr1_.codigo as codigo1_5_0_,
+        modelocarr1_.categoria as categori2_5_0_,
+        modelocarr1_.descricao as descrica3_5_0_,
+        modelocarr1_.codigo_fabricante as codigo4_5_0_,
+        fabricante2_.codigo as codigo1_3_1_,
+        fabricante2_.nome as nome2_3_1_ 
+    from
+        Carro carro0_ 
+    left outer join
+        ModeloCarro modelocarr1_ 
+            on carro0_.codigo_modelo=modelocarr1_.codigo 
+    left outer join
+        Fabricante fabricante2_ 
+            on modelocarr1_.codigo_fabricante=fabricante2_.codigo 
+    where
+        carro0_.codigo=?
+Hibernate: 
+    select
+        motorista0_.codigo as codigo1_7_0_,
+        motorista0_1_.cpf as cpf2_7_0_,
+        motorista0_1_.data_nascimento as data3_7_0_,
+        motorista0_1_.nome as nome4_7_0_,
+        motorista0_1_.sexo as sexo5_7_0_,
+        motorista0_.numero_cnh as numero1_6_0_ 
+    from
+        Motorista motorista0_ 
+    inner join
+        Pessoa motorista0_1_ 
+            on motorista0_.codigo=motorista0_1_.codigo 
+    where
+        motorista0_.codigo=?
+Hibernate: 
+    insert 
+    into
+        apolice_seguro
+        (protecao_causas_naturais, protecao_roubo, protecao_terceiro, valor_franquia) 
+    values
+        (?, ?, ?, ?)
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_2_2_,
+        carro0_.chassi as chassi2_2_2_,
+        carro0_.cor as cor3_2_2_,
+        carro0_.codigo_modelo as codigo6_2_2_,
+        carro0_.placa as placa4_2_2_,
+        carro0_.valor_diaria as valor5_2_2_,
+        modelocarr1_.codigo as codigo1_5_0_,
+        modelocarr1_.categoria as categori2_5_0_,
+        modelocarr1_.descricao as descrica3_5_0_,
+        modelocarr1_.codigo_fabricante as codigo4_5_0_,
+        fabricante2_.codigo as codigo1_3_1_,
+        fabricante2_.nome as nome2_3_1_ 
+    from
+        Carro carro0_ 
+    left outer join
+        ModeloCarro modelocarr1_ 
+            on carro0_.codigo_modelo=modelocarr1_.codigo 
+    left outer join
+        Fabricante fabricante2_ 
+            on modelocarr1_.codigo_fabricante=fabricante2_.codigo 
+    where
+        carro0_.codigo=?
+Hibernate: 
+    select
+        motorista0_.codigo as codigo1_7_0_,
+        motorista0_1_.cpf as cpf2_7_0_,
+        motorista0_1_.data_nascimento as data3_7_0_,
+        motorista0_1_.nome as nome4_7_0_,
+        motorista0_1_.sexo as sexo5_7_0_,
+        motorista0_.numero_cnh as numero1_6_0_ 
+    from
+        Motorista motorista0_ 
+    inner join
+        Pessoa motorista0_1_ 
+            on motorista0_.codigo=motorista0_1_.codigo 
+    where
+        motorista0_.codigo=?
+Hibernate: 
+    insert 
+    into
+        Aluguel
+        (codigo_apolice_seguro, codigo_carro, data_devolucao, data_entrega, data_pedido, codigo_motorista, valor_total) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+
+18. Ao examinar o banco de dados, 
+
+select * from aluguel;
+
+# codigo, valor_total, codigo_apolice_seguro, codigo_carro, data_devolucao, data_entrega, data_pedido, codigo_motorista
+1, 500.00, 1, 1, 2019-01-15 17:40:00, 2019-01-12 14:20:00, 2019-01-10, 
+2, 500.00, 2, 1, 2019-01-30 13:00:00, 2019-01-12 12:00:00, 2019-01-12, 1
+
+, o Motorista de codigo 1 foi salvo no registro de Aluguel de codigo 2.
+
+19. Fim da     Aula 05.008. Implementando Mais Um Muitos-Para-Um. 
+
+-->

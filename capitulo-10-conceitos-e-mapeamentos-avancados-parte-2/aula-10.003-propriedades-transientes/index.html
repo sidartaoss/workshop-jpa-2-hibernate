@@ -1,0 +1,181 @@
+<!--
+
+    Aula 10.003. Propriedades Transientes
+
+1. Eu criei essa classe, aqui, agora, ExemploPropriedadeTransiente, para te explicar, justamente, a respeito das propriedades transientes, nao eh?
+
+2. Bom, olha so, acontece uma situacao dessas aqui com muita frequencia.
+
+3. E, logicamente, em sistemas reais tambem.
+
+4. Eu vou te dar um exemplo solto, mas, voce vai lembrar, se voce estiver fazendo isso, ai, em um Sistema Real.
+
+5. Vamos supor que eu ou buscar, aqui, o Veiculo, eu vou te mostra, ja, o que que acontece em uma situacao comum, que acontece no dia-a-dia, ai.
+
+6. Deixa eu buscar, aqui, o Veiculo 'AAA-1111', 'Rio de Janeiro',
+
+        EntityManager em = JPAUtil.createEntityManager();
+        Veiculo veiculo = em.find(Veiculo.class, new VeiculoID("AAA-1111", "Rio de Janeiro"));
+        em.close();
+
+7. Bom, e, ai, qual que eh a situacao comum?
+
+8. Voce foi la, fez alguma consulta, esta listando alguma entidade sua, e, ai, voce quer apresentar uma especie de descricao dessa entidade na tela.
+
+9. E, ai, voce vai colocar, la, ai, se fosse na tela, voce iria colocar algo desse tipo, Esse Veiculo dessa Placa eh do Fabricante,..., Modelo,..., alguma coisa nesse sentido,
+
+    System.out.println("Placa " + veiculo.getCodigo().getPlaca() + ". Fabricante: " + veiculo.getFabricante() + ". Modelo: " + veiculo.getModelo());
+
+10. Pegaram a ideia? Voce quer descrever uma Entidade.
+
+11. E isso daqui comeca a ficar muito comum no seu Sistema.
+
+12. Alias, deixa eu executar, aqui, so para a gente ver se isso esta funcionando.
+
+13. Entao, vamos la.
+
+14. Retornou,
+
+Hibernate: 
+    select
+        veiculo0_.cidade as cidade1_0_0_,
+        veiculo0_.placa as placa2_0_0_,
+        veiculo0_.fabricante as fabrican3_0_0_,
+        veiculo0_.modelo as modelo4_0_0_,
+        veiculo0_.nome_email as nome_ema5_0_0_,
+        veiculo0_.nome_proprietario as nome_pro6_0_0_,
+        veiculo0_.nome_telefone as nome_tel7_0_0_ 
+    from
+        tab_veiculo veiculo0_ 
+    where
+        veiculo0_.cidade=? 
+        and veiculo0_.placa=?
+Placa AAA-1111. Fabricante Volks. Modelo Jeta
+
+15. Beleza, aqui, oh, mostrou, la, a Placa, fez a Consulta, la, oh, mostrou a Placa, o Fabricante, e o Modelo.
+
+16. Okay, beleza.
+
+17. Ai, voce comeca a precisar colocar isso, daqui,
+
+    System.out.println("Placa " + veiculo.getCodigo().getPlaca() + ". Fabricante: " + veiculo.getFabricante() + ". Modelo: " + veiculo.getModelo());
+
+, muito no seu sistema.
+
+18. La, em uma tela X, em uma outra tela Y, voce precisa ficar, constantemente, colocando a descricao de um sistema.
+
+19. Entao, se voce vai colocar em uma tela, e, as vezes, voce esta usando JSF, ou, qualquer outro framework que precisa dos Getters e dos Setters, qual que eh a melhor estrategia, o que que seria legal de a gente fazer?
+
+20. A gente vir, aqui, e colocar, por exemplo, 
+
+@Entity
+@Table(name = "tab_veiculo")
+public class Veiculo {
+
+    ...
+    public String getDescricao() {
+        return 
+    }
+
+
+}
+
+, porque, ai, ja vai ficar facinho, facinho de os Frameworks JSF pegarem isso e mostrarem na tela.
+
+21. E, ai, a gente passaria essa informacao, aqui,
+
+System.out.println(>>> "Placa " + veiculo.getCodigo().getPlaca() + ". Fabricante " + veiculo.getFabricante() + ". Modelo " + veiculo.getModelo() <<<);
+
+, pra ca,
+
+@Entity
+@Table(name = "tab_veiculo")
+public class Veiculo {
+
+    ...
+    public String getDescricao() {
+        return Placa " + veiculo.getCodigo().getPlaca() + ". Fabricante " + veiculo.getFabricante() + ". Modelo " + veiculo.getModelo();
+    }
+
+
+}
+
+, colocando, aqui, como Um return, okay?, algo, assim, para ficar, ja, prontinho, para a gente,
+
+@Entity
+@Table(name = "tab_veiculo")
+public class Veiculo {
+
+    ...
+    public String getDescricao() {
+        return "Placa " + getCodigo().getPlaca() + ". Fabricante " + getFabricante() + ". Modelo " + getModelo();
+    }
+
+
+}
+
+, ou seja, toda vez que a gente quiser mostrar a descricao, eh so colocar descricao, la, no framework, la, no JSF, ou algum outro framework, que ele ja vai mostrar isso daqui,
+
+    public String getDescricao() {
+        return "Placa " + getCodigo().getPlaca() + ". Fabricante " + getFabricante() + ". Modelo " + getModelo();
+    }
+
+22. Certo? Entao, aqui, em ExemploPropriedadeTransiente.java, seria veiculo.getDescricao(),
+
+    System.out.println(veiculo.getDescricao());
+
+23. Ue, Normandes, esta mostrando so como eh que cria o metodo?
+
+24. Nao. Vamos la, entao. Vamos executar isso daqui, vamos ver o que que vai acontecer.
+
+25. Deu um erro,
+
+Caused by: org.hibernate.PropertyNotFoundException: Could not locate setter method for property [com.algaworks.curso.jpa2.modelo.Veiculo#descricao]
+
+, Propriedade Nao Encontrada. Ele ainda fala, oh, 'Eu nao consigo encontrar um Setter para a propriedade descricao'. Ta, mas essa propriedade nao eh uma propriedade que eh do banco de dados.
+
+26. Concorda comigo?
+
+27. Eh uma propriedade que, a gente esta criando ela so para nos auxiliar, so para mostrar alguma coisa na tela, a mais.
+
+28. Eu nao quero que ela seja uma propriedade que vire uma coluna no banco de dados,
+
+    public String getDescricao() {
+
+        ...
+    }
+
+29. Entao que entra a ideia das propriedades transientes. Quando voce precisar fazer algo assim, voce vem, aqui, anota, aqui, oh, do javax.persistence, com @Transient,
+
+    @Transient
+    public String getDescricao() {
+        return "Placa...";
+    }
+
+30. Vamos executar, agora, novamente, se a gente vai ter algum problema?
+
+31. Nao. Funcionou, agora, perfeitamente,
+
+Hibernate: 
+    select
+        veiculo0_.cidade as cidade1_0_0_,
+        veiculo0_.placa as placa2_0_0_,
+        veiculo0_.fabricante as fabrican3_0_0_,
+        veiculo0_.modelo as modelo4_0_0_,
+        veiculo0_.nome_email as nome_ema5_0_0_,
+        veiculo0_.nome_proprietario as nome_pro6_0_0_,
+        veiculo0_.nome_telefone as nome_tel7_0_0_ 
+    from
+        tab_veiculo veiculo0_ 
+    where
+        veiculo0_.cidade=? 
+        and veiculo0_.placa=?
+Placa AAA-1111. Fabricante Volks. Modelo Jeta
+
+32. Entao, utilize, ai, as propriedades transientes quando voce precisar criar alguma coisa, algum Getter, algum Setter, algo assim, que voce nao queira que seja uma coluna no banco de dados, ou seja, nao eh uma propriedade do banco de dados, realmente.
+
+33. Eh so uma coisa auxiliar, eh um metodo auxiliar. No nosso caso, aqui, como eu disse, se voce precisa varias vezes, no seu sistema de producao, mostrar a Descricao de Uma Entidade, coloca @Transient, e voce pode usar Get, e o Framework, la, voce vai poder usar de uma forma bem simples, bem direta.
+
+34. Fim da     Aula 10.003. Propriedades Transientes.
+
+-->

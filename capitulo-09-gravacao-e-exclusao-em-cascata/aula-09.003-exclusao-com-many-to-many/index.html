@@ -1,0 +1,275 @@
+<!--
+
+    Aula 09.003. Exclusao com ManyToMany
+
+1. Bom, vamos ver um detalhe, aqui, quando a gente esta fazendo a exclusao de Relacionamento @ManyToMany.
+
+2. Aqui, nao ficou legal do jeito que a gente fez, antes, nao,
+
+public class Carro {
+
+    private List<Acessorio> acessorios;
+
+        ...
+    
+    @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.REMOVE)
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "carro_acessorio",
+			joinColumns = @JoinColumn(name = "codigo_carro"),
+			inverseJoinColumns = @JoinColumn(name = "codigo_acessorio")    
+    )
+    public List<Acessorio> getAcessorios() {
+        return acessorios;    
+    }
+}
+
+, eu coloquei o Cascade do Hibernate e tal, vamos arrancar esse camarada, aqui, porque, quando eu estou apagando Um Carro, eu nao quero fazer Cascade para Acessorios, pode ter outros Carros usando Outros Acessorios, entao, para o que que eu vou querer apagar os Acessorios?
+
+3. Certo?
+
+4. Entao, eu nao quero, a unica coisa que eu quero apagar eh o Relacionamento. E, com @ManyToMany, quando a gente esta excluindo um Carro, ele ja vai fazer isso para a gente automaticamente.
+
+5. Entao, eu vou tirar, eu nao quero Cascade, em cima de getAcessorios(), eu so preciso apagar o Relacionamento.
+
+6. Isso vai ser automatico. Vamos ver, entao, se vai ter algum probleminha, agora, no momento da exclusao. Entao, vamos acessar, aqui, oh, vamos, la, no Cadastro de Carro. Ah, um detalhe, vamos apagar, agora, tenta apagar Um Carro, que nao tem nenhum Aluguel feito ainda. Okay? Porque, ai, senao, a gente vai ter outros problemas em apagar o Carro, porque tem o Aluguel, aqui,
+
+public class Carro {
+
+    private List<Aluguel> alugueis;
+
+        ...
+
+    @OneToMany(mappedBy = "carro")
+    public List<Aluguel> getAlugueis() {
+        return alugueis;
+    }
+
+    ...
+}
+
+7. E eu vou explicar isso em uma outra aula. A gente tem um Relacionamento OneToMany, e a gente tentar apagar o Carro, a gente vai ter alguns probleminhas.
+
+8. Mas, entao, so para a gente ver que esta funcionando, aqui, apagar o relacionamento do @ManyToMany, apague Um Carro que nao tenha nenhum Aluguel.
+
+9. Eu vim, aqui, na minha base, aqui, pesquisei, oh, 'select * from aluguel', 
+
+# codigo, data_devolucao, data_entrega, data_pedido, valor_total, codigo_apolice_seguro, codigo_carro, codigo_motorista
+1, 2019-01-30 21:00:00, 2019-01-25 16:00:00, 2019-01-27, 350.00, 1, 1, 1
+2, 2019-01-29 22:00:00, 2019-01-24 20:00:00, 2019-01-27, 450.00, 2, 1, 1
+3, 2019-01-30 14:00:00, 2019-01-21 22:00:00, 2019-01-27, 350.00, 3, 2, 1
+
+
+10. Em Aluguel, eu so tenho o Carro de codigo 1 e 2, que tem Aluguel. Entao, eu vou apagar algum outro Carro que nao seja 1 e 2, okay? Mas que tenha Acessorios.
+
+11. E eu dei uma olhada, aqui, os Carros que teu tenho Acessorios sao os Carros 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 e 13.
+
+12. Isso ai, a gente da uma Consultada, aqui, oh, so para a gente ver, oh, em Pesquisa de carros.
+
+13. Vamos no Botao Acessorios, para o Carro de Codigo 6, por exemplo.
+
+14. Eu vou apagar o Carro de Codigo 8 e, depois, apagar o Carro de Codigo 6, que ambos tem Acessorios, mas na tem Aluguel.
+
+15. Entao, okay, vamos apagar, aqui, entao, o Carro 7, tambem poderia. 
+
+16. Eh so o Carro 1 e 2 que eu nao vou apagar, por conta do Aluguel.
+
+17. Entao, okay, Vamos apagar, aqui, entao, o Carro 7, e, ai, eu acho que vai dar um errinho, aqui, por conta de um probleminha no JSF.
+
+18. Retornou,
+
+fev 19, 2019 5:11:57 PM com.sun.faces.lifecycle.ApplyRequestValuesPhase execute
+ADVERTÊNCIA: failed to lazily initialize a collection of role: com.algaworks.curso.jpa2.modelo.Carro.acessorios, could not initialize proxy - no Session
+org.hibernate.LazyInitializationException: failed to lazily initialize a collection of role: com.algaworks.curso.jpa2.modelo.Carro.acessorios, could not initialize proxy - no Session
+	at org.hibernate.collection.internal.AbstractPersistentCollection.throwLazyInitializationException(AbstractPersistentCollection.java:602)
+	at org.hibernate.collection.internal.AbstractPersistentCollection.withTemporarySessionIfNeeded(AbstractPersistentCollection.java:217)
+	at org.hibernate.collection.internal.AbstractPersistentCollection.readSize(AbstractPersistentCollection.java:161)
+	at org.hibernate.collection.internal.PersistentBag.isEmpty(PersistentBag.java:292)
+	at org.apache.el.parser.AstEmpty.getValue(AstEmpty.java:54)
+	at org.apache.el.parser.AstNot.getValue(AstNot.java:43)
+	at org.apache.el.ValueExpressionImpl.getValue(ValueExpressionImpl.java:190)
+	at org.jboss.weld.el.WeldValueExpression.getValue(WeldValueExpression.java:50)
+	at com.sun.faces.facelets.el.TagValueExpression.getValue(TagValueExpression.java:109)
+	at javax.faces.component.ComponentStateHelper.eval(ComponentStateHelper.java:194)
+	at javax.faces.component.UIComponentBase.isRendered(UIComponentBase.java:419)
+	at org.primefaces.component.datalist.DataList.processDecodes(DataList.java:165)
+	at javax.faces.component.UIComponentBase.processDecodes(UIComponentBase.java:1182)
+	at org.primefaces.component.dialog.Dialog.processDecodes(Dialog.java:371)
+	at javax.faces.component.UIForm.processDecodes(UIForm.java:225)
+	at javax.faces.component.UIComponentBase.processDecodes(UIComponentBase.java:1182)
+	at javax.faces.component.UIComponentBase.processDecodes(UIComponentBase.java:1182)
+	at javax.faces.component.UIViewRoot.processDecodes(UIViewRoot.java:925)
+	at com.sun.faces.lifecycle.ApplyRequestValuesPhase.execute(ApplyRequestValuesPhase.java:78)
+	at com.sun.faces.lifecycle.Phase.doPhase(Phase.java:101)
+	at com.sun.faces.lifecycle.LifecycleImpl.execute(LifecycleImpl.java:118)
+	at javax.faces.webapp.FacesServlet.service(FacesServlet.java:593)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:231)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:199)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:96)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:490)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:139)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:92)
+	at org.apache.catalina.valves.AbstractAccessLogValve.invoke(AbstractAccessLogValve.java:668)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:343)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:408)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:66)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:834)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1417)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:49)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
+	at java.lang.Thread.run(Thread.java:748)
+
+
+19. 
+
+org.hibernate.LazyInitializationException: failed to lazily initialize a collection of role: com.algaworks.curso.jpa2.modelo.Carro.acessorios, could not initialize proxy - no Session
+
+20. Ele da, 'failed to lazily initialize a collection of role':...
+
+21. Isso aconteceu por uma coisa, aqui, do JSF, que eh o seguinte, vamos resolver, aqui, vamos abrir PesquisaCarro.xhtml, e PesquisaCarroBean.java.
+
+22. Eh o seguinte. Aqui, no PesquisaCarros.xhtml, a gente tem esses 2 dialogos,
+
+            <p:confirmDialog id="confirmacaoExclusaoDialog" widgetVar="confirmacaoExclusao"
+	        		message="Tem certeza que deseja excluir o carro de placa #{pesquisaCarroBean.carroSelecionado.placa}?"  
+	                header="Exclusão de carro" severity="alert">
+	        	<p:button value="Não" onclick="confirmacaoExclusao.hide(); return false;" />
+	        	<p:commandButton value="Sim" update=":frmPesquisa:carrosTable"
+	        			onclick="confirmacaoExclusao.hide()" action="#{pesquisaCarroBean.excluir}" />
+	    	</p:confirmDialog>
+	    	
+	    	<p:dialog id="mostraAcessoriosDialog" header="Acessórios" widgetVar="mostraAcessorios" modal="true">
+    			<p:dataList value="#{pesquisaCarroBean.carroSelecionado.acessorios}" var="acessorio" itemType="disc"
+    					rendered="#{not empty pesquisaCarroBean.carroSelecionado.acessorios}">
+    				#{acessorio.descricao}
+    			</p:dataList>
+    			<h:outputText value="Nenhum acessório" rendered="#{empty pesquisaCarroBean.carroSelecionado.acessorios}"/>
+			</p:dialog>
+
+, e tem o Dialogo que mostra Acessorios. E tem o Dialogo que mostra a Exclusao, nao eh? 
+
+23. Quando eu clicar para Excluir, beleza, vai funcionar, so que ele vai mandar no carroSelecionado, la dentro do meu ManagedBean, PesquisaCarroBean.java.
+
+24. E, aqui, no Dialogo de Acessorios, tambem estamos usando carroSelecionado.acessorios. Como, lembra que a gente fez essa Pesquisa usando LazyModel para nao Carregar os Acessorios logo de cara, para a gente poder treinar, justamente, essa questao do Lazy?
+
+25. Nao eh? Entao, aqui, ele esta pegando essa mesma Entidade, carroSelecionado, nao eh? Entao, ele tenta acessar os acessorios desse carroSelecionado. Tah, Normandes, mas nao tem nada a ver esse Dialogo. Pois eh, mas, na hora que ele tenta, na hora que ele submete o formulario, ele tenta acessar.
+
+26. E, ai, se ele tenta acessar, como, la, eu nao carreguei esse acessorios, vai dar o erro. Bom, a resolucao eh muito, muito simples. O que a gente vai fazer?
+
+27. Vamos fazer o seguinte. Vamos criar, ao inves de carroSelecionado, vamos chamar, aqui, de carroSelecionadoParaExcluir,
+
+<p:confirmDialog id="confirmacaoExclusaoDialog" widgetVar="confirmacaoExclusao" message="Tem certeza que deseja excluir o carro de placa #{pesquisaCarroBean.carroSelecionadoParaExcluir.placa}?"  
+        header="Exclusão de carro" severity="alert">
+    <p:button value="Não" onclick="confirmacaoExclusao.hide(); return false;" />
+    <p:commandButton value="Sim" update=":frmPesquisa:carrosTable"
+            onclick="confirmacaoExclusao.hide()" action="#{pesquisaCarroBean.excluir}" />
+</p:confirmDialog>
+
+28. So isso. Vamos ver, aqui, oh. E, aqui, em cima, no botao de excluir, ao inves de eu mandar para o carroSelecionado, eu vou mandar para o carroSelecionadoParaExcluir,
+
+29. E, ai, aqui, na PesquisaCarroBean, eh so a gente criar esse carroSelecionadoParaExcluir. Agora, a gente vai excluir ele, okay?
+
+	public void excluir() {
+		try {
+			carroDAO.excluir(carroSelecionadoParaExcluir);
+			this.carros.remove(carroSelecionado);
+			FacesUtil.addSuccessMessage("Carro placa " + carroSelecionadoParaExcluir.getPlaca() + " excluído com sucesso.");
+		} catch (NegocioException e) {
+			FacesUtil.addErrorMessage(e.getMessage());
+		}
+    }
+    
+30. E vamos criar obviamente, o Getter e o Setter,
+
+	public Carro getCarroSelecionadoParaExcluir() {
+		return carroSelecionadoParaExcluir;
+	}
+
+	public void setCarroSelecionadoParaExcluir(Carro carroSelecionadoParaExcluir) {
+		this.carroSelecionadoParaExcluir = carroSelecionadoParaExcluir;
+    }
+    
+31. Okay, acredito que, so isso daqui, a gente vai conseguir resolver esse probleminha.
+
+32. Vamos iniciar, aqui, de novo, o Servidor. 
+
+33. Isso sao problemas reais, nao eh mesmo, que acontecem no dia-a-dia.
+
+34. Se eu fosse, ali, simplesmente, e quisesse excluir uma coisa simples, do banco de dados, voce nao ia ver esse tipo de problema.
+
+35. Entao, vamos la, vamos mandar, aqui, iniciar a Pesquisa de Carro.
+
+36. E vamos esperar, aqui, oh, ja esta carregando o MySQL, okay, deixa eu limpar o log, aqui.
+
+37. E, ai, beleza, ja estamos, aqui. Eu vou tentar, entao, novamente, apagar o Carro de codigo 7. 
+
+38. Retornou,
+
+Hibernate: 
+    delete 
+    from
+        carro_acessorio 
+    where
+        codigo_carro=?
+Hibernate: 
+    delete 
+    from
+        Carro 
+    where
+        codigo=?
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_0_,
+        modelocarr1_.codigo as codigo1_7_1_,
+        carro0_.chassi as chassi2_3_0_,
+        carro0_.cor as cor3_3_0_,
+        carro0_.data_criacao as data_cri4_3_0_,
+        carro0_.data_modificacao as data_mod5_3_0_,
+        carro0_.codigo_modelo as codigo_m8_3_0_,
+        carro0_.placa as placa6_3_0_,
+        carro0_.valor_diaria as valor_di7_3_0_,
+        modelocarr1_.categoria as categori2_7_1_,
+        modelocarr1_.descricao as descrica3_7_1_,
+        modelocarr1_.codigo_fabricante as codigo_f4_7_1_ 
+    from
+        Carro carro0_ 
+    inner join
+        ModeloCarro modelocarr1_ 
+            on carro0_.codigo_modelo=modelocarr1_.codigo limit ?,
+        ?
+Hibernate: 
+    select
+        count(carro0_.codigo) as col_0_0_ 
+    from
+        Carro carro0_
+
+39. Agora, Carro de placa FFF-1212 excluido com sucesso. E, ai, vamos dar uma olhada, aqui, no log, o que que ele fez.
+
+40. Olha so, na hora dele excluir, ele excluiu CARRO_ACESSORIO, que eh a tabela de relacionamento, e excluiu o Carro.
+
+41. Depois, fez a pesquisa, de novo, para carregar.
+
+42. Mas, repara que ele excluiu apenas da tabela de relacionamento. Ele nao excluiu O Acessorio, nao eh? Porque a gente nao quer fazer isso neste caso.
+
+43. Certo? Se a gente quisesse, a gente teria que colocar, nao eh?, para excluir em Cascata, 
+
+    @ManyToMany(fetch = FetchType.LAZY >>>, cascade = CascadeType.REMOVE <<<)
+    @JoinTable(name = "carro_acessorio"
+        , joinColumns= ...
+        , inverseJoinColumns= ...
+    )
+    public List<Acessorio> getAcessorios() {
+        return acessorios;
+    }
+
+, mas, ai, nao seria o caso dessa tabela. Por que nao nessa tabela? Porque outros utilizam o Acessorio, teria que ser em um tipo de relacionamento em que, se voce excluir Carro, tem que excluir a outra Entidade, e eu vou mostrar isso para voce em uma proxima aula, aqui, em cima de Aluguel. Por isso que eu pedi para voce excluir um Carro que nao tivesse Um Aluguel.
+
+44. Fim da     Aula 09.003. Exclusao com ManyToMany.
+
+-->

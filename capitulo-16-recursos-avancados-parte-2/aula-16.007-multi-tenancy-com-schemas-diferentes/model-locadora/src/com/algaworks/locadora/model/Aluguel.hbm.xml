@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated 17/03/2019 18:04:26 by Hibernate Tools 3.5.0.Final -->
+<hibernate-mapping>
+    <class name="com.algaworks.locadora.model.Aluguel" table="ALUGUEL">
+        <id name="codigo" type="java.lang.Long">
+            <column name="CODIGO" />
+            <generator class="assigned" />
+        </id>
+        <many-to-one name="carro" class="com.algaworks.locadora.model.Carro" fetch="join">
+            <column name="CARRO" />
+        </many-to-one>
+        <many-to-one name="apoliceSeguro" class="com.algaworks.locadora.model.ApoliceSeguro" fetch="join">
+            <column name="APOLICESEGURO" />
+        </many-to-one>
+        <many-to-one name="motorista" class="com.algaworks.locadora.model.Motorista" fetch="join">
+            <column name="MOTORISTA" />
+        </many-to-one>
+        <property name="dataDevolucao" type="java.util.Date">
+            <column name="DATADEVOLUCAO" />
+        </property>
+        <property name="dataEntrega" type="java.util.Date">
+            <column name="DATAENTREGA" />
+        </property>
+        <property name="dataPedido" type="java.util.Date">
+            <column name="DATAPEDIDO" />
+        </property>
+        <property name="valorTotal" type="java.math.BigDecimal">
+            <column name="VALORTOTAL" />
+        </property>
+    </class>
+</hibernate-mapping>

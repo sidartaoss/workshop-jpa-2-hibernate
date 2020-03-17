@@ -1,0 +1,574 @@
+<!--
+
+    Aula 07.004. Movendo os Objetos pelo Ciclo de Vida
+
+1. Vamos fazer uma Entidade passar pelos ciclos de vida, testando no projeto crud-jpa-hibernate que fizemos em outras aulas.
+
+2. Para isso, crie uma classe TesteDoCicloDeVida com um metodo main(),
+
+package com.algaworks.curso.main;
+
+public class TesteDoCicloDeVida {
+
+
+    public static void main(String[] args) {
+
+    } 
+}
+
+3. Dica: Se voce for executando passo-a-passo o exemplo abaixo, recomendo que voce va deletando a tabela CLIENTE no banco de dados. Assim, ficara mais facil de voce ver as alteracoes.
+
+4. Se apenas criarmos um objeto, para o EntityManager, ele estara no Estado NEW,
+
+/** Uma nova Entidade. Esta no Estado NEW **/
+Cliente cliente1 = new Cliente();
+cliente1.setNome("Fernando Alonso");
+cliente1.setIdade(32);
+cliente1.setProfissao("Piloto");
+cliente1.setSexo("M");
+
+5. Para passarmos a Entidade para o Estado MANAGED, ou Gerenciado, podemos usar os metodos persist() ou merge() no EntityManager,
+
+EntityManager em = JPAUtil.createEntityManager();
+// Com persist(), fazemos o objeto passar para o Estado MANAGED
+em.getTransaction().begin();
+em.persist(cliente1);
+em.getTransaction().commit();
+
+6. Neste momento, o objeto ja esta no banco de dados e ja esta atualizado com o novo cliente, "Fernando Alonso".
+
+7.  A Entidade cliente1 continua no Estado MANAGED nesse EntityManager que criamos. Vamos, agora, desanexar esse objeto com o metodo detach(), removendo ele do EntityManager,
+
+// Agora, passamos cliente1 para o Estado "detached".
+em.detach(cliente1);
+
+8. Se, neste momento, tentarmos persistir uma Entidade nesse Estado, o Hibernate ira lancar uma Excecao com a mensagem: "detached entity passed to persist", ou seja, estamos tentando salvar uma entidade desanexada para o metodo persist(). O codigo, abaixo, esta com o try/catch(), para podermos continuar a executar nosso exemplo em sequencia,
+
+// Se tentarmos, agora, persistir uma entidade que esta desanexada, iremos receber uma exception
+try {
+    em.getTransaction().begin();
+    em.persist(cliente1);
+    em.getTransaction().commit();
+} catch(PersistenceException e) {
+    System.err.println("Erro ao persistir a entidade. " + e.getMessage());
+    em.getTransaction().rollback();
+}
+
+9. Retornou,
+
+Hibernate: insert into Cliente (idade, nome, profissao, sexo) values (?, ?, ?, ?)
+Erro ao persistir a entidade. org.hibernate.PersistentObjectException: detached entity passed to persist: com.algaworks.curso.modelo.Cliente
+
+10. A ideia, acima, eh a mesma de quando fechamos o EntityManager, em um projeto web e, depois, tentamos passar essa Entidade a um novo EntityManager. Se quiser fazer o teste, fique a vontade. Feche esse EntityManager, crie outro e tente persistir o cliente1 - nao se esqueca de iniciar a transacao,
+
+		/** ==================== * ESTADO NEW * ==================== **/
+
+		// Uma nova Entidade. Esta no Estado NEW.
+		Cliente cliente1 = new Cliente();
+		cliente1.setNome("Fernando Alonso");
+		cliente1.setIdade(32);
+		cliente1.setProfissao("Piloto");
+		cliente1.setSexo("M");
+		
+		/** ==================== * ESTADO NEW * ==================== **/
+        
+
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		EntityManager em = JPAUtil.createEntityManager();
+		
+		//Com persist(), fazemos o objeto passar para o Estado MANAGED. 
+		em.getTransaction().begin();
+		em.persist(cliente1);
+		em.getTransaction().commit();
+		
+        /** ==================== * ESTADO MANAGED * ==================== **/
+        
+        
+		/** ==================== * ESTADO DETACHED * ==================== **/
+		
+//		em.detach(cliente1);
+		
+		em.close();
+		em = JPAUtil.createEntityManager();
+		
+        /** ==================== * ESTADO DETACHED * ==================== **/
+        
+        
+		// Se tentarmos, agora, persistir uma entidade que esta desanexada, iremos receber uma exception.
+		try {
+            em.getTransaction().begin();
+            cliente1.setIdade(33);
+			em.persist(cliente1);
+			em.getTransaction().commit();
+		} catch (PersistenceException e) {
+			System.err.println("Erro ao persistir a entidade. " + e.getMessage());
+			em.getTransaction().rollback();
+        }
+        
+11. Retornou,
+
+Hibernate: insert into Cliente (idade, nome, profissao, sexo) values (?, ?, ?, ?)
+Erro ao persistir a entidade. org.hibernate.PersistentObjectException: detached entity passed to persist: com.algaworks.curso.modelo.Cliente
+
+12. Um ponto muito importante, acima, eh o rollback da transacao. Veja que, se iniciamos a transacao e a falha ocorreu no metodo persist(), a transacao ficara aberta e marcada para rollback, portanto, devemos chamar o rollback() para poder abrir outra transacao no mesmo Entity Manager.
+
+13. Para colocar o objeto como Gerenciado novamente, ou seja, no Estado Managed, utilizamos o metodo merge(). Ou buscamos com o metodo find (ou outros metodos de consulta) no banco de dados,
+
+/** ==================== * ESTADO NEW * ==================== **/
+
+		// Uma nova Entidade. Esta no Estado NEW.
+		Cliente cliente1 = new Cliente();
+		cliente1.setNome("Fernando Alonso");
+		cliente1.setIdade(32);
+		cliente1.setProfissao("Piloto");
+		cliente1.setSexo("M");
+		
+		/** ==================== * ESTADO NEW * ==================== **/
+		
+		
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		EntityManager em = JPAUtil.createEntityManager();
+		
+		//Com persist(), fazemos o objeto passar para o Estado MANAGED. 
+		em.getTransaction().begin();
+		em.persist(cliente1);
+		em.getTransaction().commit();
+		
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		
+		/** ==================== * ESTADO DETACHED * ==================== **/
+		
+//		em.detach(cliente1);
+		
+		em.close();
+		em = JPAUtil.createEntityManager();
+		
+		/** ==================== * ESTADO DETACHED * ==================== **/
+		
+		try {
+            em.getTransaction().begin();
+            >>> cliente1.setIdade(33);
+			>>> em.merge(cliente1);
+			>>> em.getTransaction().commit();
+		} catch (PersistenceException e) {
+			System.err.println("Erro ao persistir a entidade. " + e.getMessage());
+			em.getTransaction().rollback();
+        }
+        
+		try {
+			em.getTransaction().begin();
+			>>> cliente1 = em.find(Cliente.class, cliente1.getCodigo());
+			>>> cliente1.setIdade(33);
+			>>> em.getTransaction().commit();
+		} catch (PersistenceException e) {
+			System.err.println("Erro ao persistir a entidade. " + e.getMessage());
+			em.getTransaction().rollback();
+		}        
+		
+		em.close();
+	}
+
+14. Retornou,
+
+Hibernate: insert into Cliente (idade, nome, profissao, sexo) values (?, ?, ?, ?)
+Hibernate: select cliente0_.codigo as codigo1_0_0_, cliente0_.idade as idade2_0_0_, cliente0_.nome as nome3_0_0_, cliente0_.profissao as profissa4_0_0_, cliente0_.sexo as sexo5_0_0_ from Cliente cliente0_ where cliente0_.codigo=?
+Hibernate: update Cliente set idade=?, nome=?, profissao=?, sexo=? where codigo=?
+
+15. Ao invocar o metodo de merge() ou find(), eh disparado o select na base de dados, ou seja, para que o objeto seja colocado no Estado de Gerenciado (Managed).
+
+16. O update na base de dados so eh disparado ao invocar-se o metodo de commit().
+
+17. Para entrar no estado "Removed", basta chamar o metodo remove(),
+
+// Agora, entrando no Estado Removed
+em.getTransaction().begin();
+em.remove(cliente1);
+em.getTransaction().commit();
+
+18.
+
+/** ==================== * ESTADO NEW * ==================== **/
+
+		// Uma nova Entidade. Esta no Estado NEW.
+		Cliente cliente1 = new Cliente();
+		cliente1.setNome("Fernando Alonso");
+		cliente1.setIdade(32);
+		cliente1.setProfissao("Piloto");
+		cliente1.setSexo("M");
+		
+		/** ==================== * ESTADO NEW * ==================== **/
+		
+		
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		EntityManager em = JPAUtil.createEntityManager();
+		
+		//Com persist(), fazemos o objeto passar para o Estado MANAGED. 
+		em.getTransaction().begin();
+		em.persist(cliente1);
+		em.getTransaction().commit();
+		
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		
+		/** ==================== * ESTADO DETACHED * ==================== **/
+		
+//		em.detach(cliente1);
+		
+		em.close();
+		em = JPAUtil.createEntityManager();
+		
+		/** ==================== * ESTADO DETACHED * ==================== **/
+		
+		
+		
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		// Para colocar o objeto como Gerenciado novamente, ou seja, 
+		// no Estado Managed, utilizamos o metodo merge().
+		// Ou buscamos com o metodo find (ou outros metodos de consulta) no banco de dados.
+		try {
+			em.getTransaction().begin();
+			cliente1 = em.find(Cliente.class, cliente1.getCodigo());
+			cliente1.setIdade(33);
+			em.getTransaction().commit();
+		} catch (PersistenceException e) {
+			System.err.println("Erro ao persistir a entidade. " + e.getMessage());
+			em.getTransaction().rollback();
+		}
+		
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		
+		
+		/** ==================== * ESTADO REMOVED * ==================== **/
+		
+		em.getTransaction().begin();
+		em.remove(cliente1);
+		em.getTransaction().commit();
+		
+		/** ==================== * ESTADO REMOVED * ==================== **/
+		
+        em.close();
+        
+19. Retornou,
+
+Hibernate: insert into Cliente (idade, nome, profissao, sexo) values (?, ?, ?, ?)
+Hibernate: select cliente0_.codigo as codigo1_0_0_, cliente0_.idade as idade2_0_0_, cliente0_.nome as nome3_0_0_, cliente0_.profissao as profissa4_0_0_, cliente0_.sexo as sexo5_0_0_ from Cliente cliente0_ where cliente0_.codigo=?
+Hibernate: update Cliente set idade=?, nome=?, profissao=?, sexo=? where codigo=?
+Hibernate: delete from Cliente where codigo=?
+
+20. Para finalizar, vamos reconectar o objeto removido com o metodo merge(), e aprender um detalhe muito importante desse metodo, ele devolve um outro objeto!
+
+21. Isso significa que, se voce fizer a alteracao no cliente1, nada sera alterado no banco de dados! Agora, se fizer a alteracao sobre o objeto retornado, ai, sim, as alteracoes irao para o banco de dados. Veja o codigo abaixo:
+
+// Reconectando um objeto removido
+Cliente cliente2 = em.merge(cliente1);
+System.out.println(cliente1 == cliente2);       // false
+em.getTransaction().begin();
+cliente1.setIdade(34);
+em.getTransaction().commit();                   // NAO ira alterar a idade!
+
+em.getTransaction().begin();
+cliente2.setIdade(34);
+em.getTransaction().commit();                   // Agora, sim, ira alterar a idade.
+
+22.
+
+/** ==================== * ESTADO NEW * ==================== **/
+
+		// Uma nova Entidade. Esta no Estado NEW.
+		Cliente cliente1 = new Cliente();
+		cliente1.setNome("Fernando Alonso");
+		cliente1.setIdade(32);
+		cliente1.setProfissao("Piloto");
+		cliente1.setSexo("M");
+		
+		/** ==================== * ESTADO NEW * ==================== **/
+		
+		
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		EntityManager em = JPAUtil.createEntityManager();
+		
+		//Com persist(), fazemos o objeto passar para o Estado MANAGED. 
+		em.getTransaction().begin();
+		em.persist(cliente1);
+		em.getTransaction().commit();
+		
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		
+		/** ==================== * ESTADO DETACHED * ==================== **/
+		
+//		em.detach(cliente1);
+		
+		em.close();
+		em = JPAUtil.createEntityManager();
+		
+		/** ==================== * ESTADO DETACHED * ==================== **/
+		
+		
+		
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		// Para colocar o objeto como Gerenciado novamente, ou seja, 
+		// no Estado Managed, utilizamos o metodo merge().
+		// Ou buscamos com o metodo find (ou outros metodos de consulta) no banco de dados.
+		try {
+			em.getTransaction().begin();
+			cliente1 = em.find(Cliente.class, cliente1.getCodigo());
+			cliente1.setIdade(33);
+			em.getTransaction().commit();
+		} catch (PersistenceException e) {
+			System.err.println("Erro ao persistir a entidade. " + e.getMessage());
+			em.getTransaction().rollback();
+		}
+		
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		
+		
+		/** ==================== * ESTADO REMOVED * ==================== **/
+		
+		em.getTransaction().begin();
+		em.remove(cliente1);
+		em.getTransaction().commit();
+		
+		/** ==================== * ESTADO REMOVED * ==================== **/
+
+		
+		
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		// Reconectando um objeto removido
+		Cliente cliente2 = em.merge(cliente1);
+		System.out.println(cliente1 == cliente2);			// false
+		em.getTransaction().begin();
+		cliente1.setIdade(34);
+		em.getTransaction().commit();							// Nao ira alterar a idade!
+		
+        /** ==================== * ESTADO MANAGED * ==================== **/
+        
+23. Retornou,
+
+Hibernate: insert into Cliente (idade, nome, profissao, sexo) values (?, ?, ?, ?)
+Hibernate: select cliente0_.codigo as codigo1_0_0_, cliente0_.idade as idade2_0_0_, cliente0_.nome as nome3_0_0_, cliente0_.profissao as profissa4_0_0_, cliente0_.sexo as sexo5_0_0_ from Cliente cliente0_ where cliente0_.codigo=?
+Hibernate: update Cliente set idade=?, nome=?, profissao=?, sexo=? where codigo=?
+Hibernate: delete from Cliente where codigo=?
+Hibernate: select cliente0_.codigo as codigo1_0_0_, cliente0_.idade as idade2_0_0_, cliente0_.nome as nome3_0_0_, cliente0_.profissao as profissa4_0_0_, cliente0_.sexo as sexo5_0_0_ from Cliente cliente0_ where cliente0_.codigo=?
+false
+Hibernate: insert into Cliente (idade, nome, profissao, sexo) values (?, ?, ?, ?)
+
+, ou seja, cliente1 foi reconectado ao Estado Gerenciado e, portanto, ele volta a base de dados no estado inicial, ou seja, sem as alteracoes.
+
+24. Agora, fazendo as alteracoes sobre o objeto retornado, as alteracoes irao para o banco de dados,
+
+		/** ==================== * ESTADO NEW * ==================== **/
+
+		// Uma nova Entidade. Esta no Estado NEW.
+		Cliente cliente1 = new Cliente();
+		cliente1.setNome("Fernando Alonso");
+		cliente1.setIdade(32);
+		cliente1.setProfissao("Piloto");
+		cliente1.setSexo("M");
+		
+		/** ==================== * ESTADO NEW * ==================== **/
+		
+		
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		EntityManager em = JPAUtil.createEntityManager();
+		
+		//Com persist(), fazemos o objeto passar para o Estado MANAGED. 
+		em.getTransaction().begin();
+		em.persist(cliente1);
+		em.getTransaction().commit();
+		
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		
+		/** ==================== * ESTADO DETACHED * ==================== **/
+		
+//		em.detach(cliente1);
+		
+		em.close();
+		em = JPAUtil.createEntityManager();
+		
+		/** ==================== * ESTADO DETACHED * ==================== **/
+		
+		
+		
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		// Para colocar o objeto como Gerenciado novamente, ou seja, 
+		// no Estado Managed, utilizamos o metodo merge().
+		// Ou buscamos com o metodo find (ou outros metodos de consulta) no banco de dados.
+		try {
+			em.getTransaction().begin();
+			cliente1 = em.find(Cliente.class, cliente1.getCodigo());
+			cliente1.setIdade(33);
+			em.getTransaction().commit();
+		} catch (PersistenceException e) {
+			System.err.println("Erro ao persistir a entidade. " + e.getMessage());
+			em.getTransaction().rollback();
+		}
+		
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		
+		
+		/** ==================== * ESTADO REMOVED * ==================== **/
+		
+		em.getTransaction().begin();
+		em.remove(cliente1);
+		em.getTransaction().commit();
+		
+		/** ==================== * ESTADO REMOVED * ==================== **/
+
+		
+		
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		// Reconectando um objeto removido
+		Cliente cliente2 = em.merge(cliente1);
+		System.out.println(cliente1 == cliente2);			// false
+		em.getTransaction().begin();
+		cliente1.setIdade(34);
+		em.getTransaction().commit();							// Nao ira alterar a idade!
+		
+		em.getTransaction().begin();
+		cliente2.setIdade(34);
+		em.getTransaction().commit();
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		em.close();
+    }
+    
+25. Retornou,
+
+Hibernate: insert into Cliente (idade, nome, profissao, sexo) values (?, ?, ?, ?)
+Hibernate: select cliente0_.codigo as codigo1_0_0_, cliente0_.idade as idade2_0_0_, cliente0_.nome as nome3_0_0_, cliente0_.profissao as profissa4_0_0_, cliente0_.sexo as sexo5_0_0_ from Cliente cliente0_ where cliente0_.codigo=?
+Hibernate: update Cliente set idade=?, nome=?, profissao=?, sexo=? where codigo=?
+Hibernate: delete from Cliente where codigo=?
+Hibernate: select cliente0_.codigo as codigo1_0_0_, cliente0_.idade as idade2_0_0_, cliente0_.nome as nome3_0_0_, cliente0_.profissao as profissa4_0_0_, cliente0_.sexo as sexo5_0_0_ from Cliente cliente0_ where cliente0_.codigo=?
+false
+Hibernate: insert into Cliente (idade, nome, profissao, sexo) values (?, ?, ?, ?)
+Hibernate: update Cliente set idade=?, nome=?, profissao=?, sexo=? where codigo=?
+
+26. 
+
+		/** ==================== * ESTADO NEW * ==================== **/
+
+		// Uma nova Entidade. Esta no Estado NEW.
+		Cliente cliente1 = new Cliente();
+		cliente1.setNome("Fernando Alonso");
+		cliente1.setIdade(32);
+		cliente1.setProfissao("Piloto");
+		cliente1.setSexo("M");
+		
+		/** ==================== * ESTADO NEW * ==================== **/
+		
+		
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		EntityManager em = JPAUtil.createEntityManager();
+		
+		//Com persist(), fazemos o objeto passar para o Estado MANAGED. 
+		em.getTransaction().begin();
+		em.persist(cliente1);
+		em.getTransaction().commit();
+		
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		
+		/** ==================== * ESTADO DETACHED * ==================== **/
+		
+//		em.detach(cliente1);
+		
+		em.close();
+		em = JPAUtil.createEntityManager();
+		
+		/** ==================== * ESTADO DETACHED * ==================== **/
+		
+		
+		
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		// Para colocar o objeto como Gerenciado novamente, ou seja, 
+		// no Estado Managed, utilizamos o metodo merge().
+		// Ou buscamos com o metodo find (ou outros metodos de consulta) no banco de dados.
+		try {
+			em.getTransaction().begin();
+			cliente1 = em.find(Cliente.class, cliente1.getCodigo());
+			cliente1.setIdade(33);
+			em.getTransaction().commit();
+		} catch (PersistenceException e) {
+			System.err.println("Erro ao persistir a entidade. " + e.getMessage());
+			em.getTransaction().rollback();
+		}
+		
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		
+		
+		/** ==================== * ESTADO REMOVED * ==================== **/
+		
+		em.getTransaction().begin();
+		em.remove(cliente1);
+		em.getTransaction().commit();
+		
+		/** ==================== * ESTADO REMOVED * ==================== **/
+
+		
+		
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		// Reconectando um objeto removido
+		Cliente cliente2 = em.merge(cliente1);
+		System.out.println(cliente1 == cliente2);			// false
+		
+		em.getTransaction().begin();
+		cliente2.setIdade(34);
+		em.getTransaction().commit();
+		
+		/** ==================== * ESTADO MANAGED * ==================== **/
+		
+		em.close();
+    }
+    
+27. Retornou,
+
+Hibernate: insert into Cliente (idade, nome, profissao, sexo) values (?, ?, ?, ?)
+Hibernate: select cliente0_.codigo as codigo1_0_0_, cliente0_.idade as idade2_0_0_, cliente0_.nome as nome3_0_0_, cliente0_.profissao as profissa4_0_0_, cliente0_.sexo as sexo5_0_0_ from Cliente cliente0_ where cliente0_.codigo=?
+Hibernate: update Cliente set idade=?, nome=?, profissao=?, sexo=? where codigo=?
+Hibernate: delete from Cliente where codigo=?
+Hibernate: select cliente0_.codigo as codigo1_0_0_, cliente0_.idade as idade2_0_0_, cliente0_.nome as nome3_0_0_, cliente0_.profissao as profissa4_0_0_, cliente0_.sexo as sexo5_0_0_ from Cliente cliente0_ where cliente0_.codigo=?
+false
+Hibernate: insert into Cliente (idade, nome, profissao, sexo) values (?, ?, ?, ?)
+Hibernate: update Cliente set idade=?, nome=?, profissao=?, sexo=? where codigo=?
+
+28. Ao invocar o metodo de commit(),
+
+        em.getTransaction().begin();
+		cliente2.setIdade(34);
+		>>> em.getTransaction().commit(); <<<
+
+, sao feitas as alteracoes no banco de dados,
+
+Hibernate: insert into Cliente (idade, nome, profissao, sexo) values (?, ?, ?, ?)
+Hibernate: update Cliente set idade=?, nome=?, profissao=?, sexo=? where codigo=?
+
+29. Ao reconectar o objeto ao Estado Managed, o registro eh selecionado na base de dados,
+
+Hibernate: select cliente0_.codigo as codigo1_0_0_, cliente0_.idade as idade2_0_0_, cliente0_.nome as nome3_0_0_, cliente0_.profissao as profissa4_0_0_, cliente0_.sexo as sexo5_0_0_ from Cliente cliente0_ where cliente0_.codigo=?
+
+30. Interessante, nao eh verdade? Tente fazer os testes bem devagar, entenda todo o processo e realmente veja os objetos sendo movidos pelo ciclo de vida. No inicio, pode parecer confuso, mas, depois que voce entende isso, sera muito mais facil trabalhar e entender os erros em Producao.
+        
+31. Fim da     Aula 07.004. Movendo os Objetos pelo Ciclo de Vida.
+
+
+-->

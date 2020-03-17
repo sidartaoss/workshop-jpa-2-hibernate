@@ -1,0 +1,794 @@
+<!-- 
+
+Aula 04.002. Cadastrando o Primeiro Objeto
+
+1. Para a gente cadastrar o primeiro objeto, ai, no banco, a patir desse nosso sisteminha web, eu vou te mostrar, aqui, como eh que vai ser a arquitetura desse nosso sistema.
+
+2. Okay? Vou tentar te mostrar, ai, e criar de uma forma organizada, que nao fique baguncado, e te falar onde eh que a gente vai focar mais, beleza?
+
+3. Bom, a gente tem o banco de dados, que eh o MySQL.
+
+4. Acima dele, nos vamos ter uma camadinha de software, de classes, que a gente vai chamar de DAO, nao eh ?, que eh um Design Pattern, que faz acesso ao Banco de Dados.
+
+5. Entao, sempre que a gente quiser acessar o Banco de Dados, a gente vai criar uma classe, aqui, dentro do DAO.
+
+6. O que que eh o DAO, Normandes?
+
+7. Ah, eh um framework diferente? 
+
+8. Nao, nao. DAO vao ser so classes que a gente vai falar, 'As classes estao dentro do pacote DAO', vamos falar assim.
+
+9. Okay? Entao, tudo que a gente colocar aqui, dentro do DAO, significa que a gente quer acessar o Banco de Dados, eh so uma divisao logica do nosso sistema.
+
+10. Okay?
+
+11. Bom, em cima do DAO, que faz o acesso, a gente tem a Logica do nosso Sistema, as Regras de Negocio que a gente quiser colocar, a gente vai colocar aqui dentro da Logica.
+
+12. E a Visao, que eh a parte que vai ser apresentada para o Usuario, fica aqui em cima, ela acessa a Logica, ela tambem pode acessar o DAO, aqui, atraves do Controlador, a gente consegue acessar o DAO, tambem.
+
+13. Por que que a gente consegue acessar o DAO, tambem?
+
+14. Se eu quiser fazer uma consulta direta, aqui, nao tem uma Logica envolvida, eu posso acessar diretamente esse DAO, voce vai ver isso dai.
+
+15. E o nosso Modelo, eh um carinha que anda para todo lado, ai, tambem, nao eh?, os nossos modelos sao as classes mapeadas, la, pelo JPA,
+
+                    |-------|-------|   |---------|
+Servlet/JSP,        |     Visao     |   |         |
+JSF/Swing           |---------------|   |    M    |
+                            |           |         | 
+                    |-------|-------|   |    O    |
+Spring/EJB3         |     Logica    |   |         |
+                    |---------------|   |    D    |
+                            |           |         |
+                    |-------|-------|   |    E    |
+JPA/Hibernate       |      DAO      |   |         |
+                    |---------------|   |    L    |                      
+                            |           |         |
+                    |-------|-------|   |    O    |
+                    |   BD MySQL    |   |         |
+                    |---------------|   |---------|
+
+16. Bom, quais framworks, normalmente, a gente usa para criar isso aqui?
+
+17. Aqui, embaixo, em DAO, olha so, o JPA e o Hibernate, justamente, o que a gente esta estudando.
+
+18. Na Logica, tem Spring, tem EJB3, entao, tem varias formas de criar essa Logica, ai, tambem.
+
+19. Na Visao, a gente tem Servlet/JSP, JSF, Swing, ou seja, a gente, tambem, tem varios framworks para criar a Visao. Nos vamos usar, entao, o JSF, para fazer isso dai, pra gente, okay?
+
+20. Bom, vamos, agora, voltar, la, no nosso Sisteminha.
+
+21. Entao, para a gente criar isso dai, eu vou comecar mapeando, aqui, ja existem algumas classes, aqui, que eu deixei no primeiro projeto, como eu te disse, sao classes utilitarias, a gente nao vai mexer nelas, aqui, agora, nao.
+
+22. Mais para frente, eu explico detalhes mais detalhes dessas classes.
+
+23. Entao, vamos la. E lembrando, se voce quiser importar esse projeto, ai, la do GitHub, eh so voce baixar, la, com o titulo desta aula.
+
+24. Bom, eu vou criar, aqui, entao, uma nova classe, so que eu vou trocar o pacotezinho, aqui, oh, nao vai ser dentro do pacote util, vai ser dentro do pacote modelo.
+
+25. E o nome da nossa classe, nos vamos comecar criando, aqui, o Cadastro de Fabricante.
+
+26. Okay? So para a gente iniciar o procedimento, ai.
+
+27. Entao, o Cadastro de Fabricante.
+
+28. Entao, eu vou criar o modelo, no pacote modelo, com o nome Fabricante,
+
+package com.algaworks.curso.jpa2.modelo;
+
+import javax.persistence.Entity;
+
+@Entity
+public class Fabricante {
+
+}
+
+29. Okay, entao, a gente esta com a classe Fabricante, ai. Agora, a gente vai fazer o Mapeamento dela.
+
+30. Entao, nos vamos colocar @Entity, para falar, entao, que eh uma Entidade.
+
+31. Nao se esqueca de importar, sempre, do javax.persistence, nao importa, ai, do Hibernate, nao.
+
+32. O nome da Tabela, eu vou deixar o default, depois, a gente ve, se a gente quiser trocar o nome da Tabela.
+
+33. Nos vamos colocar, aqui, o codigo,
+
+import javax.persistence.GeneratedValue;
+
+@Entity
+public class Fabricante {
+
+    @Id
+    @GeneratedValue
+    private Long codigo;
+
+
+}
+
+34. Por que que tem codigo?
+
+35. Toda Tabela, nossa, vai ter um codigo, para representar aquela Entidade. No caso de Fabricante, entao, eu vou ter codigo e nome.
+
+36. Entao, vamos mapear, aqui, o codigo e o nome,
+
+@Entity
+public class Fabricante {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long codigo;
+    
+    private String nome;
+
+
+}
+
+37. E, ai, nos vamos criar os getters e os setters.
+
+38. Bom, vamos la, vamos mapear, aqui, entao, o codigo.
+
+39. Voce pode mapear por aqui, o codigo nao eh o ID?
+
+40. A gente tem que mapear o codigo, aqui, e falar a forma como ele eh gerado. Nos vamos ver, ainda, mais detalhes sobre isso daqui, mas eh @GeneratedValue, e nos vamos usar a estrategia de gerar, strategy = GenerationType.IDENTITY, ou seja, deixa o MySQL usar o Auto Increment dele, la, deixar a Entidade gerar esse ID para a gente, a gente nao precisa configurar ele.
+
+41. Bom, essas informacoes, voce pode colocar tanto aqui, em cima do atributo, 
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long codigo;
+
+, como em cima do getter do seu atributo.
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)	
+    public Long getCodigo() {
+		return codigo;
+	}    
+
+42. Entao, o getCodigo(), eu estou mapeando esse atributo codigo, aqui em cima.
+
+43. Isso eh uma questao de gosto, qual que eh o melhor?
+
+44. Questao de gosto.
+
+45. Eu, particularmente, prefiro colocar em cima do getter. Quando eu comecei a aprender, eu comecei a colocar assim, e estou ate hoje.
+
+46. Por que que eu gosto de colocar assim?
+
+47. Quando eu olho, aqui, para uma Entidade, eu olho, aqui, e eu ja vejo os atributos direto, eu ja sei que tem o codigo, o nome, na hora que voce comeca a encher de anotacoes, aqui, em cima dos atributos, comeca a ficar mais dificil de ler. Entao, eu prefiro colocar em cima dos getters, so por isso, mas, se voce quiser colocar aqui, fique a vontade.
+
+48. Bom, agora, que a gente criou o Modelo, nos vamos criar o DAO que faz acesso ao Banco de Dados, okay?
+
+49. Bom, entao, vamos la. Para a gente criar esse DAO, nos vamos clicar aqui, criar uma nova classe, no pacote que nos vamos chamar de dao, .jpa2.dao, e, aqui, o nome da classe eh FabricanteDAO, okay? E vamos implementar java.io.Serializable,
+
+package com.algaworks.curso.jpa2.dao;
+
+import java.io.Serializable;
+
+public class FabricanteDAO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+}
+
+50. Nos implementamos esse Serializable, aqui, eh para o JSF, Por que? Porque o JSF, ele pode armazenar algumas coisas, querer armazenar algumas Entidades, e, ai, nos vamos implementar esse Serializable, aqui, que eh porque, se ele precisar armazenar isso dai, ja esta pronto.
+
+51. Bom, o que que a gente precisa, aqui?
+
+52. A gente precisa criar um metodo, eu vou chamar de salvar(),
+
+public class FabricanteDAO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    public void salvar() {
+
+    }
+
+}
+
+, que vai salvar o que? Um Fabricante, o modelo de Fabricante que a gente acabou de criar.
+
+
+public class FabricanteDAO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    public void salvar(Fabricante fabricante) {
+
+    }
+
+}
+
+53. Bom, voce lembra, la, nas primeiras aulas, la, no SalvandoPrimeiroObjeto.java, o que que a gente fez para salvar um objeto no Banco de Dados?
+
+54. A gente precisava de quem?
+
+55. Lembra la, do...
+
+56. A gente precisava do EntityManager.
+
+57. Bom, e, aqui, tambem nao eh diferente.
+
+58. Entao, no nosso DAO, eh que vai ter acesso ao Entity Manager, eu vou colocar aqui, ele, oh,
+
+public class FabricanteDAO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    >>> private EntityManager em; <<<
+
+    public void salvar(Fabricante fabricante) {
+
+    }
+
+}    
+
+59. Bom, lembra como que a gente fazia?
+
+60. A gente tinha uma classe, la, JPAUtil, que retornava isso para a gente.
+
+62. Deixa eu, ate, abrir, aqui, oh, eu estou com o Projeto fechado aqui, ir na Guia Workspace / setinha para baixo / Closed Projects / 2 Cliques para abrir o Projeto.
+
+62.1. Para fechar o Projeto e ocultar no Workspace - Ir na Setinha para baixo / Filters... / Marcar Closed projects.
+
+63. Bom, deixa eu te mostrar, aqui, para voce lembrar, SalvandoPrimeiroObjeto.java.
+
+64. Lembra, la, a gente precisava do EntityManagerFactory, a gente criava a factory, e, depois, da factory, a gente criava o EntityManager, okay?
+
+65. Bom, a vantagem de se utilizar frameworks eh que ele consegue gerenciar e ja entregar esse objeto,
+
+public class FabricanteDAO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    >>> private EntityManager em; <<<
+
+    public void salvar(Fabricante fabricante) {
+
+    }
+
+}    
+
+, pronto para a gente.
+
+66. Entao, o que que a gente tem que fazer, neste projeto, eh, eu vou te ensinar isso la para frente, eu quero focar, devagarzinho, eu quero ir subindo aos poucos o nivel, ai, com voce. Por enquanto, voce vai colocar, so, aqui, @Inject, do javax.inject,
+
+import javax.inject.Inject;
+
+public class FabricanteDAO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    @Inject
+    private EntityManager em;
+
+    public void salvar(Fabricante fabricante) {
+
+    }
+
+}
+
+67. Pronto. Voce anotando isso, aqui,
+
+    @Inject
+    private EntityManager em;
+
+, com @Inject, esse objeto,
+
+    @Inject
+    >>> private EntityManager em; <<<
+
+, ja vai ser inserido, aqui, para voce, ele vai ser injetado, aqui, para voce. Isso aqui eh uma forma de a gente fazer a injecao de dependencias, okay?
+
+68. Bom, e, ai, nos vamos fazer o em.persist(), passando o fabricante,
+
+    @Inject
+    private EntityManager em;
+
+    public void salvar(Fabricante fabricante) {
+        em.persist(fabricante);
+    }        
+
+69. Okay? Assim, a gente ja consegue salvar um Fabricante no Banco de Dados.
+
+70. Okay? Usando esse DAO, aqui,
+
+public class FabricanteDAO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    @Inject
+    private EntityManager em;
+
+    public void salvar(Fabricante fabricante) {
+        em.persist(fabricante);
+    }
+}
+
+71. Bom, se a gente voltar, la, deixa eu volta, aqui, na apresentacao, a gente criou o DAO, okay?, para salvar.
+
+72. Como, para salvar, existe uma certa Logica, nao eh?, para verificar se tem campos vazios, verificar se esta tudo certo, nos vamos ter que criar a Logica.
+
+73. Entao, para a gente criar a Logica, vamos criar uma nova classe, aqui, que vai ficar, entao, nos vamos colocar dentro do pacote .service, de Servico, okay?, e, ai, nos vamos chamar essa classe de CadastroFabricanteService,
+
+public com.algaworks.curso.jpa2.service;
+
+public class CadastroFabricanteService implements Serializable {
+
+}
+
+74. Tambem vamos implementar, aqui, Serializable.
+
+75. E, ai, nos vamos criar o metodo public void salvar(Fabricante fabricante) {}
+
+public class CadastroFabricanteService implements Serializable {
+
+    public void salvar(Fabricante fabricante) {
+
+    }
+
+
+}
+
+76. Esse metodo, ele tem que lancar uma excecao, que a gente ja vai criar, essa excecao, aqui, agora, mesmo, 
+
+    public void salvar(Fabricante fabricante) throws NegocioException {
+
+
+    }
+
+77. Deixa eu criar essa Excecao, dentro do pacote service, nos vamos criar uma nova classe, nos vamos chamar de NegocioException, para lancar Regras de Negocio, excecoes de Regras de Negocio, para a gente.
+
+78. Vai estender Exception,
+
+package com.algaworks.curso.jpa2.service;
+
+public class NegocioException extends Exception {
+
+    private static final long serialVersionUID = 1L;
+
+
+}
+
+79. E, ai, a gente cria o construtor, que recebe a mensagem, 
+
+    public NegocioException(String message) {
+        super(message);
+    }
+
+, onde a gente passa essa mensagem para o objeto Exception, para o construtor do Exception, okay?
+
+80. Beleza.
+
+81. Entao, agora, a gente ja tem o metodo salvar(), recebendo Fabricante, lancando essa Excecao.
+
+82. Vamos continuar, aqui. Para a gente salvar, a gente nao pode, aqui, injetar o EntityManager. Assim, vai funcionar, se voce fizer isso, aqui, @Inject, e voce colocar, aqui, o EntityManager, vai funcionar, so que, seguindo a nossa Arquitetura, a Logica nao acessa o EntityManager. Para a Logica acessar o Banco de Dados, ela precisa acessar o DAO, entao, aqui, oh, ao inves de a gente injetar o EntityManager, nos vamos injetar o FabricanteDAO, 
+
+    @Inject
+    private FabricanteDAO dao;
+
+    public void salvar(Fabricante fabricante) throws NegocioException {
+
+    }
+
+, a gente pede o objeto FabricanteDAO. E, ai, ele cria esse objeto e coloca aqui, dentro da Classe de Servico, para a gente, o framework ja vai fazer isso para a gente.
+
+83. E, aqui, a gente coloca as regras de negocio, entao, por exemplo, a gente pode validar se o fabricante.getNome == null || fabricante.getNome().trim().equals(""), vamos supor que o usuario enche de espacos, la, entao, a gente da um trim(), ali, para apagar os espacos, e, aqui, se ele colocou alguma coisa null, a gente lanca uma excecao, falando, "O nome do fabricante eh obrigatorio!"
+
+    public void salvar(Fabricante fabricante) throws NegocioException {
+        if (fabricante.getNome() == null || "".equals(fabricante.getNome().trim())) {
+            throw new NegocioException("O nome do fabricante eh obrigatorio!");
+        }
+    }
+
+84. Okay? Entao, a gente pode fazer essa validacao, aqui.
+
+85. E, se deu certo, se passou por essa validacao, se ele chegou aqui embaixo, significa que a gente pode salvar o Fabricante,
+
+    public void salvar(Fabricante fabricante) throws NegocioException {
+        if (fabricante.getNome() == null || "".equals(fabricante.getNome().trim())) {
+            throw new NegocioException("O nome do fabricante eh obrigatorio!");
+        }
+
+        this.dao.salvar(fabricante);
+    }    
+
+, simples assim.
+
+86. Bom, agora, criando a Visao.
+
+87. Para voce criar a Visao, eu nao acho que a gente precisa ficar vendo muitos detalhes, la, na Visao, ja que nao eh o objetivo. Da Regra de Negocio, aqui, para baixo, sim. Aqui, do Service para baixo, a gente vai ver mais detalhes. Entao, aqui, nessa parte, eu vou criar, aqui, rapidinho, uma nova classe, so para voce ver, ai, dentro de controller, eu vou criar a classe CadastroFabricanteBean.java. Esse, aqui, tambem vai implementar Serializable,
+
+package com.algaworks.curso.jpa2.controller;
+
+import java.io.Serializable;
+
+public class CadastroFabricanteBean implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+}
+
+88. Esse aqui eh o ManagedBean, que eu tinha te falado la, do JSF,
+
+public class CadastroFabricanteBean implements Serializable {
+
+}
+
+, entao, eh esse cara aqui que vai estar gerenciando, esta bem ligado com a tela. Entao, a funcao dele eh pegar os dados do formulario da tela e mandar para baixo,
+
+                    |-------|-------|   |---------|
+Servlet/JSP,        |     Visao     |   |         |
+JSF/Swing           |---------------|   |    M    |
+                            |           |         | 
+                    |-------|-------|   |    O    |
+Spring/EJB3         |     Logica    |   |         |
+                    |---------------|   |    D    |
+                            |           |         |
+                    |-------|-------|   |    E    |
+JPA/Hibernate       |      DAO      |   |         |
+                    |---------------|   |    L    |                      
+                            |           |         |
+                    |-------|-------|   |    O    |
+                    |   BD MySQL    |   |         |
+                    |---------------|   |---------|
+
+89. Bom, para isso, a gente vai anotar, aqui, com @Named, porque a gente ja esta usando CDI. CDI, tambem, eh um framework, ai, do Java EE, faz parte da especificacao do Java EE, que nos ajuda nessa tarefa, ai, de Injecao de Dependencias,
+
+import javax.inject.Named;
+
+@Named
+public class CadastroFabricanteBean implements Serializable {
+
+
+}
+
+90. E nos vamos usar o escopo View, @ViewScoped, ou seja, enquanto eu estiver naquela mesma tela, ele vai criar, de forma bem resumida, quando eu estiver em uma tela Web, ou seja, eu estou, aqui, trabalhando nessa telinha, aqui, a gente vai ter o formulario, enquanto eu estiver dentro dessa tela, eu so vou ter um objeto desse Bean, aqui, CadastroFabricanteBean. Se eu troquei de pagina, trocou de Bean, okay? Mas, enquanto eu estou naquela pagina, eu vou estar naquele Bean,
+
+import javax.faces.bean.ViewScoped;
+
+import javax.inject.Named;
+
+
+@Named
+@ViewScoped
+public class CadastroFabricanteBean {
+
+
+}
+
+91. Como eu disse, a gente nao vai ver muitos detalhes, mas, so para a gente lembrar.
+
+92. A gente precisa, aqui, do Servico, CadastroFabricanteService, ele tambem vai ser injetado, aqui,
+
+@Named
+@ViewScoped
+public class CadastroFabricanteBean {
+
+    @Inject
+    private CadastroFabricanteService cadastroFabricanteService;
+
+
+}
+
+, okay?, e, para o JSF, a gente esta criando um Cadastro de Fabricante, entao, eu preciso ter o objeto Fabricante, aqui, 
+
+@Named
+@ViewScoped
+public class CadastroFabricanteBean {
+
+    @Inject
+    private CadastroFabricanteService cadastroFabricanteService;
+
+    private Fabricante fabricante;
+
+}
+
+93. Nos vamos, agora, criar getter and setter para o Fabricante.
+
+94. Nos vamos ter o metodo, aqui, 
+
+    public void init() {
+
+    }
+
+95. Esse metodo init() eh chamado toda vez que esse Bean for ser criado, logo depois que esse Bean for ser criado. Entao, para isso, eu vou anotar ele, aqui, com @PostConstruct,
+
+import javax.annotation.PostConstruct;
+
+    @PostConstruct
+    public void init() {
+
+    }
+
+96. Para que que eu vou fazer isso? Para chamar o metodo, aqui, de limpar(). O que que tem nesse metodo de limpar()?
+
+    public void limpar() {
+
+    }
+
+97. Esse metodo limpar() vai limpar o formulario. Como que ele faz isso? Criando um novo objeto Fabricante,
+
+    public void limpar() {
+        this.fabricante = new Fabricante();
+    }
+
+98. Voce vai ver que esse objeto Fabricante, ele eh linkado, ele eh ligado la na Pagina JSF.
+
+99. Entao, toda vez que eu criar, se esse objeto for construido,
+
+    @PostConstruct
+    public void init() {
+        this.limpar();
+    }
+
+, eu limpo, isso daqui,
+
+    public void limpar() {
+		this.fabricante = new Fabricante();
+	}
+
+100. Na hora que acabar de salvar, tambem, eu vou chamar esse metodo limpar().
+
+101. Bom, cade o metodo salvar()?
+
+102. Vamos criar ele aqui. Nos vamos criar o metodo salvar(), que vai ser o metodo chamado la pelo framework do JSF, entao, quando a gente clicar la no botao, na tela salvar(), ele vai chamar esse metodo, e o que que esse carinha, aqui, tem que fazer?
+
+    public void salvar() {
+
+    }
+
+103. Eu vou colocar, aqui, oh, no CadastroFabricanteService, e eu vou salvar o fabricante, nao eh?, que eh o objeto que vai vir preenchido da tela para mim.
+
+    public void salvar() {
+        this.cadastroFabricanteService.salvar(fabricante);
+    }
+
+104. Ele esta reclamando porque eu tenho que capturar a Excecao.
+
+105. Entao, eu capturo, aqui, a Excecao,
+
+    public void salvar() {
+        try {
+            this.cadastroFabricanteService.salvar(fabricante);
+        } catch (NegocioException e) {
+            e.printStackTrace();
+        }
+    }
+
+106. So que eu nao vou dar um printStackTrace(), dessa Excecao. O que que eu vou fazer? Se der erro, tem uma classezinha, aqui, FacesUtil, eu vou colocar addErrorMessage(), e vou passar e.getMessage(). Se deu algum erro, eu mostro essa mensagem de erro para o Usuario na tela.
+
+107. Se conseguiu salvar, aqui, eu vou adicionar uma mensagem de sucesso, addSuccessMessage, falando, 'Fabricante salvo com sucesso!'.
+
+108. Bom, eu acho que eh isso daqui, falta so, agora, a gente criar a nossa pagina JSF.
+
+109. Para isso, vai ser aqui dentro de src/main/webapp, que a gente cria, e, aqui, nos vamos criar uma nova pasta, chamada de fabricante, para a gente colocar as paginas relacionadas a Fabricante, porque a gente tem duas paginas, uma de Consulta e uma de Pesquisa.
+
+110. E, aqui dentro, da pasta fabricante, nos vamos criar um novo arquivo Html. Entao, voce vai criar, la, com o botao direito, New / Other / e, aqui, nos vamos procurar, dentro de Web, HTML File. Voce tambem pode copiar la do GitHub, que eh mais facil.
+
+111. Entao, aqui, eu vou chamar essa pagina de CadastroFabricante.xhtml, vou criar essa aqui so para voce ver como eu fiz da primeira vez, ele eh um XHTML, xhtml 1.0 transitional, e vou dar um Finish, aqui.
+
+112. Mas, como o nosso Curso nao eh sobre isso, eu vou apagar, e deixa eu colar, aqui, da minha cola e te mostrar, muito rapidamente, aqui, o que que esse codigo esta fazendo.
+
+113. Aqui, o titulo,
+
+    <ui:define name="titulo">Novo fabricante</ui:define>
+
+, aqui, 
+
+    <ui:define name="corpo">
+    	<f:metadata>
+			<o:viewParam name="fabricante" value="#{cadastroFabricanteBean.fabricante}" />
+		</f:metadata>
+
+, quando ele for editar, ele vai passar por essa parte, aqui, para conseguir setar o fabricante.
+
+114. Dentro do formulario, eu mostro as mensagens, que voce vai ver,
+
+    <p:messages id="messages" autoUpdate="true" closable="true" />
+
+, eu tenho uma barra de ferramentas com o botao Salvar, 
+
+<p:toolbar style="margin-top: 20px">
+    <p:toolbarGroup>
+        <p:commandButton value="Salvar" id="botaoSalvar" action="#{cadastroFabricanteBean.salvar}" update="frmCadastro"/>
+    </p:toolbarGroup>
+    <p:toolbarGroup align="right">
+        <p:button value="Pesquisa" />
+    </p:toolbarGroup>
+</p:toolbar>
+
+, tem o botao de Pesquisa, que nao vai estar funcionando, agora, porque a gente nao tem.
+
+115. O botao de Salvar, a acao dele eh chamar, la naquele Bean, la, que a gente acabou de criar, CadastroFabricanteBean, o metodo salvar(), e ele tem, aqui, um panelGrid, 
+
+
+<p:panelGrid columns="2" id="painel" style="width: 100%; margin-top: 20px"
+        columnClasses="rotulo, campo">
+    <p:outputLabel value="Código" for="codigo"/>
+    <p:inputText id="codigo" size="20" maxlength="20" value="#{cadastroFabricanteBean.fabricante.codigo}" readonly="true"/>
+    
+    <p:outputLabel value="Nome" for="nome"/>
+    <p:inputText id="nome" size="60" maxlength="80" value="#{cadastroFabricanteBean.fabricante.nome}"/>
+</p:panelGrid>
+
+, com duas Colunas, o Codigo, que eh so readOnly, voce nao consegue editar esse codigo, porque o codigo eh gerado para a gente, oh, la, ele esta dentro de cadastroFabricanteBean.fabricante.codigo, la dentro do nosso ManagedBean, e cadastroFabricanteBean.fabricante.nome.
+
+116. Okay?
+
+117. Bom, esta quase pronto, esta faltando so uma coisinha, aqui.
+
+118. Quando a gente esta ligando uma pagina na outra, a gente, normalmente, precisa de um Converter.
+
+119. Nesse caso, aqui, a gente nao vai precisar desse Converter, nao. Nos ja vamos criar o Converter do Fabricante, para voce ver todos os passos, aqui, que a gente precisa fazer.
+
+120. Entao, aqui, dentro, aqui, do pacote jpa2, nos vamos criar mais uma classe, que vai estar dentro do pacote .converter, e a classe vai ser chamada de FabricanteConverter.java.
+
+121. O conteudo dessa classe..., vamos fazer o seguinte, vamos deixar sem o Converter, por enquanto, quando chegar na hora, la, eu explico por que que a gente precisa dele, a gente nao tem todos os metodos ali.
+
+122. Mas, coloca, ai, na sua cabeca que a gente precisa do Converter, okay?
+
+123. Bom, eu acho que eh so, se eu nao esqueci de nada, eu vou mandar executar, aqui, vou mandar subir o Servidor e vamos ver se vai dar algum probleminha. Enquanto esta subindo, aqui, a gente consegue ver, as vezes, ja da algum errinho, aqui, a gente tenta corrigir, vamos ver.
+
+124. Bom, aqui, nao deu nada. Vamos ver se vai ter algum probleminha, aqui.
+
+125. Vamos dar uma olhada, aqui, no meu banco.
+
+126. Eu vou fazer o seguinte, oh, para ficar igualzinho ao seu, ai, deixa eu parar aqui, e eu vou dropar, apagar esse banco inteiro, eu quero apagar o Schema inteiro, para comecar do zero.
+
+127. Entao, oh, apaguei, e vou criar de novo, ai. Entao, Schema locadora.
+
+128. Beleza, agora nao tem nenhuma tabela. Quando eu estiver subindo, aqui, agora, o nosso Sisteminha, o nosso Tomcat, ele vai verificar, la, que nao tem a Tabela Fabricante, e vai criar para a gente.
+
+129. Okay? Quando a gente for acessar la, na primeira vez que a gente for acessar, como aqui, ele nao precisou acessar, ainda, a parte de persistencia, ele nao criou. Entao, a primeira vez, la, que a gente usar, la, o siseminha, vai demorar, vou, ate, limpar o log, aqui, para voce ver.
+
+130. Entao, vamos la, vamos entrar, aqui, novamente, http://localhost:8080/locadora-veiculo-web/, okay?, nao tem nada, ali, vamos la, eu vou acessar, aqui, nao coloquei, aqui, no menu, entao, nos vamos acessar, eh '/fabricante/CadastroFabricante.xhtml'
+
+131. Entao, okay, vamos tentar cadastrar aqui. Como eu disse, a primeira vez vai demorar, porque ele vai iniciar todo o contexto, la, do JPA.
+
+132. Vou apagar o log, aqui, do Console, so para a gente ver, o que ele vai fazer.
+
+133. Vamos ver se vai aparecer um outro erro.
+
+134. Entao, vou cadastrar, aqui, a Chevrolet, como Fabricante.
+
+135. Okay? Mandar Salvar.
+
+137. Oh, aparece, no canto superior direito que ele esta pensando, aqui, aparece, aqui, que ele esta pensando. E, aqui, no Console, ele vai iniciar a parte do JPA.
+
+138. Foi iniciando, iniciando, iniciando, atualizou, oh, falou que nao encontrou a tabela Fabricante. Provavelmente, ele criou essa Tabela.
+
+139. Mostrou aqui, oh, na tela 'Fabricante salvo com sucesso!'
+
+140. Vamos dar uma olhadinha la no banco de dados?
+
+141. A gente manda clicar com o botao direito / Refresh, aqui, oh, tabela fabricante foi criada.
+
+142. Se eu fizer um 'select * from fabricante', mandar executar, vamos ver, nao criou o registro.
+
+143. Nao veio mesmo, ja sei por que. 
+
+144. Nao salvou nada. 
+
+145. Por que que ele nao salvou nada?
+
+146. Eu esqueci de um detalhezinho, aqui, oh.
+
+147. Deixa eu parar o servidor, aqui. 
+
+148. Vamos la. Voce lembra o que que a gente tinha que fazer, deixa eu, ate, abrir, aqui, de novo, o projeto crud-jpa-hibernate, para te mostrar, dentro, aqui, oh da classe SalvandoPrimeiroObjeto.java, quando a gente queria salvar uma coisa, o que que a gente tinha que fazer?
+
+149. Exatamente.
+
+150. A Transacao.
+
+151. A gente tinha que abrir e fechar a Transacao, e dar o commit() na Transacao,
+
+    em.getTransaction().begin();
+    em.persist(cliente);
+    em.getTransaction().commit();
+
+, nao era isso?
+
+152. E a gente nao fez aquilo ali na classe FabricanteDAO.
+
+153. Entao, vamos voltar la, vamos dar uma olhada aqui. Normalmente, a gente pode abrir essa Transacao aqui no nosso Servico, nesse caso, CadastroFabricanteService.java.
+
+154. O que que a gente costuma fazer no Servico?
+
+155. As vezes, esse Servico vai chamar algum outro Servico, entao, eu vou usar a mesma Transacao.
+
+156. Mas como eh que vai funcionar isso, aqui, Normandes?
+
+157. Bom, tambem, eu vou te explicar la na frente os detalhes de como a gente esta fazendo isso, porque eu vou te explicar la na frente, eu vou te explicar bem, sobre esse detalhe aqui, oh, quando a gente cria uma Unidade de Persistencia, a gente tem um Tipo de Transacao. E o Tipo de Transacao, existem, entao, dois tipos, o Tipo que eh o Resource Local, ou seja, eu controlo ou utilizando o Java Transaction API, JTA, usando a propria API do Java para controlar a Transacao.
+
+158. Eu deixei Resource Local, porque eu quero controlar essa Transacao, para eu te mostrar isso dai.
+
+159. E, ai, eu criei algumas classes, aqui, dentro da pasta util, que controlam essa Transacao para a gente. Inclusive, eu criei uma anotacao, la, que, se voce anotar com @Transactional, esse metodo passa a ser Transacional,
+
+import com.algaworks.curso.jpa2.util.jpa.Transactional;
+
+	@Transactional
+    public void salvar(Fabricante fabricante) throws NegocioException {
+        if (fabricante.getNome() == null || "".equals(fabricante.getNome().trim())) {
+            throw new NegocioException("O nome do fabricante eh obrigatorio!");
+        }
+        this.dao.salvar(fabricante);
+	}
+
+, ou seja, esse metodo, aqui, vai abrir um Transacao e, ao final, comitar.
+
+160. Se eu lancar alguma excecao, aqui, ele da Rollback, ele nao faz esse Commit.
+
+161. Okay? Entao, vamos la, vamos subir de novo. E, agora, eu acho que eu nao esqueci de nada, nao, vamos confirmar?
+
+162. Esperar o Tomcat subir, okay.
+
+163. Vamos voltar la. Vou acessar, aqui, mais uma vez, o Cadastro de Fabricante, okay? E, agora, eu vou cadastrar Chevrolet. Vou mandar Salvar de novo. 
+
+164. Como eu disse, a primeira vez demora um pouco mais, porque ele vai fazer la o Schema do hibernate.
+
+165. E, ai, olha la, apareceu um insert aqui, nos logs,
+
+Hibernate: 
+    insert 
+    into
+        Fabricante
+        (codigo, nome) 
+    values
+        (default, ?)
+
+166. Bom, ja eh uma grande noticia.
+
+167. Se a gente olhar aqui, na tela, 'Fabricante salvo com sucesso!'.
+
+168. E, ai, vamos dar uma olhadinha no banco de dados, se eu mandar executar esse cara aqui, agora, olha la, Chevrolet esta salvo no banco de dados.
+
+169. Ah, um detalhe aqui, eu esqueci de mandar limpar a tela, ta vendo que continuou os dados aqui?
+
+170. Entao, para apagar esses dados, eu tenho que vir aqui, no Controller, quando acabou de salvar, mostrar a mensagem la, eu vou chamar, aqui, o metodo limpar(). 
+
+171. Vamos tentar Cadastrar um Novo Fabricante sem reiniciar o Servidor.
+
+172. Vou salvar, aqui, o fabricante Fiat.
+
+173. Oh, olhando nos logs do Servidor, inseriu o Fabricante Fiat.
+
+174. Salvo com sucesso e, agora, limpou os campos da tela.
+
+175. Vamos salvar um outro Fabricante, aqui, a Honda, por exemplo. Salvei. Agora, ja foi bem mais rapido, oh, ja salvou com sucesso.
+
+176. E, se a gente for la no banco de dados, olha la, 'select * from fabricante',
+
+codigo              nome
+1                   Chevrolet
+2                   Fiat
+3                   Honda
+
+, estao todos salvos, aqui, no banco de dados.
+
+177. Fim da Aula 04.002. Cadastrando o Primeiro Objeto.
+
+
+-->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,305 @@
+<!-- 
+    Aula 05.002. Mapeando Enumeracoes
+
+1. Agora, eh hora de a gente mapear a Categoria dentro do Modelo de Carro.
+
+2. Por que que eu deixei para frente? Porque eh um Enum. Nos vamos criar esse Enum Categoria, agora, e mapear esse Enum la dentro de Modelo de Carro.
+
+3. Ah, Normandes, esse Enum vai ser uma Tabela? Nao, nao, o Enum nao eh uma Tabela nova, nao. Ele vai ser apenas um atributo do Modelo do Carro.
+
+4. Entao, para a gente dar uma olhada aqui, oh, o Modelo do Carro pode ter, entao, uma Categoria que pode ser um Hatch_Compacto, um Hatch_Medio, por ai, vai, Sedan_Medio, Minivan, Esportivo, etc.
+
+5. Entao, normalmente, a gente vai utilizar o Enum para valores constantes que nao vao mudar. Eh bem dificil criar uma Categoria nova de carro. Talvez, ate, crie, mas, desses aqui, para a gente, esta mais do que suficiente.
+
+6. Um outro exemplo bom eh em Sexo. Masculino e Feminino. Ai, aqui, ja eh mais dificil criar um outro, nao eh? Entao, ou vai ser Masculino ou Feminino.
+
+7. Entao, a gente utiliza Enum para colocar em um atributo quando esse valor eh constante e para deixar o nosso codigo organizado, porque a gente nao vai trabalhar com a constante la, por exemplo, Hatch_Compacto.
+
+8. A gente poderia criar aqui, na Tabela ModeloCarro, uma coluna como String, por exemplo, ou um codigo, um inteiro, e, ai, a gente utilizaria esse codigo ou essa String para ir adicionando esses valores. Mas ia ficar bem feio, nao eh?, a gente ir fazendo essa quantidade if's e equas() dentro do nosso codigo.
+
+9. Aqui, com a Enum, a gente ja vai ter os valores direto.
+
+10. Bom, chega de conversa, vamos implementar para a gente ver como eh que isso vai ficar.
+
+11. Bom, aqui, o que que eu adicionei, aqui, na telinha?
+
+12. Eu adicionei um select, que vai aparecer la no JSF, na tela de CadastroModeloCarro.xhtml, 
+
+<p:selectOneMenu id="categoria" value="#{cadastroModeloCarroBean.modeloCarro.categoria}">
+    <f:selectItem itemLabel="Selecione a categoria" />
+    <f:selectItems value="#{cadastroModeloCarroBean.categorias}" var="categoria" 
+        itemLabel="#{categoria}" itemValue="#{categoria}"/>
+</p:selectOneMenu>
+
+, que vai ser a Categoria, e, ai, ele vai pedir para selecionar a categoria do carro, 
+
+<p:selectOneMenu id="categoria" value="#{cadastroModeloCarroBean.modeloCarro.categoria}">
+    <f:selectItem itemLabel=" >>> Selecione a categoria <<< " />
+    <f:selectItems value="#{cadastroModeloCarroBean.categorias}" var="categoria" 
+        itemLabel="#{categoria}" itemValue="#{categoria}"/>
+</p:selectOneMenu>
+
+e ele esta indo la no CadastroModeloCarroBean.java, no nosso Controller, oh, e buscando todas as categorias,
+
+<p:selectOneMenu id="categoria" value="#{cadastroModeloCarroBean.modeloCarro.categoria}">
+    <f:selectItem itemLabel="Selecione a categoria" />
+    <f:selectItems value=" #{cadastroModeloCarroBean. >>> categorias <<< }" var="categoria" 
+        itemLabel="#{categoria}" itemValue="#{categoria}"/>
+</p:selectOneMenu>
+
+13. Quando ele selecionar Uma Categoria, essa Categoria vai ser setada dentro do Modelo do Carro,
+
+<p:selectOneMenu id="categoria" value="#{ >>> cadastroModeloCarroBean.modeloCarro.categoria <<< }">
+    <f:selectItem itemLabel="Selecione a categoria" />
+    <f:selectItems value="#{cadastroModeloCarroBean.categorias}" var="categoria" 
+        itemLabel="#{categoria}" itemValue="#{categoria}"/>
+</p:selectOneMenu>
+
+, que a gente vai mapear agora.
+
+14. Okay? Entao, esse codigozinho JSF server para isso. E, aqui, no nosso ManagedBean, CadastroModeloCarroBean.java, a gente tem uma lista de categorias, que nao existe ainda, a gente vai criar, 
+
+private List<Categoria> categorias;
+
+, e a gente precisa inicializar essa lista. A gente utiliza o Arrays, do java.util, para converter, entao, o Enum vai nos devolver um array, e a gente quer converter ele em uma lista. Entao, eu uso Arrays.asList(). Esse array que vai voltar de Categoria vai ser convertido, entao, em uma lista,
+
+@PostConstruct
+public void inicializar() {
+    this.limpar();
+    this.fabricantes = fabricanteDAO.buscarTodos();
+    >>> this.categorias = Arrays.asList(Categoria.values()); <<<
+}
+
+15. Bom, entao, vamos la. Nao existe essa Categoria. Entao, nos vamos criar essa Categoria aqui, dentro do pacote .modelo, botao direito, New / Enum / Categoria.
+
+package com.algaworks.curso.jpa2.modelo;
+
+public enum Categoria {
+
+}
+
+16. Okay? Bom, entao, aqui, a gente vai criando os valores do Enum. 
+
+17. Entao, nos temos la Hatch_Compacto, Hatch_medio, Sedan_Compacto, 
+
+public enum Categoria {
+
+    HATCH_COMPACTO,
+    HATCH_MEDIO,
+    SEDAN_COMPACTO,
+    SEDAN_MEDIO,
+    SEDAN_GRANDE,
+    MINIVAN,
+    ESPORTIVO,
+    UTILITARIO_COMERCIAL
+
+}
+
+18. Okay. Entao, definimos aqui alguns valores para esse Enum.
+
+19. Bom, vamos la, agora, no ModeloCarro.java, e vamos adicionar esse atributo.
+
+public class ModeloCarro {
+
+    private Categoria categoria;
+
+	public Categoria getCategoria() {
+		return categoria;
+	}
+
+	public void setCategoria(Categoria categoria) {
+		this.categoria = categoria;
+	}    
+}
+
+20. Quando a gente esta mapeando um Enum, se fosse uma classe, seria um Mapeamento @ManyToOne, okay?
+
+21. Mas, nao eh. Eh um Enum. Se eh um enum, a gente tem que adicionar uma anotacaozinha especial, aqui, que eh @Enumerated, do javax.persistence,
+
+    @Enumerated
+    public Categoria getCategoria() {
+        return categoria;
+    }
+
+22. Bom, o enum como a gente estava conversando, eh como se fosse uma constante. Bom, se ele eh como se fosse uma constante, significa que eu posso acessar ele por um indice. Esse aqui eh o primeiro,
+
+public enum Categoria {
+
+    >>> HATCH_COMPACTO, <<<
+    HATCH_MEDIO,
+    SEDAN_COMPACTO,
+    SEDAN_MEDIO,
+    SEDAN_GRANDE,
+    MINIVAN,
+    ESPORTIVO,
+    UTILITARIO_COMERCIAL
+
+}
+
+, esse eh o segundo,
+
+public enum Categoria {
+
+    HATCH_COMPACTO,
+    >>> HATCH_MEDIO, <<<
+    SEDAN_COMPACTO,
+    SEDAN_MEDIO,
+    SEDAN_GRANDE,
+    MINIVAN,
+    ESPORTIVO,
+    UTILITARIO_COMERCIAL
+
+}
+
+, esse eh o terceiro,
+
+public enum Categoria {
+
+    HATCH_COMPACTO,
+    HATCH_MEDIO,
+    >>> SEDAN_COMPACTO, <<<
+    SEDAN_MEDIO,
+    SEDAN_GRANDE,
+    MINIVAN,
+    ESPORTIVO,
+    UTILITARIO_COMERCIAL
+
+}
+
+23. Bom, e no banco de dados, como eh que isso vai ficar? A gente vai usar esse indice de posicao ou a gente pode usar, inclusive, essa propria palavra aqui.
+
+24. Bom, o JPA te da a vantagem de poder usar qualquer um dos dois.
+
+25. Entao, eu vou comecar te mostrando como a gente faz para armazenar essa palavra inteira no banco de dados, por exemplo, 'HATCH_COMPACTO', 'HATCH_MEDIO', etc.
+
+26. Entao, eu vou colocar, aqui, EnumType.STRING,
+
+import javax.persistence.EnumType;
+
+    @Enumerated(EnumType.STRING)
+    public Categoria getCategoria() {
+        return categoria;
+    }
+
+27. So isso daqui.
+
+28. Beleza? Vamos la no CadastroModeloCarroBean.java, importar, esta faltando importar Categoria, que a gente acabou de criar, beleza. Esta faltando, agora, criar o getter da Categoria, para que a pagina JSF consiga acessar, consiga ler, mostrar la na telinha. 
+
+29. Bom, vamos aproveitar e colocar mais uma coluna, entao, na Pesquisa de Modelo de Carro, vamos colocar aqui, logo abaixo de Fabricante, vamos colocar a Categoria,
+
+	    		<p:column headerText="Categoria">
+	    			<h:outputText value="#{modeloCarro.categoria}" />
+	    		</p:column>
+
+30. Okay, vamos reiniciar o Servidor e re-testar, http://localhost:8080/locadora-veiculo-web/modeloCarro/PesquisaModeloCarro.xhtml, vamos ver o que vai acontecer, ele vai inicializar, entao, o Hibernate. Essa coluna categoria nao existe na nossa Tabela modelocarro. Vamos la dar uma olhadinha, na tabela de modelo de carro, se a gente fizer um select, aqui, agora, select * from modelocarro, e dar uma olhadinha, ele criou uma nova coluna categoria, mas colocou NULL em todos os valores. Por que? Porque ja estavam esses Modelos de Carros, aqui, cadastrados.
+
+31. Okay, trouxe, aqui, os dois registros, e a Coluna Categoria aparece vazia.
+
+32. Vamos tentar cadastrar um novo registro de modelo de carro? Para vermos como que ele vai ser cadastrado?
+
+33. O campo Categoria, olha la, selecionou, comecou a aparecer, entao, as opcoes para a gente selecionar. Entao, vamos selecionar, aqui, um Hatch Medio, Fabricante Chevrolet, Modelo Onix.
+
+34. Clicar em Salvar. Exibiu mensagem 'Modelo carro salvo com sucesso!'. Retornou,
+
+Hibernate: 
+    insert 
+    into
+        ModeloCarro
+        (categoria, descricao, codigo_fabricante) 
+    values
+        (?, ?, ?)
+
+35. Vamos ver o que que ele salvou aqui, no banco de dados? 
+
+select * from modelocarro;
+
+# codigo, descricao, codigo_fabricante, categoria
+    1,      Cruize,         1,              NULL
+    2,      Civic,          2,              NULL
+    3,      Onix,           1,              HATCH_MEDIO
+
+36. Olha la, ele ja colocou HATCH_MEDIO.
+
+37. Legal, nao eh?
+
+38. Se a gente for la na pesquisa do modelo de carro, agora, repare que, agora, vai trazer, para a gente, o HATCH_MEDIO.
+
+39. Okay?
+
+40. Bom, e, se eu quiser, como eu disse, e se eu quiser salvar o codigo, ao inves de salvar a string, eu quiser salvar o codigo?
+
+41. Eh so eu colocar, aqui, na classe ModeloCarro, ORDINAL,
+
+                @Enumerated(EnumType.ORDINAL)
+                public Categoria getCategoria() {
+                    return categoria;
+                }
+
+42. Mas, ai, para a gente nao ter nenhum probleminha, no banco de dados, eu vou apagar esse Modelo de Carro de Codigo 3, porque, senao, ele vai dar algum probleminha de conversao,
+
+delete from modelocarro where codigo = 3;
+
+43. Vamos voltar aqui e inicializar novamente o Tomcat, vamos para a Pesquisa de Modelo de Carro, http://localhost:8080/locadora-veiculo-web/modeloCarro/PesquisaModeloCarro.xhtml, vamos aguardar ele atualizar o modelo, e a gente ve o que vai acontecer no banco de dados, agora.
+
+44. Okay, bom, estao, aqui, os dois casos, vamos cadastrar mais um novo modelo de carro, vamos cadastrar um Honda, agora, a Categoria, vamos colocar um Sedan Grande, e vamos colocar, aqui, o Civic.
+
+45. Clicar em Salvar, 'Modelo carro salvo com sucesso!', Pesquisa, apareceu, na coluna Categoria, SEDAN_GRANDE.
+
+46. E o que que aconteceu no Banco de Dados?
+
+47. Vamos fazer um select, 
+
+select * from modelocarro
+
+# codigo, descricao, codigo_fabricante, categoria
+    1,      Cruize,         1, 
+    2,      Civic,          2, 
+    4,      Civic,          2,              3
+
+48. Ele colocou um codigo, ao inves de colocar a String,
+
+# codigo, descricao, codigo_fabricante, categoria
+    1,      Cruize,         1, 
+    2,      Civic,          2, 
+    4,      Civic,          2,          >>> 3 <<<
+
+49. Vamos la dar uma olhada?
+
+public enum Categoria {
+
+    HATCH_COMPACTO,             0
+    HATCH_MEDIO,                1
+    SEDAN_COMPACTO,             2
+    >>> SEDAN_MEDIO,            3   <<<
+    SEDAN_GRANDE,               4
+    MINIVAN,                    5
+    ESPORTIVO,                  6
+    UTILITARIO_COMERCIAL        7
+
+}
+
+50. O SEDAN_MEDIO, entao, que ele colocou, eh a posicao 3, comecando a contar no 0.
+
+51. Normandes, qual que eh o melhor? Qual que eh o mais certo?
+
+52. Bom, nao existe qual que eh o melhor, qual que eh o mais certo. Talves o mais recomendado, se voce estiver criando um Sistema do zero. Entao, o instrutor, particularmente, quando esta criando um Sistema, ele prefere colocar String. Por que o instrutor prefere colocar String?
+
+53. Fiz esse select aqui,
+
+select * from modelocarro
+
+# codigo, descricao, codigo_fabricante, categoria
+    1,      Cruize,         1, 
+    2,      Civic,          2, 
+    4,      Civic,          2,              3
+
+, qual que eh essa Categoria de carro?
+
+54. Ah, eh a 3? Deixa eu voltar la e contar. 
+
+55. Entao, se voce chegar e encontrar a String, eh muito melhor de se ler no Banco de Dados. Mas, como o instrutor ja nos disse, nem sempre voce esta criando um sistema, as vezes, voce esta usando um banco de dados ja existente, um sistema ja existente, esta escrevendo ele em cima de JPA, e, ai, voce precisa, 'Po, la, a coluna esta um INTEGER, eles ja fizeram assim, fala, Vou ter que continuar dessa forma', certo?
+
+56. Mas, se voce estiver criando um sistema novo, e puder colocar como String, fica mais facil de ler direto no banco de dados.
+
+57. Fim da     Aula 05.002. Mapeando Enumeracoes. 
+-->

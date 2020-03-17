@@ -1,0 +1,544 @@
+<!--
+
+    Aula 08.001. O que eh API Criteria
+
+1. Bom, se voce nunca mexeu com Criteria ainda, fica tranquilo, que eu vou te explicar devagarzinho, passo-a-passo, como eh que a gente trabalha com ela.
+
+2. Primeiro, vamos so falar rapidinho uma pequena introducao, que, antigamente, antes do JPA-2, a Criteria que tinha era somente do Hibernate, era mais proprietaria, no caso, falando da implementacao do Hibernate. Entao, o pessoal gostou tanto, era muito usado, o pessoal usava muito essa implementacao do Hibernate, que, quando eles criaram o JPA-2, eles incorporaram essa API do Criteria dentro da especificacao.
+
+3. Entao, agora, a gente ja consegue criar as nossas Criterias usando somente a especificacao, claro, e, ai, a implementacao, por baixo, o Hibernate implementa essa Criteria aqui, tambem.
+
+4. Mas, nada impede que voce, se ja usou a Criteria do Hibernate, fala, 'Ah, po, mas eu quero usar, continuar usando a Criteria do Hibernate', nao tem problema.
+
+5. Eu vou focar, aqui, na da Especificacao, que vai funcionar, tambem, para qualquer implementacao que voce for usar, ai, do JPA, inclusive do Hibernate, que eh essa que a gente esta usando.
+
+6. Okay? Entao, vamos la. Para a gente criar o primeiro exemplo rapido, aqui, eu vou criar uma classe, que a gente vai fazer aqui nesse nosso CRUD, e, ai, a partir da proxima aula, a gente volta la no nosso Sisteminha web para a gente criar alguns relatorios usando a Criteria, okay?
+
+7. Essa primeira classe, aqui, vai ser so uma pequena introducao, para a gente, para eu te apresentar, ai, as API's, as interfaces, as classes que a gente precisa utilizar, para trabalhar com Criteria.
+
+8. Entao, vamos la. Deixa eu criar uma nova classe, aqui, eu vou chamar essa nova classe, aqui, de ConsultaComCriteria. Okay?, vamos la, vou criar, aqui, um metodo main(), para a gente fazer as brincadeiras e a gente vai precisar, obviamente, do EntityManager, vamos aproveitar, aqui, que a gente ja tem o nosso JPAUtil, criar o EntityManager, e, la no final, ja vou dar o close() desse EntityManager, e, aqui, a gente vai brincar com a Criteria,
+
+package com.algaworks.curso.jpa2.consultas;
+
+public class ConsultaComCriteria {
+
+
+    public static void main(String[] args) {
+        EntityManager em = JPAUtil.createEntityManager();
+
+
+
+        em.close();
+    }
+}
+
+9. Okay? Bom, existe um paralelo, ai, entre a Criteria e o JPQL. Entao, depois que a gente entende isso, vai ficar mais facil trabalhar com Criteria.
+
+10. No inicio, pode parecer um pouco mais complicado, voce fala, 'Nossa, mas eh muita classe, eh muito metodo', mas, voce vai ver os beneficios da Criteria mais a frente, principalmente, na hora em que a gente for trabalhar la nos relatorios, voce vai ver que eh mais facil a gente definir Queries Dinamicas, porque a gente nao precisa ficar trabalhando so com String, ficar concatenando String, ficar apendando String, para criar os nossos JPQL's. Okay?
+
+11. Entao, va com calma, va devagarzinho, com o tempo, voce vai se acostumar e vai ficar natural.
+
+12. Entao, a primeira coisa que a gente tem que pensar eh que, quando a gente escrevia JPQL, a gente tinha, nao eh?, as palavras select, from, where, like, etc,... varias palavras.
+
+    public static void main(String[] args) {
+        EntityManager em = JPAUtil.createEntityManager();
+
+        // select, from, where, like, etc
+
+        em.close();
+    }
+
+13. Isso tudo vai ser transformado em metodo. Agora, a gente vai ter um metodo from(), okay?, agora, a gente vai ter um metodo where(), entao, a gente vai ter metodos relacionados a cada uma dessas palavras que a gente tinha no JPQL,
+
+    public static void main(String[] args) {
+        EntityManager em = JPAUtil.createEntityManager();
+
+        // select, from, where, like, etc... -> from(), where()...
+
+        em.close();
+    }
+
+14. Vamos criar, aqui, entao, uma consulta simples, depois, a gente da uma evoluida nela. Eu quero criar, em Criteria, a Consulta em JPQL, 'from Cliente',
+
+    public static void main(String[] args) {
+        EntityManager em = JPAUtil.createEntityManager();
+
+        // select, from, where, like, etc... -> from(), where()...
+        // JPQL: from Cliente
+
+        em.close();
+    }
+
+15. Ou seja, vamos fazer, aqui, um select em todos os clientes que eu tenho cadastrados, aqui, no banco, aqui, agora.
+
+16. Bom, para isso, a primeira coisa que a gente precisa eh de um CriteriaBuilder, essa interface, oh, CriteriaBuilder, vou chamar ela, aqui, de builder, e eu vou obte-la do EntityManager, i.e., em.getCriteriaBuilder(),
+
+    public static void main(String[] args) {
+        EntityManager em = JPAUtil.createEntityManager();
+
+        // select, from, where, like, etc... -> from(), where()...
+        // JPQL: from Cliente
+
+        CriteriaBuilder builder = em.getCriteriaBuilder();
+
+        em.close();
+    }
+
+17. Okay? Esse CriteriaBuilder vai ser uma fabrica para varios objetos que a gente vai usar para definir uma Consulta, inclusive a propria Consulta, a propria CriteriaQuery, uma outra interface que a gente vai usar, que a gente precisa definir, aqui, aonde a gente quer fazer essa Consulta, no caso, em Cliente, ja tem essa Entidade mapeada ai,
+
+    public static void main(String[] args) {
+        EntityManager em = JPAUtil.createEntityManager();
+
+        // select, from, where, like, etc... -> from(), where()...
+        // JPQL: from Cliente
+
+        CriteriaBuilder builder = em.getCriteriaBuilder();
+        CriteriaQuery<Cliente> 
+
+        em.close();
+    }
+
+18. criteriaQuery, ela veio do builder, i.e., builder.createQuery();
+
+    public static void main(String[] args) {
+        EntityManager em = JPAUtil.createEntityManager();
+
+        // select, from, where, like, etc... -> from(), where()...
+        // JPQL: from Cliente
+
+        CriteriaBuilder builder = em.getCriteriaBuilder();
+
+        CriteriaQuery<Cliente> criteriaQuery = builder.createQuery(Cliente.class);
+
+        em.close();
+    }
+
+19. Okay? Entao, assim, a gente define, a gente consegue criar a nossa CriteriaQuery, que contem as clausulas, como, por exemplo, o from.
+
+20. Entao, aqui, fazendo analogia, a gente tem criteriaQuery.from(Cliente.class);
+
+    public static void main(String[] args) {
+        EntityManager em = JPAUtil.createEntityManager();
+
+        // select, from, where, like, etc... -> from(), where()...
+        // JPQL: from Cliente
+
+        CriteriaBuilder builder = em.getCriteriaBuilder();
+
+        CriteriaQuery<Cliente> criteriaQuery = builder.createQuery(Cliente.class);
+
+        
+        criteriaQuery.from(Cliente.class);
+
+        em.close();
+    }
+
+21. Entao, olha so, eu acabei de definir essa consulta,
+
+    // JPQL: from Cliente
+
+, eu criei a minha Query, a minha Criteria,
+
+    CriteriaQuery<Cliente> >>> criteriaQuery <<< = builder.createQuery(Cliente.class);
+
+, e falei para ela, 'Olha, eu quero fazer esse from: "from Cliente"'. Entao, tem que falar, 'from Cliente'. 
+
+22. Okay, ja montei a minha Consulta.
+
+23. Agora que eu ja tenho a minha Consulta pronta, eu posso mandar executar ela.
+
+24. Da mesma forma que a gente criava a String do JPQL, a gente nao mandava o Entity Manager executar? A mesma coisa a gente vai fazer aqui.
+
+25. Entao, a gente vai no EntityManager, em.createQuery(), e a gente passa CriteriaQuery para ele,
+
+    public static void main(String[] args) {
+        EntityManager em = JPAUtil.createEntityManager();
+
+        // select, from, where, like, etc... -> from(), where()...
+        // JPQL: from Cliente
+
+        CriteriaBuilder builder = em.getCriteriaBuilder();
+
+        CriteriaQuery<Cliente> criteriaQuery = builder.createQuery(Cliente.class);
+
+        
+        criteriaQuery.from(Cliente.class);
+
+        >>> em.createQuery(criteriaQuery);
+
+        em.close();
+    }
+
+26. E ele vai criar, entao, a nossa Consulta, vai ser um TypedQuery, em cima de Cliente, para a gente nao precisar ficar fazendo Casting a toa. Entao, a gente cria, aqui, a nossa Query, finalmente,
+
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.TypedQuery;
+
+...
+
+    public static void main(String[] args) {
+        EntityManager em = JPAUtil.createEntityManager();
+
+        // select, from, where, like, etc... -> from(), where()...
+        // JPQL: from Cliente
+
+        CriteriaBuilder builder = em.getCriteriaBuilder();
+
+        CriteriaQuery<Cliente> criteriaQuery = builder.createQuery(Cliente.class);
+
+        
+        criteriaQuery.from(Cliente.class);
+
+        TypedQuery<Cliente> query = em.createQuery(criteriaQuery);
+
+        em.close();
+    }
+
+27. E manda executar, nos devolvendo uma Lista de Cliente's, 
+
+    public static void main(String[] args) {
+        EntityManager em = JPAUtil.createEntityManager();
+
+        // select, from, where, like, etc... -> from(), where()...
+        // JPQL: from Cliente
+
+        CriteriaBuilder builder = em.getCriteriaBuilder();
+
+        CriteriaQuery<Cliente> criteriaQuery = builder.createQuery(Cliente.class);
+
+
+        criteriaQuey.from(Cliente);
+
+        TypedQuery<Cliente> query = em.createQuery(criteriaQuery);
+
+        List<Cliente> clientes = query.getResultList();
+
+        
+
+        em.close();
+    }
+
+28. Simples assim.
+
+29. So isso, Normandes?
+
+30. Exatamete.
+
+31. E, aqui, eu posso mostrar, por exemplo, o Codigo, e vou mostrar o Nome,
+
+    for (Cliente cliente : clientes) {
+        System.out.println("Codigo " + cliente.getCodigo());
+        System.out.println("Nome " + cliente.getNome());
+    }
+
+32. Pronto.
+
+33. Voltando, aqui, recapitulando.
+
+34. Primeiro, a gente precisa do builder, 
+
+import javax.persistence.criteria.CriteriaBuilder();
+
+...
+
+    CriteriaBuilder builder = em.getCriteriaBuilder();
+
+...
+
+, que tem, ai, como eu disse, varias e varias funcionalidades para a gente definir a nossa consulta, ela vai ter uma fabrica para varios objetos que a gente vai precisar utilizar na nossa consulta, entre elas, a propria CriteriaQuery, que a gente vai utilizar para criar as clausulas da Consulta,
+
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+
+...
+
+    CriteriaBuilder builder = em.getCriteriaBuilder();
+
+    CriteriaQuery<Cliente> criteriaQuery = builder.createQuery(Cliente.class);
+
+...
+
+, como o 'from', por exemplo, a gente fez o from(), aqui,
+
+...
+
+        CriteriaBuilder builder = em.getCriteriaBuilder();
+
+        CriteriaQuery<Cliente> criteriaQuery = builder.createQuery(Cliente.class);
+
+
+        >>> criteriaQuery.from(Cliente.class);
+
+...
+
+35. Bom, agora, a gente ja tem a nossa Query definida, a gente pode criar a Consulta, propriamente dita, com o EntityManager, ou seja, criamos, aqui, a Query,
+
+...
+
+            CriteriaBuilder builder = em.getCriteriaBuilder();
+
+            CriteriaQuery<Cliente> criteriaQuery = builder.createQuery(Cliente.class);
+
+            
+            criteriaQuery.from(Cliente.class);
+
+            >>> TypedQuery<Cliente> query = em.createQuery(criteriaQuery);
+
+...
+
+, e mandamos executar o getResultList(),
+
+...
+
+                CriteriaBuilder builder = em.getCriteriaBuilder();
+
+                CriteriaQuery<Cliente> criteriaQuery = builder.createQuery(Cliente.class);
+
+                
+                criteriaQuery.from(Cliente.class);
+
+                TypedQuery<Cliente> query = em.createQuery(criteriaQuery);
+
+                >>> List<Cliente> clientes = query.getResultList();
+
+...
+
+36. Se nao quiser passar por esse passo a mais, aqui,
+...
+
+                CriteriaBuilder builder = em.getCriteriaBuilder();
+
+                CriteriaQuery<Cliente> criteriaQuery = builder.createQuery(Cliente.class);
+
+                
+                criteriaQuery.from(Cliente.class);
+
+                >>> TypedQuery<Cliente> query = em.createQuery(criteriaQuery); <<<
+
+                List<Cliente> clientes = query.getResultList();
+
+...
+
+, a gente pode, simplesmente, dar um getResultList(),
+
+...
+
+                CriteriaBuilder builder = em.getCriteriaBuilder();
+
+                CriteriaQuery<Cliente> criteriaQuery = builder.createQuery(Cliente.class);
+
+                
+                criteriaQuery.from(Cliente.class);
+
+                >>> TypedQuery<Cliente> query = em.createQuery(criteriaQuery).getResultList();
+
+                List<Cliente> clientes = query.getResultList();
+
+...
+
+, devolvendo, direto, aqui, em List<Cliente> clientes,
+
+...
+
+                CriteriaBuilder builder = em.getCriteriaBuilder();
+
+                CriteriaQuery<Cliente> criteriaQuery = builder.createQuery(Cliente.class);
+
+                
+                criteriaQuery.from(Cliente.class);
+
+                List<Cliente> clientes = em.createQuery(criteriaQuery).getResultList();
+
+...
+
+37. Igualmente, a gente pode fazer assim tambem, economiza um passo, ai, certo?
+
+38. Bom, se eu mandar executar esse codigo, aqui, ele vai inicializar o JPA e vai fazer a Consulta la.
+
+39. Ao passar por getResultList(),
+
+                    List<Cliente> clientes = em.createQuery(criteriaQuery).getResultList();
+
+, retornou,
+
+Hibernate: 
+    select
+        cliente0_.codigo as codigo1_0_,
+        cliente0_.idade as idade2_0_,
+        cliente0_.nome as nome3_0_,
+        cliente0_.profissao as profissa4_0_,
+        cliente0_.sexo as sexo5_0_ 
+    from
+        Cliente cliente0_
+Codigo: 26
+Nome: Fernando Alonso
+
+40. Executou o select para a gente e mostrou, aqui, o Codigo e o Nome, 'Fernando Alonso', so tem 1 Cliente cadastrado no meu banco de dados.
+
+41. Okay? Se tivesse mais, iria mostrar mais, ai, faz os testes, ai, para voce ver, cadastra mais, ai, que voce vai ver varias linhas, aqui, sendo mostradas.
+
+42. Vamos evoluir um pouquinho essa Consulta para a gente fazer o seguinte.
+
+43. Agora, eu quero evoluir isso daqui, ao inves de eu fazer so isso, em JPQL, eu quero fazer o seguinte, 
+
+                        // JPQL: select c from Cliente c where c.nome like 'Fernando%'
+
+, vamos supor que a gente tivesse mais Fernando's ai, e eu quisesse fazer esse tipo de Consulta aqui.
+
+44. Okay?
+
+45. Como que a gente vai fazer isso daqui com Criteria?
+
+46. Mais uma vez. Parece ser um pouco complicado, mas nao eh nao.
+
+47. Vamos evoluir, aqui, entao.
+
+48. Bom, a gente nao tem essa variavel 'c', uma especie de variavel 'c', aqui dentro do JPQL?,
+
+                        // select c from Cliente >>> c <<< where c.nome like 'Fernando%'
+
+49. Entao, para a gente criar essa variavel c, aqui, no Criteria, a gente vai obter ela, aqui, oh, a partir desse from(),
+
+...
+                        CriteriaBuilder builder = em.getCriteriaBuilder();
+
+                        CriteriaQuery<Cliente> criteriaQuery = builder.createQuery(Cliente.class);
+
+                        
+                        >>> criteriaQuery.from(Cliente.class);
+
+...
+
+50. Quando a gente criou esse from, esse cara, aqui, na verdade, nos retorna um objeto desse tipo aqui, oh, Root<X>, que eu vou colocar Cliente, c,
+
+import javax.persistence.criteria.Root;
+
+...
+
+                    Root<Cliente> c = criteriaQuery.from(Cliente.class);
+
+51. Esse czinho, aqui, 
+
+                    Root<Cliente> >>> c <<< = criteriaQuery.from(Cliente.class);
+
+, oh, que eh criado a partir desse from(), eu fiz, justamente, esse pedaco,
+
+                    // JPQL: select c >>> from Cliente c <<< where c.nome like 'Fernando%'
+
+52. Esse from() devolveu, para a gente, esse Objeto 'c', aqui, ou seja, essa variavel 'c', aqui, okay?
+
+                    // JPQL: select c from Cliente >>> c <<< where c.nome like 'Fernando%'
+
+53. E, ai, a partir dela, agora, eu consigo fazer esse 'select',
+
+                    // JPQL: >>> select <<< c from Cliente c where c.nome like 'Fernando%'
+
+54. Entao, esta faltando eu fazer esse select,
+
+                    // JPQL: >>> select <<< c from Cliente c where c.nome like 'Fernando%'
+
+55. Entao, criteriaQuery.select(), passando 'c',
+
+                CriteriaBuilder builder = em.getCriteriaBuilder();
+
+                CriteriaQuery<Cliente> criteriaQuery = builder.createQuery(Cliente.class);
+
+                
+                Root<Cliente> c = criteriaQuery.from(Cliente.class);
+
+                criteriaQuery.select(c);
+
+                
+                List<Cliente> clientes = em.createQuery(criteriaQuery).getResultList();
+
+...
+
+56. Simples, assim. Entao, agora, eu montei essa parte, aqui,
+
+                    // JPQL: >>> select c from Cliente c <<< where c.nome like 'Fernando%'
+
+, com a Criteria.
+
+57. Falta, agora, a gente montar o where.
+
+58. Vamos la,
+
+                    criteriaQuery.where();
+
+, e, aqui, a gente vai colocar uma expressao, que vai ser qual expressao? Essa expressao aqui,
+
+                    // JPQL: select c from Cliente c where >>> c.nome like 'Fernando%' <<<
+
+59. Okay?
+
+60. Outro uso do CriteriaBuilder eh, justamente, criar essas restricoes. Entao, a gente pode ir no nosso builder e procurar, aqui, que tem uma expressao like(),
+
+                    criteriaQuery.where(builder.like())
+
+, que recebe dois argumentos. O segundo argumento eh, justamente, o que a gente esta querendo fazer a consulta, 
+
+            criteriaQuery.where(builder.like(, "Fernando%"));
+
+, o primeiro argumento, a gente tem que substituir por qual atributo, dentro, aqui, de Cliente, a Entidade Cliente tem os atributos codigo, nome, idade, sexo, profissao. Qual desses atributos eu quero fazer o filtro? Nao eh por nome? Entao, para o c.get(), eu vou passar "nome", porque o 'c', olha la, o c.get("nome"), como na Consulta JPQL,
+
+                    // JPQL: select c from Cliente c where >>> c.nome <<< like 'Fernando%'
+
+61. Okay?,
+
+    criteriaQuery.where(builder.like(c.get("nome"), "Fernando%"));
+
+62. So que, para esse caso, aqui, o like, ele espera isso como uma String.
+
+63. Entao, a gente usa um Genericzinho, aqui, porque ele nao estava esperando um Generic, entao, a gente passa para ele, 'Olha, so que a expressao like espera o primeiro parametro como uma expressao String',
+
+        criteriaQuery.where(builder.like(c.<String>get("nome"), "Fernando%"));
+
+64. Okay, simples, assim.
+
+65. Ja fechou, a gente ja acabou de montar essa consulta,
+
+                    // JPQL: select c from Cliente c where c.nome like 'Fernando%'
+
+66. Se eu mandar executar mais uma vez, voce vai ver que, agora, ele fez o like, e trouxe, novamente, o Fernando Alonso.
+
+67. Bom, nao se assuste, nao. Parece que eh um pouco mais dificil. Realmente, no inicio, eh. Eu tambem acho que, as vezes, fica mais complicado, mesmo, criar esse tanto de objetos. Neste caso, aqui, as vezes em uma consulta simples, como 'from Cliente', bom, so para 'from Cliente', eu vou criar CriteriaBuilder, e esse monte de objetos? Nao, beleza, usa, la, JPQL, diretao, nao vai fazer mal, nao.
+
+68. Mas, quando a gente comecar a ter varios, varios filtros, ao inves de a gente ficar concatenando String para montar um JPQL dessa forma,
+
+                    // JPQL: select c from Cliente c where c.nome like 'Fernando%'
+
+, usando Criteria, a gente trabalha a nivel de metodo, vai ficar mais facil de a gente fazer isso, e a gente vai ver isso nos Relatorios do Sistema.
+
+69. Primeiro, tenta entender o que que eu fiz, aqui, tenta fazer no seu lado, ai,
+
+public static void main(String[] args) {
+
+    // JPQL: select c from Cliente c where c.nome like 'Fernando%'
+
+    CriteriaBuilder builder = em.getCriteriaBuilder();
+
+    CriteriaQuery<Cliente> criteriaQuery = builder.createQuery(Cliente.class);
+
+    // JPQL: select c >>> from Cliente c <<< where c.nome like 'Fernando%'
+    Root<Cliente> c = criteriaQuery.from(Cliente.class);
+
+    // JPQL: >>> select c from Cliente c <<< where c.nome like 'Fernando%'
+    criteriaQuery.select(c);
+
+    // JPQL: select c from Cliente c >>> where c.nome like 'Fernando%' <<<
+    criteriaQuery.where(builder.like(c.get("nome"), "Fernando%"));
+
+    List<Cliente> clientes = em.createQuery(criteriaQuery).getResultList();
+
+    for (Cliente cliente : clientes) {
+        System.out.println("Codigo: " + cliente.getCodigo());
+        System.out.println("Nome: " + cliente.getNome());
+    }
+    
+}
+
+70. Fim da     Aula 08.001. O que eh API Criteria.
+        
+
+-->

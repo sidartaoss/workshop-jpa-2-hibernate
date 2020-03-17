@@ -1,0 +1,428 @@
+<!-- 
+
+    Aula 06.007. Trabalhando com Queries Agregadas
+
+1. As consultas agregadas, também, são muito importantes. Nos vamos entender elas, aqui, bem devagarzinho. Entao, vamos la, nos temos 5 tipos de consultas, e sao muito parecidas com o SQL normal. Entao, a gente tem, la, o AVG,
+
+                            Queries Agregadas,
+
+        AVG
+
+, para, talvez, voce que nao lembra, ai, de Consultas Agregadas, nao eh?, normalmente, a gente esta agregando, pegando Uma Coluna, fazenda alguma operacao em cima dela, como se fosse Uma soma..., no caso do AVG, a gente esta fazendo a Media, entao, se a gente tem uma coluna numerica, por exemplo, a gente pode ir la e somar, fazer a Media daquele valor, e eh o que a gente vai fazer aqui tambem.
+
+2. A gente pode contar,
+
+
+                        Queries Agregadas
+        
+        AVG         COUNT
+
+, a quantidade de registros, em um determinada consulta, tambem. Entao, voce quer saber, la, a quantidade de alugueis, onde o valor do aluguel eh maior do que 200,00, a gente pode usar o COUNT, por exemplo.
+
+3. Okay? O Minimo, 
+
+
+                        Queries Agregadas
+
+    AVG         COUNT       MIN
+
+, vai trazer o valor minimo, entao, voce faz em um conjunto, e, ai, ele vai trazer, la, um conjunto de todos os alugueis, qual que eh o valor minimo do aluguel? 
+
+4. E o valor maximo?
+
+                        Queries Agregadas
+
+    AVG             COUNT           MIN         MAX
+
+, daquele aluguel que a gente fez? Certo? E, tambem, a soma,
+
+
+                        Queries Agregadas
+
+    AVG             COUNT           MIN             MAX             SUM
+
+, a gente pode ir somando.
+
+5. Entao, repare que, por que que chama Agregadas? 
+
+6. Porque a gente esta fazendo uma Query com um conjunto de operacoes, Uma Operacao, na verdade, em cima de Um Conjunto de linhas.
+
+7. Entao, a gente agregou aquele resultado, a gente condensou, ao inves de trazer varias linhas, a gente vai trazer, por exemplo, Uma que eh a Media, Uma que eh o Total (COUNT), certo?, ele ja vai somar para a gente. E, se a gente quiser, a gente pode Agrupar esses elementos, aqui (AVG, COUNT, MIN, MAX, SUM),
+
+                        Queries Agregadas
+
+    AVG             COUNT           MIN             MAX             SUM
+
+                        GROUP BY
+
+, essas Queries Agregadas (AVG, COUNT, MIN, MAX, SUM), a gente consegue agrupar, tambem, por determinada Entidade.
+
+8. E conseguimos fazer filtros das Clausulas, aqui, Agregadas (AVG, COUNT, MIN, MAX, SUM), usando o HAVING,
+
+                        Queries Agregadas
+
+    AVG             COUNT           MIN             MAX             SUM
+
+                        GROUP BY
+
+                        HAVING
+
+9. Bem parecido com o SQL.
+
+10. Bom, chega de conversa, vamos la para a gente fazer um exemplo.
+
+11. Eu quero fazer, aqui, em cima de Aluguel e Carro. Eu quero saber o seguinte, eu quero agrupar pelo Carro, e saber, por exemplo, qual que foi o valor total, o maior valor de aluguel para aquele carro.
+
+12. Eu quero agrupar, entao, pelo Carro, a gente agrupa pelo Carro e, ai, daquele Carro, qual foi o maior valor de aluguel que eu ja fiz?
+
+13. Qual foi a Media de aluguel para aquele Carro?
+
+14. Qual foi a Quantidade de aluguel que a gente teve para aquele Carro?
+
+15. Okay?
+
+16. Bom, entao, vamos comecar a escrever essa Consulta.
+
+17. Eu entrei la no banco e salvei alguns alugueis, aqui, estao eles aqui, oh, se voce olhar aqui, o Codigo do Carro, para o Codigo de Carro 1, eu tenho 2 Alugueis. Para o Codigo de Carro 2, eu tenho 1 Aluguel.
+
+18. Certo? Na tabela, aqui, de Aluguel, e, aqui, estao os valores, na coluna valor_total.
+
+19. Entao, entra ai, no seu banco de dados, tenta fazer, cadastrar alguns alugueis, ai, tambem, para voce conseguir fazer esse teste, okay?
+
+20. Entao, vamos voltar la, no Eclipse.
+
+21. Eu criei, aqui, a classe ConsultasAgregadasEmCarro,
+
+package com.algaworks.curso.jpa2.consultas;
+
+import javax.persistence.EntityManager;
+
+public class ConsultasAgregadasEmCarro {
+
+    public static void main(String[] args) {
+        EntityManager em = JPAUtil.createEntityManager();
+
+        String jpql = "";
+
+        em.close();
+    }
+}
+
+, para a gente fazer isso daqui. Entao, vamos la, o que que eu estava falando, mesmo, que eu quero?
+
+22. Eu quero, eu vou buscar o Carro, tambem, para a gente poder imprimir o Modelo do Carro, entao, eu vou colocar, aqui, o 'c',
+
+    String jpql = "select c, "
+
+, por exemplo, eu vou querer saber, eu quero contar a quantidade de aluguel pelo Carro, oh, entao, mais uma vez, eu vou estar Agrupando pelo Carro, mas eu quero saber a Quantidade de Aluguel daquele Carro, nao eh uma Entidade, oh, Um Carro nao vai trazer Muitos Alugueis? So para deixar claro, oh, Um Carro tem Varios Alugueis, nao eh?, entao, eu quero saber a Quantidade de alugueis, entao, eu vou chamar, la, de 'a',
+
+    String jpql = "select c, count(a) ";
+
+, o Carro vai chamar de 'c' e a gente ja aprendeu, inclusive, a fazer o JOIN, nao eh?, entre esses caras.
+
+23. Eu quero saber o valor maximo, la, do Aluguel,
+
+    String jpql = "select c, count(a), max(a.valorTotal) ";
+
+, posso colocar assim.
+
+24. Eu quero saber a Media dos Alugueis que eu fiz, la,
+
+    String jpql = "select c, count(a), max(a.valorTotal), avg(a.valorTotal) "
+
+, a media em cima de valorTotal.
+
+25. 'from', entao, nos vamos buscar so essas informacoes, voce pode brincar, ai, fazendo mais coisas. Trazendo Carro,
+
+    String jpql = "select c, count(a), max(a.valorTotal), avg(a.valorTotal) "
+                + "from Carro c";
+
+, e eu tenho que fazer o JOIN, nao eh verdade?, com alugueis,
+
+    String jpql = "select c, count(a), max(a.valorTotal), avg(a.valorTotal) "
+            + "from Carro c JOIN c.alugueis a ";
+
+26. A gente faz o JOIN, okay. E vou agrupar, eu preciso, nesse caso, agrupar pelo Carro,
+
+    String jpql = "select c, count(a), max(a.valorTotal), avg(a.valorTotal) "
+            + "from Carro c JOIN c.alugueis a "
+            + "group by c";
+
+27. Entao, por que que eu preciso agrupar? Se eu nao agrupar, como eh que ele vai contar, aqui?
+
+    String jpql = "select c, >>> count(a) <<<, max(a.valorTotal), avg(a.valorTotal) "
+            + "from Carro c JOIN c.alugueis a "
+            + "group by c";
+
+, eu estou buscando Carro e Aluguel, ele vai trazer varias linhas, mas como eh que ele traz esse 'c', aqui? 
+
+
+    String jpql = "select >>> c <<<, count(a), max(a.valorTotal), avg(a.valorTotal) "
+            + "from Carro c JOIN c.alugueis a "
+            + "group by c";
+
+28. Entao, ele agrupa em 'c', porque ele traz Uma linha, nao eh?, ele vai agrupar todos os registros comuns de carro e, ai, ele vai somar. Entao, ele traz Um carro e, 
+
+    String jpql = "select >>> c <<<, count(a), max(a.valorTotal), avg(a.valorTotal) "
+            + "from Carro c JOIN c.alugueis a "
+            + "group by c";
+
+,ai, soma, la, os alugueis, 
+
+    String jpql = "select c, >>> count(a) <<<, max(a.valorTotal), avg(a.valorTotal) "
+            + "from Carro c JOIN c.alugueis a "
+            + "group by c";
+
+, pega o valor maximo daqueles alugueis, 
+
+    String jpql = "select c, count(a), >>> max(a.valorTotal) <<<, avg(a.valorTotal) "
+            + "from Carro c JOIN c.alugueis a "
+            + "group by c";
+
+, porque, aqui, o a seria uma lista, nao eh?, como se fosse Uma Lista, olha la,
+
+    String jpql = "select c, count(a), max(a.valorTotal), avg(a.valorTotal) "
+            + "from Carro c JOIN >>> c.alugueis a <<<"
+            + "group by c";
+
+, certo? Entao, ele consegue agrupar essas informacoes, agregar essas informacoes, aqui.
+
+29. Ta vendo? Bom, e, ai, eh so mandar executar isso daqui, entao, vamos la,
+
+    em.createQuery(jpql)
+
+, no EntityManager, invocar crateQuery(), passando, aqui, a String jpql, invocando getResultList(),
+
+                    em.createQuery(jpql).getResultList();
+
+30. Nao sao varias informacoes? Aqui, eu tenho o c, o count(), o max(), e o avg(),
+
+    String jpql = "select >>> c, count(a), max(a.valorTotal), avg(a.valorTotal) <<< "
+            + "from Carro c JOIN c.alugueis a "
+            + "group by c";
+
+31. Entao, isso aqui vai me devolver Uma Lista de array de objetos, vamos chamar, aqui, de resultados, por exemplo,
+
+        List<Object[] resultados = em.createQuery(jpql).getResultList();
+
+32. E, aqui, agora, eu faco um for, nesses resultados, e, ai, agora, a gente comeca a mostrar, por exemplo, qual que eh o Modelo do Carro? Entao, eh na primeira posicao do array, entao, vai ser obj[0]. So que isso daqui vai trazer o Carro, entao, eu vou fazer um casting para Carro, para eu poder executar qualquer metodo, aqui, ((Carro) obj[0]),
+
+    for (Object[] obj : resultados) {
+        System.out.println("Modelo: " + ((Carro) obj[0]).getModelo().getDescricao());
+    }
+
+33. Fiz o casting para Carro. Invocar, em seguida, getModelo(), e getDescricao(), que eu consigo mostrar a descricao para a gente ver qual que eh o Carro. Entao, vai aparecer, la, Cruze, por exemplo, e os valores, aqui, das consultas agregadas,
+
+    for (Object[] obj : resultados) {
+        System.out.println("Modelo: " + ((Carro) obj[0]).getModelo().getDescricao());
+        System.out.println("Quantidade de alugueis: " + obj[1]);
+        System.out.println("Valor maximo: " + obj[2]);
+        System.out.println("Valor medio: " + obj[3]);
+        System.out.println();
+    }
+
+34. Simples assim.
+
+35. Vamos executar para a gente ver?
+
+36. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as col_0_0_,
+        count(alugueis1_.codigo) as col_1_0_,
+        max(alugueis1_.valor_total) as col_2_0_,
+        avg(cast(alugueis1_.valor_total as double)) as col_3_0_,
+        carro0_.codigo as codigo1_3_,
+        carro0_.chassi as chassi2_3_,
+        carro0_.cor as cor3_3_,
+        carro0_.codigo_modelo as codigo_m6_3_,
+        carro0_.placa as placa4_3_,
+        carro0_.valor_diaria as valor_di5_3_ 
+    from
+        Carro carro0_ 
+    inner join
+        Aluguel alugueis1_ 
+            on carro0_.codigo=alugueis1_.codigo_carro 
+    group by
+        carro0_.codigo
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_,
+        fabricante1_.codigo as codigo1_5_1_,
+        fabricante1_.nome as nome2_5_1_ 
+    from
+        ModeloCarro modelocarr0_ 
+    left outer join
+        Fabricante fabricante1_ 
+            on modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+    where
+        modelocarr0_.codigo=?
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_,
+        fabricante1_.codigo as codigo1_5_1_,
+        fabricante1_.nome as nome2_5_1_ 
+    from
+        ModeloCarro modelocarr0_ 
+    left outer join
+        Fabricante fabricante1_ 
+            on modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+    where
+        modelocarr0_.codigo=?
+Modelo: Cruze
+Quantidade de alugueis: 2
+Valor maximo: 450.00
+Valor medio: 400.0
+
+Modelo: Fit
+Quantidade de alugueis: 1
+Valor maximo: 350.00
+Valor medio: 350.0
+
+37. Olha so o que que ele trouxe, aqui, para a gente, oh, 
+
+Modelo: Cruze
+Quantidade de alugueis: 2
+Valor maximo: 450.00
+Valor medio: 400.0
+
+Modelo: Fit
+Quantidade de alugueis: 1
+Valor maximo: 350.00
+Valor medio: 350.0
+
+, para o Fit, o Maximo e a Media vai ser o mesmo, se a gente olhar no banco de dados, o Codigo de Carro, aqui, no meu Modelo, eh o Cruze. Entao, o Cruze tem 2 alugueis, realmente, sao esses dois, aqui, 350,00 e 450,00, o Valor Medio, oh, 350 + 450 = 800, entao, a Media eh 400, entao, esta certo, e o Valor Maximo 450,00.
+
+38. E o Fit eh o outro aluguel. Bom, o que que a gente consegue mexer, aqui, ainda, para aprender mais um pouquinho?
+
+39. Fazer o filtro, usando o HAVING,
+
+    String jpql = "select c, count(a), max(a.valorTotal), avg(a.valorTotal) "
+            + "from Carro c JOIN c.alugueis a "
+            + "group by c ";
+
+40. Vamos fazer o seguinte. Eu so quero saber, por exemplo, os carros, quem tem mais de 1 aluguel, por exemplo,
+
+    String jpql = "select c, count(a), max(a.valorTotal), avg(a.valorTotal) "
+            + "from Carro c JOIN c.alugueis a "
+            + "group by c "
+            + "having count(a) > 1 ";
+
+40. Ou seja, eu nao quero verificar, esse Valor Maximo e a Media, para quem so tem Um Carro. Entao, a partir de quem tem Mais de Um Carro.
+
+41. Entao, eu faco Um Having, onde o count(), aqui, for maior do que Um. Ou poderiamos fazer pela Media, ah, onde a Media, a maior media seria 300,00, coisas desse tipo. Se a gente mandar executar novamente, so vai trazer o do Cruze.
+
+42. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as col_0_0_,
+        count(alugueis1_.codigo) as col_1_0_,
+        max(alugueis1_.valor_total) as col_2_0_,
+        avg(cast(alugueis1_.valor_total as double)) as col_3_0_,
+        carro0_.codigo as codigo1_3_,
+        carro0_.chassi as chassi2_3_,
+        carro0_.cor as cor3_3_,
+        carro0_.codigo_modelo as codigo_m6_3_,
+        carro0_.placa as placa4_3_,
+        carro0_.valor_diaria as valor_di5_3_ 
+    from
+        Carro carro0_ 
+    inner join
+        Aluguel alugueis1_ 
+            on carro0_.codigo=alugueis1_.codigo_carro 
+    group by
+        carro0_.codigo 
+    having
+        count(alugueis1_.codigo)>1
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_,
+        fabricante1_.codigo as codigo1_5_1_,
+        fabricante1_.nome as nome2_5_1_ 
+    from
+        ModeloCarro modelocarr0_ 
+    left outer join
+        Fabricante fabricante1_ 
+            on modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+    where
+        modelocarr0_.codigo=?
+Modelo: Cruze
+Quantidade de alugueis: 2
+Valor maximo: 450.00
+Valor medio: 400.0
+
+, olha la, agora, ele so trouxe o Cruze, nao trouxe o do Fit, justamente, porque a gente filtrou na quantidade, agora.
+
+43. Olha a Query que ele montou, aqui, para a gente. Ele ja faz, la, o max(), avg(), ele ja consegue trazer isso tudo, fazer o Group By, fazer o Having, para a gente. Bem legal, nao eh nao?
+
+44.
+
+		String jpql = "select c, count(a), sum(a.valorTotal), min(a.valorTotal), max(a.valorTotal), avg(a.valorTotal) "
+				+ "from Carro c JOIN c.alugueis a "
+				+ "group by c "		
+				+ "having count(a) > 1 ";
+
+45. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as col_0_0_,
+        count(alugueis1_.codigo) as col_1_0_,
+        sum(alugueis1_.valor_total) as col_2_0_,
+        min(alugueis1_.valor_total) as col_3_0_,
+        max(alugueis1_.valor_total) as col_4_0_,
+        avg(cast(alugueis1_.valor_total as double)) as col_5_0_,
+        carro0_.codigo as codigo1_3_,
+        carro0_.chassi as chassi2_3_,
+        carro0_.cor as cor3_3_,
+        carro0_.codigo_modelo as codigo_m6_3_,
+        carro0_.placa as placa4_3_,
+        carro0_.valor_diaria as valor_di5_3_ 
+    from
+        Carro carro0_ 
+    inner join
+        Aluguel alugueis1_ 
+            on carro0_.codigo=alugueis1_.codigo_carro 
+    group by
+        carro0_.codigo 
+    having
+        count(alugueis1_.codigo)>1
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_,
+        fabricante1_.codigo as codigo1_5_1_,
+        fabricante1_.nome as nome2_5_1_ 
+    from
+        ModeloCarro modelocarr0_ 
+    left outer join
+        Fabricante fabricante1_ 
+            on modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+    where
+        modelocarr0_.codigo=?
+Modelo: Cruze
+Quantidade de alugueis: 2
+Soma dos alugueis: 800.00
+Valor Minimo: 350.00
+Valor maximo: 450.00
+Valor medio: 400.0
+
+46. Fim da      Aula 06.007. Trabalhando com Queries Agregadas.
+
+
+
+
+-->

@@ -1,0 +1,203 @@
+<!--
+
+    Aula 11.003. Problema N + 1
+
+1. 
+
+@Test
+public void problema() {
+    TypedQuery<Carro> query = this.manager.createQuery("from Carro", Carro.class);
+
+    List<Carro> carros = query.getResultList();
+
+    for (Carro carro : carros) {
+        System.out.println(carro.getCodigo() + " - " + carro.getPlaca() + " - " + carro.getModelo().getDescricao());
+    }
+}
+
+2. Eu ja falei isso, antes, mas nao custa repetir.
+
+3. Vamos ver o problema que pode acontecer, aqui, nos nossos mapeamentos que, aparentemente, estao funcionando, mas nao vao estar eficientes.
+
+4. Porque nao basta so funcionar. Tem que funcionar de uma forma eficiente.
+
+5. Beleza?
+
+6. Entao, olha so esse exemplo, aqui, que eu fiz, criei essa classe, aqui, oh, ProblemaNMaisUm. 
+
+7. Olha so, eu fiz, aqui, para criar um JPQL, em cima de Carro, e, na hora em que eu estou mostrando, eu estou mostrando a Placa do Carro e, ai, eu vou , navego, pego o Modelo, e pego a Descricao, nao eh?, para saber qual que eh o Modelo do Carro tambem.
+
+8. Bom, deixa eu executar esse cara, aqui, e voce vai ver o que que vai aparecer na Saida.
+
+9. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_,
+        carro0_.chassi as chassi2_3_,
+        carro0_.cor as cor3_3_,
+        carro0_.data_criacao as data_cri4_3_,
+        carro0_.data_modificacao as data_mod5_3_,
+        carro0_.foto as foto6_3_,
+        carro0_.codigo_modelo as codigo_m9_3_,
+        carro0_.placa as placa7_3_,
+        carro0_.valor_diaria as valor_di8_3_ 
+    from
+        Carro carro0_
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+1 - AAA-1234 - Cruze
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+3 - AAA-9999 - Fit
+4 - BBB-8888 - Cruze
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+5 - AAA-7788 - Civic
+6 - DDD-1234 - Fit
+8 - XXX-1111 - Civic
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+9 - ADD-8989 - HB20
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+10 - YNP-5588 - Fiesta
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+12 - AAA-1111 - Ferrari
+
+
+10. Analisa, aqui, comigo, olha so o que que ele fez.
+
+11. Ele fez o select em Carro, 
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_,
+        carro0_.chassi as chassi2_3_,
+        carro0_.cor as cor3_3_,
+        carro0_.data_criacao as data_cri4_3_,
+        carro0_.data_modificacao as data_mod5_3_,
+        carro0_.foto as foto6_3_,
+        carro0_.codigo_modelo as codigo_m9_3_,
+        carro0_.placa as placa7_3_,
+        carro0_.valor_diaria as valor_di8_3_ 
+    from
+        Carro carro0_
+
+, e, ai, no meu Cadastro, aqui, tem varios Modelos de Carros cadastrados, la. No seu, provavelmente, esta diferente do meu, entao, deixa varios carros cadastrados, ai, quando voce estiver fazendo o teste.
+
+12. Entao, olha so. Depois que ele fez o select no Carro, ele foi fazendo varios selects para o Modelo de Carro.
+
+13. E, ai, ele imprimiu, oh, Fit, ai, beleza, fez o select em Modelo de Carro, imprimiu, la, o Civic, fez outro select, foi imprimindo, la, o Ferrari, fez outro select, tem uma outra Ferrari com uma outra placa, etc.
+
+14. Ou seja, esta funcionando?
+
+15. Esta. Ele trouxe, aqui, mostrando, para a gente, imprimiu tanto a Placa quanto o Modelo do Carro. Mas nao esta eficiente, concorda comigo?
+
+16. Olha a quantidade de select's que ele fez, 6 select's, aproximadamente, aqui, para mostrar o Modelo do Carro, sendo que a gente conseguiria fazer isso com Um so. Sabe como? A gente fazer Um Join, se a gente olhar la na classe Carro, normalmente, isso vai acontecer la, nao eh?, no mapeamento ManyToOne, ModeloCarro, oh, esta Lazy, tambem, oh, repara bem, o ModeloCarro,
+
+@ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+public ModeloCarro getModelo() {
+    return modelo;
+}
+
+17. Entao, eu vou forcar Um Join e vou falar 'Eu quero que voce traga para mim o que? c.modelo, que eh assim que foi mapeado, nao eh? Eh o nome do atributo la, oh, na classe Carro, modelo',
+
+    TypedQuery<Carro> query = this.manager.createQuery("from Carro c inner join fetch c.modelo");
+
+18. Okay? Entao, eu vou falar, 'Faz o Join e traz para mim, faz o fetch, ai, para mim, em Uma Consulta so.'
+
+19. Okay? Vamos mandar executar novamente.
+
+20. E, agora, observa a quantidade de Consultas que ele vai fazer.
+
+21. Agora, olha, so, quantas consultas ele fez? Apenas Uma,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_0_,
+        modelocarr1_.codigo as codigo1_7_1_,
+        carro0_.chassi as chassi2_3_0_,
+        carro0_.cor as cor3_3_0_,
+        carro0_.data_criacao as data_cri4_3_0_,
+        carro0_.data_modificacao as data_mod5_3_0_,
+        carro0_.foto as foto6_3_0_,
+        carro0_.codigo_modelo as codigo_m9_3_0_,
+        carro0_.placa as placa7_3_0_,
+        carro0_.valor_diaria as valor_di8_3_0_,
+        modelocarr1_.categoria as categori2_7_1_,
+        modelocarr1_.descricao as descrica3_7_1_,
+        modelocarr1_.codigo_fabricante as codigo_f4_7_1_ 
+    from
+        Carro carro0_ 
+    inner join
+        ModeloCarro modelocarr1_ 
+            on carro0_.codigo_modelo=modelocarr1_.codigo
+1 - AAA-1234 - Cruze
+3 - AAA-9999 - Fit
+4 - BBB-8888 - Cruze
+5 - AAA-7788 - Civic
+6 - DDD-1234 - Fit
+8 - XXX-1111 - Civic
+9 - ADD-8989 - HB20
+10 - YNP-5588 - Fiesta
+12 - AAA-1111 - Ferrari
+14 - MMM-1111 - Cruze
+
+22. Ele ja foi la e fez o Join e ja trouxe as colunas de ModeloCarro num Select so.
+
+23. Ou seja, o funcionamento, agora, foi muito, muito mais eficiente. Concorda comigo? 
+
+24. Fim da     Aula 11.003. Problema N + 1.
+
+
+-->

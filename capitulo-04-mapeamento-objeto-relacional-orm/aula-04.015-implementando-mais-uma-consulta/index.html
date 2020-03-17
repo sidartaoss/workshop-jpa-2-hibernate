@@ -1,0 +1,78 @@
+<!--
+    Aula 04.015. Implementando Mais uma Consulta
+
+1. Vamos avancar um pouquinho mais no nosso sistema, para a gente ja deixar ele mais preparado para as outras coisas que a gente vai ver. Entao, agora, eu vou mostrar algumas coisas, de como limpar o Banco, e a gente vai criar, tambem, a Pesquisa do Carro, nao eh?, que a gente ainda nao tinha criado.
+
+2. Vou deixar la no GitHub para voce pegar la, okay?
+
+3. Voce vai ver que nao tem muito segredo, mas vai ter uma coisinha la que vai ser bem interessante de a gente ver.
+
+4. Bom, primeiro, acho que eh uma boa hora de eu te mostrar, aqui, se eu nao te mostrei, ainda, como a gente pode fazer para limpar o banco de dados. Entao, as vezes, se a gente cria tabela, apaga, a gente vai la e altera o mapeamento, lembra que eu te falei que isso eh bem complicado, nao eh?, eh um problema de deixar isso ficar acontecendo, quando voce altera o modelo, ai, no Mapeamento, ai, voce vai e testa o sistema, altera de novo, isso vai deixando lixo no seu banco de dados, nao eh? Entao, para a gente limpar, a gente teria que sair aqui apagando todas as tabelas. Entao, se eu der um Refresh, aqui, no Workbench, no Schema locadora, se voce vier aqui, selecionar todas as tabelas, e mandar apagar as tabelas, aqui, e mandar dar um Apply, provavelmente, vai dar errado. Por que que vai dar errado? Ele nao vai apagar todas as tabelas. As vezes, ele ate apaga algumas tabelas, nao apagou nada, aqui, neste caso, bom, por que que ele nao apagou? Por que nao apaga acessorio? Bom, porque, as vezes, tem uma outra tabela referenciando acessorio, no caso, eh carro_acessorio, que referencia acessorio, e, ai, comeca, entao, voce tem que achar a ordem certa de apagar as tabelas, okay?
+
+5. Mas, como a gente pode apagar tudo e sair cadastrando tudo de novo, como o nosso sistema eh bem pequenininho, o que a gente pode fazer? Vir aqui e apagar o Schema, vou apagar o Schema inteiro, nao tem mais o Schema locadora. Vou la e vou criar de novo o Schema locadora. Agora, estamos la com o Schema locadora selecionado.
+
+6. Oh, nao tem nenhuma tabela, nesse nosso sisteminha, nesse nosso Schema locadora, porque eu acabei de dropar ele, nao eh?, e vamos criar ele de novo. Para criar ele de novo, a gente simplesmente inicializa o Tomcat, entao, quando a gente inicializar o Tomcat, eh so acessar alguma pagina que inicialize o JPA para a gente. Entao, vamos cadastrar tudo de novo, entao, vamos comecar pelo Cadastro de Fabricante. Ai, nessa hora, ele demora um pouquinho, porque ele esta, justamente, criando todas as tabelas que a gente apagou,
+
+jan 08, 2019 11:29:48 AM org.hibernate.tool.hbm2ddl.SchemaUpdate execute
+INFO: HHH000228: Running hbm2ddl schema update
+jan 08, 2019 11:29:48 AM org.hibernate.tool.hbm2ddl.SchemaUpdate execute
+INFO: HHH000102: Fetching database metadata
+jan 08, 2019 11:29:48 AM org.hibernate.tool.hbm2ddl.SchemaUpdate execute
+INFO: HHH000396: Updating schema
+jan 08, 2019 11:29:48 AM org.hibernate.tool.hbm2ddl.DatabaseMetadata getTableMetadata
+INFO: HHH000262: Table not found: Acessorio
+jan 08, 2019 11:29:48 AM org.hibernate.tool.hbm2ddl.DatabaseMetadata getTableMetadata
+INFO: HHH000262: Table not found: Aluguel
+jan 08, 2019 11:29:48 AM org.hibernate.tool.hbm2ddl.DatabaseMetadata getTableMetadata
+INFO: HHH000262: Table not found: Carro
+jan 08, 2019 11:29:48 AM org.hibernate.tool.hbm2ddl.DatabaseMetadata getTableMetadata
+INFO: HHH000262: Table not found: Fabricante
+jan 08, 2019 11:29:48 AM org.hibernate.tool.hbm2ddl.DatabaseMetadata getTableMetadata
+INFO: HHH000262: Table not found: ModeloCarro
+jan 08, 2019 11:29:48 AM org.hibernate.tool.hbm2ddl.DatabaseMetadata getTableMetadata
+INFO: HHH000262: Table not found: apolice_seguro
+jan 08, 2019 11:29:48 AM org.hibernate.tool.hbm2ddl.DatabaseMetadata getTableMetadata
+INFO: HHH000262: Table not found: carro_acessorio
+jan 08, 2019 11:29:48 AM org.hibernate.tool.hbm2ddl.DatabaseMetadata getTableMetadata
+INFO: HHH000262: Table not found: Acessorio
+jan 08, 2019 11:29:48 AM org.hibernate.tool.hbm2ddl.DatabaseMetadata getTableMetadata
+INFO: HHH000262: Table not found: Aluguel
+jan 08, 2019 11:29:48 AM org.hibernate.tool.hbm2ddl.DatabaseMetadata getTableMetadata
+INFO: HHH000262: Table not found: Carro
+jan 08, 2019 11:29:48 AM org.hibernate.tool.hbm2ddl.DatabaseMetadata getTableMetadata
+INFO: HHH000262: Table not found: Fabricante
+jan 08, 2019 11:29:48 AM org.hibernate.tool.hbm2ddl.DatabaseMetadata getTableMetadata
+INFO: HHH000262: Table not found: ModeloCarro
+jan 08, 2019 11:29:48 AM org.hibernate.tool.hbm2ddl.DatabaseMetadata getTableMetadata
+INFO: HHH000262: Table not found: apolice_seguro
+jan 08, 2019 11:29:48 AM org.hibernate.tool.hbm2ddl.DatabaseMetadata getTableMetadata
+INFO: HHH000262: Table not found: carro_acessorio
+jan 08, 2019 11:29:48 AM org.hibernate.tool.hbm2ddl.DatabaseMetadata getTableMetadata
+INFO: HHH000262: Table not found: GERADOR_CODIGO
+jan 08, 2019 11:29:56 AM org.hibernate.tool.hbm2ddl.SchemaUpdate execute
+INFO: HHH000232: Schema update complete
+Hibernate: select fabricante0_.codigo as codigo1_3_, fabricante0_.nome as nome2_3_ from Fabricante fabricante0_
+
+7. Beleza, a gente volta la no Sisteminha, beleza, oh, Pesquisa de Fabricantes, http://localhost:8080/locadora-veiculo-web/fabricante/PesquisaFabricante.xhtml.
+
+8. Vamos criar, entao, os Fabricantes, Chevrolet, Honda.
+
+9. Beleza, esta cadastrado, entao, 2 Fabricantes.
+
+10. Vamos cadastrar um Modelo de Carro, Fabricante Chevrolet, Modelo Cruize, Honda Civic.
+
+11. Vamos cadastrar, agora, alguns Acessorios, Ar Condicionado, Banco de Couro. 
+
+12. Em Menu / Cadastros / Carro, esse, aqui, eu adicionei agora, nesta aula, eu adicionei a Consulta de Carro. Entao, o que que eu fiz? So para voce ver, nao tem nenhum carro ainda, nao eh? Mas, vamos la, Modelo do Carro Cruize, a Placa AAA-1234, Cor Branco, Valor diaria 200, e Tem Ar Condicionado. Salvar. Vou, agora, salvar um Civic, Placa BBB-2222, Cor Azul, Valor diaria 250,00, e esse tem Ar Condicionado e Banco de Couro. Clicar e Salvar e Pesquisar, agora, que eh o que eu acabei de implementar.
+
+13. Deixa eu te mostrar, primeiro, o que que eu adicionei, la, eu adicionei a Pagina de Pesquisa de Carros, ela esta incompleta, ainda, ela nao esta 100%, porque a gente vai ver, ainda, outros detalhes dessa Pesquisa, aqui, que eu ja vou te mostrar, e criei o ManagedBean, de PesquisaCarroBean, que nao tem nada de especial, simplesmente, a gente injeta o CarroDAO, tem la o metodo excluir(), tem o metodo inicializar(), que busca todos os carros, nao tem nenhum segredinho.
+
+14. E, ai, vamos voltar la na telinha, olha so, entao, ele mostra, la, a placa, a cor branco, o valor da diaria, e esse icone, aqui, Normandes, na coluna Acessorios, o que que eh isso?
+
+15. Quando a gente clicar aqui, vai abrir uma janelinha e mostrar todos os acessorios desse Carro. Entao, eu quero ver os acessorios, aqui, desse carro, entao, clica, que ele vai mostrar. Bom, por enquanto, nao esta mostrando nada. Por que nao esta mostrando nada? Porque, na hora que a gente colocar isso daqui, vai acontecer alguns probleminhas bem legais de a gente brincar, ai. Nao sei se voce ja mexeu com JPA, lembra daqueles Lazy Loading, nao eh?, de voce tentar carregar e..., isso aqui nao foi carregado, deixa eu ver por que. E, ai, vai la e coloca eager em tudo, e nao sei o que, e isso nem sempre eh bom, nao eh?, entao, a gente vai entender por que que isso acontece mais para frente, nas proximas aulas, e a gente vai clicar aqui em Acessorios e a gente vai ver os Acessorios desse Carro, aqui.
+
+16. Bom, por enquanto, eh isso. Entao, agora, a gente ja esta com toda essa parte, aqui, de Cadastros bem adiantado, nao esta 100% pronta, nao eh?, ja viu algumas coisas que estao faltando, mas ja esta bem adiantado.
+
+17. Fim da     Aula 04.015. Implementando Mais uma Consulta.
+
+-->

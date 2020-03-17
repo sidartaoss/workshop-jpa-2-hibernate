@@ -1,0 +1,205 @@
+<!-- 
+
+Aula 02.002. Primeira Consulta com JPA
+
+1. Bom, vamos fazer a nossa primeira consulta no Banco de Dados?
+
+2. Vamos criar, aqui, a classe ConsultandoPrimeiroObjeto, no pacote main, vamos mandar gerar o metodo main para a gente, okay?,
+
+package com.algaworks.curson.main;
+
+public class ConsultandoPrimeiroObjeto {
+
+    public static void main(String[] args) {
+
+    }
+
+}
+
+3. Bom, e a gente precisa, a gente ja saber que a gente precisa do EntityManager,
+
+    EntityManager em = 
+
+4. Mas, para eu chegar a construir o EntityManager, o que que eu preciso?
+
+5. Eu preciso do EntityManagerFactory,
+
+    EntityManagerFactory emf = 
+    EntityManager em = 
+
+, so uma revisaozinha rapida. Para criar o EntityManagerFactory, eu utilizo o metodo estatico, aqui, da classe Persistence, createEntityManagerFactory, passando, aqui, uma String, que eh o nome da Unidade de Persistencia, que eh, justamente, esse aqui, oh, <persistence-unit name="exemploPU",
+
+    EntityManagerFactory emf = Persistence.createEntityManagerFactory("exemploPU");
+
+6, Agora, a parte do EntityManagerFactory, eu consigo criar o EntityManager,
+
+    EntityManager em = emf.createEntityManager();
+
+7. Okay?
+
+8. Bom, agora que eu estou com o EntityManager, eu consigo fazer a consulta.
+
+9. Como eh que eh feita a consulta com o Entity Manager? em., ai, aqui, nos vamos ver varias formas de fazer consulta, pode ficar tranquilo, e mais detalhes, ainda, de EntityManager, mais para a frente.
+
+10. Mas, eu vou te mostrar, agora, a forma mais simples que tem, que eh utilizando  o metodo find(). O metodo find(), a primeira versao, aqui, que eu vou te mostrar, ele recebe, como argumento, aqui, uma classe, que eh a Etidade, e o segundo argumento eh o valor da chave, do identificador que voce quer buscar,
+
+    em.find(arg0, arg1);
+
+11. Entao, qual que eh a Entidade que a gente tem?
+
+12. Cliente. Entao, eu vou passar, aqui, que eu quero buscar o Cliente,
+
+    em.find(Cliente.class, arg1)
+
+, okay? O segundo argumento eh o valor da chave.
+
+13. Ele esta pedindo o valor do codigo. Ele vai buscar em quem esta anotado com @Id.
+
+14. Ele fala assim, oh, "Me fala o valor de alguem que esta anotado, la, com @Id". Entao, eh o valor do codigo.
+
+15. A gente foi, la, no Workbench, a gente tem 3 registros cadastrados, hoje, nao eh? O 1, 2, 3.
+
+16. Entao, eu vou passar, aqui, o codigo 1,
+
+    em.find(Cliente.class, 1);
+
+17. Bom, e onde eh que ele vai devolver? Esse metodo find(), ele me dar um retorno, o retorno eh o Cliente, eh o objeto Cliente ja preenchido com as informacoes que tinha no banco de dados. Entao, o find(), ele devolve, ja o Cliente, eh o tipo Cliente, ele ja utiliza o Generics, para nos devolver, aqui, oh, 
+
+    Cliente cliente = em.find(Cliente.class, 1);
+
+18. Esse cliente estava salvo no banco de dados.
+
+19. Repare que eu passei so o codigo, e ele vai me retornar varias informacoes desse cliente, como o nome, idade, profissão, e o sexo,
+
+    System.out.println("Nome: " + cliente.getNome());
+    System.out.println("Idade: " + cliente.getIdade());
+    System.out.println("Prifissão: " + cliente.getProfissao());
+    System.out.println("Sexo: " + cliente.getSexo());
+
+20. Okay, vou mandar executar esse codigo, aqui. Vamos ver o que que vai acontecer.
+
+21. Voce pode perguntar, 'Ué, Normandes, e a Transação? Você nao está esquecendo ela não?'
+
+22. Não, lembra que eu falei: "Transacao a gente so precisa abrir e inicializa-la, dar o Begin() e dar o Commit() quando eu estou alterando alguma coisa no Banco de Dados". So buscando alguma coisa, eu nao preciso da Transacao, nao.
+
+23. Certo?
+
+24. Entao, quando eu estou so consultando, eu nao preciso de Transacao.
+
+25. Vamos mandar executar, aqui, entao, o Java Application, ele vai inicializar, aqui, o Hibernate, e vai dar um erro,
+
+Exception in thread "main" java.lang.IllegalArgumentException: Provided id of the wrong type for class com.algaworks.curso.modelo.Cliente. Expected: class java.lang.Long, got class java.lang.Integer
+
+26. Ele esta falando que o valor, la, do ID que eu passei eh de um Tipo errado para a classe Cliente. Ele esta falando que ele esperava o Long, mas ele recebeu um Inteiro.
+
+27. Vamos ver o que que significa isso.
+
+28. Ele estava esperando um Long e recebeu um Inteiro, para o ID. 
+
+29. Se a gente for la na Classe Cliente, para o ID, qual que eh o Tipo da dado que a gente colocou? 
+
+    @Id
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    private Long id;
+
+30. O Long. Se eu coloquei Long, eu estou passando, aqui,
+
+    Cliente cliente = em.find(Cliente.class, >>> 1 <<<);
+
+, um valor literal 1, que eh um inteiro. Como se fosse isso daqui, oh,
+
+    int codigo = 1;
+    Cliente cliente = em.find(Cliente.class, codigo);
+
+31. O que que ele vai fazer? Ele esta esperando um objeto. Ele vai fazer a conversao, o auto-boxing para Integer, e vai passar o objeto Integer. Mas Integer nao eh um Long. Integer eh Integer, Long eh Long. Entao, o que eu preciso, aqui, na verdade, eh de um long, eu preciso passar, aqui, um long assim,
+
+    long codigo = 1L;
+    Cliente cliente = em.find(Cliente.class, codigo);
+
+, que ele vai fazer o auto-boxing para a gente, e vai passar o objeto Long para la. Eu posso fazer dessa forma, ou, quando eu colocar aqui o 1, colocar um 'L' na frente,
+
+    Cliente cliente = em.find(Cliente.class, >>> 1L <<<);
+
+32. Agora, eu estou fazendo a busca com um Long. Vamos ver se aquele erro, la, vai sair?
+
+33. Executar, novamente. Retornou,
+
+Hibernate: select cliente0_.codigo as codigo1_0_0_, cliente0_.idade as idade2_0_0_, cliente0_.nome as nome3_0_0_, cliente0_.profissao as profissa4_0_0_, cliente0_.sexo as sexo5_0_0_ from Cliente cliente0_ where cliente0_.codigo=?
+Nome: José da Silva
+Idade: 25
+Profissao: Engenheiro
+Sexo: M
+
+34. Bom, e se eu buscar um codigo que nao existe? Vamos colocar, aqui, 5,
+
+    Cliente cliente = em.find(Cliente.class, 5L);
+
+35. Retornou,
+
+Hibernate: select cliente0_.codigo as codigo1_0_0_, cliente0_.idade as idade2_0_0_, cliente0_.nome as nome3_0_0_, cliente0_.profissao as profissa4_0_0_, cliente0_.sexo as sexo5_0_0_ from Cliente cliente0_ where cliente0_.codigo=?
+Exception in thread "main" java.lang.NullPointerException
+    at com.algaworks.curso.main.ConsultandoPrimeiroObjeto.main(ConsultandoPrimeiroObjeto.java:29)
+    
+36. Vai dar um problema aonde? Voce acha que vai dar uma excecao aqui? O que que vai acontecer?
+
+37. Vou mandar executar. E, ai, deu um erro feio, aqui, oh, NullPointerException, na linha 29. Na linh 29,
+
+    System.out.println("Nome: " + cliente.getNome());
+
+38. Por que que deu esse erro? Porque o cliente esta null.
+
+39. Significa, entao, que o find(), quando ele nao encontra, ele retorna null. 
+
+40. Entao, o cliente esta null. Uma forma, aqui, de a gente fazer isso, eh colocar uma verificacao, if (cliente != null), ai, a gente vai, realmente, executar esses carinhas, aqui,
+
+    if (cliente != null) {
+		System.out.println("Nome: " + cliente.getNome());
+		System.out.println("Idade: " + cliente.getIdade());
+		System.out.println("Profissao: " + cliente.getProfissao());
+		System.out.println("Sexo: " + cliente.getSexo());        
+    }
+
+41. Certo? Senao, a gente pode colocar, aqui, um else, aqui, uma coisa bem simples, mesmo, System.out.println("Cliente nao encontrado.").
+
+    if (cliente != null) {
+		System.out.println("Nome: " + cliente.getNome());
+		System.out.println("Idade: " + cliente.getIdade());
+		System.out.println("Profissao: " + cliente.getProfissao());
+		System.out.println("Sexo: " + cliente.getSexo());        
+    } else {
+        System.out.println("Cliente nao encontrado");        
+    }
+
+42. Certo? Entao, vamos voltar, aqui, para um cliente existente, aqui,
+
+    Cliente cliente = em.find(Cliente.class, 3L);
+
+, e vamos executar novamente.
+
+43. Retornou,
+
+Hibernate: select cliente0_.codigo as codigo1_0_0_, cliente0_.idade as idade2_0_0_, cliente0_.nome as nome3_0_0_, cliente0_.profissao as profissa4_0_0_, cliente0_.sexo as sexo5_0_0_ from Cliente cliente0_ where cliente0_.codigo=?
+Nome: Pedro Bial
+Idade: 40
+Profissao: Jornalista
+Sexo: M
+
+44. E, agora, sim, ele trouxe, la, todos os dados do cliente.
+
+45. Fim da Aula 02.002. Primeira Consulta com JPA.
+
+-->
+
+
+
+
+
+
+
+
+
+
+
+
+
+

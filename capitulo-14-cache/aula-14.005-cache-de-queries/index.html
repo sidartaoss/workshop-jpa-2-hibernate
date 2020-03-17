@@ -1,0 +1,729 @@
+<!--
+    Aula 14.005. Cache de Queries
+
+1. Eu vou tentar te mostrar, nesta aula, um pouco sobre o Cache de Queries e tentar te mostrar a diferenca do Cache de Segundo Nivel.
+
+2. Beleza?
+
+3. E, para isso, olha o que que eu pensei.
+
+4. Ainda naquele sisteminha, nosso, de Gerenciador de Acesso com Cache, eu quero fazer o seguinte. Se eu vier, aqui, no PesquisaUsuario, qualquer telinha, eu vou colocar, aqui, no canto direito superior, o Total de Usuarios do Sistema e quantos Usuarios estao ativos, nesse meu Sistema.
+
+5. Okay? Eh isso que eu quero fazer.
+
+6. Entao, vamos la. Vamos brincar, aqui, e, para a gente colocar aquilo la, eu vou precisar acessar, aqui, o meu Template, LayoutPadrao.xhtml, eu vou pegar, aqui, na minha colinha, 
+
+<header>
+    <div style="float: left">
+        <h:link>
+            <h:graphicImage library="imagens" name="logo-algaworks.png" />
+        </h:link>
+    </div>
+    <div style="clear: both"></div>
+</header>
+
+, isto, vamos colar aqui, oh, 
+
+<header>
+    <div style="float: left">
+        <h:link>
+            <h:graphicImage library="imangens" name="logo-algawokrs.png" />
+        </h:link>
+    </div>
+    <div style="float: right; margin-right: 80px">
+        <span><h:outputText value="Total usuarios: #{siteBean.totalUsuarios}" /></span>
+        <br />
+        <span><h:outputText value="Usuarios ativos: #{siteBean.usuariosAtivos}" /></span>
+    </div>
+    <div style="clear: both"></div>
+</header>
+
+7. Total de usuarios e Usuarios ativos, vai aparecer essa mensagem la.
+
+8. Okay?
+
+9. Entao, eu vou buscar isso de onde? De um Bean, eu chamei, aqui, de SiteBean, totalUsuarios. Entao, vamos criar, la, esse SiteBean, na pasta controller, aqui, para representar o nosso Site, e a gente colocar as nossas Consultas, aqui dentro, mesmo,
+
+package com.algaworks.gerenciador.controller;
+
+import javax.inject.Named;
+import javax.faces.view.ViewScoped;
+
+@Named
+@ViewScoped
+public class SiteBean implements Serializable {
+
+
+
+}
+
+10. Aqui, eu acho que eu nao falei na ultima aula, mas essa atualizacao ja foi feita depois de lancado o Primefaces 5, nao eh?, 
+
+    <-- Primefaces (Biblioteca de componentes) --
+    <dependency>
+        <groupId>org.primefaces</groupId>
+        <artifactId>primefaces</artifactId>
+        <version>5.0</version>
+        <scope>compile</scope>
+    </dependency>
+
+11. Ja estou usando o Weld 2.2.1,
+
+    <-- Weld (implementacao do CDI) --
+    <dependency>
+        <groupId>org.jboss.weld.servlet</groupId>
+        <artifactId>weld-servlet</artifactId>
+        <version>2.2.1.Final</version>
+        <scope>compile</scope>
+    </dependency>
+
+12. Ja existe o @ViewScoped, do proprio JSF.
+
+13. Entao, eu nao preciso colocar aquelas outras classes que eu coloquei la no locadora-veiculo-web, porque, aqui, ja esta atualizado, aqui, ja tem algumas funcionalidades interessantes, ai.
+
+14. Okay, vamos injetar, aqui, fazer da mesma forma, aqui, vamos injetar o Entity Manager, direto, aqui, apesar de nao,..., na verdade, ai, so cria o seu DAO, nao eh?, cria um Repositorio, alguma coisa assim.
+
+15. Okay?
+
+16. E, aqui, eu vou criar, entao, o metodo, se a gente olhar, aqui, na tela, siteBean.totalUsuarios,
+
+    <div...>
+        <span><h:outputText value="Total usuarios: #{siteBean. >>> totalUsuarios}" /></span>
+
+    ...
+
+, entao, eu vou criar, aqui, o getTotalUsuarios(), e a gente vai fazer esse calculo, aqui, toda vez, vamos imaginar que eu quero fazer assim, e getUsuariosAtivos(),
+
+public class SiteBean implements Serializable {
+
+    ...
+
+    public Long getTotalUsuarios() {
+
+    }
+
+    public Long getUsuariosAtivos() {
+
+    }
+}
+
+, que eh, na tela, siteBean.usuariosAtivos,
+
+    <div...>
+        <span><h:outputText value="Usuarios ativos: #{siteBean.usuariosAtivos}" /></span>
+
+    ...
+
+17. Okay? Entao, vamos fazer essas duas Consultas, aqui, mesmo, no ManagedBean.
+
+18. Entao, vamos la. Para a gente fazer essa Consulta, vamos fazer, primeiro, obviamente, sem Cache, para, depois, a gente aprender com o Cache, okay?
+
+19. Entao, vamos la. Eu vou colocar o return, aqui, direto, 
+
+...
+
+public Long getTotalUsuarios() {
+    return
+}
+
+, return this.manager., fazer com JPQL, mesmo, .createQuery(""), nos vamos, "select count(u) from Usuario u", o resultado disso, daqui, eh um Long, .getSingleResult(),
+
+    return this.manager.createQuery("select count(u) from Usuario u", Long.class).getSingleResult();
+
+20. Okay?
+
+21. Entao, olha la.
+
+22. Eu crio a Query, seleciono, entao, estou contando todos os Usuarios, nao eh? O resultado disso eh um Long, isso, aqui, 
+
+    return this.manager.createQuery("select >>> count(u) <<< from Usuario u", Long.class).getSingleResult();
+
+, vai dar um numero inteiro, entao, eu devolvo num Long, e eu tenho certeza de que isso me devolve Um Unico Resultado, getSingleResult(), beleza?
+
+23. Vamos deixar o 0L, aqui, por enquanto,
+
+public Long getUsuariosAtivos() {
+    return 0L;
+}
+
+, agora, mesmo, a gente volta, aqui, quando a gente entender o Cache de Query, e adiciona, aqui, essa Consulta, e a gente faz ela diferente, alguma coisa, em alguma coisinha, faz com Criteria, do Hibernate, por exemplo.
+
+24. Okay. Eu acho que eh isso aqui. Esta sem Cache, por enquanto, so para a gente ver o Sisteminha funcionando, vamos ver se essa Consulta, aqui, esta funcionando,
+
+public Long getTotalUsuarios() {
+    return this.manager.createQuery("select count(u) from Usuario u", Long.class).getSingleResult();
+}
+
+25. Subir o Servidor e acessar http://localhost:8080/gerenciador-acesso/PesquisaUsuario.xhtml.
+
+26. Oh, fez o select count(), aqui,
+
+Hibernate: 
+    select
+        count(usuario0_.codigo) as col_0_0_ 
+    from
+        usuario usuario0_
+
+
+, apareceu, aqui, na tela, na parte superior direita,
+
+Total usuarios: 2
+Usuarios ativos: 0
+
+27. Usuarios ativos esta zero, porque a gente retornou zero, la, eu nao fiz aquela consulta, ainda.
+
+28. Entao, olha la, Total de usuarios, 2.
+
+29. Vamos limpar o Log, aqui.
+
+30. Se eu recarregar a Pagina, fez, de novo, aquela Consulta,
+
+Hibernate: 
+    select
+        count(usuario0_.codigo) as col_0_0_ 
+    from
+        usuario usuario0_
+
+
+31. Se recarregarmos, mais uma vez,
+
+Hibernate: 
+    select
+        count(usuario0_.codigo) as col_0_0_ 
+    from
+        usuario usuario0_
+Hibernate: 
+    select
+        count(usuario0_.codigo) as col_0_0_ 
+    from
+        usuario usuario0_
+
+, fez, de novo, aquela Consulta.
+
+32. Nao eh? Entao, do jeito que esta aqui, toda tela, imagine voce navegando, aqui, pelo Sistema, toda hora vai estar fazendo aquela consulta, toda hora faz aquela consulta. Aqui, poderia estar fazendo 2 Consultas, ainda nao implementei essa segunda, aqui, Total de Usuarios ativos,
+
+Total usuarios: 2
+Usuarios ativos: 0
+
+33. Entao, o que que nos vamos fazer?
+
+34. Vamos adicionar o Cache, aqui, para essa Consulta,
+
+>>> Total usuarios: 2
+Usuarios ativos: 0
+
+, e, ai, voce pode perguntar, "Ueh, Normandes, mas nao eh so fazer o Cache do Usuario?", ou seja,
+
+@Entity
+@Table(name = "usuario")
+>>> @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+public class Usuario implements Serializable {
+
+    ...
+}
+
+35. Bom, voce ja viu que nao, nao eh?
+
+36. Voce ja percebeu, aqui, que nao. Porque o Usuario esta, ate, com Cache, oh, eu vou, ate, buscar, aqui, oh, o Usuario de Codigo 1, ele vai fazer a Consulta do Usuario 1 e colocar em Cache, 
+
+37. Ao clicar em Pesquisar, retornou,
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        usuario0_.status as status3_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+Hibernate: 
+    select
+        grupos0_.codigo_usuario as codigo_u1_2_0_,
+        grupos0_.codigo_grupo as codigo_g2_2_0_,
+        grupo1_.codigo as codigo1_0_1_,
+        grupo1_.nome as nome2_0_1_ 
+    from
+        usuario_grupo grupos0_ 
+    inner join
+        grupo grupo1_ 
+            on grupos0_.codigo_grupo=grupo1_.codigo 
+    where
+        grupos0_.codigo_usuario=?
+
+38. Ao verificar no Log do Servidor, fez a Consulta, la, do Usuario,
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        usuario0_.status as status3_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+
+, agora, colocou em Cache.
+
+39. Se eu pesquisar mais uma vez, nao buscou.
+
+40. Mas, se eu recarregar a Tela, 
+
+Hibernate: 
+    select
+        count(usuario0_.codigo) as col_0_0_ 
+    from
+        usuario usuario0_
+
+
+, ele vai buscar, la, o count().
+
+41. Beleza?
+
+42. Ou seja, ele colocou, olha a diferenca do Cache de Segundo Nivel para o Cache de Query.
+
+43. O Cache de Segundo Nivel, ele colocou a Entidade Usuario em Cache, daquele ID, nao eh?, buscando por aquele ID. Quando a gente buscou por 1 ID, ele falou, "Opa, se ele fez a Consulta pelo ID, pela Chave Primaria, se eu faco a Consulta, aqui, oh, pelo codigo, nao eh?, que eh o que esta anotado com @Id, esse eh o Cache de Segundo Nivel. Ele fala, 'Ah, beleza, esse cara, aqui, se estiver, aqui, no meu Cache, eu ja retorno ele. Agora, o Cache de Query nao. Olha a diferenca. Eh uma Consulta que eu estou fazendo, que pode ter restricoes ou nao.'"
+
+44. Se for restricoes pelo ID, cai no Cache de Segundo Nivel. Se for uma outra Restricao, ou uma outra Consulta, como essa Consulta, aqui, uma Consulta com a Projecao aqui, nao eh?, agregando, contando, ou seja, uma Consulta diferente, que nao eh pelo Identificador,
+
+Hibernate: 
+    select
+        >>> count(usuario0_.codigo) as col_0_0_ <<<
+    from
+        usuario usuario0_
+
+, nao eh? Quando a gente fizer, ali, dos Usuarios Ativos, a gente vai adicionar um outro Parametro, la. Isso eh uma Consulta, e eu quero fazer o Cache dessa Consulta. Beleza? Entao, como eu faco o Cache dessa Consulta?
+
+45. Os passos sao os seguintes, oh.
+
+46. A primeira coisa, a gente vai entrar, la, no persistence.xml, vamos abrir ele, aqui, oh, e adicionar, aqui, falando que a gente quer fazer o uso do Query Cache,
+
+    ...
+
+    <property name="hibernate.cache.use_second_level_cache" value="true" />
+    
+    >>> <property name="hibernate.cache.use_query_cache" value="true" /> <<<
+
+    <property name="hibernate.cache.region.factory_class" value="org.hibernate.testing.cache.CachingRegionFactory" />
+
+    ...
+
+47. Okay? Fazendo o Cache das nossas Queries, aqui, coloco true, aqui,
+
+    <property name="hibernate.cache.use_query_cache" value="true" />
+
+48. O primeiro passo seria esse.
+
+49. O segundo passo eh falar, na Consulta, que eu quero Cachea-la.
+
+50. Ou seja, eu quero que essa Consulta, aqui,
+
+public Long getTotalUsuarios() {
+    return this.manager.createQuery("select (u) from Usuario u", Long.class).getSingleResult();
+}
+
+, quando eu fizer ela, ela seja adicionada ao Cache.
+
+51. Beleza? So que, para a gente fazer isso, eu vou ter que usar o Hibernate, a propria Session do Hibernate, porque eh o Hibernate que esta implementando isso.
+
+52. Entao, para isso, eu vou pegar, aqui, a Session, Session session = this.manager.unwrap(Session.class), e vou recuperar ela, aqui, do EntityManager, okay?
+
+public Long getTotalUsuarios() {
+    Session session = this.manager.unwrap(Session.class);
+
+    return this.manager.createQuery("select count(u) from Usuario u", Long.class).getSingleResult();
+}
+
+53. E, aqui, agora, ao inves de retornar a Query assim, eu vou fazer o seguinte, oh, return session.createQuery(), vamos continuar com JPQL, aqui, a mesma Consulta, 
+
+    return session.createQuery("select count(u) from Usuario u")
+    
+, beleza? Eu faco essa Consulta. Aqui, se eu for retornar sem Cache,
+
+    return (Long) session.createQuery(select count(u) from Usuario u)
+            .uniqueResult();
+
+, eh so dar .uniqueResult(). So que, para eu falar que eu quero que essa Query seja adicionada no Cache, eu tenho que avisar para ele, porque, senao, vamos supor, 'Ah, eu quero que todas as Queries entrem no Cache'. Nao, nao eh assim, nao vai selecionar todas as consultas do seu sistema para ir para o Cache.
+
+54. Concorda?
+
+55. Entao, aqui, no caso, falando disso, dai, de qual Consulta voce selecionaria para adicionar no Cache, isso eh uma decisao mais de negocio, mesmo. Assim, das Consultas que vao alterar pouco, nao eh?, se voce tiver uma coisa que esta atualizando toda hora, nao faz muito sentido voce colocar essa Consulta em Cache, nao eh? Entao, sei la, selecionou o Total de usuarios do sistema, eh uma coisa assim, depende do Sistema, eh claro, mas nao eh uma coisa que vai crescer toda hora, nao eh?, nao eh uma coisa que, a cada segundo, tem, la, 1000 atualizacoes, nao eh? Demora um pouco mais.
+
+56. Entao, essa Consulta eh uma Consulta elegivel, ai, para a gente colocar ela dentro do Cache, vai diminuir o acesso ao Banco de Dados. E, se ela esta em toda a tela, ainda, nao eh? E, depois que a gente ver, um pouquinho, as politicas de como as coisas expiram do Cache, ai, eh uma Consulta que, se ficar desatualizado, ai, por um periodozinho, nao faz tanto problema.
+
+57. Ai, a gente vai falar sobre isso, dai, sobre expirar o Cache, essas coisas, na aula de EhCache, com Infinispan, beleza?
+
+58. Entao, aqui, oh, para eu adicionar essa Query no Cache, eu tenho que montar, aqui, oh, .setCacheable(true),
+
+public Long getTotalUsuarios() {
+    Session session = this.manager.unwrap(Session.class);
+    return (Long) this.session.createQuery("select count(u) from Usuario u")
+                    .setCacheable(true)
+                    .uniqueResult();
+}
+
+59. Ta vendo? Simples assim.
+
+60. Adicionei no persistence.xml, 
+
+    <property name="hibernate.cache.use_query_cache" value="true" />
+
+, okay? Adicionei falando que essa minha Query, ela eh Cacheada, e pronto.
+
+61. Beleza? 
+
+62. Vamos ver isso, daqui, funcionando.
+
+63. Depois, a gente vem, aqui, faz o metodo getUsuariosAtivos(), aqui.
+
+64. Subir o Servidor e acessar em http://localhost:8080/gerenciador-acesso/PesquisaUsuario.xhtml.
+
+65. Okay, olha la. Fez o select(),
+
+Hibernate: 
+    select
+        count(usuario0_.codigo) as col_0_0_ 
+    from
+        usuario usuario0_
+
+, de Total de Usuarios do nosso Sistema, colocou la.
+
+66. Okay? Eu vou limpar, aqui, o Log do Servidor, e recarregar a telinha.
+
+67. Nao fez nenhuma consulta.
+
+68. Olha la. Ta vendo que ele nao fez? Eu vou buscar, aqui, o Usuario, fazer a Consulta do Usuario, do Grupo, 
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        usuario0_.status as status3_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+Hibernate: 
+    select
+        grupos0_.codigo_usuario as codigo_u1_1_0_,
+        grupos0_.codigo_grupo as codigo_g2_2_0_,
+        grupo1_.codigo as codigo1_0_1_,
+        grupo1_.nome as nome2_0_1_ 
+    from
+        usuario_grupo grupos0_ 
+    inner join
+        grupo grupo1_ 
+            on grupos0_.codigo_grupo=grupo1_.codigo 
+    where
+        grupos0_.codigo_usuario=?
+
+69. Okay? Nao faz mais essa Consulta. Nem se eu der Recarregar a Pagina, tambem nao vai fazer a Consulta Total de usurios.
+
+70. Ai, voce vai falar, 'Ah, Normandes, e quando que ele vai atualizar?'
+
+71. Se eu cadastrar um Usuario novo?
+
+72. Entao, vamos la. Como eu disse, existem as politicas de expirar e, neste caso, aqui, a gente ainda nao esta falando, porque a gente esta aprendendo so o conceito do Cache de Queries.
+
+73. Okay?
+
+74. Daqui a pouco, nas aulas sobre EhCache e InfiniSpan, eu vou te falar a respeito das politicas de expirar isso daqui,
+
+Total usuarios: 2
+Usuarios ativos: 0
+
+, ele vai ter um tempo, a gente vai configurar, e, depois, ele vai la e busca, de novo, isso no Banco de Dados, de tempo em tempo. Okay?
+
+75. O que que eu vou fazer, aqui, entao?
+
+76. Eu criei uma telinha, aqui, CadastroUsuario.xhtml, para cadastrar um novo Usuario.
+
+77. Oh, repara que ele nao esta fazendo, oh, eu fui para outra tela e ele nao fez a Consulta,
+
+>>> Total usuarios: 2
+Usuarios ativos: 0
+
+, porque ele esta em Cache.
+
+78. E, aqui, tem a tela CadastroUsuario.xhtml.
+
+79. Eu vou cadastrar, aqui, o Pedro, por exemplo, e vou Salvar.
+
+80. Ele fez o INSERT do Usuario, e olha so o que que ele fez,
+
+Hibernate: 
+    insert 
+    into
+        usuario
+        (nome, status) 
+    values
+        (?, ?)
+Hibernate: 
+    select
+        count(usuario0_.codigo) as col_0_0_ 
+    from
+        usuario usuario0_
+
+, selecionou, aqui, oh, de novo, o Total de usuarios,
+
+>>> Total usuarios: 3
+Usuarios ativos: 0
+
+81. Eu vou limpar o log, aqui, recarregar a tela, mais uma vez, oh, nao fez o SELECT novamente.
+
+82. Recarregando a Pagina, http://localhost:8080/gerenciador-acesso/CadastroUsuario.xhtml, nao fez o SELECT novamente.
+
+83. Acessando a Pagina de Pesquisa, http://localhost:8080/gerenciador-acesso/PesquisaUsuario.xhtml, nao fez o SELECT novamente.
+
+84. Eh isso, mesmo, ele ja colocou em Cache, novamente, quando eu fiz essa Insercao.
+
+85. Entao, por que que ele fez isso?
+
+86. Primeiro, vamos la, nessa Tela de Cadastro, CadastroUsuario.xhtml, eu vou te mostrar por que que ele atualizou aqui, ja, direto, quando inseriu o novo Usuario.
+
+87. Eu vou, ate, fazer mais uma vez, antes de te mostrar, aqui, oh, aqui, no Log do Console, tudo limpo, estou, aqui, na Tela de Cadastro, vou colocar, aqui, Romario, clicar em Salvar, voce vai ver que ele vai atualizar, aqui, na Tela de Cadastro, em,
+
+>>> Total usuarios: <<<
+Usuarios ativos: 0
+
+88. Atualizou, aqui, para 4,
+
+Total usuarios: 4
+Usuarios ativos: 0
+
+, ele inseriu o Usuario, e fez, de novo, o Select,
+
+Hibernate: 
+    insert 
+    into
+        usuario
+        (nome, status) 
+    values
+        (?, ?)
+Hibernate: 
+    select
+        count(usuario0_.codigo) as col_0_0_ 
+    from
+        usuario usuario0_
+
+89. Entao, vamos la.
+
+90. Por que que ele fez esse select, aqui? 
+
+Hibernate: 
+    select
+        count(usuario0_.codigo) as col_0_0_ 
+    from
+        usuario usuario0_
+
+91. Porque eh o seguinte. Se a Query que esta em Cache, a Query aqui, oh, eu tenho essa Query que esta em Cache, 
+
+public Long getTotalUsuarios() {
+    return (Long) this.manager.createQuery("select count(u) from Usuario u")
+                .setCacheable(true)
+                .uniqueResult();
+}
+
+92. Se eu fiz alguma alteracao em alguma das Entidades que participam dessa Query de Cache, ele vai la e vai invalidar, vai tirar aquilo la do Cache.
+
+93. Beleza?
+
+94. Entao, ele faz isso. Mais uma vez, oh. 
+
+95. Fiz uma alteracao numa Entidade, no caso, aqui, oh, eu nao fiz o Insert no Usuario?
+
+96. Foi. Entao, eu fiz o Insert de Usuario. Se eu fiz o Insert de Usuario, essa Query esta em Cache em Tem Usuario?
+
+97. Tem. Entao, ele vai la e arranca ela do Cache e faz aquela Consulta novamente.
+
+98. E por que que ele atualizou, ali, na hora?
+
+99. Porque eu desabilitei o Ajax, aqui, no Salvar, oh, eu coloquei o Ajax = false, 
+
+<p:commandButton value="Salvar" actionListener="#{cadastroUsuarioBean.salvar}" ajax="false" />
+
+, para ele poder recarregar a tela, e, ai, poder vir, aqui, 
+
+Total usuarios: 4
+Usuarios ativos: 0
+
+, e atualizar Total de usuarios.
+
+100. Beleza? Por isso que ele fez isso.
+
+101. E, ai, depois, ele nao faz mais a Consulta, aqui, ela ja vai estar em Cache.
+
+102. Beleza? Eu posso recarregar, que ele nao vai fazer mais aquilo la, so quando eu atualizar o Usuario.
+
+103. E, ai, so para deixar um outro exemplo, aonde, talvez, faria, tambem, sentido, a gente cachear, seria, aqui, pegar o Total de Usuarios Ativos,
+
+public Long getUsuariosAtivos() {
+    retur 0L;
+}
+
+104. E, aqui, eu coloquei essa Query, aqui, eu vou fazer ela, aqui, eu vou te mostrar um detalhezinho,
+
+public Long getUsuariosAtivos() {
+    Session session = this.manager.unwrap(Session.class);
+
+    return 0L;
+}
+
+105. Entao, vamos la.
+
+106. return session., vamos fazer ela com Criteria? return session.createCriteria();, em cima de Usuario, return session.createCriteria(Usuario.class).setProjection();, vamos adicionar, aqui, o Projections.count(), vamos contar quantos codigos, nao eh? return session.createCriteria(Usuario.class).setProjection(Projections.count("codigo")), que ele ja vai saber, ao inves de count(*), count() do codigo, que eh a mesma coisa, vamos adicionar uma Restrictions, equals(). return session.createCriteria(Usuario.class).setProjection(Projections.count("codigo").add(Restrictions.eq("status", Status.ATIVO)).setCacheable(true).uniqueResult();, a gente adiciona o Cache para Long,
+
+public Long getUsuariosAtivos() {
+    Session session = this.manager.unwrap(Session.class);
+    return (Long) session.createCriteria(Usuario.class).setProjection(Projections.count("codigo")).add(Restrictions.eq("status", Status.ATIVO)).setCacheable(true).uniqueResult();
+}
+
+107. Okay.
+
+108. Olha so. Eu fiz uma Criteria em cima de Usuario, fazendo a Projections, nao eh?, que eh fazer o count(), em cima de "codigo", adicionar a Restricao em cima de Status, ATIVO, setCacheable() true, uniqueResult(), ele vai retornar, so vai ter Um Resultado, mesmo.
+
+109. E, aqui, oh,
+
+public Long getUsuariosAtivos() {
+    Session session = this.manager.unwrap(Session.class);
+    return (Long) session.createCriteria(Usuario.class)
+            .setProjection(Projections.count("codigo"))
+            >>> .add(Restrictions.eq("status", Status.ATIVO))
+            .setCacheable(true)
+            .uniqueResult();
+}
+
+, eu quis criar esse exemplo, aqui, para te mostrar o seguinte, que, ta vendo?, eh uma consulta em que eu estou passando um parametro, para pesquisar.
+
+110. Mas, repara que esse parametro, Status.ATIVO, so pode ser Status   ATIVO ou INATIVO, porque faz sentido, tambem, colocar esse tipo de Consulta no Cache, porque a quantidade de parametros, aqui, eh pouca, nao eh?
+
+111. Eh ATIVO / INATIVO. Nao sao, tao, assim, a quantidade de Consultas que ele vai colocar no Cache eh menor, nao eh? Nao sao tao grandes.
+
+112. Entao, aqui, oh, Uma unica Consulta, que tem Uma Unica,..., um Count(), aqui, 
+
+public Long getTotalUsuarios() {
+    return (Long) this.manager.createQuery("select count(u) from Usuario u", Long.class).setCacheable(true).uniqueResult();
+}
+
+113. Aqui,
+
+public Long getUsuariosAtivos() {
+    Session session = this.manager.unwrap(Session.class);
+    return (Long) session.createCriteria(Usuario.class)
+            .setProjection(Projections.count("codigo"))
+            >>> .add(Restrictions.eq("status", Status.ATIVO))
+            .setCacheable(true)
+            .uniqueResult();
+}
+
+, tem poucos parametros que eu posso passar de Restricao. Imagina que fosse num Sisteminha, ai, que retornasse, ai, 'Eu quero saber quantos Usuarios Ativos tem no Sistema'
+
+114. Ai, ele poderia passar quantos Usuarios tem no Sistema, e voce receberia o Status como Parametro, ATIVO ou INATIVO.
+
+115. Voce poderia colocar, ainda, no Cache, porque ATIVO e INATIVO, seriam poucas as opcoes, nao eh?, que teriam de diferenca.
+
+116. Diferente se a gente fizesse uma Consulta Restricao por Nome, nao eh?, ai, ja seriam varios nomes, entao, colocar todas aquelas Consultas em Cache, talvez na ficaria tao legal.
+
+117. Nao eh?
+
+118. Entao, eh isso daqui, era so para te mostrar, tambem, a gente discutir um pouquinho sobre quando colocar essa Consulta em Cache.
+
+119. Okay? Vamos reiniciar o Servidor, aqui, mais uma vez, a gente testar, finalizando esta aula, aqui.
+
+120. Ja vai reiniciar o Hibernate, esta carregando a telinha, http://localhost:8080/gerenciador-acesso/CadastroUsuario.xhtml, inseriu, beleza, oh, fez o Select do totalUsuarios, la, e fez, tambem, pelo Status,
+
+Hibernate: 
+    select
+        count(usuario0_.codigo) as col_0_0_ 
+    from
+        usuario usuario0_
+Hibernate: 
+    select
+        count(this_.codigo) as y0_ 
+    from
+        usuario this_ 
+    where
+        this_.status=?
+
+
+121. Certo? Eh uma Consulta que varia pouco, aqui,
+
+Hibernate: 
+    select
+        count(this_.codigo) as y0_ 
+    from
+        usuario this_ 
+    where
+        this_.status= >>> ? <<<
+
+, entao, se varia pouco, aqui,
+
+Hibernate: 
+    select
+        count(this_.codigo) as y0_ 
+    from
+        usuario this_ 
+    where
+        this_.status= >>> ? <<<
+
+, entao, eh uma Query mais elegivel para a gente colocar no Cache.
+
+122. Nao eh? O Usuario Ativo, a gente tem so 1, 
+
+Total usuarios: 2
+Usuarios ativos: 1
+
+123. Se eu recarregar a Tela mais uma vez, voce ve que ele nao faz nenhuma consulta.
+
+124. Mas, se eu cadastrar, aqui, sei la, o Pedro, ele vai atualizar, aqui, oh,
+
+Total usuarios: 2
+>>> Usuarios ativos: 1
+
+, repara aqui, no canto superior direito da tela.
+
+125. Atualizou,
+
+Total usuarios: 3
+Usuarios ativos: 2
+
+126. Perceberam, que ele, oh,
+
+Hibernate: 
+    insert 
+    into
+        usuario
+        (nome, status) 
+    values
+        (?, ?)
+Hibernate: 
+    select
+        count(usuario0_.codigo) as col_0_0_ 
+    from
+        usuario usuario0_
+Hibernate: 
+    select
+        count(this_.codigo) as y0_ 
+    from
+        usuario this_ 
+    where
+        this_.status=?
+
+, eu fiz um Insert, 
+
+Hibernate: 
+    insert 
+    into
+        usuario
+        (nome, status) 
+    values
+        (?, ?)
+
+, ai, ele invalidou o Cache das duas Consultas, pois elas envolvem a Entidade Usuario.
+
+127. Okay? Eh isso, dai, que eu queria deixar para voce, a respeito do Cache de Queries.
+
+128. Fim da     Aula 14.005. Cache de Queries.
+
+
+-->

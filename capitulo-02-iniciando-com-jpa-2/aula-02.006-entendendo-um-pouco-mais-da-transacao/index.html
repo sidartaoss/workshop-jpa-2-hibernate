@@ -1,0 +1,377 @@
+<!-- 
+
+Aula 02.006. Entendendo um pouco mais de Transacao
+
+1. Vamos entender um pouquinho mais da Transacao?
+
+2. Nos vamos falar sobre Transacao durante quase todo o Curso, mas, ja vamos dar mais uma pequena introducao, ai, falar mais detalhes, para voce que nunca viu nada de Transacao.
+
+3. Bom, vamos la. Eu ja disse isso, e vou repetir, a gente precisa de Transacao para o INSERT, para o DELETE, e para o UPDATE.
+
+4. Ou seja, sao todas as operacoes que fazem alteracao no banco de dados. Entao, se a gente precisar alterar alguma coisa no banco de dados, mexer com o que esta la dentro, a gente precisa de uma Transacao.
+
+
+    -----------------
+    |               |           |
+    |    INSERT     |-----------|
+    |               |           |              
+    -----------------           |
+                                |
+    -----------------           |           |-----------------------|
+    |               |           |           |                       | 
+    |    DELETE     |-----------|==========>|       TRANSACAO       |
+    |               |           |           |                       |
+    -----------------           |           |-----------------------|
+                                |
+    -----------------           |
+    |               |           |
+    |    UPDATE     |-----------|
+    |               |           |
+    -----------------    
+
+5. Okay? E uma transacao, ela tem uma caracteristica, ela eh sempre representada por essa sigla, ACID, aqui, que significa o que? 
+
+6. Uma transacao tem que ter Atomicidade, ela tem que ter Consistencia, Isolamento, e Durabilidade.
+
+7. Na Atomicidade, significa que uma coisa que voce comecou, voce vai terminar aquilo la, ele faz tudo dentro de um processo que eles chamam de Atomico, ou seja, Comecou, tem que Terminar, ou, Comecou, tem que voltar tudo para tras daquela Transacao.
+
+8. Entao, ou Voce faz e Tudo da Certo, ou Voce faz e Nada da Certo.
+
+9. Ela tem que ser Consistente, tambem, a Transacao nao pode deixar os dados inconsistentes, no Banco de Dados.
+
+10. Ela tem que ser Isolada. Aquela Transacao, ali, nao pode interferir em uma outra Transacao.
+
+11. E, quando voce executar, terminar de executar a Transacao, o que foi feito ali, vai durar, ou seja, vai ser persistido no Banco de Dados.
+
+12. Bom, para isso, o que que nos vamos fazer? Nos vamos criar um exemplo, aqui, eu ja comecei ele, aqui, eu estou criando um projeto chamado banco-tabajara, vai ver que banco sensacional que eh esse nosso, aqui, a gente vai criar uma classe, aqui, no unico metodo main, aqui, mesmo, fica estranho, mesmo, mas eh so para voce entender um pouquinho do que a gente faz com Transacao.
+
+13. E, ai, eu criei esse Projeto, ja colocando as Bibliotecas necessarias, do Hibernate, e do HSQLDB, e criei uma Entidade Conta. Essa Entidade Conta, olha o tanto que ela eh simples, por isso que o banco eh Tabajara, nao eh?, so tem o codigo, o ID, eh o saldo daquela conta, nao tem mais nada.
+
+14. E a gente vai criar so duas contas, aqui, e tentar fazer a transferencia de uma para outra. Quando der certo, a gente comita. Quando nao der certo, a gente vai fazer o rollback.
+
+15. Como assim, Normandes, o que que eh o Rollback?
+
+16. Quando a gente da o begin,
+
+    em.getTransaction().begin()
+
+, em uma Transacao, a gente tem duas opcoes. Se deu tudo certo, a gente da o commit(),
+
+    em.getTransaction().commit();
+
+, e, se nao deu certo alguma coisa que voce queria que acontecesse, la na frente, porque voce pode comecar a Transacao, que eh o que o instrutor vai nos mostrar, fazer um monte de operacoes, e, depois, na hora que voce for dar o commit(), 'Ixe, nao era isso que eu queria, nao, eu vou ter que dar o Roolback'.
+
+17. Entao, voce pode dar o Rollback,
+
+    em.getTransaction().rollback();
+
+18. Entao, voce comeca a Transacao: ou vai para o Commit, ou vai para o Rollback.
+
+19. Vamos ver, aqui, com um exemplo pratico.
+
+20. Entao, eu criei, aqui, o persistence.xml, exatamente igual, la, com o que a gente tinha, ate o Schema, la, esta esta no cadastro_cliente, nem troquei o Schema, se voce quiser trocar o Schema, ai, entao, vamos trocar o Schema, aqui, oh, para nao ficar,... , banco_tabajara, e, ai, eu vou vir, aqui, no Workbench, e vou Criar esse novo Schema vou chamar ele de banco_tabajara, okay?
+
+21. Da um Apply, aqui, criou com sucesso o banco. A gente clica duas vezes, nele, aqui, para ele ficar em Negrito, e, ai, as tabelas desse banco a gente ja vai conseguir fazer as consultas, aqui.
+
+22. O nome da minha persistence-unit, bancoTabajaraPU, 
+
+    <persistence-unit name="bancoTabajaraPU" transaction-type="RESOURCE_LOCAL">
+    </persistence-unit>
+
+, ou seja, na hora de criar um EntityManagerFactory, eu vou passar o nome dessa Persistence Unit.
+
+23. Perfeito, vamos la, entao. Esse Sistema nosso vai ter uma pequena interacao, simples, com o Usuario. Entao, eu vou pegar um Scanner, do java.util, aqui, para receber a entrada do Usuario pela linha de comando,
+
+    Scanner entrada = new Scanner(System.in);
+
+24. Entao, vai aparecer, aqui, embaixo, a gente vai pedir essas informacoes para o Usuario.
+
+25. O que que a gente vai fazer? O que que a gente vai pedir para o Usuario?
+
+26. Primeiro, nos vamos tentar achar, ver se aquela conta ja esta cadastrada no banco de dados, a conta1,
+
+    Conta conta1 = 
+
+, entao, a gente faz, em.find(Conta.class, ), e agente passa, aqui, o ID 1L,
+
+    Scanner entrada = new Scanner(System.in);
+    Conta conta1 = em.find(Conta.class, 1L);
+
+27. Okay? Se a conta for nula, ou seja, se a gente nao encontrar essa conta, o que que eu vou fazer, Normandes, para a gente conseguir executar mais de uma vez?
+
+    if (conta == null) {
+
+    }
+
+, se a conta for nula, a gente pede o saldo inicial dessa conta,
+
+    if (conta == null) {
+        System.out.println("Digite o saldo inicial da conta 1: ");
+    }
+
+, por exemplo. E, aqui, a gente vai pedir,
+
+    if (conta == null) {
+        System.out.println("Digite o saldo inicial da conta 1: ");
+        BigDecimal saldoInicialConta1 = entrada.nextDouble();
+    }
+
+, a gente cria, entao, a conta1, 
+
+    if (conta == null) {
+        System.out.println("Digite o saldo inicial da conta 1: ");
+        BigDecimal saldoInicialConta1 = BigDecimal.valueOf(entrada.nextDouble());
+        conta1 = new Conta();
+        conta1.setSaldo(saldoIncialConta1);
+    }
+
+28. Beleza?
+
+29. Bom, se eu chegar aqui, e quiser salvar essa conta1, eu tenho que abrir a Transacao e dar o Commit.
+
+30. Mas, antes, vamos verificar, aqui, vamos fazer a mesma coisa para conta2, antes de a gente fazer isso, que a gente ja faz tudo de uma vez,
+
+
+    if (conta == null) {
+        System.out.println("Digite o saldo inicial da conta 1: ");
+        BigDecimal saldoInicialConta1 = BigDecimal.valueOf(entrada.nextDouble());
+        conta1 = new Conta();
+        conta1.setSaldo(saldoIncialConta1);
+    }
+
+    Conta conta2 = em.find(Conta.class, 2L);
+
+, a gente vai pegar a conta 2, se a conta 2 tambem nao existir, a gente pede, 'Digite o saldo inicial da conta 2: ',
+
+    Conta conta2 = em.find(Conta.class, 2L);
+    if (conta2 == null) {
+        System.out.println("Digite o saldo inicial da conta 2: ");
+        BigDecimal saldoInicialConta2 = BigDecimal.valueOf(entrada.nextDouble());
+
+    }
+
+, falei que ia ficar uma linguica, a gente podia separar isso aqui, deixar mais bonito, mas so para esse primeiro exemplo, voce vai ficar bem fa do sisteminha web jsf que a gente vai fazer, entao, nao fica brabo comigo, nao, beleza?
+
+    if (conta2 == null) {
+        System.out.println("Digite o saldo inicial da conta 2: ");
+        BigDecimal saldoInicialConta2 = BigDecimal.valueOf(entrada.nextDouble());
+        conta2 = new Conta();
+        conta2.setSaldo(saldoInicialConta2);
+    }
+
+31. Entao, o que que a gente fez, nao eh?, a gente pegou a Conta 2, ou seja, se ja estiver no Banco de dados.
+
+32. Se nao estiver, a gente pede o Saldo inicial, seta la, e configura, aqui, o saldo inicial nessa conta.
+
+33. Bom, o que que eu vou fazer, aqui, agora? Eu preciso persistir, no banco, essas duas contas.
+
+34. Entao, 
+
+    em.getTransaction().begin();
+    em.persist(conta1);
+    em.persist(conta2);
+    em.getTransaction().commit();
+
+35. Esta Transacao, aqui, comecou aqui,
+
+    >>> em.getTransaction().begin(); <<<
+    em.persist(conta1);
+    em.persist(conta2);
+    em.getTransaction().commit();
+
+, e terminou aqui,
+
+    em.getTransaction().begin();
+    em.persist(conta1);
+    em.persist(conta2);
+    >>> em.getTransaction().commit(); <<<
+
+36. Beleza?, com sucesso.
+
+37. Entao, aqui, eu vou mandar mostrar o saldo da conta, oh,
+
+    System.out.println("Saldo da conta1: " + conta1.getSaldo() 
+            + ". Saldo da conta2: " + conta2.getSaldo());
+
+38. Perfeito. Entao, oh, se ele buscou no banco, ou se ele criou as novas contas, a gente vai ver o saldo delas aqui,
+
+    System.out.println("Saldo da conta1: " + conta1.getSaldo() 
+            + ". Saldo da conta2: " + conta2.getSaldo());
+
+39. Beleza? Isso eh so a parte de preparacao inicial.
+
+40. O que que a gente vai fazer, agora?
+
+41. Agora, nos vamos fazer a transferencia de valor de uma conta para a outra conta. Mas, eu sou um Programador, aqui, inexperiente, entao, eu vou fazer, primeiro, o Credito na Conta 2, por exemplo, e, depois, tentar tirar o Credito da Conta 1. E, depois, a gente verifica se isso vai dar certo, a gente da o Commit, senao, a gente da o Rollback.
+
+42. Beleza? A gente decidiu fazer assim. Vamos supor que a gente comecou a fazer assim, a gente quis confiar na Transacao, para a gente testar a Transacao,
+
+        System.out.println("--------------------");
+
+43. Entao, vamos la. Eu vou pedir, aqui, para o Usuario, entao, agora, o Valor, 'Digite o valor a retirar da conta 1 e depositar na conta 2: ', a transferencia, nao eh?
+
+44. Entao, vai la, eu vou digitar um valor, eu quero tirar um tanto da Conta 1 e depositar na Conta 2, beleza?
+
+45. Entao, ele vai digitar, aqui, o valor aqui, oh, 
+
+    BigDecimal valorTransferencia = BigDecimal.valueOf(entrada.nextDouble());
+
+46. Entao, o Usuario vai digitar esse valor da transferencia para mim.
+
+47. E, ai, o que que a gente vai fazer?
+
+48. Eu vou precisar alterar, entao, a conta 1 e a conta 2.
+
+49. Se eu preciso alterar o saldo, a gente precisa iniciar uma Transacao.
+
+50. Essa Transacao, aqui,
+
+		em.getTransaction().begin();
+		em.persist(conta1);
+		em.persist(conta2);
+		em.getTransaction().commit();
+
+, terminou.
+
+51. Entao, eu tenho que criar uma nova Transacao,
+
+    em.getTransaction().begin();
+    
+, e, ai, agora, eu vou, eu vou tirar da conta 1, vai ser o que esta na conta 1 - valorTransferencia, 
+
+    conta1.setSaldo(conta1.getSaldo() - valorTransferencia);
+
+, concorda comigo? Pego o que tem la, conta1.getSaldo(), menos o que eu quero transferir, valorTransferencia.
+
+52. Perfeito?
+
+53. E, ai, agora, eu vou na conta2.setSaldo(conta2.getSaldo() + valorTransferencia);
+
+    conta1.setSaldo(conta1.getSaldo().subtract(valorTransferencia));
+    conta2.setSaldo(conta2.getSaldo().add(valorTransferencia));
+
+54. Perfeito? A gente fez dessa forma, conta 1, pega o saldo, menos a transferencia. Conta 2, eh o saldo mais o valor da transferencia.
+
+55. E, ai, o que que eu vou verificar, agora?
+
+56. Agora, que eu vou verificar. Nos poderiamos ter feito isso antes, mas, vamos supor que tenhamos feito assim, e eu quero verificar: Se a conta1.getSaldo() esta maior do que 0, ou seja, se ele tinha saldo suficiente, ai, eu vou fazer o commit(),
+
+    if (conta1.getSaldo().compare(BigDecimal.ZERO) > 0) {
+        em.getTransaction().commit();
+    }
+
+, senao, eu dou um Rollback,
+
+    if (conta1.getSaldo().compare(BigDecimal.ZERO) > 0) {
+        em.getTransaction().commit();
+    } else {
+        em.getTransaction().rollback();
+    }
+
+, e, aqui, eu vou colocar a mensagem, 'Transferencia realizada com sucesso!',
+
+    if (conta1.getSaldo().compare(BigDecimal.ZERO) > 0) {
+        em.getTransaction().commit();
+        System.out.println("Transferencia realizada com sucesso!");
+    } else {
+        em.getTransaction().rollback();
+    }
+
+, se fez o rollback, eu vou chamar, aqui, ate, com .err, 
+
+    if (conta1.getSaldo().compare(BigDecimal.ZERO) > 0) {
+        em.getTransaction().commit();
+    } else {
+        em.getTransaction().rollback();
+        System.err.println("Transferencia nao realizada, saldo insuficiente!");
+    }    
+
+57. Entao, vamos la, olha so o que eu fiz, eu iniciei a Transacao, antes de eu verificar, o que que a gente poderia fazer diferente? A gente poderia verificar o saldo eh suficente para fazer essa Transferencia? Eh insuficiente? Eh insuficiente, entao, ja da um erro, aqui, para o Usuario.
+
+58. Mas, nao, eu quis fazer, nao eh?, eu, primeiro, vou la, faco as alteracoes da transferencia, 
+
+		em.getTransaction().begin();
+		conta1.setSaldo(conta1.getSaldo().subtract(valorTransferencia));
+		conta2.setSaldo(conta2.getSaldo().add(valorTransferencia));
+
+, se deu certo essas alteracoes, se depois, eu for verificar e ficar maior do que zero, eu dou o Commit, senao, eu dou o Rollback.
+
+59. Pode ser um exemplo que voce fala, 'Mas eu nunca vou fazer esse tipo de situacao.' Talvez, nesse aqui, nao, mas acontecem algumas outras situacoes que, por algum outro erro, voce chamou, voce fez alguma coisa, chamou um outro servico externo, que nao eh seu Servico, chamou um Web Service de um Sistema Externo, e o Web Service deu erro, voce tem que dar Rollback em coisas que voce ja tinha feito, por exemplo, okay?
+
+60. Bom, vamos testar esse exemplo, aqui.
+
+61. Se a gente mandar executar, Run As... Java Application, ele vai iniciar o Hibernate, aqui, oh, ele nao encontrou a Tabela Conta, ele criou, beleza.
+
+62. Vamos ver la, no Workbench, antes de comecar a testar? Botao direito, Refresh All, criou a tabela Conta, 'select * from conta', nao tem nada, nenhuma conta, nenhum saldo.
+
+63. Vamos la, entao, 'Digite o saldo inicial da conta 1: ', vou digitar 1000, <Enter>.
+
+64. 'Digite o saldo inicial da conta 2: ', vou colocar 1000, tambem, <Enter>.
+
+65. 'Saldo da conta 1: 1000.0. Saldo da conta 2: 1000.0'.
+
+66. Neste momento, eu ja tinha feito o commit. Se eu fiz o commit, entao, os valores ja tem que vir aqui, oh, 
+
+select * from conta;
+
+codigo      saldo
+1           1000
+2           1000
+
+, tanto da conta 1 quanto da conta 2, ja esta 1000,00 cada um.
+
+67. Beleza? Agora, eu estou falando, oh, 'Digite o valor para retirar da conta 1 e depositar na conta 2'.
+
+68. Entao, eu vou tirar, aqui, sei la, 600,00 da conta 1 e depositar na conta 2,
+
+69. Ele tem esse saldo?
+
+70. Tem. Entao, teoricamente, vai dar certo, nao eh?
+
+71. Oh, 'Transferencia realizada com sucesso!', o programinha nosso, ate, ja acabou. Se a gente consultar aqui, no Workbench, uma vai ter que ter 400,00 que foi o que eu tirei da conta 1, 600,00, e depositei 600,00 na conta 2, entao, ficou 1600 na conta 2, 
+
+select * from conta;
+
+codigo      saldo
+1           400
+2           1600
+
+72. Perfeito? Vamos testar o rollback agora?
+
+73. Mandar executar mais uma vez.
+
+74. Vai iniciar a parte do Hibernate, de novo. Ele encontrou, ja a conta 1, que ja estava salva la no banco, nao eh? A conta 1 tinha 400,00 e a conta 2, agora, tem 1600,00, e eu vou tentar tirar, aqui, da conta 1, 450,00.
+
+75. Entao, se eu tentar tirar 450,00 para depositar na conta 2, nao eh para dar certo. Entao, o que que vai acontecer?
+
+76. Olha la, 'Transferencia nao realizada, saldo insuficiente!'. E se a gente fize o Select aqui, oh, no Workbench, 
+
+select * from conta;
+
+codigo      saldo
+1           400
+2           1600
+
+, voce pode ver que ele nao fez a alteracao. Por que? Porque eu dei o Rollback.
+
+77. Perfeito? Bem legal isso dai, nao eh? Ajuda bastante no Desenvolvimento.
+
+78. Beleza?
+
+79. Fim da Aula 02.006. Entendendo um pouco mais de Transacao.
+
+
+-->
+
+
+
+
+
+
+
+
+
+
+
+
+

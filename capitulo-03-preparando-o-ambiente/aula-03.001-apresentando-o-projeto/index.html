@@ -1,0 +1,63 @@
+<!-- 
+
+Aula 03.001. Apresentando o Projeto
+
+1. Neste curso, para a gente nao ficar salvando Passaro, Arvore, no banco de dados, nos vamos criar uma Aplicacao proxima do real, eh logico que nao eh uma Aplicacao 100% pronta, para voce ja colocar na Internet, mas eh uma Aplicacao que vai nos dar uma base muito boa de como trabalhar, dos problemas que podem acontecer em uma Aplicacao Real.
+
+2. Okay? Entao, nos vamos trabalhar em uma Aplicacao que eh uma Locadora de Veiculos.
+
+3. Nos vamos criar essa Aplicacao, utilizando JSF, com PrimeFaces, a parte Web, este curso nao eh um curso de JSF, de PrimeFaces, essa parte eu vou deixar pronta, sempre para voce, para voce trabalhar sempre com JPA, com Hibernate, okay?, voce trabalhar na camada de Persistencia sempre.
+
+4. Entao, nao se preocupe, nao, voce falar, 'Nao, eu nao queria aprender JSF.', voce nao precisa saber JSF, nao. 
+
+5. Fica tranquilo, okay? Bom, o Diagrama de Classes eh esse aqui, que o instrutor esta exibindo, e ele tambem esta la no GitHub, se voce acessar ele la, voce consegue baixa-lo.
+
+6. Eu estou usando o StarUML, o programinha para visualizar, mas eu tambem deixei la a versao JPG, uma imagem, la, para voce poder baixar ele, se voce nao quiser utilizar o StarUML.
+
+7. Okay? Bom, o sisteminha, deixa eu te mostrar ele funcionando, aqui, ele nao esta 100% pronto, claro, eu fiz bastante do Projeto antes de gravar as aulas, para eu tambem saber, direitinho, o caminho que a gente vai tomar, mas ele nao esta 100% pronto. Mas deixa eu te mostrar um pouquinho dele funcionando, para voce ver o que que a gente vai fazer, nesse sistema.
+
+8. Lembrando que eh o que a gente eh sempre relacionado a essas tabelas, em diagrama_classe_locadora_veiculo.jpg, entao, quando a gente for cadastrar o primeiro exemplo que a gente vai ver, provavelmente, vai ser o Cadastro de Fabricante, que eh uma coisa simples. Entao, quando a gente voltar, aqui, no Sisteminha, clicou no Menu Cadastros / Fabricante, a gente vem para o Cadastro de Fabricante, a primeira vez, ali, demora um pouquinho para iniciar, aqui, okay?, ja te mostro, aqui, no Eclipse, tambem, nao eh?, que como eh que isso esta funcionando, ele cai na tela de Pesquisa, a gente ve os fabricantes, a gente pode clicar no botao Novo, para cadastrar um Novo, a gente pode clicar em Pesquisa, para voltar para a Pesquisa, Editar um Fabricante, Excluir, entao, todos esses Cadastros que a gente vai ter, a gente sempre vai ter a Edicao, a Exclusao, okay?, para a gente Cadastrar todos eles ai, oh.
+
+9. Tem o Cadastro de Fabricante, depois, a gente pode cadastrar o Modelo do Carro, entao, aqui, eu ja cadastrei, oh, entao, eu vou clicar em Novo, aqui, a gente ja faz o Select, lah, oh, para trazer os Fabricantes que a gente cadastrou previamente, o Modelo do Carro e a Categoria. Isso daqui, ja eh uma Enumeracao, que a gente vai utilizar para te explicar, como eh que funciona o Enum, no JPA, com eh que a gente pode usar o Enum, aqui.
+
+10. No Cadastro de Carro, a gente tambem tem um Cadastro de Acessorios, os carros tem acessorios.
+
+11. E, por fim, a gente consegue cadastrar um Carro.
+
+12. O Carro, para uma Locadora de Veiculo, ela tem, aqui, a gente vai selecionar o Modelo, a gente vai definir a Placa, a Cor, o Valor da Diaria, e selecionar os Acessorios que a gente quer colocar nesse Carro.
+
+13. Entao, ta vendo, oh, nesse tipo de sistema, a gente ja esta fazendo o relacionamento Muitos para Muitos, que eh o caso, aqui, com Acessorios, Relacionamento Um Carro, ele pode ter Um Modelo de Carro, entao, a gente esta fazendo Relacionamento Muitos para Um, porque Um Modelo pode estar para Varios Carros, okay?, entao, a gente vai treinar tudo isso dai, na pratica, com um Sisteminha Real.
+
+14. Okay? E nao, simplesmente, ficar salvando, la, como eu disse, uma Arvore, um Passaro, etc.
+
+15. No caso, aqui, de Funcionario, a gente, tambem, vai cadastrar os Funcionarios da Empresa, e, aqui, a gente vai utilizar, eu vou mostrar, aqui, no UML, heranca, para a gente poder fazer isso.
+
+16. Entao, eu vou te mostrar as formas que a gente tem para fazer heranca, com JPA, e vou te mostrar isso daqui na pratica, tambem, funcionando, tanto no Cadastro de Funconario, quanto no Cadastro de Motorista. 
+
+17. Okay? Bom, assim que a gente terminar essa parte de Cadastro, a gente vem, aqui, tambem, para o Aluguel, porque uma Locadora de Veiculos aluga, nao eh?, veiculos, entao, a gente vai selecionar o Carro, selecionar o Motorista, que a gente esta alugando, a gente vai selecionar a Data, que ele esta pegando, para colocar a hora, entao, oh, para a gente ver o mapeamento de hora, no banco de dados, okay?
+
+18. A Data da Devolucao, o Valor Total, a gente pode selecionar dados da Apolice de Seguro desse Carro, esse, aqui, eh um Relacionamento Um Para Um, para a gente poder ver como eh que funciona, tambem, o Relacionamento Um para Um, Um Aluguel pode ter Uma Apolice de Seguro.
+
+19. Okay? Vamos la, o que mais que a gente tem, aqui, no Sisteminha?
+
+20. Com isso aqui, a gente termina a parte de Basica do Sistema. Bom, e, ai, a gente vai cair, essa parte, aqui, eu nao terminei, ainda, 100%, que sao os Relatorios.
+
+21. Os Relatorios, nos vamos criar esses Relatorios para a gente treinar as Consultas. Entao, aqui, a gente vai inventando Relatorio, a medida que a gente vai tendo ideia, aqui, de Criar Um Relatorio, a gente cria a telinha, coloca a telinha, aqui, e manda gerar esse Relatorio, para a gente terminar as consultas, okay? E, ai, nessa parte, aqui, a gente vai treinar bastante as Consultas um pouco mais avancadas, utilizando JPQL, utilizando Criteria, okay?
+
+22. E voce vai ter bastante servico, ai, para avancar com esse Sisteminha, para voce estudar bastante, ai.
+
+23. Beleza?
+
+24. Bom, vamos comecar?
+
+25. Vamos comecar preparando o ambiente para esse tipo de Aplicacao, no Eclipse. Nos vamos, a partir das proximas aulas, eu vou te mostrar como eh que a gente instala o Tomcat, dentro do Eclipse, para a gente poder usar o Tomcat dentro do Eclipse, para os nossos projetos.
+
+26. Esse Projeto, nosso, eh um Projeto Maven.
+
+27. A gente vai configurar o Maven, tambem, aqui, no Eclipse, okay?, alem do Projeto JSF, que a gente vai configurar aqui.
+
+28. Okay?
+
+29. Fim da Aula 03.001. Apresentando o Projeto.
+
+-->

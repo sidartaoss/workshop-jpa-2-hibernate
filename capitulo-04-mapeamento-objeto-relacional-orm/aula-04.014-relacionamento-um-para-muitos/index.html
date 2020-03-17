@@ -1,0 +1,238 @@
+<!--
+    Aula 04.014. Relacionamento Um-Para-Muitos
+
+1. Para a gente comecar a entender o Relacionamento Um-Para-Muitos, nos vamos trabalhar, aqui, em Aluguel e Carro.
+
+2. So para a gente lembrar, aqui, no nosso Diagrama de Classes, o Aluguel possui um Carro. E Um Carro pode ser alugado em Varios Alugueis.
+
+3. Entao, Carro tem Alugueis, aqui.
+
+4. Deixa eu te mostrar um exemplo disso aqui no Banco de dados, como ficaria no Banco, para a gente entender melhor. Vamos pegar essa situacao,
+
+                Carro
+        Codigo          Placa
+        1               AAA-1234
+
+
+                Aluguel
+    Codigo      Valor Total     Codigo Carro
+    1           500             1
+    2           250             1
+
+5. A gente ja foi la e cadastrou Um Carro, a gente tem Um Carro, ja, la, cadastrado, nessa Locadora de Veiculos de Codigo 1 e a Placa AAA-1234, eu nao coloquei o restante das colunas, aqui, so para facilitar.
+
+6. Bom, e, ai, a gente tem esse Carro cadastrado e a gente vai la e faz um novo Aluguel, coloca, la, o restante das informacoes, mas, entre elas, vai ser cadastrado o Codigo do Aluguel, o Valor Total do Aluguel e, para o Aluguel, tem que selecionar Um Carro. Certo? Entao, oh, o Aluguel vai estar apontando, entao, la para aquele Carro,
+
+                Carro
+        Codigo          Placa
+        1               AAA-1234
+
+
+                Aluguel
+    Codigo      Valor Total     Codigo Carro
+    1           300             1
+
+7. Ai, a gente vai la e fez um segundo Aluguel de outro Valor para o mesmo Carro,
+
+                Carro
+        Codigo          Placa
+        1               AAA-1234
+
+
+                Aluguel
+    Codigo      Valor Total     Codigo Carro
+    1           300             1
+    2           450             1
+
+, o cara pegou uns dias a mais, ficou um pouquinho mais caro, mas eh o mesmo carro, obviamente, depois que ele devolveu, nao eh?, a gente teria que fazer toda essa validacao aqui tambem.
+
+8. E esse Codigo do Carro tambem eh 1, ou seja, apontando para o mesmo Codigo do Carro.
+
+9. E, para voce nao ter duvidas de quando eh um Mapeamento Um-Para-Muitos, Muitos-Para-Um, olha so, se voce pensar dessa forma, olha como fica facil de voce entender.
+
+10. Quando eu falor Um Aluguel, o que que eu estou falando? Uma linha.
+
+11. Perfeito? Oh, Um Aluguel eh esse cara, aqui, de Codigo 1, 300,00 e Codigo Carro 1,
+
+                Aluguel
+    Codigo      Valor Total     Codigo Carro
+>>>    1           300             1        <<<
+    2           450             1
+
+12. Entao, Um Aluguel tem quantos Carros? Quantos IDs de Carro eu consigo colocar nessa Coluna Codigo Carro? Somente Um.
+
+13. Entao, oh, Um Aluguel tem apenas Um Carro.
+
+14. Beleza? E no sentido contrario?
+
+15. Um Carro, quando eu falo Um Carro eh Uma linha aqui no Banco de Dados,
+
+                Carro
+        Codigo          Placa
+>>>        1               AAA-1234     <<<
+
+, eh o cara de Codigo 1, entao, Um Carro, ele tem, ai, voce vai no sentido contrario, aqui, oh, ele tem mais de Um Carro,
+
+                Carro
+        Codigo          Placa
+        1<-|              AAA-1234                     
+           |----------------------------------------|
+                Aluguel                             |
+    Codigo      Valor Total     Codigo Carro        |
+    1           300             1 ------------------|
+    2           450             1 ------------------|
+
+
+, ou melhor, Um Carro, esta em mais de Um Aluguel, nao eh verdade?, o ID do Carro esta duplicado aqui, oh. Entao, nesse sentido do Carro para o Aluguel, eu falo que Um Carro tem Varios Alugueis. Certo? E eh assim que voce entende, entao, o Mapeamento de Um Para Muitos.
+
+16. Vamos voltar la no Eclipse para a gente dar uma olhada.
+
+17. E, ai, o que que vai acontecer? Se a gente tem um Relacionamento de um lado que eh de Muitos Para Um, ou seja, tem Muitos Alugueis Para Um Carro, no sentido contrario, vai ser Um Carro Para Muitos Alugueis.
+
+18. Entao, se a gente for, aqui, no Aluguel, e chegar, aqui, no Mapeamento de Carro, eu vejo, la, que esta com a anotacao @ManyToOne, e eu ja fiz o Mapeamento, aqui, de Carro, e falou, 'Olha, a coluna de Join, nao eh?, quem que eh o dono desse Relacionamento? Eh o Aluguel'. Ele ja fez esse Mapeamento aqui,
+
+public class Aluguel {
+
+    ...
+
+    @ManyToOne
+    @JoinColumn(name = "codigo_carro")
+    public Carro getCarro() {
+        return carro;
+    }
+
+    ...
+}
+
+, a coluna que vai fazer esse Relacionamento, nao eh?, a gente mapear ela, esta aqui dentro do @ManyToOne. O @JoinColumn esta aqui, e a coluna, para fazer esse Relacionamento Muitos-Para-Um, a coluna tem que estar no Aluguel, a coluna do Banco de Dados tem que estar na Tabela Aluguel, porque eh aqui que voce vai conseguir colocar Varios Carros,
+
+                Carro
+        Codigo          Placa
+        1<-|              AAA-1234                     
+           |----------------------------------------|
+                Aluguel                             |
+    Codigo      Valor Total     Codigo Carro        |
+    1           300             1 ------------------|
+    2           450             1 ------------------|
+
+19. Entao, ja esta feito esse Mapeamento, aqui. Beleza, entao, vamos fazer o Mapeamento, la, na classe Carro?
+
+20. Bom, se, na classe Carro, o Relacionamento eh Um-Para-Muitos, entao, aqui, Um Carro pode estar em Varios Alugueis, certo?,
+
+@Entity
+public class Carro {
+
+    ...
+    private List<Aluguel> alugueis;
+
+    @OneToMany(mappedBy = "carro")
+    public List<Aluguel> getAlugueis() {
+        return alugueis;
+    }
+
+    public void setAlugueis(List<Aluguel> alugueis) {
+        this.alugueis = alugueis;
+    }
+}
+
+, entao, se ele pode estar em varios alugueis, vai ser Uma Lista de Aluguel.
+
+21. Perfeito?
+
+22. Vamos voltar, aqui, para ver de novo,
+
+                Carro
+        Codigo          Placa
+        1<-|              AAA-1234                     
+           |----------------------------------------|
+                Aluguel                             |
+    Codigo      Valor Total     Codigo Carro        |
+    1           300             1 ------------------|
+    2           450             1 ------------------|
+
+, voce esta com o Carro,
+
+                Carro
+        Codigo          Placa
+>>>        1              AAA-1234      <<<
+
+, deixa eu ver quais os Alugueis que esse Carro tem. Tem esses alugueis aqui,
+
+                Aluguel                             
+    Codigo      Valor Total     Codigo Carro        
+    1           300               >>> 1 
+    2           450               >>> 1 
+
+, entendeu? Quando voce pensar, aqui, na Entidade que voce esta criando, voce fala, 'Po, Normandes, eu nao estou entendendo essa Lista',
+
+@Entity
+public class Carro {
+
+    ...
+    private List<Aluguel> alugueis;
+
+    @OneToMany(mappedBy = "carro")
+    public List<Aluguel> getAlugueis() {
+        return alugueis;
+    }
+
+    public void setAlugueis(List<Aluguel> alugueis) {
+        this.alugueis = alugueis;
+    }
+}
+
+, pensa bem, oh, se eu peguei esse Carro, aqui,
+
+                Carro
+        Codigo          Placa
+>>>        1              AAA-1234      <<<
+
+, eu fui la e fiz um find(), usando o EntityManager, nesse Carro, e eu quero, a partir desse Carro, saber quais os alugueis que esse Carro participou. Bom, se eu quero saber quais os alugueis, eu estou falando, ate, no plural, vai ter que ser uma Lista, porque vai ter mais de um Aluguel.
+
+23. Entao, coloca aqui, oh, na classe Carro, List<Aluguel> alugueis, e, ai, fazemos o mapeamento,
+
+@Entity
+public class Carro {
+
+    ...
+    private List<Aluguel> alugueis;
+
+    @OneToMany(mappedBy = "carro")
+    public List<Aluguel> getAlugueis() {
+        return alugueis;
+    }
+
+    public void setAlugueis(List<Aluguel> alugueis) {
+        this.alugueis = alugueis;
+    }
+}   
+
+, criamos o Getter e o Setter, para fazer o Mapemanto, e o Mapemanento, aqui, eh o @OneToMany, anotacao @OneToMany. 
+
+24. Bom, mas eh so colocar isso, Normandes? Entao, a gente tem que falar, aqui, uma boa pratica a gente chegar aqui e falar, oh, que o mapeamento foi feito la na classe de Aluguel. Entao, a gente pode chegar aqui e falar assim, oh, 'Foi mapeado la na classe Aluguel'. Em qual atributo da classe Aluguel que ele esta sendo mapeado, ja foi feito esse Mapeamento?
+
+25. Ah, foi feito la no atributo carro.
+
+26. Entao, mapeado pelo atributo carro,
+
+@OneToMany(mappedBy = "carro")
+public List<Aluguel> getAlugueis() {
+    return alugueis;
+}
+
+27. Simples assim.
+
+28. Entao, eh bom a gente colocar isso daqui,
+
+@OneToMany(>>> mappedBy = "carro" <<<)
+public List<Aluguel> getAlugueis() {
+    return alugueis;
+}
+
+, ta certo?, para a gente falar quem, la, dentro de Aluguel, mapeou esse @OneToMany, aqui, para a gente. Entao, a gente fala, 'Oh, foi mapeado la, na classe Aluguel, pelo atributo carro'.
+
+29. Bom, esse Mapeamento aqui, a gente nao vai fazer nenhum teste agora, mas, so uma previazinha, para a gente entender, a gente finalizar essa sequencia de Um-Para-Um, Muitos-Para-Um, Muitos-Para-Muitos, para, quando a gente for fazer os Relatorios, la, do nosso Sisteminha, e, ai, eu vou te mostrar mais detalhes sobre esse Um Para Muitos, as coisas que podem acontecer com ele, ai.
+
+30. Fim da     Aula 04.014. Relacionamento Um-Para-Muitos.
+
+-->

@@ -1,0 +1,926 @@
+<!-- 
+
+    Aula 08.008. Join e Fetch
+
+1.
+
+    @Test
+    public void exemploJoinFetch() {
+        CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+
+        CriteriaQuery<Carro> criteriaQuery = builder.createQuery(Carro.class);
+
+        // from Carro c
+        Root<Carro> c = criteriaQuery.from(Carro.class);
+
+        // select c from Carro c
+        /** criteriaQuery.select(c); **/
+
+        TypedQuery<Carro> query = this.manager.createQuery(criteriaQuery);
+
+        List<Carro> resultado = query.getResultList();
+
+        for (Carro carro : resultado) {
+            System.out.println(carro.getPlaca() + " - " + carro.getModelo().getDescricao());
+        }
+
+    }
+
+2. Eu vou te mostrar, agora, uma coisa muito, muito importante, que, as vezes, muitos desenvolvedores JPA iniciantes nao se atentam e, ai, o que que acontece? A performance do sistema deles fica ruim, nao fica boa.
+
+3. E a gente fez isso nos exemplos passados, usando o JPQL, e nos vamos corrigir, agora, nos vamos aprender como resolver esse probleminha que aconteceu.
+
+4. Vamos la. Deixa eu te mostrar, primeiro, aqui, oh, eu criei esse novo teste, aqui, que eh o exemploJoinEFetch(), que eu vou mostrar agora.
+
+5. Primeiro, eu criei, aqui, o CriteriaBuilder, eu criei o CriteriaQuery, em cima de Carro, selecionei a minha Entidade Carro, com criteriaQuery.from(Carro.class), criei a Query, com this.manager.createQuery(criteriaQuery), retornou o TypedQuery<Carro>, mandei executar, com query.getResultList().
+
+6. Okay, ate aqui, nao tem nenhuma novidade. Peguei o resultado e estou imprimindo, aqui, a Placa e o Modelo do Carro.
+
+7. Okay? Vamos executar, so para a gente ver como eh que esse camarada, aqui, esta se comportando.
+
+8. Vou mandar executar aqui, CTRL+SHIFT+X / Run JUnit Test. 
+
+9. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_,
+        carro0_.chassi as chassi2_3_,
+        carro0_.cor as cor3_3_,
+        carro0_.data_criacao as data_cri4_3_,
+        carro0_.data_modificacao as data_mod5_3_,
+        carro0_.codigo_modelo as codigo_m8_3_,
+        carro0_.placa as placa6_3_,
+        carro0_.valor_diaria as valor_di7_3_ 
+    from
+        Carro carro0_
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_,
+        fabricante1_.codigo as codigo1_5_1_,
+        fabricante1_.nome as nome2_5_1_ 
+    from
+        ModeloCarro modelocarr0_ 
+    left outer join
+        Fabricante fabricante1_ 
+            on modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+    where
+        modelocarr0_.codigo=?
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_,
+        fabricante1_.codigo as codigo1_5_1_,
+        fabricante1_.nome as nome2_5_1_ 
+    from
+        ModeloCarro modelocarr0_ 
+    left outer join
+        Fabricante fabricante1_ 
+            on modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+    where
+        modelocarr0_.codigo=?
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_,
+        fabricante1_.codigo as codigo1_5_1_,
+        fabricante1_.nome as nome2_5_1_ 
+    from
+        ModeloCarro modelocarr0_ 
+    left outer join
+        Fabricante fabricante1_ 
+            on modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+    where
+        modelocarr0_.codigo=?
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_,
+        fabricante1_.codigo as codigo1_5_1_,
+        fabricante1_.nome as nome2_5_1_ 
+    from
+        ModeloCarro modelocarr0_ 
+    left outer join
+        Fabricante fabricante1_ 
+            on modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+    where
+        modelocarr0_.codigo=?
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_,
+        fabricante1_.codigo as codigo1_5_1_,
+        fabricante1_.nome as nome2_5_1_ 
+    from
+        ModeloCarro modelocarr0_ 
+    left outer join
+        Fabricante fabricante1_ 
+            on modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+    where
+        modelocarr0_.codigo=?
+AAA-1234 - Cruze
+BBB-2222 - Fit
+AAA-9999 - Fit
+BBB-8888 - Cruze
+AAA-7788 - Civic
+DDD-1234 - Fit
+FFF-1212 - Cruze
+XXX-1111 - Civic
+ADD-8989 - HB20
+YNP-5588 - Fiesta
+
+10. Okay, executou. Olha so, o que que ele fez, para voce ver como eh que nao esta legal isso daqui. Eh isso que eu quero mostrar, para a gente corrigir.
+
+11. Bom, como eu mandei buscar Carro,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_,
+        carro0_.chassi as chassi2_3_,
+        carro0_.cor as cor3_3_,
+        carro0_.data_criacao as data_cri4_3_,
+        carro0_.data_modificacao as data_mod5_3_,
+        carro0_.codigo_modelo as codigo_m8_3_,
+        carro0_.placa as placa6_3_,
+        carro0_.valor_diaria as valor_di7_3_ 
+    from
+        Carro carro0_
+
+, ele fez um 'select', em cima de Carro.
+
+12. Ate ai, sem problema.
+
+13. Porem, como eu estou, deixa eu, aqui, abrir a classe Carro.
+
+14. Repare que eu estou acessando o modelo,
+
+public class Carro {
+
+    ...
+    private ModeloCarro modelo;
+
+    ...
+}
+
+, eh um relacionamento que a gente tem, aqui, oh, Muitos Para Um,
+
+    @ManyToOne
+    @JoinColumn(name = "codigo_modelo")
+    public ModeloCarro getModelo() {
+        return modelo
+    }
+
+15. Okay? E, como o meu EntityManager, nesse momento, ainda esta aberto, o que que ele vai fazer?
+
+16. Ah, beleza, ele esta precisando do modelo do carro, e ele esta com o EntityManager aberto, vamos la buscar?
+
+17. Entao, ele vai la e busca o Modelo do Carro,
+
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_,
+        fabricante1_.codigo as codigo1_5_1_,
+        fabricante1_.nome as nome2_5_1_ 
+    from
+        ModeloCarro modelocarr0_ 
+    left outer join
+        Fabricante fabricante1_ 
+            on modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+    where
+        modelocarr0_.codigo=?
+
+18. Faz outro select, oh, e faz varios select's, para os varios modelos de carro que a gente tem cadastrado, aqui, no banco de dados.
+
+19. Depois que ele buscou, ai, sim, para cada Modelo de Carro diferente, tem o Cruze, Fit, Civic, HB20 e Fiesta, tem 5 Modelos, entao, por isso, ele fez essas Consultas extras, aqui.
+
+20. Bem, repara que isso nao parece estar legal, nao eh?
+
+21. Ele buscou o Carro e, depois, saiu buscando o resto das coisas.
+
+22. Bom, pra gente, eh facil de desenvolver, eu so escrevi isso daqui, ou seja, o metodo exemploJoinEFetch(), precisei do Modelo, coloco, oh,
+
+    for (Carro carro : resultado) {
+        System.out.println(carro.getPlaca + " - " + >>> carro.getModelo().getDescricao());
+    }
+
+, beleza.
+
+23. Mas, repara que, se a gente tiver muitas Entidades, aqui, ou seja, Carros, e muitos Modelos de Carros diferentes, ele vai ficar indo muito no banco de dados. Isso vai fazer o nosso Sistema ficar lento.
+
+24. Entao, a gente precisa resolver isso daqui.
+
+25. A gente precisa dar um jeito de resolver isso.
+
+26. E, se a gente for la no nosso Sisteminha Web, tem uma parte nossa de Consulta de Carro que esta acontecendo isso.
+
+27. Vou mandar inicializar o Servidor pra te mostrar, la, tambem, que isso esta acontecendo.
+
+28. E, ai, a gente ja vai resolver no JPQL e, depois, eu venho, aqui, e te ensino a fazer no Criteria.
+
+29. Entao, vamos la. Vamos mandar, vamos vir aqui, na Pesquisa de Carro, ele vai inicializar. Aqui, okay, terminou de inicializar o Servidor, agora que vai inicializar o Hibernate.
+
+30. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_,
+        carro0_.chassi as chassi2_3_,
+        carro0_.cor as cor3_3_,
+        carro0_.data_criacao as data_cri4_3_,
+        carro0_.data_modificacao as data_mod5_3_,
+        carro0_.codigo_modelo as codigo_m8_3_,
+        carro0_.placa as placa6_3_,
+        carro0_.valor_diaria as valor_di7_3_ 
+    from
+        Carro carro0_ limit ?
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_,
+        fabricante1_.codigo as codigo1_5_1_,
+        fabricante1_.nome as nome2_5_1_ 
+    from
+        ModeloCarro modelocarr0_ 
+    left outer join
+        Fabricante fabricante1_ 
+            on modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+    where
+        modelocarr0_.codigo=?
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_,
+        fabricante1_.codigo as codigo1_5_1_,
+        fabricante1_.nome as nome2_5_1_ 
+    from
+        ModeloCarro modelocarr0_ 
+    left outer join
+        Fabricante fabricante1_ 
+            on modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+    where
+        modelocarr0_.codigo=?
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_,
+        fabricante1_.codigo as codigo1_5_1_,
+        fabricante1_.nome as nome2_5_1_ 
+    from
+        ModeloCarro modelocarr0_ 
+    left outer join
+        Fabricante fabricante1_ 
+            on modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+    where
+        modelocarr0_.codigo=?
+Hibernate: 
+    select
+        count(carro0_.codigo) as col_0_0_ 
+    from
+        Carro carro0_
+
+31. Okay.
+
+32. Repara bem, olha so a Consulta que ele fez,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_,
+        carro0_.chassi as chassi2_3_,
+        carro0_.cor as cor3_3_,
+        carro0_.data_criacao as data_cri4_3_,
+        carro0_.data_modificacao as data_mod5_3_,
+        carro0_.codigo_modelo as codigo_m8_3_,
+        carro0_.placa as placa6_3_,
+        carro0_.valor_diaria as valor_di7_3_ 
+    from
+        Carro carro0_ limit ?
+
+, buscou os Carros, e, ai, depois, comecou a buscar os Modelos dos Carros, da mesma forma que a gente tinha feito no JUnit.
+
+33. So para voce lembrar, na pesquisa de carro, a gente usou Paginacao, nao eh?,
+
+@PostConstruct
+public void inicializar() {
+    this.lazyCarros = new LazyCarroDataModel(this.carroDAO);
+}
+
+, entao, a gente esta buscando, nesse LazyCarroDataModel, no LazyCarroDataModel, a gente passou o DAO, a gente esta executando, no DAO, buscarComPaginacao(). Entao, em CarroDAO.buscarComPaginacao(), a gente esta executando a Carro.buscarTodos, uma NamedQuery, e, ai, entao, ela esta la na nossa Entidade Carro,
+
+@NamedQueries ({
+    @NamedQuery(name = "Carro.buscarTodos", query = "select c from Carro c")
+})
+
+34. Okay, essa consulta, aqui, que ele esta executando, 'select c from Carro c'.
+
+35. Bom, como, entao, que a gente consegue fazer esse fetch, aqui, de ModeloCarro?
+
+36. Como eh que a gente consegue fazer essa Consulta e falar pra ele, 'Olha, na hora que voce buscar o Carro, ja traz os modelos pra mim. Eu nao quero que voce, para cada Modelo, vai la no banco de novo fazer essa Consulta'?
+
+37. A gente vai colocar, aqui, oh, 'inner join', 'Eu quero que voce faca um join', ele ja vai fazer para a gente, entao, esse join, so que retornando quem? 
+
+38. c.modelo,
+
+...
+    @NamedQuery(name = "Carro.buscarTodos" query = "select c from Carro c inner join fetch c.modelo")
+
+...
+
+39. Aqui, eu estou falando para ele, oh, 'Faca o join, ai, para mim, com Modelo. O fetch eh para falar, "Mas ja traga os dados do Modelo. Na hora que voce fizer essa Consulta, eu quero que voce ja traga o c.modelo. Ja traz,ai, entao, o ModeloCarro para mim."'.
+
+40. Okay? Ele ja vai fazer isso, 'inner join fetch'.
+
+41. Vamos fazer o deploy de novo, aqui?
+
+42. Vou dar so um Publish..., aqui, para ele fazer um Hot Deploy, aqui.
+
+43. Acessar http://localhost:8080/locadora-veiculo-web/carro/PesquisaCarros.xhtml.
+
+44. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_0_,
+        modelocarr1_.codigo as codigo1_7_1_,
+        carro0_.chassi as chassi2_3_0_,
+        carro0_.cor as cor3_3_0_,
+        carro0_.data_criacao as data_cri4_3_0_,
+        carro0_.data_modificacao as data_mod5_3_0_,
+        carro0_.codigo_modelo as codigo_m8_3_0_,
+        carro0_.placa as placa6_3_0_,
+        carro0_.valor_diaria as valor_di7_3_0_,
+        modelocarr1_.categoria as categori2_7_1_,
+        modelocarr1_.descricao as descrica3_7_1_,
+        modelocarr1_.codigo_fabricante as codigo_f4_7_1_ 
+    from
+        Carro carro0_ 
+    inner join
+        ModeloCarro modelocarr1_ 
+            on carro0_.codigo_modelo=modelocarr1_.codigo limit ?
+Hibernate: 
+    select
+        fabricante0_.codigo as codigo1_5_0_,
+        fabricante0_.nome as nome2_5_0_ 
+    from
+        Fabricante fabricante0_ 
+    where
+        fabricante0_.codigo=?
+Hibernate: 
+    select
+        fabricante0_.codigo as codigo1_5_0_,
+        fabricante0_.nome as nome2_5_0_ 
+    from
+        Fabricante fabricante0_ 
+    where
+        fabricante0_.codigo=?
+Hibernate: 
+    select
+        count(carro0_.codigo) as col_0_0_ 
+    from
+        Carro carro0_
+
+45. Vamos dar uma olhada no que que ele fez, agora.
+
+46. Olha, so, agora, o que que ele fez,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_0_,
+        modelocarr1_.codigo as codigo1_7_1_,
+        carro0_.chassi as chassi2_3_0_,
+        carro0_.cor as cor3_3_0_,
+        carro0_.data_criacao as data_cri4_3_0_,
+        carro0_.data_modificacao as data_mod5_3_0_,
+        carro0_.codigo_modelo as codigo_m8_3_0_,
+        carro0_.placa as placa6_3_0_,
+        carro0_.valor_diaria as valor_di7_3_0_,
+        modelocarr1_.categoria as categori2_7_1_,
+        modelocarr1_.descricao as descrica3_7_1_,
+        modelocarr1_.codigo_fabricante as codigo_f4_7_1_ 
+    from
+        Carro carro0_ 
+    inner join
+        ModeloCarro modelocarr1_ 
+            on carro0_.codigo_modelo=modelocarr1_.codigo limit ?
+
+, ele, na hora que ele fez o select, aqui, ele trouxe o Carro, fez o Join com ModeloCarro, e, olha que legal, ja trouxe as propriedades do ModeloCarro pra gente, para nao precisar de ir la para cada Modelo.
+
+47. Beleza? Ja comecamos a resolver o nosso problema.
+
+48. So que, olha so. Ele fez, agora, para os fabricantes do modelo. Entao, ele foi la, falar, 'Ja que ele esta buscando o Modelo', vamos dar uma olhada o que que tem na classe ModeloCarro.
+
+49. Na classe ModeloCarro, para Fabricante, tambem temos um Relacionamento ManyToOne,
+
+    @ManyToOne
+    @JoinColumn(name = "codigo_fabricante")
+    public Fabricante getFabricante() {
+        return fabricante;
+    }
+
+50. Entao, ele vai trazer, o default eh sempre trazer trazer, ou seja, FetchType.EAGER, se eu busquei um Modelo de Carro, eu vou trazer um Fabricante. Todo ManyToOne, a forma default de fazer o fetch eh EAGER, ou seja, eu ja trago antes de eu precisar.
+
+51. Para a gente nao trazer isso tambem, nos vamos fazer o fetch, aqui, e vamos usar o FetchType.LAZY, ou seja, nao quero trazer tudo agora, eu nao quero, toda vez que eu buscar o ModeloCarro, buscar o Fabricante,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "codigo_fabricante")
+    public Fabricante getFabricante() {
+        return fabricante;
+    }    
+
+52. Entao, no ManyToOne, aqui, o default eh EAGER, ai, toda vez, ele vai precisar. Nao, eu quero deixar como LAZY. So quando eu quiser que eu vou inicializar.
+
+53. Okay, vamos fazer mais uma vez, aqui, Publish..., aqui, e acessar a Pesquisa de Carro.
+
+54. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_0_,
+        modelocarr1_.codigo as codigo1_7_1_,
+        carro0_.chassi as chassi2_3_0_,
+        carro0_.cor as cor3_3_0_,
+        carro0_.data_criacao as data_cri4_3_0_,
+        carro0_.data_modificacao as data_mod5_3_0_,
+        carro0_.codigo_modelo as codigo_m8_3_0_,
+        carro0_.placa as placa6_3_0_,
+        carro0_.valor_diaria as valor_di7_3_0_,
+        modelocarr1_.categoria as categori2_7_1_,
+        modelocarr1_.descricao as descrica3_7_1_,
+        modelocarr1_.codigo_fabricante as codigo_f4_7_1_ 
+    from
+        Carro carro0_ 
+    inner join
+        ModeloCarro modelocarr1_ 
+            on carro0_.codigo_modelo=modelocarr1_.codigo limit ?
+Hibernate: 
+    select
+        count(carro0_.codigo) as col_0_0_ 
+    from
+        Carro carro0_
+
+
+55. Vamos ver a consulta que ele fez.
+
+56. Olha como ja diminui, nao eh?
+
+57. Entao, olha la, fez o select em Carro,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_0_,
+        modelocarr1_.codigo as codigo1_7_1_,
+        carro0_.chassi as chassi2_3_0_,
+        carro0_.cor as cor3_3_0_,
+        carro0_.data_criacao as data_cri4_3_0_,
+        carro0_.data_modificacao as data_mod5_3_0_,
+        carro0_.codigo_modelo as codigo_m8_3_0_,
+        carro0_.placa as placa6_3_0_,
+        carro0_.valor_diaria as valor_di7_3_0_,
+        modelocarr1_.categoria as categori2_7_1_,
+        modelocarr1_.descricao as descrica3_7_1_,
+        modelocarr1_.codigo_fabricante as codigo_f4_7_1_ 
+    from
+        Carro carro0_ 
+    inner join
+        ModeloCarro modelocarr1_ 
+            on carro0_.codigo_modelo=modelocarr1_.codigo limit ?
+
+, ModeloCarro ele trouxe, ele fez, ja, o inner join com fetch, ele ja trouxe. Esse select, aqui,
+
+Hibernate: 
+    select
+        count(carro0_.codigo) as col_0_0_ 
+    from
+        Carro carro0_
+
+, eh o select da Paginacao. Entao, esse aqui, esta certo. Ta okay. 
+
+58. Repare que a gente reduziu, entao, de umas 4, 5 consultas, para apenas 1 consulta.
+
+59. Percebe como isso aqui vai melhorar muito a performance do nosso sistema?
+
+60. No nosso caso, aqui, estava beleza, porque esta pequenininho. Imagina em um sistema maior, nao eh verdade?
+
+61. Deixa eu parar o servidor, aqui. Se a gente estivesse usando Criteria, ali, como eh que a gente faria isso com Criteria?
+
+62. Entao, voltando ao metodo exemploJoinEFetch(), eu tinha te mostrado, aqui, esse exemplo, a gente esta fazendo, executando, exatamente, a mesma coisa, fazendo a consulta em Carro, e estava buscando todo mundo.
+
+63. Se eu quiser, entao, fazer o fetch, aqui, o 'Join fetch', eu vou usar a classe Join, do pacote javax.persistence.criteria,
+
+    ....
+    Root<Carro> c = criteriaQuery.from(Carro.class);
+    Join<Z, X>
+
+    ...
+
+, e, ai ele espera, o Join entre quem?
+
+64. A gente nao esta fazendo o Join entre Carro e o ModeloCarro? Entao, a gente coloca aqui, oh, o Join entre Carro e ModeloCarro, vou chamar, aqui, de modelo,
+
+        ...
+
+        Root<Carro> c = criteriaQuery.from(Carro.class);
+        Join<Carro, ModeloCarro> modelo = 
+
+        ...
+            
+65. E, ai, a gente, em cima do Carro, a gente faz o fetch, mas eu quero fazer o fetch() em quem? Qual a propriedade?
+
+            ...
+
+            Root<Carro> c = criteriaQuery.from(Carro.class);
+
+            Join<Carro, ModeloCarro> modelo = c.fetch("modelo");
+
+, aqui, a gente precisa fazer um Cast para Join,
+
+                ...
+
+                Root<Carro> c = criteriaQuery.from(Carro.class);
+
+                Join<Carro, ModeloCarro> modelo = (Join) c.fetch("modelo");
+
+                ...
+
+66. Simples assim. Aqui eu estou falando, oh, 'Quando voce fizer esse Join, ja faz o Join com Fetch, ou seja, ja busca, ja traz todas as propriedades do ModeloCarro'.
+
+67. O Modelo, la, nosso, ja esta anotado como Lazy, eu acredito que ele vai trazer apenas, vai fazer apenas 1 Consulta,
+
+                    @ManyToOne(fetch = FetchType.LAZY)
+                    @JoinColumn(name = "codigo_modelo")
+                    public ModeloCarro getModelo() {
+                        return modelo;
+                    }
+
+68. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_0_,
+        modelocarr1_.codigo as codigo1_7_1_,
+        carro0_.chassi as chassi2_3_0_,
+        carro0_.cor as cor3_3_0_,
+        carro0_.data_criacao as data_cri4_3_0_,
+        carro0_.data_modificacao as data_mod5_3_0_,
+        carro0_.codigo_modelo as codigo_m8_3_0_,
+        carro0_.placa as placa6_3_0_,
+        carro0_.valor_diaria as valor_di7_3_0_,
+        modelocarr1_.categoria as categori2_7_1_,
+        modelocarr1_.descricao as descrica3_7_1_,
+        modelocarr1_.codigo_fabricante as codigo_f4_7_1_ 
+    from
+        Carro carro0_ 
+    inner join
+        ModeloCarro modelocarr1_ 
+            on carro0_.codigo_modelo=modelocarr1_.codigo
+AAA-1234 - Cruze
+BBB-2222 - Fit
+AAA-9999 - Fit
+BBB-8888 - Cruze
+AAA-7788 - Civic
+DDD-1234 - Fit
+FFF-1212 - Cruze
+XXX-1111 - Civic
+ADD-8989 - HB20
+YNP-5588 - Fiesta
+
+69. Vamos analisar. Okay, so fez uma consulta mesmo.
+
+70. Fez o select, trouxe, aqui, o Carro, e trouxe o ModeloCarro, aqui, ja fez o Fetch, ja fez o Join nele, fazendo o Fetch, simples assim.
+
+71. Legal, nao eh?
+
+72. Se a gente quisesse fazer so o Join, eh so trocar, aqui, para join(),
+
+                    ...
+
+                    Root<Carro> c = criteriaQuery.from(Carro.class);
+
+                    Join<Carro, ModeloCarro> modelo = (Join) c.join("modelo");
+
+                    ...
+
+73. Mas, ai, ele nao traz. Ele nao vai trazer, ele vai fazer o Join, mas nao vai fazer o Fetch. Ou seja, vou mandar executar, aqui, de novo, voce vai ver que ele faz o Join, mas nao traz nada, ele fez os outros selects todos novamente.
+
+74. Retornou, com fetch EAGER,
+
+                    @ManyToOne
+                    @JoinColumn(name = "codigo_modelo")
+                    public ModeloCarro getModelo() {
+                        return modelo;
+                    }
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_,
+        carro0_.chassi as chassi2_3_,
+        carro0_.cor as cor3_3_,
+        carro0_.data_criacao as data_cri4_3_,
+        carro0_.data_modificacao as data_mod5_3_,
+        carro0_.codigo_modelo as codigo_m8_3_,
+        carro0_.placa as placa6_3_,
+        carro0_.valor_diaria as valor_di7_3_ 
+    from
+        Carro carro0_ 
+    inner join
+        ModeloCarro modelocarr1_ 
+            on carro0_.codigo_modelo=modelocarr1_.codigo
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+AAA-1234 - Cruze
+BBB-2222 - Fit
+AAA-9999 - Fit
+BBB-8888 - Cruze
+AAA-7788 - Civic
+DDD-1234 - Fit
+FFF-1212 - Cruze
+XXX-1111 - Civic
+ADD-8989 - HB20
+YNP-5588 - Fiesta
+
+75. Retorna, com fetch LAZY,
+
+                    @ManyToOne(fetch = FetchType.LAZY)
+                    @JoinColumn(name = "codigo_modelo")
+                    public ModeloCarro getModelo() {
+                        return modelo;
+                    }
+
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_,
+        carro0_.chassi as chassi2_3_,
+        carro0_.cor as cor3_3_,
+        carro0_.data_criacao as data_cri4_3_,
+        carro0_.data_modificacao as data_mod5_3_,
+        carro0_.codigo_modelo as codigo_m8_3_,
+        carro0_.placa as placa6_3_,
+        carro0_.valor_diaria as valor_di7_3_ 
+    from
+        Carro carro0_ 
+    inner join
+        ModeloCarro modelocarr1_ 
+            on carro0_.codigo_modelo=modelocarr1_.codigo
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+AAA-1234 - Cruze
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+BBB-2222 - Fit
+AAA-9999 - Fit
+BBB-8888 - Cruze
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+AAA-7788 - Civic
+DDD-1234 - Fit
+FFF-1212 - Cruze
+XXX-1111 - Civic
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+ADD-8989 - HB20
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+YNP-5588 - Fiesta
+
+, ou seja, nao traz nada, ele fez os outros selects todos novamente.
+
+76. Ele fez o Join, com ModeloCarro, mas nao trouxe, 
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_,
+        carro0_.chassi as chassi2_3_,
+        carro0_.cor as cor3_3_,
+        carro0_.data_criacao as data_cri4_3_,
+        carro0_.data_modificacao as data_mod5_3_,
+        carro0_.codigo_modelo as codigo_m8_3_,
+        carro0_.placa as placa6_3_,
+        carro0_.valor_diaria as valor_di7_3_ 
+    from
+        Carro carro0_ 
+    inner join
+        ModeloCarro modelocarr1_ 
+            on carro0_.codigo_modelo=modelocarr1_.codigo
+
+, porque a gente nao fez o Fetch, e, ai, ele vai fazer outros select's para cada um dos Modelos de Carro.
+
+77. Ah, Normandes, entao, para, entao, que existe esse join(), aqui?
+
+                    ...
+                    
+                    Root<Carro> c = criteriaQuery.from(Carro.class);
+
+                    Join<Carro, ModeloCarro> modelo = (Join) c.join("modelo");
+
+                    ...
+
+78. Porque, se a gente quisesse fazer, por exemplo, uma condicao baseado no Modelo, seria a gente so, a gente poe um where(), aqui, usando o CriteriaBuilder, e, depois, vamos trazer somente os Carros cujo Modelo.descricao esteja, por exemplo, em 'Fit', que eh o Modelo que a gente tem la,
+
+                        criteriaQuery.where(builder.equal(modelo.get("descricao"), "Fit"));
+
+78. Okay? Eh uma coisa assim, e eu nao vou querer trazer nada, aqui, do modelo, somente a placa, aqui, do carro, por exemplo,
+
+                        for (Carro carro : resultado) {
+                            System.out.println(carro.getPlaca());
+                        }
+
+79. Ai, eu fiz o Join, aqui, com Modelo, nao estou querendo usar nada de Carro, entao, vamos la fazer a Consulta.
+
+80. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_,
+        carro0_.chassi as chassi2_3_,
+        carro0_.cor as cor3_3_,
+        carro0_.data_criacao as data_cri4_3_,
+        carro0_.data_modificacao as data_mod5_3_,
+        carro0_.codigo_modelo as codigo_m8_3_,
+        carro0_.placa as placa6_3_,
+        carro0_.valor_diaria as valor_di7_3_ 
+    from
+        Carro carro0_ 
+    inner join
+        ModeloCarro modelocarr1_ 
+            on carro0_.codigo_modelo=modelocarr1_.codigo 
+    where
+        modelocarr1_.descricao=?
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+BBB-2222
+AAA-9999
+DDD-1234
+
+81. A gente coloca, la, faz o Join. Okay, olha la, ele fez o select, fez o Join com ModeloCarro, e fez o where, aqui, com a descricao, e trouxe para a gente apenas os modelos, la, cuja placa eh Fit. Mas por que que ele fez o select, aqui, em cima de ModeloCarro, Normandes?
+
+82. Porque, provavelmente, em Carro, vamos la olhar, o Relacionamento com ModeloCarro, deve estar como EAGER. Aqui, oh, 
+
+            @ManyToOne
+            @JoinColumn(name = "codigo_modelo")
+            public ModeloCarro getModelo() {
+                return modelo;
+            }
+        
+, @ManyToOne, nao colocamos nada. Se a gente marcar, aqui, como fetch = FetchType.LAZY, e mandar executar de novo, agora, ele so vai fazer o Join em cima de Carro, e nao trouxe nada, porque a gente nao fez o fetch, okay?, mas fez o join com ModeloCarro, fazendo o filtro pelo ModeloCarro.descricao,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_,
+        carro0_.chassi as chassi2_3_,
+        carro0_.cor as cor3_3_,
+        carro0_.data_criacao as data_cri4_3_,
+        carro0_.data_modificacao as data_mod5_3_,
+        carro0_.codigo_modelo as codigo_m8_3_,
+        carro0_.placa as placa6_3_,
+        carro0_.valor_diaria as valor_di7_3_ 
+    from
+        Carro carro0_ 
+    inner join
+        ModeloCarro modelocarr1_ 
+            on carro0_.codigo_modelo=modelocarr1_.codigo 
+    where
+        modelocarr1_.descricao=?
+BBB-2222
+AAA-9999
+DDD-1234
+
+
+83. Beleza? Vamos voltar, aqui, em exemploJoinEFetch(). Bom, acho que eh isso daqui, nao eh? Eu esqueci de colocar aqui, mas eh bom a gente colocar, aqui, falando que eu quero fazer o select de carro,
+
+            criteriaQuery.select(c);
+
+84. Nao vai mudar nada, nao, mas eh sempre legal. Nesse caso, aqui, nao precisa, porque a gente so esta usando Carro, nao e? Mas, as vezes, eh legal colocar, ai, ja que a gente criou o Root, aqui, vamos usar.
+
+85. Bem, eh isso dai. Perceberam a diferenca entre o join() e o fetch(). O join() so faz o Join para a gente fazer, por exemplo, algum filtro a mais,
+
+            criteriaQuery.where(builder.equal(modelo.get("descricao"), "Fit"));
+
+, O fetch(), 
+
+            Join<Carro, ModeloCarro> modelo = (Join) c.fetch("modelo");
+
+, a gente vai usar quando a gente quer, na mesma consulta, uma Consulta ja trazer, ja buscar, nao eh?, o fetch() ja buscar o ModeloCarro, ja, em uma mesma Consulta, nao precisar fazer uma outra Consulta depois. Tanto com Criteria quanto, usando JPQL, 
+
+            "select c from Carro c inner join fetch c.modelo"
+
+, nao eh muito complicado.
+
+85. Fim da     Aula 08.008. Join e Fetch.
+
+ -->

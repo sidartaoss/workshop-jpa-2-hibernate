@@ -1,0 +1,286 @@
+<!--
+
+Aula 02.003. Removendo Objeto do Banco de Dados
+
+1. Bom, e para remover um objeto do Banco de Dados, como eh que a gente vai fazer?
+
+2. Nos vamos criar, aqui, uma classe, adivinha como eh que vai ser o nome dela? RemovendoPrimeiroObjeto, marcar para gerar o metodo main.
+
+3. Bom, como eu ja falei para voce 2 vezes, precisa do EntityManager, do EntityManagerFactory, ou seja, ja comecamos a repetir codigo demais, nao eh verdade? Entao, estamos vendo que isso aqui nao esta legal,
+
+    EntityManagerFactory emf = Persistence.createEntityManagerFactory("exemploPU");
+    EntityManager em = emf.createEntityManager();
+
+4. Mais para a frente, a gente vai melhorar isso daqui.
+
+5. Por enquanto, pensa so que voce precisa disso,
+
+
+
+, da classe de Modelo, e do persistence.xml, para fazer esse tipo de operacao.
+
+6. Depois, a gente comeca a criar mais classes, deixar o nosso Projeto melhor. Beleza?
+
+7. Bom, adivinha se, no EntityManager, nao tem um metodo, aqui, remove(),
+
+    em.remove();
+
+, olha so, bem simples, nao eh? Entao, ele tem um metodo remove(), que recebe o objeto que voce quer remover do Banco de Dados. Entao, ele esta esperando, aqui o objeto Cliente,
+
+    em.remove(cliente);
+
+, para ele remover.
+
+8. Qual objeto que eh esse? O objeto do tipo Cliente.
+
+9. Bom, se eu fizer isso daqui, oh, 
+
+    Cliente cliente = new Cliente();
+    em.remove(cliente);
+
+, e falar, "Remove la esse objeto cliente do banco de dados", ele vai falar, "Nao, mas, que objeto que eh esse? O que que eh esse objeto cliente, aqui? Eu nao sei que objeto cliente eh esse aqui, como eh que eu vou conseguir apagar esse objeto?"
+
+10. Ai, ele vai falar, 'Entao, para eu conseguir apagar ele, eu teria que configurar,...', vamos la, vamos ver se eh isso, nao eh?, entao, la, nos temos esses 3 objetos, olhando no MySQL Workbench, 'select * from cliente', e vamos supor que nos vamos apagar, aqui, oh, o registro de codigo 2, 'Maria Rita', 22 anos, Sexo Feminino, Médica, voce deve pensar, "Bom, o que identifica essa linha eh o codigo. Entao, eh so eu setar o codigo e mandar ele apagar?". Vamos ver. Voce vai ver que, ainda, nos vamos ter uma surpresinha,
+
+    Cliente cliente = new Cliente();
+    cliente.setCodigo(2L);
+    em.remove(cliente);
+
+11. Entao, setei o codigo, aqui, e falei, 'Remove, la, para a gente'. 
+
+12. Se eu mandar executa isso daqui,
+
+    Cliente cliente = new Cliente();
+    cliente.setCodigo(2L);
+    em.remove(cliente);
+
+, de cara, a gente ja pode ver que tem um problema, aqui. Antes de ver esse outro problema, que voce vai ver que nao vai dar certo ainda, mas tem um problema maior. Toda vez que eu quero alterar alguma coisa no banco de dados, o que que eu tenho que fazer?
+
+13. em.getTransaction().begin();
+
+14. em.getTransaction().commit();
+
+    Cliente cliente = new Cliente();
+    cliente.setCodigo(2L);
+    em.getTransaction().begin();
+    em.remove(cliente);
+    em.getTransaction().commit();
+
+15. Nao podemos esquecer de dar o Begin() e de dar o Commit() toda vez que a gente quiser alterar alguma coisa no banco de dados.
+
+16. Beleza? Vou mandar executar isso daqui. Voce vai ver que, infelizmente, vai dar um erro, aqui, dificil de entender,
+
+Exception in thread "main" java.lang.IllegalArgumentException: Removing a detached instance com.algaworks.curso.modelo.Cliente#2
+
+17. Olha so, ja deu aqui um errao, falando que eu estou tentando remover uma instancia, que eh essa Cliente, que ela esta desatachada.
+
+18. O que que eh uma instancia estar desatachada?
+
+19. Uma instancia, ela esta desatachada, porque o EntityManager nao sabe quem que eh esse objeto Cliente, que eu estou querendo apagar,
+
+    Cliente cliente = new Cliente();
+    cliente.setCodigo(2L);
+    em.getTransaction().begin();
+    em.remove( >>> cliente <<< );
+    em.getTransaction().commit();
+
+20. Entao, quando eu faco isso daqui,
+
+    Cliente cliente = new Cliente();
+    cliente.setCodigo(2L);
+    em.getTransaction().begin();
+    em.remove( >>> cliente <<< );
+    em.getTransaction().commit();
+
+, eu EntityManager fala, 'Ueh, esse cliente, oh',
+
+    >>>Cliente cliente = new Cliente();
+    cliente.setCodigo(2L);<<<
+
+
+    em.getTransaction().begin();
+    em.remove( >>> cliente <<< );
+    em.getTransaction().commit();
+
+, eh um cara que voce acabou de criar, aqui. O EntityManager nao tem nocao de que esse cara existe,
+
+    >>>Cliente cliente = new Cliente();
+    cliente.setCodigo(2L);<<<
+
+, para o que que esse cara serve.
+
+21. Okay? Para te ilustrar isso melhor, deixa eu te mostrar uma apresentacaozinha aqui, que vai te mostrar isso. Tem um objeto, la, entao, por exemplo, Pessoa, no nosso caso, la, eh o objeto Cliente, mas a gente tem um objeto, la, qual que eh?
+
+22. Eh um objeto simples, nao eh? Eh um pojozinho que a gente acabou de criar.
+
+23. A gente tem o Banco de Dados MySQL e quem faz essa interface, aqui, com o Banco de Dados para a gente, eh o EntityManager. E, para eu conseguir, entao, fazer com que eu apague alguma entidade, aqui, do Banco de Dados, ou atualize alguma Entidade no Banco de Dados, essa Entidade precisa estar sendo gerenciada pelo EntityManager,
+
+
+
+                        |-----------------------------------|
+                        |                                   |
+                        |      Entity Manager               |
+                        |                                   |
+                        |                                   |
+                        |                                   |
+                        |       |-------------------|       |
+                        |       |                   |       |
+                        |       |   Pessoa          |       |
+                        |       |                   |       |
+                        |       |-------------------|       |
+                        |                                   |
+                        |-----------------------------------|
+                                        |
+                                        |
+                                        |
+                                        |
+                                        |
+                                        |
+                                        |
+                                        |
+                                        |
+                                        V
+                            |-----------------------|
+                            |                       |
+                            |         BD MySQL      |
+                            |                       |
+                            |                       |
+                            |-----------------------|
+
+
+24. Ele eh o gerenciador de Entidades.
+
+25. Certo?
+
+26. Entao, ele precisa conhecer esse cara, aqui, 
+
+    Cliente >>> cliente <<< = new Cliente();
+
+, desse jeito,
+
+    cliente.setCodigo(2L);
+
+, ele nao conhece. Se eu so criar esse objeto simples,
+
+    Cliente >>> cliente <<< = new Cliente();
+    cliente.setCodigo(2L);
+
+, ele nao conhece.
+
+27. Okay? Como eh que eu faco para esse objeto, no nosso caso, ele eh o Cliente, ele vir a ser gerenciado pelo EntityManager?
+
+28. Bom, ou eu salvo ele, como a gente tinha feito, aqui, no SalvandoPrimeiroObjeto, 
+
+    em.getTransaction().begin();
+    em.persist(cliente);
+    em.getTransaction().commit();
+
+, quando eu persistir, aqui, 
+
+    em.getTransaction().begin();
+    >>> em.persist(cliente); <<<
+    em.getTransaction().commit();
+
+, eu passo esse objeto, e eu falo, 'Agora, o EntityManager esta gerenciando esse objeto', entao, se eu comecasse aqui, embaixo, 
+
+    em.getTransaction().begin();
+    em.persist(cliente);
+    em.getTransaction().commit();
+
+    >>> <<<
+
+, e ja apagasse, beleza, daria certo.
+
+29. Quando eu consulto ele, 
+
+    Cliente cliente = em.find(Cliente.class, 3L);
+
+, eu estou falando, "EntityManager, comeca a gerenciar esse objeto, aqui, para mim,",
+
+    Cliente >>> cliente <<< = em.find(Cliente.class, 3L);
+
+30. O EntityManager ja te devolve ele gerenciado.
+
+31. Bom, entao, se eu quero apagar, veja bem, se eu quero apagar o objeto de codigo 2, por exemplo, o que que eu posso fazer? 
+
+32. Ueh, entao, eu posso pedir para o EntityManager, utilizando o find(), buscar la, para a gente, ja gerenciando o objeto de codigo 2, ou seja, esse Cliente vai vir ja gerenciado pelo EntityManager.
+
+33. Quando ele ja esta gerenciado pelo EntityManager, eu ja consigo ir la, falando para ele, 'Remove, pra gente, esse objeto, aqui'. Okay?
+
+    Cliente cliente = em.find(Cliente.class, 2L);
+
+    em.getTransaction().begin();
+    em.remove(cliente);
+    em.getTransaction().commit();
+
+34. Okay? Vou te mostrar isso, mais detalhes disso la na frente, que isso, ai, ja eh um pouquinho mais avancado.
+
+35. Beleza? Mas, so para voce ver que voce precisa ter esse objeto antes de mandar remover ele. Okay?
+
+36. Agora, se eu mandar, deixa eu colocar uma mensagem aqui, oh, System.out.println("Objeto removido com sucesso!");
+
+37. Mandar executar de novo, aqui.
+
+38. E deu um outro erro,
+
+Caused by: java.sql.SQLIntegrityConstraintViolationException: Cannot delete or update a parent row: a foreign key constraint fails (`cadastro_cliente`.`conta_corrente`, CONSTRAINT `conta_corrente_ibfk_1` FOREIGN KEY (`codigo_cliente`) REFERENCES `cliente` (`codigo`))
+
+39. E qual que eh o erro que ele deu agora? Ah, ele esta falando, aqui, oh, que ele nao consegue apagar por causa da constraint la na Foreign Key, que a gente tem com a tabela CONTA_CORRENTE.
+
+40. Lembra que, quando a gente criou a Tabela CLIENTE, a gente tambem criou uma tabela CONTA_CORRENTE,
+
+'select * from conta_corrente'
+
+41. Oh, tem o codigo_cliente 1 e 2, ou seja, os clientes 1 e 2 tem conta corrente. Ou seja, entao, ele tem uma Foreign Key apontando, aqui, dessa tabela CONTA_CORRENTE, la para a tabela CLIENTE. Entao, o banco de dados eh que nao deixou eu apagar. 
+
+42. La no JPA, esta tudo certo, agora, eu nao tenho que fazer mais nada, so que o banco de dados falou 'Opa, voce nao consegue apagar nao, porque tem uma outra tabela referenciando a tabela cliente.'
+
+43. Isso aqui ja estava aqui, ja estava aqui esse lixo, aqui, no meu banco de dados.
+
+44. Okay? Entao, o que que eu posso fazer?
+
+45. Duas coisas. Ou eu mando apagar o cliente de codigo 3, aqui, no banco de dados, que ele nao tem conta corrente, ou eu posso vir aqui, na tabela conta_corrente, e apagar, por exemplo, para nao ter que mexer nada la nas classes Java,
+
+'delete from conta_corrente where codigo = 2'
+
+, esse codigo, aqui, da conta_corrente, oh, eh, justamente, o codigo do cliente 2.
+
+46. Entao, se eu apagar aqui, ele apagou, beleza?
+
+47. Vou voltar la, agora, no Eclipse, e, agora, se eu Executar, tem que funcionar.
+
+48. Retornou,
+
+Hibernate: select cliente0_.codigo as codigo1_0_0_, cliente0_.idade as idade2_0_0_, cliente0_.nome as nome3_0_0_, cliente0_.profissao as profissa4_0_0_, cliente0_.sexo as sexo5_0_0_ from Cliente cliente0_ where cliente0_.codigo=?
+Hibernate: delete from Cliente where codigo=?
+Objeto removido com sucesso!
+
+49. Olha la, 'Objeto removido com sucesso!'
+
+50. Se eu voltar, aqui, no Workbench, fizer um Select no cliente,
+
+selec * from cliente;
+
+, nao tem mais o cliente de codigo 2.
+
+51. Okay?
+
+
+
+
+-->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

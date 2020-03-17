@@ -1,0 +1,110 @@
+<!--
+    Aula 15.005. Pool de Conexoes com C3P0
+
+1. Bom, deixa eu te falar um pouquinho, agora, do C3P0, que tambem eh uma biblioteca, que vai te ajudar a fazer o Pool de Conexoes com o Banco de Dados.
+
+2. Ou seja, voce vai ter varias conexoes com o Banco, quando voce precisar de Uma, voce vai pedir para Esse Pool, ela te devolve, depois, voce devolve essa Conexao para Um Pool.
+
+3. O C3P0 eh um cara que eu ja usei em Producao, em varios projetos que eu ja participei, e funcionou.
+
+4. Eh claro que voce pode ter problemas, ai, de configuracao, ate acertar, direitinho, as propriedades que voce precisa, no seu Projeto, mas, ele eh um Cara que funciona, e funciona bem.
+
+5. Beleza? Ja eh usado, ja tem alguns anos, ai, essa biblioteca.
+
+6. E eu vou te mostrar como eh que voce configura ele, aqui, no DataSource.
+
+7. Eh bem simples, a configuracao dele, a instalacao dele, sao Dois Jar's, ai, que voce vai precisar, voce faz o Download dele nessa URL, aqui, oh, https://sourceforge.net/projects/c3p0/files/c3p0-bin, e voce pode obter, ai, a ultima versao, ai, oh, a c3p0-0.9.5.3, eh Java8, okay?, e, na hora que voce descompactar, dentro da pasta \lib, o c3p0-0.9.5.3.jar, e o mchange-commons-java-0.2.15.jar, voce vai copiar esses dois Jars, aqui, para dentro da pasta \apache-tomcat-9.0.14\lib, do Tomcat, oh.
+
+8. Logico que o Driver do MySQL eu ja copiei para ca, em \apache-tomcat-9.0.14\lib.
+
+9. Beleza? Entao, sao esses Jar's que a gente precisa copiar para conseguir funcionar essa Biblioteca.
+
+10. E, ai, a gente vai mudar o DataSource, agora, tambem, em context.xhml,
+
+	<Resource name="jdbc/GerenciadorAcessoDB" auth="Container" type="javax.sql.DataSource"
+			maxTotal="100" 
+			maxIdle="30" 
+			maxWaitMillis="10000"
+			username="root" 
+			password="admin" 
+			driverClassName="com.mysql.jdbc.Driver"
+            url="jdbc:mysql://localhost:3306/gerenciador_acesso" />
+            
+11. O DataSource tem algumas configuracoes um pouquinho, os nomes,..., aqui, muita atencao, porque os nomes sao diferentes, dos nomes do DataSource do Commons-DBCP, que a gente ja viu, okay?
+
+12. Entao, da uma olhadinha certinho nos nomes. Por exemplo, username, eh user, no C3P0. No DBCP, eh username. Entao, essas diferencas, sao importantes voce ficar atento, ai,
+
+	<Resource auth="Container"
+				driverClass="com.mysql.jdbc.Driver"
+				maxPoolSize="4"
+				minPoolSize="2"
+				acquireIncrement="1"
+				name="jdbc/GerenciadorAcessoDB"
+				user="root"
+				password="admin"
+				factory="org.apache.naming.factory.BeanFactory"
+				type="com.mchange.v2.c3p0.ComboPooledDataSource"
+				jdbcUrl="jdbc:mysql://localhost:3306/gerenciador_acesso" />
+
+13. Entao, voce, colocando os Jar's, la, na pasta \apache-tomcat-9.0.14\lib, olha so o que a gente precisa mudar, aqui. Precisa mudar a factory, precisamos mudar o type, dele, falando que eh o tipo C3P0, okay?, mais esse type, aqui, que eh mais importante trocar, okay? E as propriedades, dele, sao varias propriedades, ai, que ele tem, para te auxiliar.
+
+14. Ta vendo? Deixa eu te mostrar um pouquinho. Na documentacao dele, mostra como eh que voce comeca a configuracao, em www.mchange.com/projects/c3p0/#tomcat-specific, e, aqui, na documentacao, tambem, www.mchange.com/projects/c3p0/#configuration_propreties, deixa eu te mostrar, aqui, oh, olha so, voce ve, aqui, na documentacao, aqui, ele vai mostrar todas as propriedades que voce pode colocar, aqui, no seu DataSource,
+
+	<Resource auth="Container"
+				driverClass="com.mysql.jdbc.Driver"
+				maxPoolSize="4"
+				minPoolSize="2"
+				acquireIncrement="1"
+				name="jdbc/GerenciadorAcessoDB"
+				user="root"
+				password="admin"
+				factory="org.apache.naming.factory.BeanFactory"
+				type="com.mchange.v2.c3p0.ComboPooledDataSource"
+                jdbcUrl="jdbc:mysql://localhost:3306/gerenciador_acesso" />
+                
+15. Eu coloquei algumas, aqui, oh, maxPoolSize, minPoolSize, acquireIncrement, significa, ele vai comecar com o minimo, Duas conexoes, minPoolSize="2", e ele vai incrementar de Uma em Uma, acquireIncrement="1", ate chegar no maximo de conexoes, maxPoolSize="4".
+
+16. Entao, voce pode colocar, vamos supor, voce comeca, la, com 10 conexoes, e o maximo, 40, ou seja,
+
+    minPoolSize="10"
+    maxPoolSize="40"
+
+17. Voce pode falar, 'Eu quero que voce incremente de 5 em 5 conexoes',
+
+    acquireIncrement="5"
+
+, ou seja, se ele chegou no minimo de conexoes, minPoolSize="2", e precisou incrementar mais Conexoes, 'Opa, incrementa de 5, de Uma Vez', por exemplo.
+
+18. Okay? Porque, lembre-se, pegar mais Conexoes, Conectar com o Banco de Dados, eh um Processo Caro, um Processo Lento, e, quanto mais cedo voce fizer isso, melhor (, ou seja, obter as Conexoes).
+
+19. Nao eh? Ah, entao, por que que voce ja nao coloca o minimo e o maximo iguais, por exemplo?,
+
+    minPoolSize="40"
+    maxPoolSize="40"
+
+20. Isso eh uma coisa que eu, normalmente, costumo fazer em Producao. 
+
+21. Normalmente, eu coloco, no minimo e no maximo, o mesmo valor.
+
+22. Entao, se eu for ter, la, 20 Conexoes com o Banco, eu ja coloco 20 em minPoolSize e 20 em maxPoolSize.
+
+23. Por que?
+
+24. Para eu nao gastar tempo, adquirindo essas Conexoes.
+
+25. Entao, em Producao, eh algo que eu costumo fazer, sim.
+
+26. Okay?
+
+27. E, aqui, entre outras propriedades que voce pode ler, com carinho, cada uma delas, ai, em https://www.mchange.com/projects/c3p0/#configuration_properties.
+
+28. Tem algumas que vao ser uteis no seu Projeto, outras, nem tanto, nao eh?, entao, tudo vai depender da quantidade de uso, no seu projeto, se o seu Projeto esta sendo muito usado, se nao esta sendo muito usado, voce vai precisa colocar mais propriedades / menos propriedades, aqui. Okay?
+
+29. Voce, colocando isso, eu peguei essa Aplicacao, la, o gerenciador-acesso-com-cache, ja estava configurada com um DataSource, eu, simplesmente, aqui, alterei o Resource, colocando os Jar's, la dentro da pasta \lib, do Tomcat.
+
+30. E eh isso, a Aplicacao esta funcionando, e continua funcionando, normalmente, aqui.
+
+31. Fim da     Aula 15.005. Pool de Conexoes com C3P0.
+
+
+-->

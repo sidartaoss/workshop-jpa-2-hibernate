@@ -1,0 +1,720 @@
+<!--
+    Aula 15.007. Named Queries em Arquivos Externos
+
+1. Sabia que as Named Queries sao bem importantes dentro do JPA, e eu tenho certeza que ela eh bem util dentro do seu Sistema.
+
+2. Entao, eu vou te mostrar, aqui, algumas vantagens dela, e uma forma bem interessante de se utilizar as Named Queries, que eh em um arquivo externo.
+
+3. Okay? Entao, vamos la.
+
+4. Se voce nao sabe o que sao Named Queries, a gente pode tratar elas como Consultas Estaticas.
+
+
+                                    Named Queries
+
+
+                                  Consultas Estaticas
+
+5. O que que sao Consultas Estaticas?
+
+6. Vamos la. Vamos ver a diferenca entre Named Queries e Dynamic Queries, que, pelo proprio nome, sao Queries, nao eh?, Consultas Dinamicas,
+
+
+
+
+            Named Queries                       Dynamic Queries
+
+
+              Estaticas                            Dinamicas
+
+
+7. Beleza? Entao, uma eh Consulta Estatica e a uma eh Consulta Dinamica.
+
+8. Normandes, o que que significa uma Consulta Estatica e uma Consulta Dinamica?
+
+9. Uma Consulta Estatica eh aquilo la que voce esta vendo, select nome from Pessoa where codigo = ?, a um determinado valor, ali. E isso, essa Consulta, vai ser assim para sempre. Em tempo de execucao, ela sempre vai ser essa Consulta, nao vai mudar nunca,
+
+
+
+            Named Queries                       Dynamic Queries
+
+
+              Estaticas                            Dinamicas
+
+
+            select nome                         
+            from Pessoa
+            where codigo = ?
+
+10. Beleza? E o que sao as Consultas Dinamicas?
+
+
+            Named Queries                       Dynamic Queries
+
+
+              Estaticas                            Dinamicas
+
+
+            select nome                           select nome                      
+            from Pessoa                           from Pessoa
+            where codigo = ?                      where codigo = ?
+
+
+11. Bom, tem, la, essa Consulta, ai, oh, select nome from Pessoa where codigo = ?, a um determinado valor, mas, dependendo, ali, pensa num Sistema, as vezes, o cara pode ter um filtro que ele nao vai pesquisar pelo codigo, mas ele vai pesquisar pelo CPF, por exemplo,
+
+
+            Named Queries                       Dynamic Queries
+
+
+              Estaticas                            Dinamicas
+
+
+            select nome                           select nome                      
+            from Pessoa                           from Pessoa
+            where codigo = ?                      where cpf = ?
+
+
+12. Beleza? Entao, essa Consulta mudou, ali, dinamicamente, dentro do sistema.
+
+13. Nao eh? Essa eh a diferenca basica entre esses dois carinhas, ai.
+
+14. Beleza? Mas, existem algumas outras diferencas, ai, em relacao a vantagens das Named Queries, que sao o que?
+
+15. Mais facil de ler.
+
+16. Porque, como ela eh fixa, concorda que ela nao vai estar mudando, ali, nao vai estar em codigo, ela eh mais facil de ler.
+
+17. Se ela eh mais facil de ler, ela, tambem, vai ser mais facil de manter, de voce dar manutencao nela, alterar, fazer alguma coisa em cima dessa Query,
+
+                            Named Queries
+
+                          Consultas Estaticas
+
+                            
+                          Mais facil de ler
+                         Mais facil de manter
+
+18. E tambem tem uma melhor Performance,
+
+                            Named Queries
+
+                          Consultas Estaticas
+
+                            
+                          Mais facil de ler
+                         Mais facil de manter
+                          Melhor performance
+
+19. Por que que tem uma melhor performance?
+
+20. Porque, no momento, ali, que esta subindo o Sistema, nao eh?, no momento do Deploy, o JPA, ali, ele ja vai pegar e ja vai fazer o parse dessa Query, e vai faze um Cache dela.
+
+21. Entao, ele nao vai precisar ficar convertendo da String para o MySQL, para consultar no Banco de Dados, toda hora. Ele faz isso so uma vez, e faz um Cache disso. Entao, isso melhora a performance do seu sistema, usar Named Queries, sabia disso?
+
+22. Bom, entao, olha so.
+
+23. Como, normalmente, a gente usa as Named Queries?
+
+24. Normalmente, voce colocaria, ali, em cima da Entidade, no caso, ali, Pessoa, por exemplo, daria um nome para ela, Pessoa.todas. Por que que eu coloquei Pessoa.todas? Precisa colocar esse Pessoa., nao eh?, porque esta em cima da classe Pessoa?,
+
+    @NamedQuery(name ="Pessoa.todas", query = "from Pessoa p")
+    @Entity
+    @Table(name = "pessoa")
+    public class Pessoa implements Serializable {
+
+    }
+
+25. Nao. Nao precisa disso. 
+
+26. Mas eh legal. Por que?
+
+27. Como as Named Queries sao unicas dentro de um mesmo EntityManager, significa que eu nao posso ter duas NamedQueries, com o mesmo nome.
+
+28. Entao, o que que, normalmente, eh feito?
+
+29. Voce coloca, por exemplo, o nome da Entidade, ali, no nome da NamedQuery, no caso, ali, Pessoa, okay?, oh, nesse momento, aqui,
+
+    @NamedQuery(name = ">>> Pessoa <<< .todas", query = "from Pessoa p")
+
+30. E, apos o ponto, se da o nome para a consulta que voce quer fazer, e escreve a consulta, com o atributo query, query = "from Pessoa p".
+
+31. Beleza?
+
+32. E, ai, quando eu quiser executar isso daqui, eu vou passar apenas esse Pessoa.todas, eh como se fosse, nao eh?, uma variavel para acessar essa consulta, aqui, ou seja, "from Pessoa p".
+
+33. Beleza? Eu ja vou te mostrar como eh que a gente faz isso no Sisteminha, usando JPA.
+
+34. Beleza?
+
+35. Entao, normalmente, eh assim.
+
+36. Mas, e se essa query for grande demais?
+
+        @NamedQuery(name = "Pessoa.todas", query = ">>> from Pessoa p <<<")
+
+37. E se ela comecar a ficar muito mais complexa?
+
+38. Sendo uma Query estatica, mas comecar a ficar muito complexa, comecar a ficar muito grande?
+
+39. Nao eh? Vai ficar ruim, aqui, voce ficar colocando isso dentro do seu codigo.
+
+40. Nao eh? Entao, essa eh a ideia que eu quero te mostrar.
+
+41. Eu vou tentar mostrar como eh que a gente melhora isso, aqui, colocando essa Consulta num arquivo externo.
+
+42. Eu vou colocar essa consulta, que eh uma consulta simples, mas abstraia isso, dai, na hora em que voce estiver trabalhando no seu sistema, voce, "Po, tem uma consulta, aqui, que esta muito grande, eu acho que seria legal aquela ideia que o Normandes me deu, la, de colocar isso num arquivo externo."
+
+43. E, ai, voce segue o passo, aqui, que eu estou te mostrando, e voce coloca num arquivo externo.
+
+44. Beleza?
+
+45. Ah, aqui, so um detalhe. As vezes, voce pode pensar, mas, e se eu comecar a concatenar String, aqui, vai ficar ruim, tambem,
+
+    @NamedQuery(name = "Pessoa.todas", query = "from " 
+                + "Pessoa " 
+                + " p")
+
+46. Nao.
+
+47. Se voce concatenar String, aqui, eh, ate, legal, por que?
+
+48. Vai ficar mais facil de voce ler. E a performance nao vai piorar por conta disso. Eh como eu disse, eh no momento do Deploy que ele vai pegar essa Query e vai colocar em Cache, beleza? Entao, eh so uma vez que ele vai fazer isso, nao eh toda vez.
+
+49. Diferente das Queries dinamicas, que ele vai ter que ficar fazendo aquilo la toda vez.
+
+50. Bom, chega de conversa, deixa eu te mostrar isso no Sistema que eu preparei, aqui.
+
+51. Sisteminha bem simples. Eu chamei, aqui, de financeiro, esse sistema.
+
+52. Olha so o que que eu tive a ideia. Eu coloquei algumas classes, aqui, para voce brincar, para voce fazer mais testes, ai, se voce quiser.
+
+53. Eu coloquei a classe Pessoa, tem so os atributos codigo e nome.
+
+54. Coloquei, la, uma NamedQuery, para ela, chamada Pessoa.todas, 
+
+@NamedQuery(name = "Pessoa.todas", query = "from Pessoa p")
+@Entity
+@Table(name = "Pessoa")
+public class Pessoa implements Serializable {
+
+    ...
+
+    private Long codigo;
+    private String nome;
+}
+
+55. Coloquei uma classe Lancamento. Aqui, eu coloquei, oh, uma NamedQuery, "descricoesQueContem", 
+
+@NamedQuery(name = "Lancamento.descricoesQueContem", query = "select distinct descricao from lancamento " 
+                                                                + "where upper(descricao) like upper(:descricao)"
+)
+@Entity
+@Table(name = "lancamento")
+public class Lancamento implements Serializable {
+
+    ...
+    private Long codigo;
+    private Pessoa pessoa;
+    private String descricao;
+    private BigDecimal valor;
+    private TipoLancamento tipo;
+
+    ...
+}
+
+, e, ai, eu estou fazendo select distinct descricao, aqui, porque essa classe Lancamento, aqui, oh, ela faz um Relacionamento com Pessoa, e tem os atributos descricao, valor, o tipo, mas, a consulta que eu estou colocando, aqui, oh, select distinct descricao from lancamento, onde a descricao eh igual a uma outra descricao, a descricao que eu vou passar como parametro, usando Named Parameters, okay?, entao, eu vou passar, agora, mesmo, voce ja vai ver isso daqui.
+
+56. O upper eh para a gente ignorar a letra maiuscula e minuscula.
+
+57. Mas, entao, coloca essa consulta, aqui, como NamedQuery.
+
+58. TipoLancamento, nao eh?, eh um enum, aqui, eu estou falando se eh RECEITA, se eh DESPESA.
+
+59. Entao, eh isso.
+
+60. Okay?
+
+61. Um Modelzinho bem simplezinho, bem simples de entender.
+
+62. Eu estou usando JPA 2.1, vide persistence.xml,
+
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.1"
+    xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence
+         http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
+         
+
+63. Beleza? Nesse arquivo, persistence.xml, eu coloquei, la, o banco eh o financeiro,
+
+    <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/financeiro" />
+
+, e, ai, eu estou usando um recurso, aqui, novo, do JPA 2.1, de criacao das tabelas, 
+
+    <property name="javax.persistence.schema-generation.database.action" value="drop-and-create" />
+    <property name="javax.persistence.schema-generation.create-source" value="metadata" />
+    <property name="javax.persistence.schema-generation.drop-source" value="metadata" />
+
+    <property name="javax.persistence.sql-load-script-source" value="META-INF/sql/carregar-dados.sql" />
+
+, eh o seguinte, oh, na hora em que eu estou iniciando o Sistema, ele vai apagar as tabelas e criar, novamente, beleza?
+
+    <property name="javax.persistence.schema-generation.database.action" value="drop-and-create" />
+
+64. Ele vai criar baseado nas anotacoes, que eu coloquei nas Entidades. Por que nas anotacoes? Porque ele poderia fazer isso via script, tambem. Beleza?
+
+<property name="javax.persistence.schema-generation.create-source" value="metadata" />
+
+65. E, aqui, oh,
+
+ <property name="javax.persistence.sql-load-script-source" value="META-INF/sql/carregar-dados.sql" />
+
+, um script para carregar os dados, que eu coloquei nessa pasta, aqui, oh, META/INF/sql/carregar-dados.sql, onde eu consigo, ja, na hora em que esta subindo o Sistema, ele cria as tabelas, e, depois, ele executa esse Script e insere esses dados, para mim, na tabela.
+
+66. Beleza? Entao, isso, aqui, seria uma forma de voce ja carregar alguns dados, na hora que estivesse subindo o seu sistema.
+
+67. Entao, eu insiro duas pessoas, aqui, oh, Joao Santos, Sara Batista, insiro alguns lancamentos, para algumas pessoas, algumas descricoes, aqui, okay?
+
+68. Entao, voce pode brincar com isso, dai, a vontade, repetir esse exemplo.
+
+69. persistence.xml, eu ja falei. O log4j.properties, eu coloquei so para aparecer o log, aqui, formatado, eh so voce colar esse conteudo do arquivo, ai, tambem, e criei duas classes de teste, para a gente poder executar os testes.
+
+70. No caso, aqui, PessoaTest, eu estou usando o JIntegrity, entao, eu preciso do JIntegrity, aqui, para a gente poder fazer as consultas, desse Sistema, e, ai, eh o seguinte, quando ele esta subindo, ele vai falar, 'Eu estou usando o MySQL, e a gente vai criar o EntityManager aqui', ele cria, para a gente, ja, o EntityManager, e, ai, eu ja vou brincar, direto, com o EntityManager,
+
+package com.algaworks.financeiro.model;
+
+public class PessoaTest {
+
+    private JIntegrity helper;
+    private EntityManager manager;
+
+    @Before
+    public void init() {
+        this.helper = new JIntegrity();
+        this.helper.useMySQL();
+        this.manager = JPAHelper.currentEntityManager();
+    }
+
+    @Test
+    public void deveRetornarTodasPessoas() {
+        TypedQuery<Pessoa> query = this.manager.createNamedQuery("Pessoa.todas", Pessoa.class);
+        List<Pessoa> pessoas = query.getResultList();
+        
+        assertEquals(2, pessoas.size());
+    }
+}
+
+71. deveRetornarTodasPessoas(). Entao, o EtityManager, fez, la, "Pessoa.todas", lembra que eu te falei que eu ia te mostrar como eh que eu crio um NamedQuery? Entao, eh o metodo createNamedQuery(), eu passo o nome, la, da Consulta,
+
+@NamedQuery(name = ">>> Pessoa.todas <<<", query = "from Pessoa p")
+@Entity
+@Table(name = "pessoa")
+public class Pessoa implements Serializable {
+
+    ...
+}
+
+72. Beleza, oh? Passo o nome da Consulta, aqui,
+
+    TypedQuery<Pessoa> query = this.manager.createNamedQuery("Pessoa.todas", Pessoa.class);
+
+73. No caso, aqui, eu estou passando Pessoa.class, ja para ele fazer o Cast, para mim, da query,
+
+    TypedQuery<Pessoa> >>> query = this.manager.createNamedQuery("Pessoa.todas", Pessoa.class);
+
+, beleza?
+
+74. E eu dou um getResultList(), e ele ja me devolve, direto, oh, uma lista de Pessoas.
+
+75. E, ai, se eu quero retornar todas as pessoas, eu estou fazendo um assertEquals, aqui, do 2, com pessoas.size(), porque eu inseri, apenas, 2 pessoas, conforme o arquivo carregar-dados.sql,
+
+insert into pessoa(codigo, nome) values(1, "Joao Santos");
+insert into pessoa(codigo, nome) values(2, "Sara Batista");
+
+76. Okay?
+
+77. Vou mandar executar esse carinha, aqui, ou seja, deveRetornarTodasPessoas().
+
+78. Vamos ver, olha so o que ele fez. Okay, ficou verdinho a Guia JUnit. Vamos dar so uma olhadinha, aqui, o que que ele fez, no momento que ele estava subindo,
+
+Hibernate: 
+    alter table lancamento 
+        drop 
+        foreign key FK_jk370dbqg33lqf68n97ftvlih
+2019-03-14 10:30:16,942 [main] WARN  org.hibernate.jpa.internal.schemagen.GenerationTargetToDatabase - Unable to execute JPA schema generation drop command [alter table lancamento drop foreign key FK_jk370dbqg33lqf68n97ftvlih]
+Hibernate: 
+    drop table if exists lancamento
+Hibernate: 
+    drop table if exists pessoa
+Hibernate: 
+    create table lancamento (
+        codigo bigint not null auto_increment,
+        descricao varchar(255),
+        tipo varchar(255),
+        valor decimal(10,2),
+        codigo_pessoa bigint,
+        primary key (codigo)
+    )
+Hibernate: 
+    create table pessoa (
+        codigo bigint not null auto_increment,
+        nome varchar(255),
+        primary key (codigo)
+    )
+Hibernate: 
+    alter table lancamento 
+        add constraint FK_jk370dbqg33lqf68n97ftvlih 
+        foreign key (codigo_pessoa) 
+        references pessoa (codigo)
+Hibernate: 
+    insert into pessoa (codigo, nome) values (1, 'Jõao Santos')
+Hibernate: 
+    insert into pessoa (codigo, nome) values (2, 'Sara Batista')
+Hibernate: 
+    insert into lancamento (codigo_pessoa, descricao, valor, tipo) values (1,'Pagamento água', 45.30, 'DESPESA')
+Hibernate: 
+    insert into lancamento (codigo_pessoa, descricao, valor, tipo) values (1,'Salário', 3000.00, 'RECEITA')
+Hibernate: 
+    insert into lancamento (codigo_pessoa, descricao, valor, tipo) values (2,'água', 23.50, 'DESPESA')
+Hibernate: 
+    select
+        pessoa0_.codigo as codigo1_1_,
+        pessoa0_.nome as nome2_1_ 
+    from
+        pessoa pessoa0_
+
+79. Ele fez algumas coisas, apagou as tabelas, criou as tabelas, Lancamento, tabela Pessoa, etc., inseriu aqueles dados, la, que estavam em carregar-dados.sql, naquele script sql nosso, e, ai, depois, fez o select, que eh o select que esta definido, nao eh?, que transformou aquele jpql em um select sql, que esta definido la na minha Entidade Pessoa.
+
+80. Beleza? Entao, fez o select, ai, pra gente.
+
+81. E, aqui, em LancamentoTest,
+
+package com.algaworks.financeiro.model;
+
+public class LancamentoTest {
+
+    private JIntegrity helper;
+    private EntityManager manager;
+
+    @Before
+    public void init() {
+        this.helper = new JIntegrity();
+        this.helper.useMySQL();
+        this.manager = JPAHelper.currentEntityManager();
+    }
+    
+    @Test
+    public void deveRetornarTodosLancamentosComDescricaoAgua() {
+        TypedQuery<String> query = this.manager.createNamedQuery("Lancamento.descricoesQueContem", String.class);
+        query.setParameter("descricao", "%água%");
+        List<String> descricoes = query.getResultList();
+
+        assertEquals(2, descricoes.size());
+        
+    }
+}
+
+82. Oh, deve retornar todos os lancamentos com descricao agua, por exemplo.
+
+83. Todos os que tem a descricao agua, entao, eu tambem passei o nome da Named Query, ou seja, Lancamento.descricoesQueContem, da mesma forma. So que, agora, eu dou um setParameter(), passando "descricao", passo "água", aqui, coloco % para encontrar em qualquer lugar.
+
+84. Vamos dar uma olhada, la em Lancamento,
+
+@NamedQuery(name = "Lancamento.descricoesQueContem", 
+	query = "SELECT distinct 	descricao FROM Lancamento " 
+				+ "WHERE upper(descricao) like upper(:descricao)"
+)
+
+, Olha so, esse :descricao, esta sendo esse camarada, aqui,
+
+    query.setParameter(>>> "descricao", "%água%");
+
+85. E, ai, eu dou um getResultList, ele devolve todas as descricoes, e eu vou verificar, tem que ter 2 registros.
+
+86. Por que que tem que ter 2? Porque, no script, em carregar-dados.sql, tem 2 registros com "água" na descricao do Lancamento,
+
+>>> insert into lancamento (codigo_pessoa, descricao, valor, tipo) values (1,'Pagamento água', 45.30, 'DESPESA');
+insert into lancamento (codigo_pessoa, descricao, valor, tipo) values (1,'Salário', 3000.00, 'RECEITA');
+>>> insert into lancamento (codigo_pessoa, descricao, valor, tipo) values (2,'água', 23.50, 'DESPESA');
+
+87. Beleza? Entao, se eu mandar executar esse cara, aqui, tambem, vai fazer tudo de novo, vai apagar as tabelas, nao eh?, do jeito que eu fiz, e olha la, fez o select, 
+
+Hibernate: 
+    select
+        distinct lancamento0_.descricao as col_0_0_ 
+    from
+        lancamento lancamento0_ 
+    where
+        upper(lancamento0_.descricao) like upper(?)
+
+, e ficou Verdinho, na Guia JUnit, ou seja, realmente, ele trouxe 2 descricoes, aqui, para mim.
+
+88. Okay?
+
+89. Mas, o objetivo, aqui, dessa video-aula, que eu coloquei para voce, eh, justamente, tirar essa Consulta,
+
+@NamedQuery(name = "Lancamento.descricoesQueContem", 
+	query = "SELECT distinct 	descricao FROM Lancamento " 
+				+ "WHERE upper(descricao) like upper(:descricao)"
+)
+@Entity
+@Table(name = "lancamento")
+public class Lancamento implements Serializable {
+
+    ...
+}
+
+, aqui, de dentro,
+
+@NamedQuery(name = "Lancamento.descricoesQueContem", 
+	query = "SELECT distinct 	descricao FROM Lancamento " 
+				+ "WHERE upper(descricao) like upper(:descricao)"
+)
+
+90. Eu nao quero deixar isso, daqui. 
+
+91. Por que que eu nao quero deixar isso, daqui?
+
+92. Porque, como eu disse, essa Consulta pode ficar um pouco grande, nao eh?, e pode ficar ruim de colocar aqui, voce pode ter varios NamedQueries, para Uma Entidade.
+
+93. Entao, a ideia eh voce separar isso, daqui, para ficar mais facil de ler e dar manutencao.
+
+94. Beleza? Dessas consultas, aqui,
+
+@NamedQuery(name = "Lancamento.descricoesQueContem", 
+	query = "SELECT distinct 	descricao FROM Lancamento " 
+				+ "WHERE upper(descricao) like upper(:descricao)"
+)
+
+95. Entao, o que que eu vou fazer?
+
+96. Qual que eh o procedimento para a gente poder fazer isso, daqui?
+
+97. Bom, a primeira coisa que eu vou fazer eh criar um arquivo xml que contem, que a gente vai colocar essas Consultas.
+
+98. Okay?
+
+99. Entao, eu vou colocar, aqui, oh, eu vou colocar dentro de META-INF/ eu vou criar, uma pasta, aqui, chamada consultas, e, aqui, eu vou criar o arquivo, eu vou chamar ele de,..., vamos fazer, primeiro em Pessoa, pessoas.xml.
+
+100. Sao as consultas em cima da Entidade Pessoa.
+
+101. E, ai, deixa eu pegar, aqui, da minha cola, porque, isso, aqui, voce nao precisa ter a obrigacao de decorar, nao eh?,
+
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-mappings version="2.1"
+    xmlns="http://xmlns.jcp.org/xml/ns/persistence/orm" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence/orm http://xmlns.jcp.org/xml/ns/persistence/orm_2_1.xsd">
+    <named-query name="Pessoa.todas">
+        <query>
+            FROM
+            Pessoa p
+        </query>
+    </named-query>
+</entity-mappings>
+
+102. Mas, olha, so, 
+...
+<named-query name="Pessoa.todas">
+    <query>
+        FROM
+        Pessoa p
+    </query>
+</named-query>
+
+103. <named-query name="Pessoa.todas">, ou seja, aquele nome, vamos voltar, aqui, oh, aquele nome que esta aqui,
+
+    @NamedQuery(name = ">>> Pessoa.todas", query = "from Pessoa p")
+
+, eu estou passando ele para ca,
+
+...
+<named-query name=">>> Pessoa.todas">
+    <query>
+        FROM
+        Pessoa p
+    </query>
+</named-query>
+
+104. E, aqui, eu coloco a query, a consulta que eu quero, aqui, em JPQL, 
+
+    <query>
+        FROM
+        Pessoa p
+    </query>
+
+, isso esta from Pessoa p, poderia ser select p from Pessoa p, no caso, esta so from Pessoa p, beleza?
+
+105. E eh isso daqui. Quando eu faco isso, eu posso tirar, entao, esse @NamedQuery, daqui,
+
+>>> @NamedQuery(name = "Pessoa.todas", query = "from Pessoa p")
+@Entity
+@Table(name = "pessoa")
+public class Pessoa implements Serializable {
+
+    ...
+}
+
+106. Arranquei ele de la
+
+107. E, agora, eu preciso informar para o persistence.xml carregar esse arquivo, aqui, o pessoas.xml.
+
+108. Beleza? Entao, como eh que eu faco isso?
+
+109. Eu venho, aqui, dentro do meu persistence.xml, dentro do meu <persistence-unit>, acima de <properties>, eu adiciono, aqui, o <mapping-file>,
+
+        <persistence-unit name="financeiroPU" transaction-type="RESOURCE_LOCAL">
+
+            <mapping-file>META-INF/consultas/pessoas.xml</mapping-file>
+
+            <properties>
+
+                ...
+
+110. Eu estou falando, 'Eu estou esse mapeamento, aqui, em pessoas.xml, e, la, em pessoas.xml, nesse camarada, tem o <named-query>'.
+
+111. Simples assim.
+
+112. Beleza?
+
+113. Entao, fiz isso daqui, de forma simples. 
+
+114. O que que eu vou fazer, agora?
+
+115. Eu posso mandar executar PessoaTest.
+
+116. Oh, voce reparou que eu apaguei a NamedQuery de la, da Entidade Pessoa, e eu vou executar, aqui, agora, a Consulta em cima de Pessoa, usando NamedQuery, so que, agora, esse NamedQuery esta no arquivo.
+
+117. Vou mandar executar de novo. Continuou funcionando, exibiu a Consulta no Log e apareceu Verdinho, na Guia do JUnit,
+
+Hibernate: 
+    select
+        pessoa0_.codigo as codigo1_1_,
+        pessoa0_.nome as nome2_1_ 
+    from
+        pessoa pessoa0_
+
+118. E, ai, voltando, aqui, como eu disse, se voce olhar essa consulta,
+
+<named-query name="Pessoa.todas">
+    <query>
+        FROM 
+        Pessoa p
+    </query>
+</named-query>
+
+, aqui, direto, sem precisar estar dentro do arquivo da Entidade, o seu arquivo fica menor, oh, da Entidade, e uma Consulta mais complexa, como eu disse, abstrai, ai, para algum problema, para uma Consulta maior,
+
+<named-query name="Pessoa.todas">
+    <query>
+    >>>    FROM 
+    >>>    Pessoa p
+    </query>
+</named-query>
+
+, mas, voce, olhando num lugar so, a Consulta, fica muito mais facil de se trabalhar com ela. Se voce fez essa consulta e esse teste dessa Consulta em outro lugar, e, ai, voce consegue, ai, depois, so dar um CTRL+C e CTRL+V dela para ca, 
+
+<named-query name="Pessoa.todas">
+    <query>
+    >>>    FROM 
+    >>>    Pessoa p
+    </query>
+</named-query>
+
+, nao eh?, e consegue brincar de uma forma mais facil, aqui, tambem, ou seja, no arquivo xml separado,
+
+<named-query name="Pessoa.todas">
+    <query>
+    >>>    FROM 
+    >>>    Pessoa p
+    </query>
+</named-query>
+
+119. Beleza? Entao, como eh que eu adiciono, aqui? Deixa eu tirar, aqui, terminar esse cara, aqui, ou seja, em Lancamento, eu vou tirar Consulta que esta nessa NamedQuery, aqui, e eu vou colocar em outro arquivo, para te mostrar como eh que eu coloco isso em outro arquivo.
+
+120. Eu crio o arquivo META-INF/consultas/lancamentos.xml.
+
+121. Eu vou colocar esse conteudo, aqui,
+
+    <?xml version="1.0" encoding="UTF-8"?>
+    <entity-mappings version="2.1"
+            xmlns="http://xmlns.jcp.org/xml/ns/persistence/orm" 
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence/orm http://xmlns.jcp.org/xml/ns/persistence/orm_2_1.xsd">
+
+        <named-query name="Lancamento.descricoesQueContem">
+            <query>
+                SELECT distinct descricao
+                FROM Lancamento
+                WHERE upper(descricao) like upper(:descricao)
+
+            </query>
+        </named-query>
+
+        <named-query name="Lancamento.todos">
+            <query>
+                FROM
+                Lancamento l
+            </query>
+        </named-query>
+    </entity-mappings>
+
+122. E, aqui, eu estou te mostrando que eu posso ter mais de uma <named-query> dentro de um arquivo.
+
+123. Entao, eu estou como eh que eu crio mais de um arquivo e, dentro de um arquivo, mais de uma <named-query>
+
+124. Aqui, oh, Lancamento.todos, devolve todos os Lancamentos,
+
+    <named-query name="Lancamento.todos">
+        <query>
+            FROM 
+            Lancamento l
+        </query>
+    </named-query>
+
+, e Lancamento.descricoesQueContem, 
+
+    <named-query>
+        <query>
+            SELECT distinct descricao
+            FROM Lancamento 
+            WHERE upper(descricao) like upper(:descricao)
+        </query>
+    </named-query>
+
+, eu coloco a consulta que esta aqui,
+
+@NamedQuery(name = "Lancamento.descricoesQueContem", 
+    >>>    query = "SELECT distinct descricao " 
+                    + "FROM Lancamento " 
+                    + "WHERE upper(descricao) like upper(:descricao)"
+)
+@Entity
+@Table(name = "lancamento")
+public class Lancamento implements Serializable {
+
+    ...
+}
+
+, eu vou arrancar esse cara da Entidade Lancamento, e deixar apenas aqui, no arquivo, em lancamentos.xml, porque fica mais facil de voce ler.
+
+125. E isso, aqui, tambem, so falta falar do persistence.xml, 
+
+    <persistence-unit name="financeiroPU" transaction-type="RESOURCE_LOCAL">
+
+        <mapping-file>META-INF/consultas/pessoas.xml</mapping-file>
+        <mapping-file>META-INF/consultas/lancamentos.xml</mapping-file>
+
+        <properties>
+            <property name="javax.persistence.jdbc.url" value="..." />
+            ...
+
+126. Eu vou falar para ele, "Olha, carrega, tambem, esse arquivo lancamentos.xml".
+
+127. Beleza? Entao, deixa eu executar, aqui, o LancamentoTest, para a gente ver se eu nao fiz nada de errado, aqui.
+
+128. Executar tudo de novo. Beleza, fez, la, a Consulta, em cima do Lancamento, usando NamedQuery, que eu defini no arquivo externo, lancamentos.xml.
+
+129. Fim da     Aula 15.007. Named Queries em Arquivos Externos.
+
+-->

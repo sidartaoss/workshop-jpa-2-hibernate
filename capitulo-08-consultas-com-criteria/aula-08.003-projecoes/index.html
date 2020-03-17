@@ -1,0 +1,320 @@
+<!-- 
+
+    Aula 08.003. Projecoes
+
+1. Pode ter situacoes que a gente precisa consultar somente um atributo do nosso modelo. Por exemplo, imagina que a gente tem que montar, imprimir, de alguma forma, somente a placa do carro, por exemplo.
+
+2. Ou seja, a gente nao precisa retornar o objeto inteiro, a gente so quer a placa do carro.
+
+3. Bom, para a gente nao ter que ficar criando uma pagina JSF toda hora, aqui, em cima do nosso sistema, que, talvez, nao vai fazer tanto sentido, eu vou fazer o seguinte, aproveitar e ja mostrar um pouquinho como eh que a gente inicia alguns testes de integracao, mas, veja bem, a gente nao vai criar os testes ainda. Mais a frente, eu vou mostrar, para voce, como eh que a gente configura isso la para a gente poder fazer alguns testes de integracao. 
+
+4. Eu vou usar apenas o JUnit, aqui, agora, para rodar, para a gente, esses exemplos, para a gente nao ter que ficar criando classes com metodo main(), aqui, eu vou criar em cima do pacote src/test/java, okay?, que ja eh uma forma de a gente comecar a introduzir, se voce nunca viu testes, a gente vai trabalhar um pouquinho nisso dai, mas, mais uma vez, nao eh o objetivo fazer os testes aqui, eu so vou aproveitar a estrutura do projeto, aproveitar que tem o pacote src/test/java, aqui, e vou configurar ele aqui.
+
+5. Para a gente fazer isso, a primeira coisa que a gente vai fazer eh clicar com o botao direito em cima do nome do Projeto / Properties / e vamos adicionar, aqui, uma biblioteca que vai ser o JUnit, e voce seleciona, ai, o JUnit 4.
+
+6. Entao, da um Okay, e beleza.
+
+7. Agora, o pom.xml, la, do Maven, para nao dar problema, se voce estiver executando, ai, na mao, vamos colocar a dependencia, aqui, tambem, nos vamos colocar a dependencia, o groupId eh o JUnit, o artifactId eh o JUnit, a versao eh a 4.10, e o escopo que a gente vai usar eh o escopo de teste,
+
+
+    <-- Nucleo do Hibernate --
+    <dependency>
+        <groupId>org.hibernate</groupId>
+        <artifactId>hibernate-core</artifactId>
+        <version>5.4.0.Final</version>
+        <scope>compile</scope>
+    </dependency>
+
+    <-- Implementacao de EntityManager da JPA --
+    <dependency>
+        <groupId>org.hibernate</groupId>
+        <artifactId>hibernate-entitymanager</artifactId>
+        <version>5.4.0.Final</version>
+        <scope>compile</scope>
+    </dependency>    
+
+    <-- JUnit 5.1.0
+    <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter-engine</artifactId>
+        <version>5.1.0</version>
+        <scope>test</scope>
+    </dependency>
+
+8. Okay? Mas, isso daqui, a gente nao vai usar isso daqui agora nao. Bom, beleza, fechamos o pom.xml, aqui. O que que a gente vai fazer agora?
+
+9. Aqui, na pasta src/test/java, nos vamos criar uma nova classe, no pacote, que eu vou chamar, aqui, com.algaworks.curso.jpa2.criteria, e, aqui, a gente vai colocar os Exemplos de Criteria,
+
+package com.algaworks.curso.jpa2.criteria;
+
+public class ExemplosCriteria {
+
+
+}
+
+10. Mais uma vez, nao eh para a gente testar ainda, eh so para a gente aproveitar, aqui, ja ensinar a configurar.
+
+11. Bom, a primeira coisa que a gente vai precisar, que a gente nao vai conseguir fazer funcionar, aqui, eh o @Inject, para injetar o EntityManager aqui pra gente, isso aqui nao vai dar certo aqui.
+
+12. Entao, o que que a gente precisa fazer?
+
+13. Eu vou precisar, entao, do EntityManagerFactory. Entao, eu vou colocar, aqui, o EntityManagerFactory, e vou colocar como estatico, porque Eu So Preciso Dele Uma Vez Nesta Classe,
+
+public class ExemplosCriteria {
+
+
+    private static EntityManagerFactory factory;
+
+
+}
+
+14. Okay? E, para eu inicializar ele, eu vou colocar, no metodo estatico, aqui, eu vou chamar de init(), okay?, e, aqui, eu vou colocar o factory, vai receber da forma que a gente ja tinha feito, Persistence.createEntitManagerFactory("locadoraVeiculoPU");
+
+public class ExemplosCriteria {
+
+
+    private static EntityManagerFactory factory;
+
+    public static void init() {
+        factory = Persistence.createEntityManagerFactory("locadoraVeiculoPU");
+    }
+
+}
+
+, que eh, a partir do Persistence, criar o Entity Manager Factory, passando a String.
+
+15. Para a gente executar isso daqui, nao ter que ficar chamando esse init(), o JUnit nos ajuda, eu, se eu anotar, aqui, @BeforeClass, ele vai executar esse cara, aqui, antes de executar os nossos testes, So Uma Vez, okay?, porque eh um metodo estatico.
+
+16. E, para criar pra gente, um cara que ta faltando, aqui, que a gente vai precisar, eh o EntityManager,
+
+public class ExemplosCriteria {
+
+
+    private static EntityManagerFactory factory;
+
+    private EntityManager manager;
+
+    @BeforeClass
+    public static void init() {
+        factory = Persistence.createEntityManagerFactory("locadoraVeiculoPU");
+    }
+
+    public void setUp() {
+
+    }
+
+}
+
+18. E, ai, o EntityManager, eu ja quero que ele seja criado antes da execucao de cada metodo de teste. Entao, eu vou anotar esse cara com @Before, dentro desse metodo,
+
+    @Before
+    public void setUp() {
+
+    }
+
+19. E, quando a gente terminar de usar esse EntityManager, eu vou ter que fechar ele. Entao, eu vou colocar, aqui, EntityManager.close(), e eu anoto, aqui, como @After
+
+
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.EntityManager;
+
+import org.junit.BeforeClass;
+import org.junit.Before;
+import org.junit.After;
+
+public class Exemplos Criteria {
+
+    private static EntityManagerFactory factory;
+
+    private EntityManager manager;
+
+    @BeforeClass
+    public static void init() {
+        factory = Persistence.createEntityManagerFactory("locadoraVeiculoPU");
+    }
+
+    @Before
+    public void setUp() {
+        this.manager = factory.createEntityManager();
+    }
+
+    @After
+    public void tearDown() {
+        this.manager.close();
+    }
+
+}
+
+20. Okay? Entao, Antes de Cada metodo que eu escrever, agora, ele vai inicializar o EntityManager,
+
+@Before
+public void setUp() {
+    this.manager = factory.createEntityManager();
+}
+
+, e, Depois de Cada metodo que a gente escrever, ele vai fechar o EntityManager,
+
+@After
+public void tearDown() {
+    this.manager.close();
+}
+
+21. Entao, vamos la. Que metodos sao esses?
+
+22. Sao os metodos que a gente anotar com @Test. E, ai, a gente vai escrever um metodo, aqui, que eu vou te mostrar, entao, como eh que a gente busca as Projecoes, como eh que a gente faz Projecoes com Criteria,
+
+...
+import org.junit.Test;
+
+...
+
+@Test
+public void projecoes() {
+
+}
+
+23. Entao, eu vou chamar ele, aqui, de projecoes().
+
+24. Bom, a primeira coisa que a gente precisa, quando a gente esta trabalhando com Criteria, eh do objeto CriteriaBuilder, que a gente pega ele do EntityManager, okay?
+
+import javax.persistence.criteria.CriteriaBuilder;
+
+@Test
+public void projecoes() {
+    CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+}
+
+25. Eh o objeto que vai nos auxiliar a criar varios objetos importantes na Criteria, como a propria CriteriaQuery, okay?
+
+26. Lembra isso aqui, oh, eu importei a CriteriaQuery do javax.persistence.criteria.
+
+27. Cuidado para voce nao importar do Hibernate, ai, okay?
+
+28. E, aqui, a gente passaria a Entidade que a gente queria fazer a nossa Query.
+
+29. So que, como, agora, eu falei para voces que eu quero buscar apenas a placa do Carro, a minha Consulta vai ser em cima de uma String, entao, a CriteriaQuery, aqui, eu vou colocar uma String,
+
+@Test
+public void projecoes() {
+    CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+    CriteriaQuery<String> criteriaQuery = builder.createQuery(String.class);
+
+}
+
+30. Entao, a minha CriteriaQuery eh do tipo String. E a gente vai usar a CriteriaBuilder para criar essa Query, em cima de String.
+
+31. Eu estou falando, oh, 'Eu quero que o meu resultado dessa Query seja uma String'.
+
+32. Bom, mas, eu vou selecionar onde?
+
+33. Eu preciso do Root, que eh em cima de Carro, okay? Entao, criteriaQuery, eu vou criar o from(), em cima de Carro, okay? Mas, na hora em que eu for fazer o select, eu preciso falar o seguinte, oh, 'Olha, eh em cima de Carro, so que nao eh o Carro inteiro que eu vou querer, eu vou querer apenas pegar a placa',
+
+    @Test
+    public void projecoes() {
+        CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+        CriteriaQuery<String> criteriaQuery = builder.createQuery(String.class);
+
+        // from Carro c
+        Root<Carro> c = criteriaQuery.from(Carro.class);
+        // select c.placa from Carro c
+        criteriaQuery.select(c.get("placa"));
+    }
+
+, so que a placa, o c.get("placa"), o metodo get() devolver um cara generico, ou seja, um Object, e, aqui, o CriteriaQuery nao eh do tipo String que eu estou querendo?
+
+34. Entao, vamos fazer, usar o Generics e falar, 'Olha, mas o resultado que eu quero disso, eu sei que eh uma String, entao, eu vou colocar o Generics de String'.
+
+35. E, ai, a gente vai criar um TypedQuery, que o resultado a gente sabe que eh uma String, recebendo manager, e a gente manda criar a Query, usando o criteriaQuery, que a gente ja criou,
+
+    TypedQuery<String> query = this.manager.createQuery(criteriaQuery);
+
+36. Pronto, agora, que a gente ja tem a nossa consulta, eh so retornar, mandar executar, retornando uma Lista de placas,
+
+    List<String> placas = query.getResultList();
+
+37. E a gente pode, agora, mandar imprimir isso, aqui, no Console,
+
+    for (String placa : placas) {
+        System.out.println(placa);
+    }
+
+38. Okay. Criamos, aqui, entao, a nossa Projecao, usando Criteria.
+
+39. Ou seja, a gente so esta buscando a placa, a gente nao esta buscando a Entidade Carro inteira. Quando a gente fizer o Select, mandar executar, voce vai ver o Select gerado, ele vai fazer o select apenas em cima da placa.
+
+40. Para executar esse cara, aqui, oh, Bota Direito / Run As / JUnit Test, e, ai, ele vai inicializar o Hibernate, okay, trouxe, la, pra gente,
+
+Hibernate: 
+    select
+        carro0_.placa as col_0_0_ 
+    from
+        Carro carro0_
+AAA-1234
+BBB-2222
+AAA-9999
+BBB-8888
+AAA-7788
+DDD-1234
+FFF-1212
+XXX-1111
+ADD-8989
+YNP-5588
+
+
+41. E olha so o select que eu tinha falado para voce, oh, 
+
+select
+        carro0_.placa
+
+, sendo que ele so trouxe a placa do carro. E, ai, a gente mandou imprimir, aqui, os valores das placas.
+
+42. Ta vendo? Entao, se voce tiver uma situacao, ai, que precisar trazer apenas um atributo de um Objeto, eh dessa forma, a nossa Consulta vai ser em cima daquele tipo,
+
+CriteriaQuery< >>> String> criteriaQuery = builder.createQuery(String.class);
+
+, e, na hora que a gente for fazer o select, 
+
+criteriaQuery.select(c.<String>get("placa"));
+
+, e, nessa parte, so voltando, aqui, as vezes, essa parte, eu sei que fica mais complicadinha, nao eh?, parece que eh mais dificil de entender isso daqui, mas nao eh. 
+
+43. Veja bem, eu ja criei a minha query, a minha query, eu ja falei que ela vai ser do tipo String, aqui,
+
+CriteriaQuery< >>> String> criteriaQuery = builder.createQuery(String.class);
+
+44. Okay? E, ai, eu falei, 'Olha, eu vou fazer o from() em cima de Carro',
+
+Root<Carro> c = criteriaQuery.from(Carro.class);
+
+45. Olha so, eu vou fazer o from em cima de Carro,
+
+ from
+        Carro carro0_
+
+46. Eh isso que ele fez aqui,
+
+Root<Carro> c = criteriaQuery.from( >>> Carro.class);
+
+47. So que o select, eu quero que me devolva apenas a placa. Entao, no select,
+
+criteriaQuery. >>> select(c.<String>get("placa"));
+
+, o que que eu estou trazendo no select? No select, eu estou trazendo a placa,
+
+criteriaQuery.select( >>> c.<String>get("placa") <<< );
+
+48. So que a minha placa, como esses metodos sao muito genericos, eu tenho que falar assim, oh, 'mas, o resultado disso, ou seja, c.get(), eh uma String',
+
+criteriaQuery.select(c. >>> <String>get("placa"));
+
+49. Entao, a gente coloca o Generics para falar que eh do tipo String essa placa. Depois que a gente montou a nossa Query, a gente pode criar a TypedQuery para, realmente, mandar executar no Banco de Dados,
+
+TypedQuery<String> query = this.manager.createQuery(criteriaQuery);
+List<String> placas = query.getResultList();
+
+50. Beleza? 
+
+51. Fim da     Aula 08.003. Projecoes.
+
+
+-->

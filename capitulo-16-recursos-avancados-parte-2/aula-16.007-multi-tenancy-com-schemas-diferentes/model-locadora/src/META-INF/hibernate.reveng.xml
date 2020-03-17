@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-reverse-engineering PUBLIC "-//Hibernate/Hibernate Reverse Engineering DTD 3.0//EN" "http://hibernate.org/dtd/hibernate-reverse-engineering-3.0.dtd" >
+
+<hibernate-reverse-engineering>
+  <table-filter match-catalog="locadora" match-name="acessorio"/>
+  <table-filter match-catalog="locadora" match-name="aluguel"/>
+  <table-filter match-catalog="locadora" match-name="apolice_seguro"/>
+  <table-filter match-catalog="locadora" match-name="carro"/>
+  <table-filter match-catalog="locadora" match-name="carro_acessorio"/>
+  <table-filter match-catalog="locadora" match-name="fabricante"/>
+  <table-filter match-catalog="locadora" match-name="funcionario"/>
+  <table-filter match-catalog="locadora" match-name="gerador_codigo"/>
+  <table-filter match-catalog="locadora" match-name="modelocarro"/>
+  <table-filter match-catalog="locadora" match-name="motorista"/>
+  <table-filter match-catalog="locadora" match-name="pessoa"/>
+</hibernate-reverse-engineering>

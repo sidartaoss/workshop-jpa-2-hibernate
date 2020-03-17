@@ -1,0 +1,712 @@
+<!--
+    Aula 12.005. Transforme, Ordene e Agrupe a Consulta
+
+1. Eu pensei em um Relatorio, agora, para te explicar a respeito de como que a gente vai fazer GroupBy, como eh que a gente vai fazer Count, como que a gente adiciona Ordenacao, como eh que a gente faz Transformacao para Um Objeto?
+
+2. Entao, eu pensei na seguinte Consulta para a gente montar o Relatorio. Eu quero saber a quantidade de Alugueis que Um determinado Carro teve.
+
+3. Okay?
+
+4. Entao, no caso, Carro, eu vou mostrar a Placa do Carro.
+
+5. Entao, a telinha que eu criei, aqui, eu chamei de TotalAlugueisPorCarro.xhtml, ela vai ter, aqui, a Placa, onde eu vou mostrar a placa, e a Quantidade de alugueis, aqui, eu quero mostrar a quantidade de alugueis.
+
+6. Beleza?
+
+7. Criei, aqui, o Bean RelatorioTotalAlugueisPorCarroBean, onde a gente vai implementar o metodo buscar(), e, obviamente, a gente vai implementar, aqui, no CarroDAO, o metodo de, a implementacao, mesmo, usando Criteria do Hibernate.
+
+8. Entao, vamos la.
+
+9. Se a gente vier, aqui, no metodo buscar(), o que que eu quero fazer?
+
+10. Eu quero executar, aqui, alguma coisa no DAO, CarroDAO, entao, eu vou fazer alguma coisa, aqui, no CarroDAO, vamos definir, aqui, o metodo buscarTotalAlugueisPorCarro(),
+
+public void buscar() {
+    this.carroDAO.buscarTotalAlugueisPorCarro();
+}
+
+11. Esse camarada, aqui, buscarTotalAlugueisPorCarro(), ele vai me devolver um resultado, que a gente vai colocar, aqui, agora. Vai retornar, aqui, nessa lista,
+
+<p:dataTable id="carrosTable" value="#{relatorioTotalAlugueisPorCarroBean. >>> <<< }" 
+        var="" 
+        style="margin-top: 20px" emptyMessage="Nenhum carro encontrado." rows="5" 
+        paginator="true" paginatorAlwaysVisible="false" paginationPosition="bottom">
+    <p:column headerText="Placa">
+        <h:outputText value="#{}"
+    </p:column>
+    <p:column headerText="Quantidade de alugueis">
+        <h:outputText value="#{}"
+    </p:column>    
+</p:dataTable>
+
+, o que que a gente vai comecar a colocar aqui, a Placa e a Quantidade de alugueis,
+
+<p:dataTable id="carrosTable" value="#{relatorioTotalAlugueisPorCarroBean.}" 
+        var="" 
+        style="margin-top: 20px" emptyMessage="Nenhum carro encontrado." rows="5" 
+        paginator="true" paginatorAlwaysVisible="false" paginationPosition="bottom">
+    <p:column headerText="Placa">
+        <h:outputText value="#{ >>> <<< }"
+    </p:column>
+    <p:column headerText="Quantidade de alugueis">
+        <h:outputText value="#{ >>> <<< }"
+    </p:column>    
+</p:dataTable>
+
+12. Ao inves de eu retornar isso num Array de Object, que ficaria chato e feio de fazer, nao e?, a gente vai retornar isso num objeto, pra eu ja te mostrar a Transformacao.
+
+13. Que objeto?
+
+14. Um objeto novo, nos vamos criar, aqui, agora, a classe, para representar esse Objeto. Entao, por exemplo, eu criaria, aqui, dentro do pacote modelo.util, e eu vou chamar isso, aqui, de TotalDeAlugueisPorCarro,
+
+package com.algaworks.curso.jpa2.modelo.util;
+
+public class TotalDeAlugueisPorCarro {
+
+}
+
+15. Okay? Essa classe TotalDeAlugueisPorCarro, ela vai ter os dados, aqui, vao ter a Placa e a Quantidade de alugueis,
+
+...
+
+    <p:column headerText="Placa">
+        <h:outputText value="#{ >>> <<< }"
+    </p:column>
+    <p:column headerText="Quantidade de alugueis">
+        <h:outputText value="#{ >>> <<< }"
+    </p:column>    
+
+...
+
+16. Entao, o que que esse cara, aqui, esse model, novo, aqui, tem?
+
+17. Vamos implementar Serializable, private String placa, private Long totalDeAlugueis, aqui, dessa Placa,
+
+package com.algaworks.curso.jpa2.modelo.util;
+
+public class TotalDeAlugueisPorCarro implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private String placa;
+    private Long totalDeAlugueis;
+
+}
+
+18. Beleza? Eh uma classe nova para representar isso.
+
+19. Eu preciso gerar os Getters e os Setters, aqui, porque o Hibernate vai usar, okay?
+
+20. So isso.
+
+21. Entao, eu vou fazer uma Consulta, e essa Consulta vai retornar uma Lista de Objetos dessa Classe, TotalDeAlugueisPorCarro.
+
+22. Beleza? A Consulta que o DAO vai me retornar eh uma Lista de Objetos dessa classe, entao, eu vou adicionar Transformacao no Hibernate. Ao inves de o Hibernate me retornar os modelos que a gente tem, aqui, como Carro, nao eh?, Aluguel, que a gente ja conhece, ele vai me retornar um novo, eu vou ensinar ele a criar esse Objeto a partir da Consulta.
+
+23. Beleza?
+
+24. Porque, voce entendeu a Consulta. Eu quero saber o seguinte, a Placa AAA-1234 teve 2 Alugueis, a Placa BBB-1111 teve 1 Aluguel. E por ai vai. Depende de como esta a sua massa de dados, ai.
+
+25. Beleza? Entao, isso que eu quero retornar da Consulta.
+
+26. Entao, vamos voltar em RelatorioTotalAlugueisPorCarroBean. Entao, eu terei uma Lista, de TotalDeAlugueisPorCarro. Eu so preciso do Getter desse cara. Beleza, entao, esse camarada, aqui,
+
+    private List<TotalDeAlugueisPorCarro> totalDeAlugueisPorCarro;
+
+, vai ser o cara retornado pelo DAO,
+
+        public void buscar() {
+            totalDeAlugueisPorCarro = this.carroDAO.buscarTotalDeAlugueisPorCarro();
+        }
+
+27. E, ai, esse camarada, aqui, ou seja, totalDeAlugueisPorCarro, eh que a gente vai usar, aqui, na telinha, nessa posicao,
+
+<p:dataTable id="carrosTable" value="#{relatorioTotalAlugueisPorCarroBean. >>> totalDeAlugueisPorCarro}" 
+        var="" 
+        style="margin-top: 20px" emptyMessage="Nenhum carro encontrado." rows="5" 
+        paginator="true" paginatorAlwaysVisible="false" paginationPosition="bottom">
+    <p:column headerText="Placa">
+        <h:outputText value="#{ }"
+    </p:column>
+    <p:column headerText="Quantidade de alugueis">
+        <h:outputText value="#{ }"
+    </p:column>    
+</p:dataTable>
+
+28. Entao, quando tiver alguma coisa, aqui, ele vai retornar, vamos chamar essa variavel, aqui, de total, 
+
+<p:dataTable id="carrosTable" value="#{relatorioTotalAlugueisPorCarroBean.totalDeAlugueisPorCarro}" 
+        var="total" 
+        style="margin-top: 20px" emptyMessage="Nenhum carro encontrado." rows="5" 
+        paginator="true" paginatorAlwaysVisible="false" paginationPosition="bottom">
+    <p:column headerText="Placa">
+        <h:outputText value="#{ }"
+    </p:column>
+    <p:column headerText="Quantidade de alugueis">
+        <h:outputText value="#{ }"
+    </p:column>    
+</p:dataTable>
+
+, por exemplo, e, aqui, na Placa, ele vai mostrar #{total.placa} e, em Quantidade de alugueis, #{total.totalDeAlugueis}.
+
+<p:dataTable id="carrosTable" value="#{relatorioTotalAlugueisPorCarroBean.totalDeAlugueisPorCarro}" 
+        var="total" 
+        style="margin-top: 20px" emptyMessage="Nenhum carro encontrado." rows="5" 
+        paginator="true" paginatorAlwaysVisible="false" paginationPosition="bottom">
+    <p:column headerText="Placa">
+        <h:outputText value="#{total.placa}"
+    </p:column>
+    <p:column headerText="Quantidade de alugueis">
+        <h:outputText value="#{total.totalDeAlugueis}"
+    </p:column>    
+</p:dataTable>
+
+29. Beleza? Entao, eh isso, aqui, que eu tenho que fazer, eu tenho que implementar. Oh, o ManagedBean ja esta implementado, so falta implementar o metodo no DAO. Vamos mandar criar o metodo, aqui, e vamos brincar com o Hibernate, aqui,
+
+public List<TotalDeAlugueisPorCarro> buscarTotalDeAlugueisPorCarro() {
+
+    return null;    
+}
+
+30. Beleza? Entao, vamos la.
+
+31. O que que nos vamos fazer, aqui?
+
+32. Bom, primeira coisa, voce ja esta cansado de saber, eu preciso da Session. E, a partir da Session, que eu crio o Criteria. Para quem? Qual que eh a classe, nao eh?, o nosso model? Qual que eh a classe base que a gente vai utilizar? Eh a classe Carro,
+
+public List<TotalDeAlugueisPorCarro> buscarTotalDeAlugueisPorCarro() {
+    Session session = this.em.unwrap(Session.class);
+    Criteria criteria = session.createCriteria(Carro.class);
+
+    return null;
+}
+
+33. Beleza? Entao, a gente quer fazer o Select principalmente em cima de Carro.
+
+34. Eu quero saber os Carros, mas vamos ter o GroupBy ali, entao, a gente deixa dessa forma, falando que a base da Criteria eh em cima de Carro.
+
+35. E, aqui, a gente vai retornar o criteria.list();
+
+public List<TotalDeAlugueisPorCarro> buscarTotalDeAlugueisPorCarro() {
+    Session session = this.em.unwrap(Session.class);
+    Criteria criteria = sessin.createCriteria(Carro.class);
+    
+
+
+    return criteria.list();
+}
+
+36. Beleza? Agora, aqui, a gente vai comecar a trabalhar nela. Bom, o que que eu preciso fazer?
+
+37. Se voce pensar nesse Select, aqui, seria um select desse tipo, aqui, a gente precisa fazer c.placa, e o count, por exemplo, do aluguel.codigo,
+
+        /** 
+        
+            select c.placa
+                 , count(a.codigo)
+        
+        **/
+
+, certo? Entao, a gente precisa contar isso, daqui, quantos alugueis tem para essa Placa, nao eh o codigo que identifica o Aluguel? Entao, vamos contar quantos codigos tem no Aluguel ja nos ajuda.
+
+38. Entao, beleza, from carr c, aluguel a, where, a gente vai precisar fazer o Relacionamento entre eles, c.codigo = a.codigo_carro
+
+        /** 
+        
+            select c.placa
+                 , count(a.codigo)
+            from carro c,
+                 aluguel a
+            where c.codigo = a.codigo_carro
+
+        
+        **/ 
+
+, alguma coisa assim. Beleza?
+
+39. Uma coisa eh que eu vou precisar trabalhar em cima de a,
+
+        /** 
+        
+            select c.placa
+                 , count(>>> a.codigo <<< )
+            from carro c,
+                 aluguel a
+            where c.codigo = a.codigo_carro
+
+        
+        **/
+
+, nao vou? Oh, preciso fazer o a.codigo. Entao, aqui, isso ja me da a dica para criar um alias, em cima de "alugueis", onde eu vou chamar de "a",
+
+    ...
+
+    Session session = this.em.unwrap(Session.class);
+    Criteria criteria = session.createCriteria(Carro.class);
+    criteria.createAlias("alugueis", "a");
+
+    return criteria.list();
+    ...
+
+40. Beleza? Entao, isso, aqui, ja me da a dica que eu preciso fazer isso, daqui.
+
+41. So que eu vou precisar fazer um GroupBy, um Group by em cima de quem?
+
+42. Em cima de c.placa,
+
+/** 
+        
+            select c.placa
+                 , count(>>> a.codigo <<< )
+            from carro c,
+                 aluguel a
+            where c.codigo = a.codigo_carro
+            group by c.placa
+        
+        **/
+
+43. Okay? Eu preciso fazer, se eu quero contar, entao, eu tenho que agrupar em cima de placa.
+
+44. Entao, eu agrupei pela placa.
+
+45. Beleza?
+
+46. E eu vou adicionar, aqui, tambem, um Order By, order by count(a.codigo);
+
+/** 
+        
+            select c.placa
+                 , count(>>> a.codigo <<< )
+            from carro c,
+                 aluguel a
+            where c.codigo = a.codigo_carro
+            group by c.placa
+            order by count(a.codigo)
+        
+        **/
+
+47. Beleza? Entao, a gente criou o alias para alugueis, porque eu vou precisar trabalhar em cima de alugueis, entao, eu ja criei um alias para eu poder navegar nessa Entidade.
+
+48. Beleza? A partir de Carro, tem o Relacionamento com Aluguel, eh alugueis que chama la, oh,
+
+@Entity
+public class Carro {
+
+
+    ...
+
+
+    private List<Aluguel> alugueis;
+
+    ...
+}
+
+, entao, eu ja crio esse alias, aqui, para eu poder trabalhar, brincar la em cima dele,
+
+    criteria.createAlias("alugueis", "a");
+
+49. Que mais?
+
+50. Vamos fazer o seguinte. Beleza, agora, vamos la.
+
+51. O que que eu preciso fazer para retornar apenas 2, ta vendo que nao eh asterisco, nao eh todo mundo,
+
+/** 
+        
+            select >>> c.placa
+                 , >>> count(a.codigo)
+            from carro c,
+                 aluguel a
+            where c.codigo = a.codigo_carro
+            group by c.placa
+            order by count(a.codigo)
+        
+        **/
+
+52. Entao, eu preciso retornar 2 colunas, a Placa e a Quantidade.
+
+53. Isso, a gente ja viu um pouquinho, que eh com Projection que a gente faz. So que nao eh so um, eu preciso de dois. Entao, a gente vai usar o ProjectionList, vou chamar, aqui, de 'pl', e como eh que eu crio um ProjectionList? A partir de Projections.projectionList, e, aqui, eu consigo ir adicionando as minhas Projection's. Entao, eu vou adicionar, aqui, o Projections, para fazer o Group by em cima da Placa,
+
+54. Entao, eu preciso criar um ProjectionList,
+
+    Session session = this.em.unwrap(Session.class);
+    Criteria criteria = session.createCriteria(Carro.class);
+    criteria.createAlias("alugueis", "a");
+
+    ProjectionList pl = Projections.projectionList()
+            .add(Projections.)
+
+55. Quando eu faco, adicionar o group by em cima da placa, ele ja eh esperto o suficiente para falar, 'Se ele fazer o Group by em cima da Placa, ele quer retornar a Placa'
+
+/** 
+        
+            select >>> c.placa <<<
+                 , count(a.codigo)
+            from carro c,
+                 aluguel a
+            where c.codigo = a.codigo_carro
+                  >>> group by c.placa <<<
+            order by count(a.codigo)
+        
+        **/
+
+56. Entao, Projections.groupProperty("placa"), .add(Projections.count("a.codigo")), entao, eu quero contar o "a.codigo",
+
+    ProjectionList pl = Projections.projectionList()
+            .add(Projections.groupProperty("placa"))
+            .add(Projections.count("a.codigo"))
+
+, nao eh isso que a gente viu, oh? Entao, eu quero contar o a.codigo. E eu quero agrupar pela placa. Isso, aqui, ele ja eh esperto o suficiente para saber, 'Ah, entao, beleza, entao, ele esta agrupando pela Placa, entao, ele vai adicionar a Placa aqui, em cima,'
+
+/** 
+        
+            select >>> c.placa <<<
+                 , count(a.codigo)
+            from carro c,
+                 aluguel a
+            where c.codigo = a.codigo_carro
+                  >>> group by c.placa <<<
+            order by count(a.codigo)
+        
+        **/
+
+, a gente quer adicionar ela.
+
+57. Beleza. Esse ProjectionList, aqui, ja esta pronto? Nao.
+
+58. Eu tenho que adicionar ele no criteria.
+
+59. criteria., esta pronto, nao eh?, eh so adicionar no Criteria,
+
+    criteria.setProjection(pl);
+
+60. Entao, eu quero adicionar esse ProjectionList.
+
+61. Beleza? O que que esta faltando, aqui?
+
+62. Entao, ele ja fez, oh, esse select,
+
+    select c.placa,
+           count(a.codigo)
+    from carro c,
+         aluguel a
+
+, ja fez esse relacionamento,
+
+    where c.codigo = a.codigo_carro
+
+, ja fez o group by
+
+    group by c.placa
+
+, esta faltando adicionar o order by,
+
+    order by count(a.codigo);
+
+63. Vamos adicionar o order by?
+
+64. criteria.addOrder(Order.desc), a gente tem o Order.asc e o Order.desc. Se a gente quiser colocar em ordem Decrescente, ou seja, os mais alugados primeiro, vamos fazer assim? Entao, vamos. Ai, eu quero ordenar pelo Count(a.codigo). Beleza? Eu quero ordenar por isso.
+
+65. Ele so aceita uma String,
+
+    criteria.addOrder(Order.desc(""));
+
+66. Eu nao posso vir, aqui, e colocar,
+
+    criteria.addOrder(Order.desc( >>> "count(a.codigo)") <<< );
+
+67. Porque ele eh o desc() de uma propriedade, ele esta imaginando que eh uma propriedade da Classe Carro, aqui, nao eh?, da Consulta que a gente esta fazendo.
+
+68. Entao, aqui,
+
+    criteria.addOrder(Order.desc( >>> "count(a.codigo)") <<< );
+
+, eu nao posso colocar dessa forma, nao vai dar certo.
+
+69. Entao, o que que eu posso fazer, aqui, oh? Eu posso dar um apelido para esse cara, aqui, um alias, .as(alias), e, ai, eu vou colocar, aqui, totalDeAlugueis, beleza?,
+
+        ProjectionList pl = Projections.projectionList()
+                .add(Projections.groupProperty("placa"))
+                .add(Projections.count("a.codigo").as("totalDeAlugueis"));
+
+70. Entao, esse 'totalDeAlugueis', vem para ca,
+
+        ProjectionList pl = Projections.projectionList()
+                .add(Projections.groupProperty("placa"))
+                .add(Projections.count("a.codigo").as(totalDeAlugueis));
+
+        criteria.setProjection(pl);
+        >>> criteria.addOrder(Order.desc("totalDeAlugueis")); <<<
+
+        return criteira.list();
+
+71. Bom, esta quase pronto, eh bem simples, mesmo, nao eh? O Criteria do Hibernate eh muito facil.
+
+72. Eu falei que ia te ensinar Transformacao tambem.
+
+73. Para a gente Transformar no Objeto dessa classe, aqui, TotalDeAlugueisPorCarro.
+
+74. E, ai, nao sei se voce percebeu, mas eu coloquei esse nome, aqui, 
+
+    ProjectionList pl = Projections.projectionList()
+        .add(Projections.groupProperty("placa"))
+        .add(Projections.count("a.codigo").as(">>> totalDeAlugueis <<< "));
+
+, de proposito, porque esse 'totalDeAlugueis' eh, exatamente, esse nome, aqui, oh, 
+
+public class TotalDeAlugueisPorCarro implements Serializable {
+
+    ...
+    private String placa;
+    >>> private Long totalDeAlugueis;
+
+    ...
+}
+
+75. Porque ele vai pegar cada Projection, ou seja, cada Coluna retornada nessa Consulta e vai dar um nome.
+
+76. E eh esse nome que eu vou usar para fazer a Transformacao para o Objeto TotalDeAlugueisPorCarro.
+
+77. E, ai, como eu estou fazendo, aqui, group by pela property 'placa',
+
+        ProjectionList pl = Projections.projectionList()
+                >>> .add(Projections.groupProperty("placa"))
+                .add(Projections.count("a.codigo").as("totalDeAlugueis"));
+
+, ele vai colocar uma coisa c.placa,
+
+            >>> select c.placa
+                 , count(a.codigo)
+            from carro c,
+                 aluguel a
+            where c.codigo = a.codigo_carro
+            group by c.placa
+            order by count(a.codigo)
+
+, eu tambem vou dar um alias(), aqui, para placa,
+
+        ProjectionList pl = Projections.projectionList()
+                .add(Projections.groupProperty("placa").as("placa"))
+                .add(Projections.count("a.codigo").as("totalDeAlugueis"));
+
+78. Beleza? E essa placa, esse as, aqui, 'placa', eh tambem, esse nome, aqui,
+
+public class TotalDeAlugueisPorCarro implements Serializable {
+
+    ...
+    >>> private String placa;
+    private Long totalDeAlugueis;
+
+    ...
+}
+
+79. Beleza?
+
+80. Entao, eu posso dar o nome que eu quiser, aqui, para cada coluna retornada nessa Consulta.
+
+81. Entao, oh, agora, essa Consulta vai me retornar 2 colunas, cada uma nomeada de 'placa' e 'totalDeAlugueis'.
+
+82. E esse totalDeAlugueis tambem me serviu para adicionar o Order By, aqui,
+
+    criteria.setProjection(pl);
+    >>> criteria.addOrder(Order.desc("totalDeAlugueis"));
+
+    return criteria.list();
+
+83. Beleza? 
+
+84. Entao, so esta faltando eu setar o ResultTransformer,
+
+    criteria.setProjection(pl);
+    criteria.addOrder(Order.desc("totalDeAlugueis"));
+
+    criteria.setResultTransformer();
+
+    return criteria.list();
+
+, ou seja, transforma o resultado para mim.
+
+85. Transformar em que?
+
+86. A gente faz, 
+
+    criteria.setResultTransformer(Transformers.aliasToBean());
+
+, ou seja, pega os alias e transforma para qual Bean? O TotalDeAlugueisPorCarro.class,
+
+    criteria.setResultTransformer(Transformers.aliasToBean(TotalDeAlugueisPorCarro.class));
+
+87. Pronto. 
+
+88. Aqui, eu ja falei isso para voce, eu vou tirar o criteria., para deixar dessa forma, para nao precisar ir chamando de novo, ta okay?,
+
+    criteria.setProjection(pl)
+        .addOrder(Order.desc("totalDeAlugueis"))
+        .setResultTransformer(Transformers.aliasToBean(TotalDeAlugueisPorCarro.class));
+
+    return criteria.list();
+
+89. Se quiser deixar, dar uma economizada no codigo, voce pode fazer assim tambem.
+
+90. Entao, olha so. Eu acho que a minha Consulta esta pronta.
+
+91. Eu ja fiz o Projections, oh, criei o alias para conseguir usar uma coisa dessas, por exemplo, a.codigo, eu preciso criar esse alias,
+
+    criteria.createAlias("alugueis", "a");
+
+    ProjectionList pl = Projections.projectionList()
+            .add(Projections.groupProperty("placa").as("placa"))
+            .add(Projections.count(>>> "a.codigo" <<<).as("totalDeAlugueis"));
+
+92. Ja fiz o group by pela placa, e dei o nome dela de placa,
+
+    ProjectionList pl = Projections.projectionList()
+            >>> .add(Projections.groupProperty("placa").as("placa"))
+            .add(Projections.count("a.codigo").as("totalDeAlugueis"));
+
+93. Fiz o count no codigo e chamei de totalDeAlugueis,
+
+    ProjectionList pl = Projections.projectionList()
+            .add(Projections.groupProperty("placa").as("placa"))
+            >>> .add(Projections.count("a.codigo").as("totalDeAlugueis"));
+
+94. Porque esses dois nomes, aqui, 
+
+    ProjectionList pl = Projections.projectionList()
+            .add(Projections.groupProperty("placa").as(>>> "placa"))
+            .add(Projections.count("a.codigo").as(>>> "totalDeAlugueis"));
+
+, vao ser importantes na Transformacao, no ResultTransformer, eu estou falando, oh,
+
+    criteria.setResultTransformer(Transformers.aliasToBean(TotalDeAlugueisPorCarro));
+
+, o Resultado disso, ao inves de voce me retornar uma Lista de um array de Object, vai me retornar uma Lista desse cara, TotalDeAlugueisPorCarro.
+
+95. E esse totalDeAlugueis serviu para adicionar o OrderBy, aqui, na Criteria, tambem na Query, tambem,
+
+    criteria.setProjection(pl)
+            .addOrder(Order.desc("totalDeAlugueis"))
+            .setResultTransformer(Transformers.aliasToBean(TotalDeAlugueisPorCarro));
+
+96. Bom, eu acho que eh so isso, aqui, mesmo, se eu nao cometi nenhum erro, deve funcionar.
+
+97. Vamos reiniciar, aqui.
+
+98. A gente ve o que que vai acontecer.
+
+99. Vamos la, oh, na Pagina Total de Alugueis Por Carro, http://localhost:8080/locadora-veiculo-web/aluguel/TotalAlugueisPorCarro.xhtml, e vou clicar no botao de Pesquisa. Fez a pesquisa.
+
+100. Retornou,
+
+Hibernate: 
+    select
+        this_.placa as y0_,
+        count(a1_.codigo) as y1_ 
+    from
+        Carro this_ 
+    inner join
+        Aluguel a1_ 
+            on this_.codigo=a1_.codigo_carro 
+    group by
+        this_.placa 
+    order by
+        y1_ desc
+
+
+101. E olha so. Trouxe, la, as placas do Carro, e a quantidade de alugueis em ordem decrescente, de cada um desses caras, de cada uma dessas Placas.
+
+102. E, olha so o select que ele fez.
+
+103. Foi bem parecido com esse que a gente escreveu, aqui, nao eh?
+
+104. Ele fez um Inner Join com Aluguel, 
+
+select
+        this_.placa as y0_,
+        count(a1_.codigo) as y1_ 
+    from
+        Carro this_ 
+    >>> inner join
+        >>> Aluguel a1_ 
+            >>> on this_.codigo=a1_.codigo_carro 
+    group by
+        this_.placa 
+    order by
+        y1_ desc
+
+, fez o Group by pela placa, 
+
+select
+        this_.placa as y0_,
+        count(a1_.codigo) as y1_ 
+    from
+        Carro this_ 
+    inner join
+        Aluguel a1_ 
+            on this_.codigo=a1_.codigo_carro 
+    >>> group by
+        >>> this_.placa 
+    order by
+        y1_ desc
+
+, e trouxe a placa, aqui, em cima,
+
+select
+        >>> this_.placa as y0_,
+        count(a1_.codigo) as y1_ 
+    from
+        Carro this_ 
+    inner join
+        Aluguel a1_ 
+            on this_.codigo=a1_.codigo_carro 
+    group by
+        >>> this_.placa 
+    order by
+        y1_ desc
+
+, e fez o Order by, desc, em cima da propriedade y1_, esse nome ele da, aqui, na Consulta que ele faz, mas a gente trabalhou os nossos nomes.
+
+105. E ele conseguiu Transformar para para esse TotalDeAlugueisPorCarro, que foi o objeto que a gente utilizou para mostrar, aqui, na tela,
+
+    <p:dataTable id="carrosTable" value="#{relatorioTotalAlugueisPorCarro.>>> totalDeAlugueisPorCarro <<<}"
+        var="total"
+        style="..."
+    ...
+
+, para percorrer, aqui, na tela, e fazer esse super relatorio, ai, para a gente, nao eh?
+
+106. Na verdade, eu quis te mostrar mais a respeito, aqui, no metodo, aqui,
+
+@SuppressWarnings("unchecked")
+	public List<TotalDeAlugueisPorCarro> buscarTotalAlugueisPorCarro() {
+		Session session = this.getSession();
+		Criteria criteria = session.createCriteria(Carro.class);	
+		
+		criteria.createAlias("alugueis", "a");
+		
+		ProjectionList pl = Projections.projectionList()
+				.add(Projections.groupProperty("placa").as("placa"))
+				.add(Projections.count("a.codigo").as("totalDeAlugueis"));
+		
+//		criteria.setProjection(pl);
+//		criteria.addOrder(Order.desc("totalDeAlugueis"));
+//		criteria.setResultTransformer(Transformers.aliasToBean(TotalDeAlugueisPorCarro.class));
+
+		criteria.setProjection(pl)
+				.addOrder(Order.desc("totalDeAlugueis"))
+				.setResultTransformer(Transformers.aliasToBean(TotalDeAlugueisPorCarro.class));
+		
+		return criteria.list();
+    }
+    
+, e nao na telinha, la. Mas, como a gente cria Projections com mais de um atributo, como a gente faz o Group by, como a gente faz o Count, como a gente adiciona Ordenacao, e Transformacao, tambem.
+
+107. Beleza?
+
+108. Eh bem simples, mesmo, a gente trabalhar com Criteria do Hibernate, realmente, nao eh complicado.
+
+109. Beleza?
+
+110. Fim da     Aula 12.005. Transforme, Ordene e Agrupe a Consulta.
+
+-->

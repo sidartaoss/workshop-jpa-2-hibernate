@@ -1,0 +1,72 @@
+<!-- 
+
+Aula 03.004. Importando um Projeto do GitHub
+
+1. Deixa eu te explicar, agora, como eh que a gente baixa um projeto, aqui, do GitHub para a gente conseguir importar ele dentro do Eclipse.
+
+2. Esse primeiro projeto que eu vou te mostrar, aqui, eh um projeto muito, muito simples, que eu fiz, aqui, usando JSF-2 com PrimeFaces, so para a gente garantir que o seu ambiente esta funcionando, esta tudo certo, ai, como o seu Tomcat, como o seu Maven, nao eh?, entao, quando voce acabar de cofigurar esse primeiro projeto, bem simples, a gente ja vai estar bem pronto para avancar para as proximas fases, voltando la no JPA, com Hibernate, okay?
+
+3. Bom, entao, vamos la.
+
+4. O que que eh o GitHub, aqui, primeiro, nao eh? Eh uma forma bem simples, eh um Repositorio que nos deixa armazenar codigo-fonte, resumidamente, utilizando o Git, que eh uma ferramenta, tambem, que nos ajuda a fazer esse controle de versao do codigo.
+
+5. Bom, mas esta aula nao eh para falar de Git, nao eh nada disso, nao. Voce nao precisa sabe nada de Git, nem de instalar o GitHub ai, instalar o Git ai, na sua maquina, nada. 
+
+6. O que que a gente vai fazer?
+
+7. Voce vai acessar aqui, oh, https://github.com/algaworks/curso-jpa-hibernate, esse aqui eh o Repositorio que voce consegue navegar, aqui, nos arquivos deste Curso, entao, se voce clicar em Docs, por exemplo, voce ve o Diagrama de Classes, possivelmente, algum outro arquivo que eu possa colocar aqui. Se voce entrar aqui dentro de Aulas, pelo nome das aulas, voce consegue encontrar, por exemplo, la, Atualizando o banco de dados, se voce for navegando aqui, voce consegue chegar ate o codigo-fonte das aulas que a gente viu, do codigo que a gente viu. 
+
+8. Entao, por exemplo, oh, AtualizandoPrimeiroObjeto, foi isso aqui que a gente viu, entao, esta aqui, voce consegue baixar esses projetos e importar dentro do Eclipse.
+
+9. Deixa eu te mostrar, importando esse projeto aqui, oh, 'Importando um Projeto do GitHub', eu quero importar esse projeto aqui, 'primeiro-projeto-jsf', para deixar pronto essa configuracao, okay?, do JSF com o Maven com o Tomcat, para a gente avancar.
+
+10. Bom, mas a gente nao consegue baixar so esse projetinho, nos vamos baixar o Repositorio inteiro.
+
+11. Entao, quando a gente volta, aqui, no Home, oh, curso-jpa-hibernate, tem um botaozinho, aqui, embaixo, oh, Download ZIP, que a gente baixa o Repositorio inteiro em formato zip.
+
+12. Okay? Esse botaozinho, aqui, ja esteve em outros lugares, entao, se ele nao estiver aqui, embaixo, da uma procurada, que ele esta por ai.
+
+13. Nao esquecendo que voce tem que estar dentro do Repositorio curso-jpa-hibernate.
+
+14. Se voce clicar dentro de Aulas, por exemplo, oh, ja some aquele botaozinho.
+
+15. Entao, voce vem aqui, oh, curso-jpa-hibernate, clica aqui em Download ZIP, ele vai aparecer para voce fazer o Download, voce salva ele ai, eh pequenininho, o codigo-fonte eh pequeno, beleza.
+
+16. Eu nao vou extrair todo o repositorio, se voce quiser extrair ai, fique a vontade, eu vou extrair so o primeiro-projeto-jsf, para a gente importar dentro do Eclipse.
+
+17. Selecionei, cliquei em Extrair para, ja vou colocar la dentro do Workspace, C:\Users\sosilva\eclipse-workspace\primeiro-projeto-jsf, okay, extrai para la.
+
+18. Agora, eu vou importar esse Projeto, File / Import... / Maven / Existing Maven Projects.
+
+19. Cuidado para nao ir em General / Existing Projects into Workspace. Essa opcao, aqui, tambem pode funcionar, so que, se voce extrair dentro do Workspace, eu acredito que nao vai funcionar, voce teria que estar em uma pasta temporaria, e, depois, mandar copiar para ca, se voce quiser copiar o seu Projeto dentro do Workspace.
+
+20. Okay? E, aqui, se voce importar ele aqui, talvez, voce va ter que configurar, aqui, questoes dos Facets, algumas propriedades do Projeto, entao, eu vou importar, ele, ja, como um Projeto Maven, direto, que a gente vai ter menos problemas.
+
+21. Pode ser que a gente tenha problemas, certo?
+
+22. Entao, a gente clica, aqui, no Browser, para selecionar a pastinha, la, eu vou onde eu extrai, e eu clico aqui, oh, 'primeiro-projeto-jsf', voce clica na pasta, na raiz do projeto, ele vai dar uma lida, ai, no pom.xml, voce pode deixar marcada essa opcao, Resolve Workspace projects, desmarcada a opcao Add project(s) to working set, okay?, eh so dar um Finish.
+
+23. Provavelmente, ai, na sua casa, vai demorar um pouquinho mais, porque, como eu fiz esse Projeto, aqui, eu ja baixei todo o Repositorio, ja baixei as bibliotecas que precisavam, eu nao preciso baixar mais da Internet, entao, pode ser que, ai, demore um pouquinho mais.
+
+24. Eh so ter um pouquinho de paciencia, ai, que ja vai terminar de baixar. 
+
+25. Okay?
+
+26. Na proxima aula, eu vou te mostrar os detalhes, aqui, de dentro desse Projeto, para fazer uma Introducao fast, bem rapida, sobre JSF com PrimeFaces, okay?
+
+27. Eu vou clicar aqui nesse Primerio Projeto, primeiro-projeto-jsf e vou arrastar, ele, aqui, para o Servidor, sincronizou, aqui, e vou mandar iniciar o Tomcat.
+
+28. Vamos ficar de olho, aqui, ver se a gente nao ve nenhum probleminha. A principio, ali, nao deu nenhum probleminha, vamos la acessar. Para acessar, vai ser localhost://8080/primeiro-projeto-jsf/OlaJSF.xhtml, okay? Da um <Enter>, ai, e, aqui, o Projeto, o que que esse Projeto complicadissimo faz?
+
+29. Ele pede, ai, para voce digitar o seu nome, vamos la, eu vou digitar, aqui, Normandes, e clicar em Enviar, ele, simplesmente, transforma para maiusculo o que voce digitou ali.
+
+30. Eh bem simples, mesmo. Se voce digitar ai, sei, la, Pedro, clicou em Enviar, ele vai passar para maiusculo.
+
+31. Okay? Eh isso dai, esse Projetinho, para a gente deixar configurado o nosso Ambiente, desde o Tomcat, com Maven, com o JSF. Se voce chegou ate aqui, e isso aqui esta funcionando, parabens, a gente consegue ja avancar. Se esta com alguma duvida, deu algum probleminha, eh so comentar, ai, que a gente vai tentando ajudar.
+
+32. 
+
+
+
+
+-->

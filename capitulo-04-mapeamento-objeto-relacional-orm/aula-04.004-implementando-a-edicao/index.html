@@ -1,0 +1,315 @@
+<!-- 
+
+Aula 04.004. Implementando a Edicao
+
+1. Bem, vamos implementar a Edicao, te dar mais umas dicas, aqui, e a gente ja vai ver mais um pouquinho do JPA, como eh que a gente faz para fazer Edicao.
+
+2. Nao eh? Porque, Edicao, nada mais eh do que um UPDATE no Banco de Dados, em cima de alguem que ja esta salvo.
+
+3. Certo? Bom, entao, vamos la. Para a gente fazer a Edicao, primeiro, deixa eu executar, do jeito que esta aqui, para voce ver o que que vai acontecer quando a gente esta trabalhando no ambiente Web, e, ai, a gente tenta Editar uma Entidade.
+
+4. Deixa eu entrar, aqui, no nosso Sisteminha, e, ai, eu vou la em Cadastro de Fabricante.
+
+5. Nao lembro se eu tinha mostrado, aqui, para voce, para fazer o Menu, ali, funcionar, vem, aqui, no LayoutPadrao.xhtml, eu tinha digitado errado, aqui, no outcome, eh so baixar, la, do GitHub, que vai estar funcionando, okay?
+
+6. Bom, voltando la, ele ja inicializou, aqui, o Hibernate, okay? Vou limpar, aqui, o log, ai, ele trouxe a Pesquisa para a gente, na hora que a gente entra, aqui, no Cadastro / Fabricante, a primeira coisa que ele faz eh fazer a pesquisa.
+
+7. Bom, ele traz, la, o Codigo, e o Nome, nao eh?, na Pesquisa de Fabricantes.
+
+8. O botao Editar, eh esse primeiro, aqui, com Lapizinho, aqui. Quando a gente clicar, nesse botao, o que que, na verdade, a gente esta fazendo?
+
+9. A gente vai enviar o codigo dessa Entidade, aqui, desse Fabricante, para uma nova Requisicao.
+
+10. Entao, nos vamos fazer uma nova Requisicao para Editar esse Fabricante.
+
+11. Okay? E, ai, quando eu clicar aqui, no botao Editar, eu estou enviando so o codigo. E, quando eu fizer isso, deixa eu voltar aqui, no Eclipse, quando eu fizer isso, ele vai voltar para a Tela de Cadastro, okay?, e vai setar, ja, esse,..., ele vai cair no ManagedBean CadastroFabricanteBean.java, e ja vai setar, para a gente, aqui, ja vai configurar essa variavel fabricante,
+
+public class CadastroFabricanteBean implements Serializable {
+
+    @Inject
+    >>> private Fabricante fabricante; <<<
+
+    ...
+
+    public void salvar() {
+        ...
+    }
+
+}
+
+, okay?
+
+12. Bom, entao, vamos la.
+
+13. Para a gente fazer isso, eu vou clicar aqui, no botao Editar, na tela de Pesquisa de Fabricantes, e vai dar um erro. Veja bem, eu vou te mostrar aqui, em cima, oh, a URL eh CadastroFabricante.xhtml?fabricante=1, eu passei '?fabricante=1', quando eu clico la no botao Editar.
+
+14. E, ai, ele deu um erro de conversao,
+
+java.lang.NullPointerException
+    at com.sun.faces.renderkit.html_basic.HtmlBasicInputRenderer.getConvertedValue(HtmlBasicInputRenderer.java:129)
+    
+, ele esta falando que, quando eu passei o '1' la, ele converteu para null Converter, ou seja, nao tem nenhum conversor selecionado, aqui, para a gente usar.
+
+15. Que conversor que eh esse, Normandes?
+
+16. Bom, normalmente, o que que acontece?
+
+17. Eu estou passando o codigo do fabricante,
+
+http://localhost:8080/locadora-veiculo-web/fabricante/CadastroFabricante.xhtml? >>> fabricante=1 <<<
+
+18. O codigo do fabricante nao eh o fabricante. Entao, o que que eu tenho que fazer? Quando eu passar o codigo, eu tenho que ir la no Banco de Dados e buscar novamente o fabricante, a partir desse codigo.
+
+19. E eh para isso que serve o Converter.
+
+20. Entao, nos vamos criar uma nova classe, aqui, nos vamos colocar no pacote converter, e nos vamos chamar essa classe de FabricanteConverter,
+
+package com.algaworks.curso.jpa2.converter;
+
+public class FabricanteConverter {
+
+}
+
+21. E olha so como funciona um Converter, eu ja coloco, aqui, no caso, o JSF, eu falo la, 'Isso aqui eh um Conversor, para a classe Fabricante',
+
+@FacesConverter(forClass=Fabricante.class)
+public class FabricanteConverter {
+
+}
+
+, entao, ele ja vai saber que eh para criar um Conversor para essa classe Fabricante.
+
+22. E ai, quando a gente estiver vindo de uma Requisicao como essa, 
+
+http://localhost:8080/locadora-veiculo-web/fabricante/CadastroFabricante.xhtml?fabricante=1
+
+, e ele quer recuperar o Objeto, ai, ele vai passar, aqui, o codigo,
+
+	@Override
+	public Object getAsObject(FacesContext context, UIComponent component, >>> String value <<< ) {
+		Fabricante retorno = null;
+
+		if (value != null) {
+			retorno = this.fabricanteDAO.buscarPeloCodigo(new Long(value));
+		}
+
+		return retorno;
+	}
+
+, o codigo que a gente esta passando, ele vai chamar no DAO, 
+
+		if (value != null) {
+			retorno = this. >>> fabricanteDAO <<<.buscarPeloCodigo(new Long(value));
+		}
+
+, e vai retornar o objeto.
+
+23. Tem horas que a situacao eh o contrario, a gente vai ver, la na frente, quando a gente esta fazendo um ComboBox, por exemplo, em que a gente vai passar o objeto, 
+
+	@Override
+	public String getAsString(FacesContext context, UIComponent component, >>> Object value <<< ) {
+		if (value != null) {
+			Long codigo = ((Fabricante) value).getCodigo();
+			String retorno = (codigo == null ? null : codigo.toString());
+			
+			return retorno;
+		}
+		
+		return "";
+    }
+    
+, e eu quero que ele monte aquele Combo, somente com o codigo, para eu conseguir recuperar depois. Entao, ele passa o objeto e, a partir daquele objeto, eu vou pegar o codigo, e retornar o codigo, como uma String. A gente vai ver isso aqui quando for fazer o ComboBox, deixa ele quieto aqui.
+
+24. Entao, com getAsObject(), esse String value, aqui,
+
+	@Override
+	public Object getAsObject(FacesContext context, UIComponent component, >>> String value <<< ) {
+		Fabricante retorno = null;
+
+		if (value != null) {
+			retorno = this.fabricanteDAO.buscarPeloCodigo(new Long(value));
+		}
+
+		return retorno;
+	}
+
+, vai vir aquele ID, vai vir, la, 'fabricante=1',
+
+http://localhost:8080/locadora-veiculo-web/fabricante/CadastroFabricante.xhtml?fabricante=1
+
+, vai vir esse numero '1'. Entao, o '1' que eu vou converter, entao, para um Long, e vou, no DAO, buscar pelo codigo,
+
+		if (value != null) {
+			retorno = this.fabricanteDAO.buscarPeloCodigo(new Long(value));
+        }
+        
+, okay? E, ai, eu vou fazer, isso daqui, nao tem esse metodo, buscarPeloCodigo(). Entao, vamos criar esse metodo, aqui, 
+
+        public Fabricante buscarPeloCodigo(Long codigo) {
+            return em.find(Fabricante.class, codigo);
+        }
+
+25. E, ai, aqui, eu tenho certeza que voce ja sabe fazer. Entao, na hora que eu passei o codigo, eu estou fazendo uma busca no EntityManager pelo codigo.
+
+26. Okay. Vamos re-testar, agora, novamente, entao, na Pagina Html, em http://localhost:8080/locadora-veiculo-web/fabricante/CadastroFabricante.xhtml?fabricante=1.
+
+27. Retornou, no Log do Servidor,
+
+Hibernate: 
+    select
+        fabricante0_.codigo as codigo1_0_0_,
+        fabricante0_.nome as nome2_0_0_ 
+    from
+        Fabricante fabricante0_ 
+    where
+        fabricante0_.codigo=?
+
+28. Olha la. Agora, eu ja editei, entao, deixa eu voltar la na Pagina de Pesquisa, http://localhost:8080/locadora-veiculo-web/fabricante/PesquisaFabricante.xhtml.
+
+29. Se eu clicar no botao Editar, ele vai fazer aquela Requisicao, http://localhost:8080/locadora-veiculo-web/fabricante/CadastroFabricante.xhtml?fabricante=1, olha la, ja trouxe o Fabricante de codigo 1.
+
+30. Vou editar, aqui, o Honda, de codigo 3. Olha la, trouxe o Codigo 3, e o Nome Honda. Repare que, aqui, na Tela de Edicao, o Codigo eh bloqueado, aqui, eu nao consigo editar ele, mesmo se eu tentar editar alguma coisa, eu nao consigo, okay? Isso aqui eh so para mostrar, por que? Porque o codigo eh gerado automaticamente, eu nao quero alterar o codigo. Mas, o Nome, eu consigo editar. Entao, beleza, eu vou deixar, aqui, Honda, e vou colocar, aqui, sei la, Honda S/A, okay?, so para fazer o teste.
+
+31. Vamos ver se vai funcionar. Quando eu clicar aqui, em Salvar, vamos ver o que que vai acontecer?
+
+32. Nao mostrou nada aqui, na tela, deve ter acontecido algum erro. Vamos ver os Logs do Servidor.
+
+33. Retornou o erro,
+
+Caused by: org.hibernate.PersistentObjectException: detached entity passed to persist: com.algaworks.curso.jpa2.modelo.Fabricante
+
+34. Ele esta falando para a gente, oh, eu estou tentando pegar uma Entidade Desatachada e persistir ela. Entao, eu estou querendo pegar uma Entidade que ja voi atachada no Entity Manager, mas nao esta mais. Ai, ele reclama isso aqui para a gente. 
+
+35. Bom, se uma Entidade, nos vamos ver mais detalhes sobre atachar uma Entidade mais na frente. Mas, ja vou te adiantar aqui, para a gente conseguir andar.
+
+36. Quando uma Entidade esta desatachada, e a gente quer atachar ela novamente, a gente quer pegar as alteracoes que a gente fez nela, enquanto ela estava offline, enquanto ela estava desatachada, vamos chamar ela de offline, depois que ela saiu do EntityManager, a gente alterou, e quer pegar essas alteracoes offline e jogar de volta para o EntityManager, para ele fazer o Update no Banco de Dados, ao inves de usar o persist(), eu preciso fazer um merge(). Isso mesmo, eh so fazer um merge(), usar o merge(), que ele vai saber fazer isso para mim.
+
+37. Ele vai saber pegar essa Entidade desatachada e atachar ela novamente. Ueh, Normandes, mas, ai, quando for persistir, e ai? Quando for uma Entidade totalmente nova, quando a gente vai criando um Novo Fabricante?
+
+        public void salvar(Fabricante fabricante) {
+            em.merge(fabricante);
+        }
+
+38. Nao tem problema. Esse merge(), aqui, vai conseguir tambem. Nos vamos ver mais detalhes sobre merge() la na frente, quando a gente estiver falando Como que uma Entidade que esta desatachada, Por que que uma Entidade esta Desatachada, Quando eh uma Entidade nova ou nao, la na frente. Por enquanto, lembre-se disso daqui, usando o merge(), eu consigo pegar uma Entidade tanto nova, um objeto novo, e salvar, persistir no banco, quanto pegar uma que ja estava la, e atachar ela novamente. Atachar significa juntar ela, novamente, no Entity Manager, so mostrar essa apresentacao, aqui, oh, para a gente lembrar, oh, eh um Objeto, o Banco de Dados, e o Entity Manager,
+
+                                               ----------------
+Objeto Simples                                 |Entity Manager|
+ ----------                                    |              |
+|Fabricante|                                   |--------------|      
+ ----------                                           |
+                                                      |
+                                                      V
+                                                   BD MySQL
+
+
+39. Quando eu faco o persist(), eu jogo o objeto para ca,
+
+                                               ----------------
+Objeto Simples                                 |Entity Manager|
+                                               |              |
+                                               |  ----------  |
+                                               | |Fabricante| |
+                                               |  ----------  |  
+                                               |--------------|
+                                                      |
+                                                      |
+                                                      |
+                                                      V
+                                                   BD MySQL
+
+, ou seja, para dentro do EntityManager.
+
+40. Quando eu faco o merge(), eu tambem faco essa Entidade vir para o EntityManager,
+
+                                               ----------------
+Objeto Simples                                 |Entity Manager|
+                                               |              |
+                                               |  ----------  |
+                                               | |Fabricante| |
+                                               |  ----------  |  
+                                               |--------------|
+                                                      |
+                                                      |
+                                                      |
+                                                      V
+                                                   BD MySQL
+
+41. Okay?
+
+42. Bom, entao, vamos la, coloquei merge() aqui,
+
+        public void salvar(Fabricante fabricante) {
+            this.em.merge(fabricante);
+        }
+
+, o Tomcat ja fez o redeploy, ai, para mim, disso. Se der errado, a gente da uma reiniciada. Agora, vamos la ver se vamos ter algum probleminha?
+
+43. Em http://localhost:8080/locadora-veiculo-web/fabricante/CadastroFabricante.xhtml?fabricante=3. Vou iniciar novamente o Servidor.
+
+44. Quando, as vezes, voce faz varios redeploys, pode ser que a gente tenha algum problema de memoria no Tomcat, ele nao consiga subir com aquela quantidade de memoria que voce ja reservou.
+
+45. Depois, eu te mostro como eh que a gente configura isso tambem.
+
+46. Bom, vamos la testar novamente. vamos pegar o fabricante 3 mesmo. Agora, eh so esperar ele subir, aqui.
+
+47. Vou editar o Honda, em Nome, 'Honda S/A'.
+
+48. Eu vou tentar Salvar.
+
+49. Retornou a mensagem, na tela, 'Fabricante salvo com sucesso!'. Retornou, no Log do Servidor,
+
+Hibernate: 
+    select
+        fabricante0_.codigo as codigo1_0_0_,
+        fabricante0_.nome as nome2_0_0_ 
+    from
+        Fabricante fabricante0_ 
+    where
+        fabricante0_.codigo=?
+Hibernate: 
+    update
+        Fabricante 
+    set
+        nome=? 
+    where
+        codigo=?
+
+50. Vamos la na Pagina de Pesquisa dar uma olhadinha? Oh, Honda S/A, entao, ele conseguiu atualizar.
+
+51. Se a gente olhar aqui, nos Logs do Servidor, ele conseguiu fazer o Update,
+
+Hibernate: 
+    update
+        Fabricante 
+    set
+        nome=? 
+    where
+        codigo=?
+
+, entao, ele alterou o nome daquele Fabricante.
+
+52. Esta vendo, entao, com o merge(), eu consigo, entao, atualizar uma Entidade desatachada, consigo colocar ela de novo dentro no EntityManager.
+
+53. E criar um novo Fabricante, Normandes?
+
+54. Vamos la, para voce ver que eu nao estou mentido para voce.
+
+55. Vamos criar, aqui, oh, na tela de Cadastro Fabricante, o Fabricante Fiat, e vou clicar em Salvar. Retornou a mensagem 'Fabricante salvo com sucesso'. 
+
+56. Vamos para a Pagina de Pesquisa. Olha la, o Fiat esta aqui. Entao, significa que voce consegue, entao, tanto criar um novo registro, quanto editar, oh, eu vou tirar esse S/A do Honda, aqui, clicar em Salvar, e Pesquisar, olha la, o Honda, la, esta sem o S/A, tambem editado.
+
+57. So para te mostrar, aqui, como eh que voce configura o Tomcat, se der aquele errinho, la, de memoria, para voce, deixa eu parar ele, aqui, o Tomcat. Se voce clicar 2 vezes em cima dele, aqui, em Servers, no Eclipse, ele vai abrir as propriedades de configuracao do Tomcat. 
+
+58. Pode ser que voce tenha algum problema de Timeout tambem, as vezes, dependendo da sua maquina, ai, tiver um pouco mais lenta, ele vai tentar subir em 45 segundos. Se ele nao conseguir, ele vai dar um erro. Ai, voce vem aqui, aumenta esse valor, ah, vou colocar, aqui, mais 90 segundos, sei la, 200 segundos, 300 segundos, para dar tempo dele parar, okay?
+
+59. Para voce aumentar a memoria, voce pode vir aqui, oh, Open launch configuration, aqui, em Arguments, aqui embaixo, em VM arguments, voce consegue passar -Xms64m -Xmx128m, por exemplo. Nao precisa colocar dois pontos, eh assim mesmo, -Xms64m -Xmx128m.
+
+60. Voce pode passar essa informacao, voce pode aumentar ai, se precisar, okay?
+
+61. Eu nao vou alterar aqui, nao, porque voi causado por causa de Hot Deploy, voce ficar alterando o seu projeto e ele ficar publicando.
+
+62. Aqui, oh, em Publishing, voce fala, 'Bom, mas toda hora ele fica publicando', tem, dentro dessa opcao, oh, 'Automaticamente publicar quando a gente mudar alguma coisa', 'Automatically publish when resources change', se voce coloca aqui, oh, 'Nunca publicar automaticamente', ai, so quando voce pedir, ele vai fazer isso, eu vou, ate, deixar o meu configurado assim, para ele nao publicar sozinho, so quando eu fizer alguma alteracao, eu vou ter que clicar com o botao direito aqui, na Guia Servers / Servidor Tomcat / Publish. Ai, ele vai, realmente, fazer a Publicacao das alteracoes.
+
+63. Fim da Aula 04.004. Implementando a Edicao. 
+
+-->

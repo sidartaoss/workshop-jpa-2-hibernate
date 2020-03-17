@@ -1,0 +1,829 @@
+<!--
+
+    Aula 13.003. Convertendo o Resultado de Queries Nativas
+
+1. Bom, nesta aula, eu vou te mostrar uma novidade do JPA 2.1, que foi a seguinte.
+
+2. Eles criaram uma anotacao que vai nos ajudar a pegar uma Query nativa. E a gente vai conseguir mapear essa Query nativa em uma classe.
+
+3. Beleza? Uma classe nao necessariamente ligada a Entidade, aqui, nao ligada a Entidade.
+
+4. Beleza? Entao, nos vamos fazer isso. Qual situacao que isso eh util?
+
+5. Bom, pode ter algumas situacoes. As vezes, voce nao pode criar um outro mapeamento, ali, talvez, essa nao seja uma boa desculpa, mas, as vezes, eh uma Tabela que nao esta mapeada, mas que existe no banco, e voce precisa so de um campo dela, e a interacao com uma outra tabela do seu sistema, ou, entao, a consulta eh uma consulta mais complexa, e voce quis fazer ela nativa, para ficar mais simples, e, ai, o resultado dela vai ser jogado em um Objeto novo.
+
+6. Razoes podem aparecer, ai, no dia-a-dia, nao eh?, nao da para a gente prever todas, aqui, entao, eu vou te ensinar como eh que funciona e, ai, no dia-a-dia, se aparecer, voce fala, 'Ah, eu ja vi esse negocio, aqui, da para a gente fazer dessa forma'.
+
+7. O que que eu vou fazer, entao, para a gente demonstrar isso?
+
+8. Bom, eu vou criar uma ideia, aqui, em cima do nosso projeto, que eh o seguinte.
+
+9. Todo Usuario, quando acontece alguma coisa com ele no sistema, nao eh?, la, ele logou, alguma coisa assim, vai ser gerado um alerta.
+
+10. Okay? E, ai, vai existir uma Tabela, eu criei, aqui, uma DDL para a gente executar, porque eu nao vou criar um mapeamento para ela, nao, okay? Entao, eu criei a tabela, aqui, alerta, que ela tem o seguinte ela tem o codigo, tem o Codigo do Usuario, que eh a Foreign Key referenciando o Usuario, okay?, e tem a data e hora em que aconteceu aquilo la,
+
+11. Ai, beleza, ai, eu vou criar, antes, aqui, nao eh?, vamos criar essa tabela, aqui, a tabela nao esta criada, se eu mandar executar, aqui, no Workbench, criou a tabela,
+
+create table alert (
+			codigo bigint(20) primary key auto_increment,
+			codigo_usuario bigint(20),
+			register_date datetime,
+			foreign key (codigo_usuario) references usuario(codigo)
+)
+
+12. Okay. Tabela alert esta aqui.
+
+13. Vamos voltar aqui, no Eclipse.
+
+14. Eu criei, la, o XML para falar o seguinte, eu coloquei la, 5 alertas, para o Usuario 1, tem 2 Alertas, e, para o Usuario 2, tem 3 Alertas,
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<dataset>
+    <alert codigo="1" codigo_usuario="1" register_date="2014-05-29 10:10:02" />
+    <alert codigo="2" codigo_usuario="1" register_date="2014-05-30 13:44:12" />
+    <alert codigo="3" codigo_usuario="2" register_date="2014-05-28 09:01:10" />
+    <alert codigo="4" codigo_usuario="2" register_date="2014-05-29 11:22:32" />
+    <alert codigo="5" codigo_usuario="2" register_date="2014-05-30 14:00:01" />
+</dataset>
+
+, e joguei horas aleatorias, aqui, para representar isso, dai.
+
+15. E eu vou fazer uma Consulta que vai ser a Consulta, eu quero saber quantos Alertas teve para o Usuario.
+
+16. Eh, uma consulta bem simples, mesmo, com GroupBy, la, bem simples, porque eu quero te mostrar como eh que a gente faz o mapeamento disso em uma classe nova.
+
+17. Beleza? Entao, como eh que a gente vai fazer?
+
+18. Eu vou criar isso atraves de @NamedQuery, nao eh?, que eu acho que, talvez, possa ser a forma onde voce usaria no dia-a-dia.
+
+19. Entao, eu vou criar o @NamedNativeQuery,
+
+@NamedNativeQuery
+@Entity
+@Table(name = "usuario")
+public class Usuario implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private Long codigo;
+
+    ...
+}
+
+, que vai ser a Consulta nativa que eu vou fazer.
+
+20. Okay? O que que esse cara, aqui, precisa?
+
+21. 
+
+@NamedNativeQuery(
+
+)
+@Entity
+@Table(name = "usuario")
+public class Usuario implements Serializable {
+
+    ...
+}
+
+22. Ela precisa de um nome, que eu vou colocar, aqui, como 'alertasPorUsuario',
+
+@NamedNativeQuery(name = "alertasPorUsuario"
+
+)
+@Entity
+@Table(name = "usuario")
+public class Usuario implements Serializable {
+
+    ...
+
+    private Long codigo;
+
+    ...
+
+}
+
+23. Eh o nome dessa Native Query, que eh o nome que a gente usa para referenciar ele la no nosso teste, que a gente vai fazer agora mesmo.
+
+24. Qual que vai ser a Consulta que eu vou fazer aqui?
+
+@NamedNativeQuery(name = "alertasPorUsuario",
+    query = ""
+)
+@Entity
+@Table(name="usuario")
+public class Usuario implements Serializable {
+    ...
+}
+
+25. Essa consulta, aqui, vai ser uma Consulta Nativa, nao eh JPQL, nao eh Criteria, a mesma consulta que voce faria no MySQL, okay?
+
+26. Entao, eu vou fazer, oh, 'select u.nome as nome', vou dar um alias nome, aqui, que voce ja vai entender, 'count(a.codigo) as totalAlertas ', ele vai contar para mim, 'from Usuario u, Alert a where u.codigo = a.codigo_usuario', fizemos o Relacionamento, group by u.nome. So assim, mesmo.
+
+27. Bem simples a Consulta, se eu pegar ela, aqui, 
+
+    select  u.nome as nome, 
+            count(a.codigo) as totalAlertas 
+    from Usuario u, Alert a 
+    where u.codigo = a.codigo_usuario
+    group by u.nome
+
+, ah, mas a gente nao inseriu os dados, ainda, entao, vamos deixar ela, aqui, no Workbench, para a gente inserir os dados, a gente executa ela para voce ver.
+
+28. Agora, nao vai trazer nada, porque ele nao inseriu nada no Alerta, ainda, que esta la no meu XML. Agora mesmo eu insiro.
+
+29. Beleza? Bom, esta faltando alguma coisinha, aqui, ainda, que eu ja vou te mostrar o que que eh.
+
+30. Vou deixar, aqui, por enquanto.
+
+31. Bom, eu quero que o resultado dessa Consulta va para um mapeamento.
+
+32. Qual mapeamento? Ja vou criar ele aqui, oh, @SqlResultSetMapping, eu tambem tenho que dar um nome para ele, que eu vou chamar de 'alertasPorUsuarioMapping', okay? E, aqui, eu vou comecar a fazer o mapeamento,
+
+@NamedNativeQuery(name = "alertasPorUsuario"
+    query = "select u.nome as nome, count(a.codigo) as totalAlertas from Usuario u, Alert a "
+            + "where u.codigo = a.codigo_usuario "
+            + "group by u.nome "
+)
+@SqlResultSetMapping(name = "alertasPorUsuarioMapping",
+
+)
+@Entity
+@Table(name = "usuario")
+public class Usuario implements Serializable {
+
+    ...
+
+
+}
+
+33. Coloco classes, aqui, 
+
+    classes = {
+
+    }
+
+, e, esse cara, agora, vem a novidade do JPA 2.1. Eu quero que o Resultado dessa Consulta, agora mesmo, a gente vai ligar esse cara,
+
+>>>> @NamedNativeQuery(name = "alertasPorUsuario",
+    ...
+)
+
+, com esse,
+
+>>> @SqlResultSetMapping(name = "alertasPorUsuarioMapping",
+    classes = {
+        @
+    }
+)
+
+34. Agora, mesmo, a gente ja poe aqui. Mas eu quero falar o seguinte, eu quero que esse resultado, aqui, 
+
+@NamedNativeQuery(name = "alertasPorUsuario",
+    query = " >>> ... <<< "
+)
+
+, seja mapeado no Construtor de uma classe. Qual classe?
+
+35. A gente ainda vai criar ela.
+
+36. Mas, aqui, oh, @ConstructorResult(),
+
+@SqlResultSetMapping(name = "alertasPorUsuarioMapping",
+    classes = {
+        @ConstructorResult()
+    }
+)
+
+37. Esse ConstructorResult, aqui, eh o que vai me ajudar a criar, cada coluna dessas, daqui,
+
+@NamedNativeQuery(name = "alertasPorUsuario",
+    query = "select >>> u.nome as nome, count(a.codigo) as totalAlertas <<< from ..."
+)
+
+, a gente vai ter que criar, nessa nova classe, o Construtor dela.
+
+38. Entao, la no Construtor dela, a gente vai ter que ter o nome, e vai ter que ter o totalAlertas. Como eh que eu ligo, aqui,
+
+@SqlResultSetMapping(name = "alertasPorUsuarioMapping",
+    classes = {
+        >>> @ConstructorResult(
+
+        )
+    }
+)
+
+, la?
+
+39. Eu vou ter, aqui, o atributo targetClass, e, aqui, eu vou criar a classe AlertasPorUsuario,
+
+@SqlResultSetMapping(name = "alertasPorUsuarioMapping",
+    classes = {
+        @ConstructorResult(
+            targetClass = AlertasPorUsuario.class
+        )
+    }
+)
+
+40. Essa classe nao existe. Vamos criar a classe no pacote com.algaworks.relatorio.
+
+package com.algaworks.relatorio;
+
+public class AlertasPorUsuario {
+
+
+}
+
+41. Bom, quais sao os dados, o que que eu tenho que criar, aqui, os atributos que eu tenho que criar nessa classe?
+
+42. Eh bem simples de a gente descobrir, oh. Sao esses caras que eu quero que sejam mapeados nessa classe,
+
+@NamedNativeQuery(name = "alertasPorUsuario",
+    query = "select >>> u.nome as nome, count(a.codigo) as totalAlertas <<< from Usuario u, Alerta a where u.codigo ..."
+)
+
+43. Entao, eu preciso de um nome, e o totalAlertas.
+
+44. Entao,
+
+package com.algaworks.relatorio;
+
+public class AlertasPorUsuario {
+
+    private String nome;
+    private BigInteger totalAlertas;
+
+    ...
+}
+
+45. O 'count(a.codigo) as totalAlertas' vai ser mapeado como BigInteger. Okay? Vamos mandar gerar o Construtor,
+
+public class AlertasPorUsuario {
+
+    private String nome;
+    private BigInteger totalAlertas;
+
+    public AlertasPorUsuario(String nome, BigInteger totalAlertas) {
+        this.nome = nome;
+        this.totalAlertas = totalAlertas;
+    }
+}
+
+46. Vou mandar gerar os Getters e os Setters, tambem. E vou mandar gerar o toString(), tambem, desse cara, para, quando eu mandar imprimir o Objeto, eu vou aproveitar e te mostrar recursozinho legal do Java 8, se voce estiver usando o Java 8, e nao conhece ainda, vai ver que legal.
+
+47. Entao, eu vou mostrar, vou imprimir nos dados, la, entao, vai aparecer o nome e o Total de alertas.
+
+48. Beleza?
+
+49. Entao, essa eh a classe, oh. Classe simples, um POJOzinho, muito, muito simples, nao eh?, normalzinho, nada de especial.
+
+50. Entao, eu falo, 'Cada um desses caras,'
+
+@NamedNativeQuery(name = "alertasPorUsuario",
+    query = "select >>> u.nome as nome, count(a.codigo) as totalAlertas <<< from Usuario u, Alert a where u.codigo = ..."
+)
+
+, tem que ser para o Construtor daqui,
+
+@SqlResultSetMapping(name = "alertasPorUsuarioMapping",
+    classes = {
+        @ConstructorResult(
+            targetClass = AlertasPorUsuario.class
+            >>>
+        )
+    }
+)
+
+, mas como eh que eles sao mapeados?
+
+51. Como eh que essas colunas vem para ca, no Construtor desse cara?
+
+52. Entao, eu coloco, aqui, oh, 
+
+columns = {
+
+}
+
+, as colunas vao ser mapeadas da seguinte forma, @ColumnResult(name = "nome"). Entao, esse camarada, aqui, eh, justamente, esse carinha, aqui, definido no atributo query de @NamedNativeQuery,
+
+import javax.persistence.ConstructorResult;
+import javax.persistence.ColumnResult;
+
+...
+
+@SqlResultSetMapping(name = "alertasPorUsuarioMapping",
+    classes = {
+        @ConstructorResult(
+            targetClass = AlertasPorUsuario.class,
+            columns = {
+                @ColumnResult(name = "nome")
+            }
+        )
+    }
+)
+
+53. A mesma coisa, aqui, com totalAlertas, coloca uma virgula, aqui, e repete,
+
+...
+
+@SqlResultSetMapping(name = "alertasPorUsuarioMapping",
+    classes = {
+        @ConstructorResult(
+            targetClass = AlertasPorUsuario.class,
+            columns = {
+                @ColumnResult(name = "nome"),
+                @ColumnResult(name = "totalAlertas")
+            }
+        )
+    }
+)
+
+54. Entao, aqui, a gente ja vai saber que esse cara, aqui, 
+
+@SqlResultSetMapping(name = "alertasPorUsuarioMapping",
+    classes = {
+        @ConstructorResult(
+            targetClass = AlertasPorUsuario.class,
+            columns = {
+                @ColumnResult(name = ">>> nome <<<"),
+                @ColumnResult(name = "totalAlertas")
+            }
+        )
+    }
+)
+
+, eh esse,
+
+@NamedNativeQuery(name = "alertasPorUsuario",
+	query = "select >>> u.nome <<< as nome, count(a.codigo) as totalAlertas from Usuario u, Alert a "
+			+ "where u.codigo = a.codigo_usuario "
+			+ "group by u.nome"
+)
+
+, e esse segundo,
+
+@SqlResultSetMapping(name = "alertasPorUsuarioMapping",
+    classes = {
+        @ConstructorResult(
+            targetClass = AlertasPorUsuario.class,
+            columns = {
+                @ColumnResult(name = "nome"),
+                @ColumnResult(name = ">>> totalAlertas <<<")
+            }
+        )
+    }
+)
+
+, eh esse,
+
+@NamedNativeQuery(name = "alertasPorUsuario",
+	query = "select u.nome as nome, count(a.codigo) as >>> totalAlertas <<< from Usuario u, Alert a "
+			+ "where u.codigo = a.codigo_usuario "
+			+ "group by u.nome"
+)
+
+, e ele vai conseguir criar esse objeto, aqui,
+
+@SqlResultSetMapping(name = "alertasPorUsuarioMapping",
+    classes = {
+        @ConstructorResult(
+            targetClass = >>> AlertasPorUsuario.class, <<<
+            columns = {
+                @ColumnResult(name = "nome"),
+                @ColumnResult(name = "totalAlertas")
+            }
+        )
+    }
+)
+
+55. Depois que esta pronto, aqui, eu acho que eh mais facil de ver,
+
+@NamedNativeQuery(name = "alertasPorUsuario",
+	query = "select u.nome as nome, count(a.codigo) as totalAlertas from Usuario u, Alert a "
+			+ "where u.codigo = a.codigo_usuario "
+			+ "group by u.nome"
+)
+@SqlResultSetMapping(name = "alertasPorUsuarioMapping",
+	classes = {
+			@ConstructorResult(
+					targetClass = AlertasPorUsuario.class,
+					columns = {
+							@ColumnResult(name = "nome"),
+							@ColumnResult(name = "totalAlertas")
+					}
+			)
+    }
+)
+
+56. Mas, ainda esta faltando uma coisa.
+
+57. Como eh que esse cara, ou seja, @NamedNativeQuery, liga com esse, ou seja, @SqlResultSetMapping?
+
+58. Aqui, eu tenho que falar o seguinte, 'O ResultSet disso, daqui,'
+
+@SqlResultSetMapping(name = "alertasPorUsuarioMapping",
+	classes = {
+			@ConstructorResult(
+					targetClass = AlertasPorUsuario.class,
+					columns = {
+							@ColumnResult(name = "nome"),
+							@ColumnResult(name = "totalAlertas")
+					}
+			)
+    }
+)
+
+, voce tem que mapear. Mapear aonde?
+
+59. Entao, tem um atributo, aqui, oh, 
+
+@NamedNativeQuery(name = "alertasPorUsuario",
+    query = "select u.nome as nome, count(a.codigo) as totalAlertas from Usuario u, Alert a where u.codigo = ...",
+    resultSetMapping = 
+)
+
+, que ele espera o nome do SqlResultSetMapping. Entao, esse nome, aqui, 
+
+@SqlResultSetMapping(name = ">>> alertasPorUsuarioMapping <<<",
+	classes = {
+			@ConstructorResult(
+					targetClass = AlertasPorUsuario.class,
+					columns = {
+							@ColumnResult(name = "nome"),
+							@ColumnResult(name = "totalAlertas")
+					}
+			)
+    }
+)
+
+, tem que ser, exatamente, esse nome,
+
+@NamedNativeQuery(name = "alertasPorUsuario",
+	query = "select u.nome as nome, count(a.codigo) as totalAlertas from Usuario u, Alert a "
+			+ "where u.codigo = a.codigo_usuario "
+			+ "group by u.nome",
+	resultSetMapping = ">>> alertasPorUsuarioMapping <<<"
+)
+
+60. Agora, a gente ligou esses dois caras,
+
+@NamedNativeQuery(name = "alertasPorUsuario",
+	query = "select u.nome as nome, count(a.codigo) as totalAlertas from Usuario u, Alert a "
+			+ "where u.codigo = a.codigo_usuario "
+			+ "group by u.nome",
+	resultSetMapping = "alertasPorUsuarioMapping"
+)
+@SqlResultSetMapping(name = "alertasPorUsuarioMapping",
+	classes = {
+			@ConstructorResult(
+					targetClass = AlertasPorUsuario.class,
+					columns = {
+							@ColumnResult(name = "nome"),
+							@ColumnResult(name = "totalAlertas")
+					}
+			)
+	}
+)
+
+61. Beleza?
+
+62. Simples, nao?
+
+63. Parece que eh complicado, esse tanto de coisa, mas, oh, tem um monte de <Enter>, aqui, para, essas coisas, a gente poderia reduzir, nao eh?, para ficar em menos linhas.
+
+64. Mas nao eh complicado, nao, eh so fazer essa associacao, aqui, que fica facil de entender.
+
+65. Okay, aqui, 
+
+package com.algaworks.model;
+
+public class ConstructorResultTest {
+
+    private JIntegrity helper;
+
+    private EntityManager manager;
+
+    @Before
+    public void init() {
+        this.helper = new JIntegrity();
+        this.helper.useMySQL();
+        this.helper.cleanAndInsert("Usuario", "Alert");
+
+        this.manager = JPAHelper.currentEntityManager();
+    }
+
+    @Test
+    public void deveRetornarAlertasPorUsuario() {
+
+    }
+}
+
+, em deveRetornarAlertasPorUsuario(), eu ja criei, aqui, a classe ConstructorResultTest, para a gente testar, justamente, esse cara, aqui, oh, o @ConstructorResult,
+
+@SqlResultSetMapping(name = "alertasPorUsuarioMapping",
+	classes = {
+			>>> @ConstructorResult(
+					targetClass = AlertasPorUsuario.class,
+					columns = {
+							@ColumnResult(name = "nome"),
+							@ColumnResult(name = "totalAlertas")
+					}
+			)
+	}
+)
+
+, que veio no JPA 2.1, a gente esta testando ele, aqui, okay?, e a gente vai, nao eh?, inserir o Usuario e o Alerta,
+
+...
+
+        this.helper.cleanAndInsert("Usuario", "Alert");
+
+...
+
+66. Ah, para a gente testar a nossa Consulta, aqui, se eu executar, aqui, sem nada, esse teste, ele vai rodar, la, o DBUnit, e, provavelmente, ele inseriu, aqui, para a gente, oh, select * from alert;
+
+# codigo, codigo_usuario, register_date
+1, 1, 2014-05-29 13:10:02
+2, 1, 2014-05-30 16:44:12
+3, 2, 2014-05-28 12:01:10
+4, 2, 2014-05-29 14:22:32
+5, 2, 2014-05-30 17:00:01
+
+
+67. Entao, se eu fizer esse select,
+
+    select	u.nome as nome, 
+			count(a.codigo) as totalAlertas 
+    from Usuario u, Alert a 
+    where u.codigo = a.codigo_usuario
+    group by u.nome
+
+, oh,
+
+# nome, totalAlertas
+Joao, 2
+Maria, 3
+
+, o Joao tem 2 Alertas, e a Maria tem 3 Alertas.
+
+68. O Joao, de Codigo 1, tem 2 Alertas, e a Maria tem 3 Alertas.
+
+69. Okay, entao, vamos fazer, aqui, a Consulta.
+
+70. Agora, eu acho que eh o mais simples de se fazer.
+
+71. Entao, a gente vai retornar uma Lista, de AlertasPorUsuario, isso mesmo, ja vai ser, a Consulta, aquela consulta nativa que eu mandar executar, ja vai me devolver os AlertasPorUsuario.
+
+72. Entao, isso, aqui, vai ser a minha Lista, eu vou usar o EntityManager, para criar uma NamedQuery, que eh esse nome, aqui,
+
+@NamedNativeQuery(name = ">>> alertasPorUsuario",
+    query = "select u.nome, count(a.codigo) as totalAlertas from Usuario u, Alert a where u.codigo = ..."
+)
+
+, entao, coloca esse cara aqui,
+
+@Test
+public void deveRetornarAlertasPorUsuario() {
+    List<AlertasPorUsuario> lista = this.manager.createNamedQuery(">>> alertasPorUsuario")
+
+
+}
+
+73. Se eu nao quisesse usar o NamedQuery, eu poderia criar a Consulta Nativa, aqui, na hora, e falar para a Consulta Nativa, 'Olha, so que eu quero que voce use esse ResultSetMapping, 
+
+@SqlResultSetMapping(name = ">>> alertasPorUsuarioMapping",
+    classes = {
+        @ConstructorResult(
+            targetClass = AlertasPorUsuario.class,
+            columns = {
+                @ColumnResult(name = "nome"),
+                @ColumnResult(name = "totalAlertas")
+            }
+        )
+    }
+)
+
+, para Transformar. Passa esse nome, la, que tambem eh uma solucao. Aqui, oh, voce poderia escrever, aqui, o SELECT que voce quer, 'select u.nome as nome, count(a.codigo) as totalAlertas from Usuario u, Alert a ...', e, aqui, em resultSetMapping, eh, exatamente, esse nome aqui,
+
+@SqlResultSetMapping(name = ">>> alertasPorUsuarioMapping",
+    classes = {
+        @ConstructorResult(
+            targetClass = AlertasPorUsuario.class,
+            columns = {
+                @ColumnResult(name = "nome"),
+                @ColumnResult(name = "totalAlertas")
+            }
+        )
+    }
+)
+
+@Test
+public void deveRetornarAlertasPorUsuario() {
+    List<AlertasPorUsuario> lista = this.manager.createNativeQuery("select u.nome as nome...", resultSetMapping);
+
+        ...
+}
+
+74. Voce poderia passar, ... terminaria de escrever o SELECT, okay?, passaria, no segundo parametro, ou seja, mas, quem esta mapeando, eh esse camarada, aqui, que esta escrito, aqui, nessa anotacao,
+
+@SqlResultSetMapping(name = ">>> alertasPorUsuarioMapping",
+    classes = {
+        @ConstructorResult(
+            targetClass = AlertasPorUsuario.class,
+            columns = {
+                @ColumnResult(name = "nome"),
+                @ColumnResult(name = "totalAlertas")
+            }
+        )
+    }
+)
+
+75. Mas, nos nao vamos fazer assim nao. Nos vamos fazer com NamedQuery, aqui, o NamedQuery eh esse nome, aqui,
+
+@NamedNativeQuery(name = ">>> alertasPorUsuario",
+	query = "select u.nome as nome, count(a.codigo) as totalAlertas from Usuario u, Alert a "
+			+ "where u.codigo = a.codigo_usuario "
+			+ "group by u.nome",
+	resultSetMapping = "alertasPorUsuarioMapping"
+)
+
+@Test
+public void deveRetornarAlertasPorUsuario() {
+    List<AlertasPorUsuario> lista = this.manager.createNamedQuery("alertasPorUsuario")
+}
+
+76. Eu estou falando, 'Eu quero que voce pegue esse cara e execute, para mim, dando um getResultList()',
+
+@Test
+public void deveRetornarAlertasPorUsuario() {
+    List<AlertasPorUsuario> lista = this.manager.createNamedQuery("alertasPorUsuario").getResultList();
+
+
+}
+
+77. Beleza. Vamos percorrer essa lista, aqui?
+
+78. Entao, vamos la. Eu vou te mostrar como eh que a gente faz isso, se a gente fosse fazer, aqui, normal, vamos fazer normal, primeiro,
+
+    for (AlertasPorUsuario a : lista) { 
+        System.out.println(a);
+    }
+
+79. Vou mandar imprimir so o 'a', porque, aqui, na classe AlertasPorUsuario, eu criei o metodo toString(), nao eh?, entao, ele ja vai conseguir mostrar para mim.
+
+80. Vamos ver se isso, daqui, funciona.
+
+81. Retornou,
+
+Hibernate: 
+    select
+        u.nome as nome,
+        count(a.codigo) as totalAlertas 
+    from
+        Usuario u,
+        Alert a 
+    where
+        u.codigo = a.codigo_usuario 
+    group by
+        u.nome
+AlertasPorUsuario [nome=Joao, totalAlertas=2]
+AlertasPorUsuario [nome=Maria, totalAlertas=3]
+
+82. Executou a Query, okay, e AlertasPorUsuario, olha la, Joao e Maria.
+
+83. Ou seja, conclusao desta aula, antes de eu te mostrar um negocinho legal do Java 8, aqui, que eu consegui, entao, criar uma Query Nativa e mapear, atraves do @ConstrutorResult, para essa nova classe, no nosso caso, AlertasPorUsuario. Eh so a gente fazer o mapeamento, coluna a coluna, aqui, nesse columns,
+
+@SqlResultSetMapping(name = "alertasPorUsuarioMapping",
+    classes = {
+        @ConstructorResult(
+            targetClass = AlertasPorUsuario.class,
+            >>> columns = {
+                @ColumnResult(name = "nome"),
+                @ColumnResult(name = "totalAlertas")
+            }
+        )
+    }
+)
+
+84. Beleza?
+
+85. So para te dar um bonus, ai, do Java 8, eh o seguinte, eles adicionaram uma coisa, aqui, no List, que eu posso fazer um forEach(),
+
+    lista.forEach()
+
+, e eu poderia, ... eu posso pegar esse cara, aqui,
+
+    for (>>> AlertasPorUsuario a <<< : lista) {
+
+    }
+
+, colocar, aqui, entre parenteses,
+
+    lista.forEach((AlertasPorUsuario a))
+
+, tem uma aula, em que voce pode olhar, aqui, nesse link, http://blog.algaworks.com/introducao-ao-lambda-do-    java-8, uma aula gratis que eu coloquei, la, no nosso blog, em que voce pode ver, nao eh?, como eh que, em mais detalhes, aqui, como eh que funciona isso, daqui.
+
+86. Okay? Mas vamos colocar, aqui, so para voce, rapidamente, oh. Eu posso fazer isso daqui, (AlertasPorUsuario a) -> System.out.println(a);, poderia fazer algo assim.
+
+86. Ele tem esse metodo forEach(), agora, la, na classe Iterable, em que eu vou estar fazendo essa iteracao, oh,
+
+    lista.forEach((AlertasPorUsuario a) -> System.out.println(a));
+
+87. Entao, isso, aqui, que eu fiz, eu falei, olha, pega esse cara,
+
+    lista.forEach( >>> (AlertasPorUsuario a) <<< -> System.out.println(a));
+
+, e entrega para ca,
+
+    lista.forEach((AlertasPorUsuario a) -> >>> System.out.println(a) <<< );
+
+88. Aqui, vai dar o mesmo resultado. Voce vai ver que esse cara continua funcionando.
+
+89. Retornou,
+
+Hibernate: 
+    select
+        u.nome as nome,
+        count(a.codigo) as totalAlertas 
+    from
+        Usuario u,
+        Alert a 
+    where
+        u.codigo = a.codigo_usuario 
+    group by
+        u.nome
+AlertasPorUsuario [nome=Joao, totalAlertas=2]
+AlertasPorUsuario [nome=Maria, totalAlertas=3]
+
+90. Beleza? Entao, aqui, eu posso, ainda, usar uma referencia a metodos e fazer da seguinte forma, eu nao precisaria nem colocar o Tipo, porque ele ja sabe o tipo desse cara,
+
+    lista.forEach(a -> System.out.println(a));
+
+, entao, eu poderia usar desse jeito, e falar, 'Se eu ja sei que o tipo da Lista eh AlertasPorUsuario, voce nao precisa colocar na Expressao Lambda, entao, voce ja deixa o azinho, aqui, diretao,'
+
+    lista.forEach(>>> a <<< -> System.out.println(a));
+
+91. Retornou,
+
+Hibernate: 
+    select
+        u.nome as nome,
+        count(a.codigo) as totalAlertas 
+    from
+        Usuario u,
+        Alert a 
+    where
+        u.codigo = a.codigo_usuario 
+    group by
+        u.nome
+AlertasPorUsuario [nome=Joao, totalAlertas=2]
+AlertasPorUsuario [nome=Maria, totalAlertas=3]
+
+92. Mas, so que, ai, voce ainda consegue melhorar.
+
+93. Ele sabe que voce esta iterando alguma coisa, e tem esse metodo, aqui, que recebe um parametro,
+
+    lista.forEach(System.out.println(a));
+
+, nao eh?
+
+94. Entao, ele sabe o seguinte. Eu quero que voce chame o metodo println, passando, como parametro, cada elemento, aqui, da Lista,
+
+    lista.forEach(System.out::println); 
+
+95. Voce pode reduzir a so essa linha.
+
+96. Retornou,
+
+Hibernate: 
+    select
+        u.nome as nome,
+        count(a.codigo) as totalAlertas 
+    from
+        Usuario u,
+        Alert a 
+    where
+        u.codigo = a.codigo_usuario 
+    group by
+        u.nome
+AlertasPorUsuario [nome=Joao, totalAlertas=2]
+AlertasPorUsuario [nome=Maria, totalAlertas=3]
+
+97. Ao inves de fazer isso daqui,
+
+        for (AlertasPorUsuario a : lista) {
+			System.out.println(a);
+        }
+        
+, no Java 8, voce consegue fazer so dessa forma,
+
+        lista.forEach(System.out::println);
+
+98. Continua executando da mesma forma.
+
+99. Beleza?
+
+100. Fim da     Aula 13.003. Convertendo o Resultado de Queries Nativas.
+
+-->

@@ -1,0 +1,186 @@
+<!--
+    Aula 16.002. OneToOne Lazy Com Instrumentacao
+
+1. Ai, voce pode falar pra mim, "Ah, Normandes, nao gostei desse tanto de anotacoes, desses atributo novo que voce colocou, nao eh?, a interface que teve que implementar, nao tem outra forma, nao?".
+
+2. Tem, a gente pode fazer atraves de instrumentacao.
+
+3. O que que eh instrumentacao?
+
+4. Eh, depois que a gente fez o nosso codigo, a gente vai rodar um Carinha, que vai abrir o nosso bytecode e alterar ele ali dentro, direto.
+
+5. Ai, provavelmente, ele vai adicionar essas coisas, aqui, la dentro.
+
+6. Okay? Vai mexer nessas classes, adicionando esse tipo de coisa, aqui, nele.
+
+7. Entao, eu vou tirar, aqui, e te mostrar como eh que a gente faz isso, oh, eu vou tirar essa interface FieldHandler, eu vou tirar esse atributo private FieldHandler handler, @LazyToOne(LazyToOneOpton.NO_PROXY), eu preciso deixar, no Getter e Setter de endereco, eu tiro o tratamento para o FieldHanlder, e posso tirar o Getter e o Setter do FieldHanlder,
+
+@Entity
+@Table(name = "usuario")
+// public class Usuario implements Serializable, FieldHandler {
+public class Usuario implements Serializable {
+
+    ...
+
+    // private FieldHandler handler;
+
+    @OneToOne(mappedBy = "usuario", fetch = FetchType.LAZY)
+    @LazyToOne(LazyToOneOption.NO_PROXY)
+    private Endereco endereco;
+
+    //@Override
+    //public FieldHandler getFieldHandler() {
+    //    return handler;
+    //}
+
+    //@Override 
+    //public void setFieldHandler(FieldHandler handler) {
+    //    this.handler = handler;
+    //}
+
+    public Endereco getEndereco() {
+        //if (this.handler != null) {
+            //return (Endereco) this.handler.readObject(this, "endereco", endereco);
+        //}
+        return endereco;
+    }
+
+    public void setEndereco(Endereco endereco) {
+        //if (this.handler != null) {
+            //this.endereco = (Endereco) this.handler.writeOjbect(this, "endereco", this.endereco, endereco);
+        //}
+        this.endereco = endereco;
+    }
+
+}
+
+8. Okay? Beleza.
+
+9. Ta vendo? Nao tem mais nada, o nosso codigo fica mais simples, nao eh?
+
+10. Mas, ai, eu preciso usar um recursozinho, aqui, no Maven, um plugin, do Ant, que eh para ele executar, quando, ele acabou de compilar, nao eh?, ele esta processando as classes, ele vai executar esse plugin para instrumentar esse nosso codigo, colar o codigo, aqui, do plugin, oh,
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.0</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.8</version>
+                <executions>
+                    <execution>
+                        <id>Instrument domain classes</id>
+                        <configuration>
+                            <tasks>
+                                <taskdef name="instrument"
+                                    classname="org.hibernate.tool.instrument.javassist.InstrumentTask">
+                                    <classpath>
+                                        <path refid="maven.dependency.classpath" />
+                                        <path refid="maven.plugin.classpath" />
+                                    </classpath>
+                                </taskdef>
+                                <instrument verbose="true">
+                                    <fileset dir="${project.build.outputDirectory}">
+                                        <include name="**/modelo/**/*.class" />
+                                    </fileset>
+                                </instrument>
+                            </tasks>
+                        </configuration>
+                        <phase>process-classes</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>                        
+                    </execution>
+                </executions>
+            </plugin>
+
+        </plugins>
+    </build>
+
+11. Olha so, ele vai ficar vermelhinho, aqui, que ele nao entende esse <execution>, aqui, ele nao esta reconhecendo, mas, vai funcionar.
+
+12. Beleza?
+
+13. Adiciona isso, daqui, parte importante, aqui, oh, 
+
+    <include name="**/modelo/**/*.class" />
+
+, eh para falar o pacote que ele vai pesquisar, quais classes que ele vai pesquisar para ele mexer. Entao, eu estou colocando, aqui, oh, qualquer coisa antes, i.e., **, /modelo/, **/*, i.e., qualquer coisa depois, .class, eh para mexer, ou seja, ele vai procurar, aqui, oh, todas as classes dentro do pacote com.algaworks.exemplo.modelo, ele vai alterar essas classes.
+
+14. Okay?
+
+15. E, ai, agora, eu nao posso, mais, mandar ele executar, aqui, com o JUnit, direto, eu preciso mandar executar com o Maven, para o Maven executar esse Plugin, e alterar o meu bytecode,
+
+    <include name="**/modelo/**/* >>> .class" />
+
+16. Okay? Entao, vamos la. Como eh que eu faco para executar?
+
+17. Vamos na Raiz do Projeto / botao direito / Run As / Maven build... / Goals: clean install / Apply / Run.
+
+18. E, ai, vamos observar, aqui, no Console, oh, o que que ele vai fazer, oh.
+
+19. Oh o plugin do antrun, aqui, executando, oh,
+
+[INFO] --- maven-antrun-plugin:1.8:run (Instrument domain classes) @ problema-lazy-one-to-one ---
+
+20. E, ai, o que que o Maven faz?
+
+21. O Maven vai executar os Testes para a gente.
+
+22. Como esse nosso codigo tem um Teste Unitario, ali, ele vai comecar a executar os Testes, oh, TestesConsultas,
+
+-------------------------------------------------------
+ T E S T S
+-------------------------------------------------------
+Running com.algaworks.exemplo.TestesConsultas
+
+, ele ja executa para a gente, sozinho.
+
+23. Beleza, beleza, olha o select que ele fez,
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+
+, somente o select de Usuario.
+
+24. O nosso Teste executou, e passou,
+
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.528 sec
+
+25. Nao eh?, executou 1 Teste com sucesso.
+
+26. So fez o select do Usuario, nao fez o select em Endereco.
+
+27. Nao eh?
+
+28. E eu nao precisei colocar aquele FieldHandler, aquelas outras coisas, aqui, ne Entidade Usuario.
+
+29. Mas, precisei alterar o meu pom.xml, adicionando a instrumentacao, aqui,
+
+        <tasks>
+            <taskdef name="instrument"
+                    classname="org.hibernate.tool.instrument.javassist.InstrumentTask">
+                <classpath>
+                    <path refid="maven.dependency.classpath" />
+                    <path refid="maven.plugin.classpath" />
+                </classpath>
+        </tasks>
+
+30. Essa seria uma outra forma de se fazer.
+
+31. Fim da     Aula 16.002. OneToOne Lazy Com Instrumentacao.
+
+-->

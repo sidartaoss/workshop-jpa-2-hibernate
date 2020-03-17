@@ -1,0 +1,403 @@
+<!--
+    Aula 15.003. O Pattern Repository
+
+1. Vamos tirar o DAO desse nosso Sistema e adicionar o Repository.
+
+2. Okay?
+
+3. Existem algumas diferencas entre eles, eu vou falar um pouco delas, aqui, agora, e o Repository esta mais relacionado a voce escrever os metodos, nao so escrever os metodos, mas, essa eh uma das coisas, escrever o nome dos metodos mais relacionados ao Negocio, de uma forma que voce esta pensando no Sistema, como se voce estivesse conversando com,..., o seu Sistema conversando com alguem, a respeito dele. E nao pensando em banco de dados, como o DAO, como a gente vai fazendo com o DAO, assim, nao eh?, e a gente pensa, oh: buscar...(), nao eh?, salvar...().
+
+4. Voce tem que pensar no Repository mais como uma Colecao, onde voce adiciona as coisas na Colecao, nao eh?, voce Deleta alguma Entidade da Colecao, okay?
+
+5. Entao, a gente tem que pensar nisso.
+
+6. E pensar, tambem, num conceito importante, que sao os Aggregates. 
+
+7. Voce tem que pensar, por exemplo, nesse caso, Pedio e ItemPedido.
+
+8. O ItemPedido nao vai viver sem o Pedido.
+
+9. Concorda? Nao tem jeito de eu criar 1 ItemPedido sem ter 1 Pedido.
+
+10. E, pensando no negocio do Sistema, eu vejo que os Dois fazem parte de Um Aggregate.
+
+11. Uma Agregacao os Dois, ali. Os Dois sempre vao estar trabalhando juntos. O Pedido tem os seus Itens, os Itens tem o seu Pedido.
+
+12. Entao, a gente trabalha essas duas Entidades como Um Aggregate.
+
+13. Sendo que a Entidade Principal, vamos chamar assim, seria o Pedido.
+
+14. Entao, eu nao teria, agora, mais Um Repositorio para cada Entidade, mas, sim, para Esse Aggregate, dai.
+
+15. No caso, Pedido e ItemPedido, eu posso ter apenas Um Repositorio em cima de Pedido.
+
+16. Okay?
+
+17. Entao, vamos la.
+
+18. Vamos modificar, aqui, isso, daqui, para a gente trabalhar com Repositorio.
+
+19. Vou deixar a interface, PedidoDAO, tambem, do mesmo jeito, poderia deixar, poderia ser sem interface, tambem.
+
+20. Okay?
+
+21. Entao, ao inves de eu chamar, aqui, de PedidoDAO, poderia ser PedidoRepository, mas, como eu disse, a gente pode trabalhar esse cara mais parecido com uma Colecao, entao, eu vou chamar ele de Pedidos.
+
+22. Okay? Eu vou renomear PedidoDAO para Pedidos.
+
+23. Esse nome desse metodo, aqui,
+
+public interface Pedidos extends GenericDAO<Pedido, Long> {
+
+    List<ValorTotalVendaDoDia> buscarValorTotalVendaDoDia();
+}
+
+, esse GenericDAO, aqui, eu vou tirar, porque a gente so vai ter Um Repositorio, aqui. Se voce quiser algum Repositorio Generico, tambem, tenta seguir, mais ou menos a ideia, ai, do GenericDAO, que a gente fez.
+
+24. Beleza? Mas nao eh o objetivo, aqui, nao.
+
+25. O objetivo eh te mostrar, um pouquinho mais, como eh que a gente escreve esses nomes, nao eh?, como eh que funciona esse Reposotorio.
+
+26. Entao, la, transformei em Pedidos, 
+
+public interface Pedidos {
+
+    List<ValorTotalVendaDoDia> buscarValorTotalVendaDoDia();
+}
+
+27. Isso nao esta muito relacionado a um Banco de Dados, vai la no Banco, buscar o Valor Total de Vendas do Dia.
+
+28. Se a gente renomear esse cara, aqui, para,..., bom vamos pensar, aqui, oh, vai ter Pedidos.valoresTotaisDasVendasPorDia(). Posso renomear esse metodo para ficar assim. Entao, vai ficar Pedidos.valoresTotaisDasVendasPorDia().
+
+29. Eh uma coisa mais, ta vendo?, mais relacionado ao Dominio da Aplicacao, nao eh? A gente nao fala, assim, oh, vai la e busca, a gente nao esta mandando, assim, nao eh?, a gente esta pensando mais no Dominio do nosso Sistema, okay?,
+
+public interface Pedidos {
+
+    List<ValorTotalVendaDoDia> valoresTotaisDasVendasPorDia();
+}
+
+30. No caso, aqui, ItemPedidoDAO, nao vai ter mais esse DAO, aqui. E o que a gente tem, aqui, hoje, de metodo, seria esse buscarItensPendentes().
+
+31. Deixa eu mover esse metodo, buscarItensPendentes(), para a classe Pedidos.
+
+32. Nao vamos definir como buscarItensPendentes(). A gente pode colocar, simplesmente, itensPendentes(), ou, se quiser colocar o verbo, encontrarItensPendentes(), nao eh?, fica mais no Dominio, ali.
+
+33. Okay?
+
+public interface Pedidos {
+    List<ValorTotalVendaDoDia> valoresTotaisDasVendasPorDia();
+    List<ItemPedido> encontrarItensPendentes();
+}
+
+34. Entao, como eu nao preciso mais desse ItemPedidoDAO, eu vou arrancar ele daqui, do pacote .dao, ou seja, excluir.
+
+35. Vou arrancar esse GenericDAO, aqui, porque eu nao vou precisar dele.
+
+36. O HibernatePedidoDAO, eu vou transformar ele, aqui, ou seja, renomear, para HibernatePedidos.
+
+37. Os metodos, que estao aqui, em HibernateGenericDAO, como buscarPeloCodigo(), o salvar(), o filtrar(), o filtrar(), eh um metodo que ficou legal, para ser o metodo do Repository, okay?, entao, a gente pode levar esse metodo filtrar() para la, nao eh?, no nosso Repositorio, ou seja, para HibernatePedidos.
+
+38. Entao, vamos la,
+
+public class HibernatePedidos extends HibernateGenericDAO<Pedido, Long> implements Pedidos, Serializable {
+    
+
+    ...
+}
+
+, nao vai existir esse HibernateGenericDAO, 
+
+public class HibernatePedidos implements Pedidos, Serializable {
+
+    ...
+}
+
+39. Vai implementar Pedidos e Serializable.
+
+40. Okay.
+
+41. Vamos injetar direto, aqui, o EntityManager,
+
+public class HibernatePedidos implements Pedidos, Serializable {
+
+    ...
+
+    @Inject
+    private EntityManager manager;
+
+    public List<ValorTotalVendaDoDia> valoresTotaisDasVendasPorDia() {
+        return this.manager.createQuery("select "
+            + "NEW ..."
+    }
+
+    ...
+}
+
+42. Esta faltando, aqui, oh, esse metodo encontrarItensPendentes(),
+
+    public List<ItemPedido> encontrarItensPendentes() {
+        return null;
+    }
+
+, que esta dentro de HibernateItemPedidoDAO, eh essa Consulta,
+
+    Criteria criteria = getSession().createCriteria(ItemPedido.class);
+    criteria.createAlias("pedido", "p")
+            .add(Restrictions.eq("p.entrega", Entrega.PENDENTE));
+    return criteria.list();
+
+43. Vamos colocar ela, aqui,
+
+    public List<ItemPedido> encontrarItensPendentes() {
+        Session session = this.manager.unwrap(Session.class);
+        Criteria criteria = session.createCriteria(ItemPedido.class);
+        criteria.createAlias("pedido", "p")
+                .add(Restrictions.eq("p.entrega", Entrega.PENDENTE));
+        return criteria.list();
+    }
+
+44. Entao, esse HibernateItemPedidoDAO pode sumir tambem, ou seja, ser excluido.
+
+45. HibernateGenericDAO, essa ideia do metodo filtrar(), eh essa mesma, mas eu nao vou deixar ele Generico, eu nao vou copiar ele assim, porque nos vamos fazer de forma diferente, vai ser direto, aqui, na interface de Pedidos,
+
+public interface Pedidos {
+
+    ...
+
+    List<Pedido> filtrar(Pedido pedido);
+}
+
+46. Okay?
+
+47. Muitas vezes, eh feito, vamos fazer, aqui?, ao inves de passar a Entidade, como parametro, eles, tambem, podem criar, aqui, dentro do pacote .dao, uma classe para o filtro.
+
+48. Vamos chamar de PedidoFiltro,
+
+package com.algaworks.pedidosvenda.dao;
+
+public class PedidoFiltro {
+
+
+}
+
+49. Nesse PedidoFiltro, eu teria, aqui, apenas o que eu quero filtrar,
+
+public class PedidoFiltro {
+
+    private Long codigo;
+    private String referencia;
+    private Entrega entrega;
+
+    ...
+}
+
+50. Vamos gerar os Getters e os Setters, aqui, implementa o Serializable,
+
+public class PedidoFiltro implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private Long codigo;
+    private String referencia;
+    private Entrega entrega;
+
+    ...
+}
+
+51. Ao inves de a gente trabalhar, aqui, agora, com a Entidade, na interface Pedidos, eu vou trabalhar com PedidoFiltro, e eu vou chamar esse cara de filtro,
+
+public interface Pedidos {
+
+    ...
+    List<Pedido> filtrar(PedidoFiltro filtro);
+
+}
+
+52. Okay? Porque, ai, eu ja tenho, tambem, uma classe que representa somente aquele filtro, eu poderia adicionar, aqui, se eu tivesse datas, aqui, por exemplo, eu poderia colocar assim, PedidoFiltro.entre, definiria, aqui, na classe PedidoFiltro, um metodo que passaria as datas, ja, a primeira e a segunda, para a gente trabalhar, como eu disse, de uma forma mais relacionada ao Dominio, nao eh?, ao jeito que a gente conversa.
+
+53. Okay, em PesquisaPedidoBean, nesse metodo, aqui, filtrar(), eu posso tirar dessa forma assim, os demais parametros,
+
+    public void pesquisar() {
+//		this.listaPedidos = pedidoDAO.filtrar(this.filtro, "codigo", "referencia", "entrega");
+		this.listaPedidos = this.pedidoDAO.filtrar(this.filtro);
+    }
+
+54. E, aqui, ao inves de chamar de Pedido, eu vou chamar de PedidoFiltro,
+
+    // private Pedido filtro;
+    private PedidoFiltro filtro;
+
+55. No metodo inicializar(), eu corrijo para:
+
+    public void inicializar() {
+        >>> this.filtro = new PedidoFiltro();
+        ...
+    }
+
+56. E, no getter de Pedido, eu corrijo para getPedidoFiltro().
+
+57. Isto mesmo.
+
+58. Vamos, la, implementar, ele, aqui, entao, em HibernatePedidos, esse metodo filtrar(),
+
+@Override
+public List<Pedido> filtrar(PedidoFiltro filtro) {
+    Session session = this.manager.unwrap(Session.class);
+    Criteria criteria = session.createCriteria(Pedido.class);
+    if (filtro.getCodigo() != null) {
+        criteria.add(Restrictions.eq("codigo", filtro.getCodigo()));
+    }    
+    if (filtro.getReferencia() != null && !"".equals(filtro.getReferencia().trim())) {
+        criteria.add(Restrictions.ilike("referencia", filtro.getReferencia(), MatchMode.ANYWHERE));
+    }
+    if (filtro.getEntrega() != null) {
+        criteria.add(Restrictions.eq("entrega", filtro.getEntrega()));
+    }
+    return criteria.list();
+}
+
+59. Okay. Implementamos, aqui, em HibernatePedidos, o metodo filtrar().
+
+60. Temos, ainda, que definir, na interface Pedidos, os metodos peloCodigo(), correspondente ao antigo metodo buscarPeloCodigo() e adicionar(), correspondente ao antigo metodo salvar(),
+
+public interface Pedidos {
+
+    ...
+    Pedido peloCodigo(Long codigo);
+    void salvar(Pedido pedido);
+}
+
+61. Ao inves de buscarPeloCodigo(), eu vou, simplesmente, colocar peloCodigo(). Ao inves de salvar(), eu vou chamar ele de adicionar(), pensando como mais uma Colecao, mesmo.
+
+62. Okay?
+
+63. Agora, eu volto, aqui, em HibernatePedidos, vamos pedir para o Eclipse implementar esses metodos para a gente,
+
+@Override
+public Pedido peloCodigo(Long codigo) {
+    return this.manager.find(Pedido.class, codigo);
+}
+
+@Override
+public void salvar(Pedido pedido) {
+    this.manager.merge(pedido);
+}
+
+64. Okay. Podemos apagar, aqui, ja, o HibernateGenericDAO.
+
+65. E vamos substituir, ai, aonde a gente estava trabalhando o ItemPedidoDAO, nao eh mais o ItemPedidoDAO, a gente apagou ele, agora, a gente trabalha com Pedidos. Entao, por exemplo, em EntregasPendentesBean,
+
+    // @Inject
+    // private ItemPedidoDAO itemPedidoDAO;
+
+    @Inject
+    private Pedidos pedidos;
+
+66. E, aqui, vai ser pedidos.encontrarItensPendentes(),
+
+    public void buscarItensPendentes() {
+        this.itensPendentes = this.pedidos.encontrarItensPendentes();
+    }
+
+67. Okay? Ou, poderia ser so itensPendentes(), pedidos.itensPendentes(), vamos colocar assim? 
+
+public void buscarItensPendentes() {
+    this.itensPendentes = this.pedidos.itensPendentes();
+}
+
+68. Acho que vai ficar melhor, mesmo,
+
+public interface Pedidos {
+
+    ...
+    List<ItemPedido> itensPendentes();
+    ...
+}
+
+69. E, em HibernatePedidos, alteramos a assinatura, tambem, do metodo encontrarItensPendentes(), para itensPendentes().
+
+70. Ja fica mais direto, ta vendo?
+
+71. Pedidos.itensPendentes(), eu ja sei que esta me retornando os Itens de Pedido Pendentes.
+
+72. Vamos ver, aqui, no PedidoService, nao eh salvar(), mais,
+
+@Transactional
+public void salvar() {
+
+    ...
+
+    this.pedidoDAO.salvar(pedido);
+}
+
+, agora, eh adicionar(),
+
+@Transactoinal
+public void salvar() {
+
+    ...
+
+    this.pedidoDAO.adicionar(pedido);
+}
+
+73. Pensa como se fosse uma Colecao.
+
+74. Acho que eh isso, o resto..., vamos, tambem, renomear de PedidoDAO, para pedidos, por exemplo, em PedidoService, PesquisaPedidoBean, ValorVendasPorDiaBean, PedidoConverter.
+
+75. No Converter, ou seja, PedidoConverter, nao eh mais buscarPeloCodigo(), vamos trocar, aqui, agora, eh pedidos.peloCodigo(), apenas.
+
+76. Okay. Acho que eh isso dai. 
+
+77. A gente ja transformou o nosso Projeto, utilizando ele como um Repositorio.
+
+78. Vamos reiniciar o Tomcat e re-testar o Sistema.
+
+79. Acessar em http://localhost:8080/pedidos-venda/CadastroPedido.xhtml.
+
+80. Clicar Pesquisa, vamos em http://localhost:8080/pedidos-venda/PesquisaPedido.xhtml.
+
+81. Clicar em Pesquisar, vai iniciar o Hibernate.
+
+82. Okay. Vamos fazer um Cadastro, aqui, Campinas, Adicionar item, Descricao: Sabonete; Quantidade: 10; Valor unitario: 2, clicar em Salvar.
+
+83. Salvou.
+
+84. Vamos em Pesquisa de Pedidos. Filtrar por Pendente. Clicar em Pesquisar.
+
+85. Okay. Esta funcionando.
+
+86. Relatorios / Entregas pendentes
+
+87. Relatorios / Vendas por dia
+
+88. Okay, esta funcinando.
+
+89. Beleza?
+
+90. Essa foi a ideia, ai, do Repositorio, que eu queria passar para voces.
+
+91. Entao, perceberam, ai, a diferenca entre os nomes dos metodos, nao eh?, nao so..., voce tem que colocar nomes que pensem que voce esta pensando como uma Colecao, que aquilo la eh uma Colecao, do Objeto, a questao, no caso, que eh a Colecao de Pedidos. Okay?
+
+92. E, ai, voce conversa com essa Colecao, ao inves de voce ordenar coisas a elas, nao eh?
+
+93. Entao, como a gente disse aqui, nao eh?, ao inves de buscarValores...(), 
+
+public void buscarValorTotalVendaDoDia() {
+
+    this.vendas = pedidos.  >>> valoresTotaisDasVendasPorDia();
+}
+
+, nao, a gente da os valores, ja fala direto, oh, os pedidos e os valores totais das vendas por dia, ou seja, Pedidos.valoresTotaisDasVendasPorDia(), eh uma coisa mais direta.
+
+94. Beleza? Eh uma coisa mais pensando no Dominio.
+
+95. E a questao do Aggregate, nao eh? 
+
+96. No caso, Pedidos eh o Aggregate Root, nao eh?, o Principal, ai, dessa Agregacao, entre Pedido e ItemPedido.
+
+97. Entao, voce nao precisa ter uma Classe para cada Entidade. Mas, sim, uma Classe que vai representar aquela Agregacao, aquelas classes relacionadas, ali.
+
+98. Fim da     Aula 15.003. O Pattern Repository.
+
+
+-->

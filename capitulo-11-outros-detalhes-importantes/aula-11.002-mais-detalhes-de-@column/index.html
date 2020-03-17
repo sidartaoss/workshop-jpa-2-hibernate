@@ -1,0 +1,114 @@
+<!--
+
+    Aula 10.002. Mais Detalhes de @Column
+
+1. As vezes, tambem, voce quer mudar o nome de Uma Coluna mapeada no banco de dados.
+
+2. Entao, por exemplo, aqui, dataPedido,
+
+@Entity
+public class Aluguel {
+
+
+    ...
+    @Temporal(TemporalType.DATE)
+    public Date getDataPedido() {
+        return dataPedido;
+    }
+
+    ...
+
+}
+
+, eu nao quero que o nome da coluna seja assim, porque, as vezes, na sua empresa, existem algumas regras. Por exemplo, eu ja trabalhei em empresas em que o nome da coluna do banco de dados deveria seguir um determinado padrao.
+
+3. Entao, por exemplo, comecava sempre com o nome, as iniciais da empresa. Entao, sei la, voce teria, se fosse na AlgaWorks, sei la, AW, 
+
+    ...
+    @Temporal(temporalType.DATE)
+    @Column(name = "AG_")
+    public Date getDataPedido() {
+        return dataPedido;
+    }
+
+, as vezes, tem empresas que gostam de fazer isso, eu acho estranho, mas tem gente que gosta. 
+
+4. Entao, se voce tiver alguma coisa assim, uma situacao, com @Column, voce consegue fazer isso daqui,
+
+@Temporal(TemporalType.DATE)
+@Column(name = "AG_")
+public Calenar getDataPedido() {
+    return dataPedido;
+}
+
+5. Entao, voce consegue mudar o nome da coluna no banco de dados para o nome que voce quiser. Entao, sei la, as vezes, nao quer que escreva DATA, e coloca um DT, alguma coisa assim, _PEDIDO, etc.,
+
+@Temporal(TemporalType.DATE)
+@Column(name = "AW_DT_PEDIDO")
+public Calenar getDataPedido() {
+    return dataPedido;
+}
+
+6. Ou seja, voce quer trocar o nome da coluna mapeada.
+
+7. Entao, a gente utiliza o @Column. Assim como o @JoinColumn, tambem, nao eh?, a gente ja viu, a gente consegue trocar o nome da coluna de Join.
+
+8. O @Column tambem faz isso para as outras colunas que nao sao colunas de Join.
+
+9. E tanto, aqui, em @Column, como em @JoinColumn, existem outras propriedades tambem que voce consegue setar.
+
+10. Entao, por exemplo, o jeito que a gente fez, aqui, o nosso sistema, era o proprio Hibernate que gerava as tabelas no banco de dados, nao foi isso?
+
+11. Ele percebia as mudancas e gerava.
+
+12. Bom, mas e as propriedades do banco de dados, la, de se o banco pode ser nulo ou nao, como eh que ele definiu isso? Tem jeito de a gente definir isso nas anotacoes?
+
+13. Tem, sim. existe, aqui, oh, por exemplo, 
+
+@Temporal(TemporalType.DATE)
+@Column(name = "AW_DT_PEDIDO", nullable = "false")
+public Calenar getDataPedido() {
+    return dataPedido;
+}
+
+, exsite, aqui, oh, por exemplo, nullable. Esse camarada vai nos falar, se voce colocar true ou false, se ele pode ser nulo ou nao.
+
+14. Entao, esse campo, aqui, por exemplo, vamos supor, ele, nao lembro, aqui, agora, na regra de negocio, a data do pedido do aluguel, nao pode ser nulo de jeito nenhum. Entao, ela eh nullable? Voce coloca false, nao, nao pode ser nula.
+
+15. Se alguem tentar fazer uma insercao sendo nulo, nao vai conseguir, nao vai dar certo, o banco de dados nao vai aceitar, repare bem, isso, nao eh?, o banco que nao aceita essa insercao nula.
+
+16. Ta vendo? Tanto que voce comeca a proteger, tambem, o seu banco de dados, okay?
+
+17. Entao, se voce quer que esse campo seja unique, esse campo eh unique? Se voce colocar true, nao vao poder ter dois repetidos, o banco de dados vai criar o indice la, e vai falar, 'Olha, nao pode repetir 2 datas do pedido ao mesmo tempo, se tiver true'.
+
+18. Nesse caso, aqui, colocar false eh mais interessante,
+
+@Temporal(TemporalType.DATE)
+@Column(name = "AW_DT_PEDIDO", nullable = false, unique = false)
+public Calenar getDataPedido() {
+    return dataPedido;
+}
+
+19. insertable
+
+20. Pode inserir ou nao? 
+
+21. updatable
+
+22. Pode alterar ou nao? Pode fazer o update nessa coluna ou nao?
+
+23. Entao, tem situacoes que voce quer que seja inserido alguma coisa e tem situacoes que voce nao quer que seja atualizado. As vezes, voce fala, 'Nao, depois que inseriu, eu nao quero mais nada que seja atualizado nessa coluna'.
+
+24. Okay?
+
+@Temporal(TemporalType.DATE)
+@Column(name = "AW_DT_PEDIDO", nullable = false, unique = false, insertable = true, updatable = false)
+public Calenar getDataPedido() {
+    return dataPedido;
+}
+
+25. Entao, voce pode usar essas propriedades, tanto, aqui, no @Column, como no @JoinColumn, tambem, okay?
+
+26. Fim da     Aula 10.002. Mais Detalhes de @Column.
+
+-->

@@ -1,0 +1,320 @@
+<!--
+
+    Aula 06.006. Fazendo JOIN Entre Entidades
+
+1. Esta aula eh bem legal.
+
+2. Voce vai aprender muita coisa agora.
+
+3. Entao, presta atencao, e, se ficou com alguma duvida, eh so perguntar.
+
+4. Okay? Na Pesquisa de Carros, eu adicionei esse coluna Modelo, aqui, que, as vezes, falava, 'Bah, mas nao tinha essa coluna Modelo', eu adicionei, justamente, para poder explicar o que a gente vai fazer nesta aula.
+
+5. Entao, olha so, eu quero fazer uma pesquisa dos Acessorios, dado Um Modelo de Carro.
+
+6. Entao, eu quero saber la, eu vou falar, o Cruze, quais sao os Acessorios do Cruze?
+
+7. Ai, eu quero ir la e verificar, aqui, oh, tem Ar Condicionado, Banco de Couro, Air Bag, e Som MP3, okay?
+
+8. Ah, ja tem aqui nessa tela?, i.e., http://localhost:8080/locadora-veiculo-web/carro/PesquisaCarros.xhtml.
+
+9. Bom, a gente esta treinando, nao eh?
+
+10. Entao, vamos la, entao, eu quero saber, dado Um Modelo, quais sao os Acessorios?, eu quero ter essa lista, exibida na tela http://localhost:8080/locadora-veiculo-web/carro/PesquisaCarros.xhtml, no Popup de Acessorios.
+
+11. Entao, eu cadastrei, aqui, para esse Modelo, oh, o Cruze tem Ar Condicionado, Banco de Couro, AirBag, e Som MP3.
+
+12. E o Fit tem Ar Condicionado e Som MP3, apenas.
+
+13. Okay? Esse aqui que eh o cenario do meu Cadastro, agora.
+
+14. Entao, vamos la, vamos voltar, aqui, vamos parar o Servidor, aqui, e vamos fazer uns testes no metodo main().
+
+15. Eu criei essa classe, aqui, oh, ConsultaAcessorioPorModeloCarro,
+
+package com.algaworks.curso.jpa2.consultas;
+
+import javax.persistence.EntityManager;
+
+import java.util.List;
+
+import com.algaworks.curso.jpa2.util.JPAUtil;
+
+public class ConsultaAcessorioPorModeloCarro {
+
+    public static void main(String[] args) {
+        EntityManager em = JPAUtil.createEntityManager();
+
+        String jpql = "";
+        List<String> acessorios = em.createQuery(jpql, String.class).getResultList();
+        
+        for (String acessorio : acessorios) {
+            System.out.println("Acessorio: " + acessorio);
+        }
+
+        em.close();
+    }
+}
+
+16. A gente vai, la, faz as coisas padroes, e a gente vai escrever o JPQL aqui,
+
+        String jpql = "";
+
+, e, ai, quando eu passar ele para o JPQL, aqui, eu quero uma relacao de Strings, 
+
+List<String> acessorios = em.createQuery(jpql, >>> String.class <<< ).getResultList();
+
+, porque o que eu quero eh, simplesmente, uma lista da descricao dos Acessorios.
+
+17. Se a gente for la na Entidade Acessorio, 
+
+@Entity
+public class Acessorio {
+
+    private Long codigo;
+    private String descricao;
+
+    ...
+}
+
+, a gente tem a descricao, nao tem?
+
+18. Entao, eu quero mostrar, justamente, essa descricao, dado Um Modelo de Carro.
+
+19. Beleza?
+
+20. Entao, vamos la.
+
+21. Bom, no Modelo de Carro, nao tem Relacionamento, nao eh?, com Acessorios.
+
+22. Vamos consultar o Diagrama de Classes, aqui, para voce ver, olha la, na classe ModeloCarro, ela nao tem Um Relacionamento com a classe Acessorio. Quem tem eh a classe Carro.
+
+23. Okay? Entao, a classe Carro faz Um Relacionamento com a classe Acessorio, e com a classe ModeloCarro.
+
+24. Bom, entao, aqui, ja da para a gente perceber que a gente vai conseguir, atraves da classe Carro, chegar em Acessorio e em ModeloCarro.
+
+25. Certo?
+
+26. Entao, vamos comecar a escrever a nossa Consulta, aqui, nos vamos evoluindo ela para a gente entender passo-a-passo como eh que a gente faz essa Consulta.
+
+27. Entao, esta na sua cabeca, ai, oh, mais uma vez,
+
+, a partir de Carro, eu tenho uma lista de Acessorios, e tambem tenho Um Relacionamento, aqui, para ModeloCarro, tenho um Modelo de Carro a partir de Carro.
+
+28. Entao, vamos voltar la.
+
+29. Vamos la, entao, o que eu quero eh a descricao do Acessorio. Entao, se a gente fosse colocar, aqui, algum select, nos vamos colocar, aqui, alguma coisa, vamos colocar interrogacao, aqui, eu, ainda, nao sei o que que eu vou colocar, ali,
+
+    String jpql = "select ?.descricao "
+
+30. Bom, a gente poderia pensar assim, 'Bom, entao, eh so a gente buscar em Carro,'
+
+    String jpql = "select ?.descricao from Carro c "
+
+, se eu fizer em Carro c, nao tem uma lista de acessorios? Tem.
+
+31. Ah, entao, eh so fazer acessorios.descricao?,
+
+    String jpql = "select c.acessorios.descricao from Carro c";
+
+32. Hm, isso nao vai dar certo. Mas deixa eu te mostrar, eu quero te provar.
+
+33. String jpql = "select c.acessorios.descricao from Carro c where c.modelo."
+
+, onde c.modelo, ai, eu entro dentro de Modelo de Carro,
+
+@Entity
+public class Carro {
+    
+    ...
+    private ModeloCarro modelo;
+    ...
+}
+
+34. E, dentro de Modelo de Carro, tem a descricao,
+
+    String jpql = "select c.acessorios.descricao from Carro c where c.modelo.descricao = 'Cruze'"
+
+, ai, aqui, no filtro, a gente coloca, por exemplo, o Cruze.
+
+35. Vamos fazer ate aqui. Essa parte aqui beleza, nao eh?,
+
+    String jpql = "select c.acessorios.descricao from Carro c where >>> c.modelo.descricao = 'Cruze' <<< "
+
+, a gente, ate, ja fez alguns exemplos assim, e funcionou.
+
+36. Agora, isso daqui,
+
+    String jpql = "select >>> c.acessorios.descricao <<< from Carro c where c.modelo.descricao = 'Cruze' "
+
+, que nao vai dar certo.
+
+37. Por que que isso daqui,
+
+    String jpql = "select >>> c.acessorios.descricao <<< from Carro c where c.modelo.descricao = 'Cruze'"
+
+, nao vai dar certo?
+
+38. Olha so o que que a gente esta querendo fazer?
+
+39. Eu vou executar e voce vai ver o erro que vai aparecer.
+
+40. Mas, oh, c.acessorios, o que que eh acessorios, dentro de Carro?
+
+41. Nao eh uma Colecao?
+
+@Entity
+public class Carro {
+
+    ...
+    private List<Acessorio> acessorios;
+
+    ...
+}
+
+42. Eh uma Lista.
+
+43. Bom, entao, eu estou querendo trazer uma Lista, colocar uma Lista, aqui, no select, 
+
+String jpql = "select >>> c.acessorios.descricao <<< from Carro c where c.modelo.descricao = 'Cruze'"
+
+, na hora de buscar. Isso nao da certo, isso aqui nao vai funcionar. Vamos executar para voce ver?
+
+44. Retornou,
+
+Exception in thread "main" java.lang.IllegalArgumentException: org.hibernate.QueryException: illegal attempt to dereference collection [carro0_.codigo.acessorios] with element property reference [descricao] [select c.acessorios.descricao from com.algaworks.curso.jpa2.modelo.Carro c where c.modelo.descricao = 'Cruze']
+
+45. Uma tentativa ilegal de fazer uma colecao, oh, ele falou, acessorios. Hm, nao tem jeito de a gente fazer isso. Entao, assim, por que? Porque, como eh que voce esta querendo buscar uma descricao em uma lista? Nao existe essa propriedade la, nao eh? Esta errado.
+
+46. Aqui, nao vai dar certo isso daqui. Beleza? Entao, se isso daqui nao eh possivel,
+
+String jpql = "select c. >>> acessorios <<< .descricao from Carro c where c.modelo.descricao = 'Cruze'"
+
+, a gente pode pensar, 'Bom, entao, se eu nao consigo trazer a partir da colecao, eu preciso, entao, da classe Acessorio, aqui, para eu poder poder buscar a descricao de acessorios'. Entao, se eu chamar Acessorios, por exemplo, de 'a', eu ja vou colocar ele aqui, 
+
+String jpql = "select a.descricao from Carro c where c.modelo.descricao = 'Cruze'"
+
+, ai, eu consigo a.descricao. Vamos, aqui, no 'from', aqui, colocar uma virgula, aqui, por exemplo, Acessorio a,
+
+String jpql = "select a.descricao from Carro c, Acessorio a where c.modelo.descricao = 'Cruze'"
+
+47. Agora, ja faz um pouquinho mais de sentido, ainda esta faltando relacionar isso daqui, que ja chego la, mas, olha so, agora, eu estou falando que eu estou buscando a descricao de 'a', que eh uma Entidade, Acessorio, ah, agora, sim, esta comecando a fazer mais sentido, aqui, para mim, nao eh verdade?
+
+48. So que, se eu estou colocando essa Entidade,
+
+String jpql = "select a.descricao from >>> Carro c <<< , Acessorio a where c.modelo.descricao = 'Cruze'"
+
+, e essa outra Entidade,
+
+String jpql = "select a.descricao from Carro c, >>> Acessorio a <<< where c.modelo.descricao = 'Cruze'"
+
+, ueh, e o Relacionamento ente elas?
+
+49. Aqui, 
+
+String jpql = "select a.descricao from Carro c, Acessorio a where >>> c.modelo.descricao <<< = 'Cruze'"
+
+eu nao preciso colocar o Modelo, porque eu consigo navegar, aqui, entre Carro e Modelo e descricao. No where, aqui, nao tem nenhum problema.
+
+50. E, na hora que eu faco isso daqui,
+
+String jpql = "select a.descricao from Carro c, Acessorio a where >>> c.modelo. <<< descricao = 'Cruze'"
+
+, o proprio JPQL, o framework, ele ja vai fazer, 'Ah, ta, vamos la dar, transformar isso daqui em um SQL', ele ja faz o JOIN entre o Carro e o Modelo.
+
+51. Mas, agora, aqui, 
+
+String jpql = "select a.descricao from >>> Carro c, Acessorio a <<< where c.modelo.descricao = 'Cruze'"
+
+, ele nao esta fazendo esse JOIN.
+
+52. Eu deixei solto isso daqui,
+
+String jpql = "select a.descricao from >>> Carro c, Acessorio a <<< where c.modelo.descricao = 'Cruze'"
+
+53. Entao, oh, preciso fazer o Relacionamento, o JOIN entre esses carinhas. O JOIN,... e se eu vier e fazer isso daqui, oh?,
+
+String jpql = "select a.descricao from Carro c JOIN Acessorio a where c.modelo.descricao = 'Cruze'"
+
+, ao inves de eu colocar 'Acessorio a', aqui,
+
+String jpql = "select a.descricao from Carro c JOIN >>> Acessorio a <<< where c.modelo.descricao = 'Cruze'"
+
+, eu posso falar o seguinte, 
+
+String jpql = "select a.descricao from Carro c JOIN c.acessorios a where c.modelo.descricao = 'Cruze'"
+
+54. Olha so o que eu disse agora. Entao, oh, 'Traga o Carro e faca o JOIN com a entidade representada por c.acessorios a',
+
+String jpql = "select a.descricao >>> from Carro c JOIN c.acessorios a <<< where c.modelo.descricao = 'Cruze'"
+
+, porque, agora, esse 'a', aqui,
+
+String jpql = "select a.descricao from Carro c JOIN c.acessorios >>> a <<< where c.modelo.descricao = 'Cruze'"
+
+, vai ser o c.acessorios e ele esta realizando esse JOIN.
+
+55. Vamos executar agora? 
+
+56. Retornou,
+
+Hibernate: 
+    select
+        acessorio2_.descricao as col_0_0_ 
+    from
+        Carro carro0_ 
+    inner join
+        carro_acessorio acessorios1_ 
+            on carro0_.codigo=acessorios1_.codigo_carro 
+    inner join
+        Acessorio acessorio2_ 
+            on acessorios1_.codigo_acessorio=acessorio2_.codigo cross 
+    join
+        ModeloCarro modelocarr3_ 
+    where
+        carro0_.codigo_modelo=modelocarr3_.codigo 
+        and modelocarr3_.descricao='Cruze'
+Acessorio: Ar Condicionado
+Acessorio: Banco de Couro
+Acessorio: Air Bag
+Acessorio: Som MP3
+
+57. Deu certo. Se eu colocar o Fit, aqui, que tem menos acessorios,
+
+String jpql = "select a.descricao from Carro c JOIN c.acessorios a where c.modelo.descricao = 'Fit'"
+
+58. Retornou,
+
+Hibernate: 
+    select
+        acessorio2_.descricao as col_0_0_ 
+    from
+        Carro carro0_ 
+    inner join
+        carro_acessorio acessorios1_ 
+            on carro0_.codigo=acessorios1_.codigo_carro 
+    inner join
+        Acessorio acessorio2_ 
+            on acessorios1_.codigo_acessorio=acessorio2_.codigo cross 
+    join
+        ModeloCarro modelocarr3_ 
+    where
+        carro0_.codigo_modelo=modelocarr3_.codigo 
+        and modelocarr3_.descricao='Fit'
+Acessorio: Ar Condicionado
+Acessorio: Som MP3
+
+59. Okay, deu certo. Ele ja faz o JOIN, aqui, para a gente.
+
+60. Muito bem, eh isso ai.
+
+61. Interessante, nao eh?
+
+62. Entao, a gente consegue fazer um select desses de uma forma tao simples, nao eh?, usando JPQL. Fala a verdade, voce nao prefere muito mais isso daqui do que escrever isso em SQL?, nao eh?, onde a gente teria que fazer, colocar virgula, em 'acessorios', comecar a fazer todos os Relacionamentos,..., aqui, sai de uma forma bem mais simples, nao eh nao?
+
+63. Bom, entende bem isso daqui. Entende que esse JOIN, aqui, porque que foi feito.
+
+64. Fim da     Aula 06.006. Fazendo JOIN Entre Entidades.
+
+
+-->

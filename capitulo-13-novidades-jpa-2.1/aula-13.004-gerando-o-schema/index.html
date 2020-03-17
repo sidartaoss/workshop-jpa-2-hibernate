@@ -1,0 +1,519 @@
+<!--
+    Aula 13.004. Gerando o Schema
+
+1. Sabe essa paradinha, aqui, do Hibernate, que voce sempre usou, as vezes, para criar as tabelas, nao eh?, 
+
+    <property name="hibernate.hbm2ddl.auto" value="update" />
+
+2. Toda vez que voce alterava o modelo, voce alterava no banco de dados?
+
+3. Pois entao, essa propriedade, aqui, do hibernate, que era exclusiva do hibernate, agora, passa ser, tambem, da Especificacao, ela passa a Definir.
+
+4. Entao, a gente nao precisa mais desse cara, se a gente quiser usar o da Especificacao, que eh do JPA 2.1,
+
+<?xml version="1.0" encoding="UTF-8"?>
+<-- >persistence version="2.0"
+  xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"->
+
+  <persistence version="2.1"
+  xmlns="http://xmlns.jcp.org/xml/ns/persistence" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence 
+  http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
+
+  <persistence-unit name="novidadesJPA21PU" transaction-type="RESOURCE_LOCAL">
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/novidades_jpa_2_1" />
+      <property name="javax.persistence.jdbc.user" value="root" />
+      <property name="javax.persistence.jdbc.password" value="admin" />
+      <property name="javax.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver" />
+
+      <-- property name="hibernate.hbm2ddl.auto" value="update"/->
+      <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect"/>
+      <property name="hibernate.show_sql" value="true" />
+      <property name="hibernate.format_sql" value="true" />
+    </properties>
+  </persistence-unit>
+
+</persistence>
+
+
+5. Entao, a gente tem que atualizar, aqui, oh, para 2.1,
+
+<persistence version="2.1"
+
+, aqui, tem que atualizar, aqui, o namespace,
+
+xmlns="http://xmlns.jcp.org/xml/ns/persistence"
+
+, e o Schema desse namespace,
+
+xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd"
+
+6. Beleza? Onde eh que ele esta.
+
+7. Entao, atualizando esses 2 caras, aqui, o namespace mais a versao, a gente ja vai conseguir usar essas propriedades.
+
+8. E vai ser uma propriedade, vai comecar como javax.persistence. alguma coisa que eu vou te mostrar, porque, agora, eh padrao da especificacao.
+
+9. Entao, vamos la, deixa eu comecar a te mostrar, aqui, a partir da Especificacao, da Apresentacao.
+
+10. Vamos la.
+
+11. Entao, aqui, oh, como eu disse, javax.persistence.schema-generation.database.action. Eu coloquei esse database.action em negrito, porque, o que vai mudar, na maioria das propriedades, que eu vou te mostrar todas, aqui, que eles adicionaram, e, ai, no fimzinho, so uma outra, a ultima que eu vou te mostrar, eh diferente.
+
+12. Entao, database-action. O que que significa o database.action?
+
+13. Eh a acao que o Provider tem que tomar em relacao ao criacao das Tabelas, dos Indices, dessas coisas, que tem que fazer no Banco de dados.
+
+14. Entao, vamos la. none, que eh o default, quando voce nao coloca nada. Significa que ele nao faz nada.
+
+15. Okay? create, create significa que ele vai criar apenas, ele vai criar as tabelas, as coisas dentro do banco de dados.
+
+16. drop-and-create, que ele vai apagar, antes de criar.
+
+17. E drop, ele vai so apagar,
+
+                            javax.persistence.schema-generation.database.action
+
+                                            none
+                                            create
+                                            drop-and-create
+                                            drop
+
+18. Nao eh? Aqui, no create, toma cuidado, se voce deixar create, somente o create, ele vai criar, a primeira vez, vamos supor, nao tem nada, ele cria. Ai, voce para a Aplicacao. Voce subiu de novo, ele vai tentar criar de novo. Beleza? Entao, se tentar criar de novo, pode ser um problema. Entao, e, logicamente, nao eh?, logico, que eu nao preciso nem te falar isso, mas, isso eh mais utilizado, mesmo, em ambiente de Desenvolvimento, voce nao vai colocar isso em sua aplicacao de Producao, para fazer um drop-and-create no Ambiente de Producao.
+
+19. Beleza?
+
+20. Entao, vamos la, vamos ver como eh que a gente faz para brincar com esse cara.
+
+21. Entao, vou pegar, aqui, olha so,
+
+    <property name="javax.persistence.schema-generation.database.action" value="drop-and-create" />
+
+22. Desse jeito, aqui, ele vai apagar e criar as tabelas.
+
+23. Que tabelas?
+
+24. Bom, o default, dele, ainda vou te mostrar, tambem, um negocinho, aqui, legal, agora mesmo, mas o default eh pegar, aqui, as Entidades que a gente tem, entao, a gente tem duas, aqui, eu estou usando aquele mesmo projeto, que eu te apresentar as novidades do JPA 2.1, eu tenho duas Tabelas, aqui, por enquanto, a Tabela Usuario, e a Tabela Fatura.
+
+25. Okay? E, la no meu Banco, eu vim, aqui, e apaguei, oh, nao tem nada, nesse meu Schema, novidades_jpa_2_1. Okay?
+
+26. Entao, o que que eu vou fazer?
+
+27. Eu vou, simplesmente, executar, aqui, o GerarTabelas, que faz a mesma coisa, ele, simplesmente, cria o EntityManager.
+
+28. Beleza?
+
+29. E, ai, a gente vai ver o que que vai aparecer, aqui, no Console, oh.
+
+30. Vai carregar, olha so.
+
+31. Retornou,
+
+Hibernate: 
+    
+    drop table if exists fatura
+2019-03-04 10:40:23,627 [main] INFO  org.hibernate.orm.connections.access - HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@18151a14] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.
+Hibernate: 
+    
+    drop table if exists usuario
+Hibernate: 
+    
+    create table fatura (
+       codigo bigint not null auto_increment,
+        valor decimal(19,2),
+        vencida bit not null,
+        vencimento datetime(6),
+        primary key (codigo)
+    ) engine=InnoDB
+2019-03-04 10:40:23,677 [main] INFO  org.hibernate.orm.connections.access - HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@4fbb001b] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.
+Hibernate: 
+    
+    create table usuario (
+       codigo bigint not null auto_increment,
+        data_nascimento datetime(6),
+        nome varchar(255),
+        primary key (codigo)
+    ) engine=InnoDB
+2019-03-04 10:40:24,516 [main] INFO  org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator - HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+>>>>> Tabelas geradas com sucesso! <<<<<
+
+32. Olha so o log,
+
+ drop table if exists fatura
+
+ drop table if exists usuario
+
+, entao, ele verifica se tem ou nao antes, nao eh?, a Usuario e Fatura. Por que que ele verifica para fazer o Drop?
+
+33. Porque eu coloquei drop-and-create,
+
+   <property name="javax.persistence.schema-generation.database.action" value="drop-and-create" />
+   
+34. Beleza? Entao, se tiver, ele apaga. E, ai, ele faz, oh, 
+
+    create table fatura (
+       codigo bigint not null auto_increment,
+        valor decimal(19,2),
+        vencida bit not null,
+        vencimento datetime(6),
+        primary key (codigo)
+    ) engine=InnoDB
+
+, depois, faz o 
+
+create table usuario (
+       codigo bigint not null auto_increment,
+        data_nascimento datetime(6),
+        nome varchar(255),
+        primary key (codigo)
+    ) engine=InnoDB
+
+35. Ai, mostra, ai, as tabelas que foram geradas.
+
+36. Se a gente voltar, aqui, no Workbench, e dar um Refresh, oh, as duas tabelas foram geradas pra gente.
+
+37. Beleza? Bom, Ate ai, esta bem parecido com o Hibernate, nao eh? Nao tem nenhum problema, nao.
+
+38. Entao, vou continuar, aqui, na minha apresentacao.
+
+39. Bom, a gente tem mais essas duas propriedades, que a gente pode colocar, ai, que eh o
+
+                javax.persistence.schema-generation.create-source
+
+                                    ou
+
+                javax.persistence.schema-generation.drop-source
+
+40. O que que significa o create-source e o drop-source?
+
+41. O create-source eh a fonte de onde ele vai fazer a criacao e a fonte de onde ele vai buscar para fazer a criacao, de onde ele vai buscar para fazer o drop.
+
+42. Ueh, como assim, Normandes? Nao tem as Entidades la?
+
+43. Tem as Entidades, que eh o default, que eh se voce configurar essa propriedade como "metadata", ele so vai pegar la.
+
+44. Mas, eles adicionaram, agora, tambem, via "script". Entao, voce tambem pode falar para ele criar as tabelas via um script.
+
+45. Voce pode falar para ele, tambem, oh, 'Eu quero que voce crie via esse Script, e, daqui, a pouco, eu te mostro a propriedade, para voce falar qual script que eh, onde que o Script esta.'
+
+46. Entao, voce tem tanto o Script para criar, quanto o script para dropar.
+
+47. Sao scripts diferentes, nao eh?, que voce vai criar la, 'create table ...', e o outro, voce vai colocar, 'drop table ...'.
+
+48. As outras opcoes sao, metadata-then-script, ou seja, o mapeamento nosso, la, das nossas classes e, depois, executo o script, ou executa o script e, depois, verifica as nossas as nossas Entidades de mapeamento,
+
+                                        metatada
+                                        script
+                                        metadata-then-script
+                                        script-then-metadata
+
+49. Vamos ver aqui?
+
+50. Vamos inventar alguma coisa, aqui, na hora, mesmo.
+
+51. Que eh o seguinte, eu vou colocar, aqui, oh, via so script,
+
+        <property name="javax.persistence.schema-generation.database.action" value="drop-and-create" />
+        
+        >>> <property name="javax.persistence.schema-generation.create-source" value="script" />
+
+52. A gente ja rodou, ali, o drop-and-create, para as tabelas com o jeito que estava..., bom, vamos fazer o seguinte, vamos usar a opcao metadata-then-scrit,
+
+    <property name="javax.persistence.schema-generation.create-source" value="metadata-then-script" />
+
+Ai, ele vai apagar as nossas tabelas que estao la, e, depois, executar o script. Qual script que ele vai executar? Onde eh que esta esse script para criacao?
+
+53. Esse, aqui, eh o primeiro da criacao,
+
+    <property name="javax.persistence.schema-generation.database.action" value="drop-and-create" />
+    >>> <property name="javax.persistence.schema-generation.create-source" value="metadata-then-script" />
+
+, se eu vier, aqui, e fizer o drop, 
+
+    <property name="javax.persistence.schema-generation.database.action" value="drop-and-create" />
+    <property name="javax.persistence.schema-generation.create-source" value="metadata-then-script" />
+    >>> <property name="javax.persistence.schema-generation.drop-source" value="metadata-then-script" />
+
+, drop-source, mesma coisa, entao, eu posso ter essas duas opcoes,
+
+                        javax.persistence.schema-generation.create-source
+                        javax.persistence.schema-generation.drop-source
+
+54. Entao, eu estou falando, primeiro, faz do metadata, ou seja, das nossas classes, depois, via Script.
+
+55. Mas, eu tenho que falar onde estao esses Scripts.
+
+56. Como eh que eu falo onde estao esses Scripts?
+
+57. Dessa forma aqui, oh,
+
+                        javax.persistence.schema-generation.create-script-source
+                        javax.persistence.schema-generation.drop-script-source
+
+58. E, por exemplo, eu coloco, la, dentro da pasta META-INF/sql, criar-tabelas.sql, por exemplo.
+
+59. Ou, dropar, na pasta META-INF/sql, dropar-tabelas.sql.
+
+60. Eu posso fazer dessa forma.
+
+61. Entao, vamos brincar, aqui, no persistence.xml, oh, esta faltando a propriedade para falar onde esta o script, e, aqui, eu vou falar onde eh que esta o script, em META-INF/sql/criar-tabelas.sql, e, aqui, o drop-script-source, tambem, em META-INF/sql/dropar-tabelas.sql,
+
+    <property name="javax.persistence.schema-generation.database.action" value="drop-and-create" />
+    <property name="javax.persistence.schema-generation.create-source" value="metadata-and-script" />
+    <property name="javax.persistence.schema-generation.drop-source" value="metadata-and-script" />
+    >>> <property name="javax.persistence.schema-genearation.create-script-source" 
+                    value="META-INF/sql/criar-tabelas.sql" />
+    >>> <property name="javax.persistence.schema-generation.drop-script-source" 
+                    value="META-INF/sql/dropar-tabelas.sql"
+
+62. Okay?
+
+63. Entao, vamos la, dentro, aqui, de src/main/resources/META-INF, eu falei que eu vou criar uma pastinha chamada sql, eu vou criar criar-tabelas.sql, e dropar-tabelas.sql.
+
+64. Ueh, Normandes, mas, quando que eu uso isso dai, quando que eu uso o metadata, ou seja, deixo ele criar a partir das Entidades (Usuario, Fatura, etc.), ou seja, das suas classes mapeadas?
+
+65. Bom, ai, depende, mesmo, depende do tipo de criacao. As vezes, eh uma criacao um pouco mais avancada, que ele nao vai conseguir criar, nao eh?, porque a criacao metadata, ou seja, a partir das Entidades, eh um pouco limitado. Entao, se voce quiser criar, ai, esse sql, aqui, um pouco mais avancado, voce consegue.
+
+66. Entao, voce pode deixar ele criar um pouco via metadata, depois, voce complementa via Script, ou faz tudo por Script, eh so deixar que ele vai fazer tudo por script, nao eh?
+
+67. Entao, eu vou criar, aqui, uma tabela qualquer, inventar, agora, aqui,
+
+    create table endereco (codigo bigint primary key auto_increment, rua varchar(100));
+
+, vou fazer isso, daqui, mesmo.
+
+68. E para dropar a tabela, aqui, endereco?
+
+                drop table if exists endereco;
+
+69. Beleza. So isso aqui, mesmo.
+
+70. Entao, eu posso escrever, aqui, o meu Script, posso ir colocando, aqui, mais Scrits, se eu quiser.
+
+71. Entao, o que eu fiz, aqui, na criacao, eu faco, aqui, no drop. Para ele fazer o drop, aqui, no inicio, porque, aqui, esta drop-and-create, entao, ele vai apagar e, depois, criar,
+
+      >>> <property name="javax.persistence.schema-generation.database.action" value="drop-and-create" />
+      <property name="javax.persistence.schema-generation.create-source" value="metadata-then-script" />
+      <property name="javax.persistence.schema-generation.drop-source" value="metadata-then-script" />
+
+
+72. Eu vou mandar gerar mais uma vez, ou seja, GerarTabelas, e vamos ver o que que ele vai fazer.
+
+73. Retornou,
+
+Hibernate: 
+    
+    drop table if exists fatura
+2019-03-04 12:07:47,084 [main] INFO  org.hibernate.orm.connections.access - HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@df4b72] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.
+Hibernate: 
+    
+    drop table if exists usuario
+2019-03-04 12:07:47,517 [main] INFO  org.hibernate.tool.schema.internal.SchemaCreatorImpl - HHH000476: Executing import script 'file:/C:/Users/SEMPR/workshop-jpa-2-hibernate/capitulo-13-novidades-jpa-2.1/aula-13.004-gerando-o-schema/novidades-jpa-2.1/target/classes/META-INF/sql/dropar-tabelas.sql'
+Hibernate: 
+    
+    drop table if exists endereco
+Hibernate: 
+    
+    create table fatura (
+       codigo bigint not null auto_increment,
+        valor decimal(19,2),
+        vencida bit not null,
+        vencimento datetime(6),
+        primary key (codigo)
+    ) engine=InnoDB
+2019-03-04 12:07:47,685 [main] INFO  org.hibernate.orm.connections.access - HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@4943defe] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.
+Hibernate: 
+    
+    create table usuario (
+       codigo bigint not null auto_increment,
+        data_nascimento datetime(6),
+        nome varchar(255),
+        primary key (codigo)
+    ) engine=InnoDB
+2019-03-04 12:07:48,127 [main] INFO  org.hibernate.tool.schema.internal.SchemaCreatorImpl - HHH000476: Executing import script 'file:/C:/Users/SEMPR/workshop-jpa-2-hibernate/capitulo-13-novidades-jpa-2.1/aula-13.004-gerando-o-schema/novidades-jpa-2.1/target/classes/META-INF/sql/criar-tabelas.sql'
+Hibernate: 
+    
+    create table endereco (
+       codigo bigint primary key auto_increment,
+        rua varchar(100)
+    )
+2019-03-04 12:07:48,430 [main] INFO  org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator - HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+>>>>> Tabelas geradas com sucesso! <<<<<
+
+74. Entao, olha so.
+
+75. Ele apagou a tabela fatura,
+
+Hibernate: 
+    
+    drop table if exists fatura
+
+, apagou a tabela usuario,
+
+Hibernate: 
+    
+    drop table if exists usuario
+
+, deu um drop table em endereco, tambem,
+
+Hibernate: 
+    
+    drop table if exists endereco
+
+, e a gente tem a tabela endereco, la, criada, agora. Refresh All no Workbench, a tabela endereco foi criada, aqui.
+
+76. Entao, ele fez, oh, via as Tabelas do nosso Modelo, ou seja, as Entidades, o nosso ORM, que a gente mapeou, e, tambem, via Script.
+
+77. Beleza?
+
+78. Entao, voce tem essas opcoes, ai, cada caso vai ser um caso, nao eh?, nao tem, as vezes, voce vai querer so create, dro-and-create, as vezes, so metadata, as vezes, eh metadata-and-script, as vezes, eh script-and-metadata, okay?, sao essas opcoes.
+
+79. E a ultima propriedade que eu quero te mostrar eh essa aqui, 
+
+
+                        javax.persistence.sql-load-script-source
+
+, que eu vou falar, por exemplo, de um lugar para carregar alguns dados, para fazer algum insert, se eu quiser.
+
+80. Entao, eu vou criar, eu vou adicionar essa propriedade, aqui, em persistence.xml, deixa eu copiar aqui,
+
+        <property name="javax.persistence.sql-load-script-source" value=""
+
+, e eu vou colocar, aqui, oh, "META-INF/sql/carregar-dados.sql",
+
+        <property name="javax.persistence.sql-load-script-source" value="META-INF/sql/carregar-dados.sql" />
+
+81. Por exemplo. Vou criar esse SQL, aqui. E, aqui, eu posso fazer o insert,
+
+                insert into endereco(codigo, rua) values(1, 'Rua X nro 10');
+
+, posso inserir nas outras tabelas tambem, viu?
+
+                insert into usuario(codigo, nome, data_nascimento) values(1, 'Joao Souza', '1990-10-10');
+
+82. Vamos ver, aqui, entao, ele fazendo a insercao desses dados?
+
+83. Vou mandar executar mais uma vez. Beleza, agora, foi, oh, fez o insert para a gente, oh,
+
+Hibernate: 
+    insert into endereco(codigo, rua) values(1, 'Rua X nro 10')
+Hibernate: 
+    insert into usuario(codigo, nome, data_nascimento) values(1, 'Joao Souza', '1990-10-10')
+
+, tranquilo?
+
+84. Se voce for, la, no Workbench e fizer o select,
+
+select * from endereco;
+
+# codigo, rua
+1, Rua X nro 10
+
+
+
+select * from usuario;
+
+# codigo, data_nascimento, nome
+1, 1990-10-10 00:00:00.000000, Joao Souza
+
+85. Certo?
+
+86. E, para finalizar, uma outra coisa que ficou bem legal, que eh o seguinte.
+
+87. Antes, era bem limitado, nao eh?, essa criacao, aqui. Eles conseguiram dar uma melhorada, adicionaram algumas anotacoes, que eu vou te mostrar uma delas, aqui, agora, para a criacao da tabela.
+
+88. Que eh o seguinte. indece.
+
+89. As vezes, eh interessante a gente adicionar indice, para melhorar, quando a gente quer fazer pesquisa.
+
+90. Entao, vamos supor, a tabela Usuario.
+
+91. Usuario eh, bem, um candidato a gente buscar pelo nome.
+
+92. Nao eh?
+
+93. Entao, seria interessante voce criar um indice, nessa tabela, por nome.
+
+94. Entao, o que que a gente pode fazer, que eles adicionaram aqui, oh, indexes = {}, e, ai, eu vou abrir, aqui, e colocar @Index, do pacote javax.persistence,
+
+package com.algaworks.model;
+
+import javax.persistence.Index;
+
+@Entity
+@Table(name = "usuario", indexes = { @Index() })
+public class Usuario implements Serializable {
+
+}
+
+, e, aqui, eu vou falar quais sao as colunas que eu quero adicionar o indice,
+
+@Entity
+@Table(name = "usuario", indexes = { @Index(columnList = "nome") })
+public class Usuario implements Serializable {
+
+}
+
+, entao, eu vou adicionar, aqui, o indice do nome, por exemplo.
+
+95. E eu vou falar o seguinte, eu quero falar o seguinte, tambem, que, alem de eu estar melhorando a pesquisa, eu adicionei um indice no nome, ou seja, a pesquisa vai ser mais rapida pelo nome, agora, eu posso falar, tambem, que eu quero um indice, onde ele eh unico, porque o usuario, nao seria legal ele ter dois usuarios, no sistema, com o mesmo nome,
+
+@Entity
+@Table(name = "usuario", indexes = { @Index( columnList = "nome", unique = true ) })
+public class Usuario implements Serializable {
+
+
+}
+
+96. Entao, eu tambem posso colocar, aqui, unique = true. Beleza?
+
+97. E, isso, aqui, oh, ele ja vai criar, oh, vamos ver o que que ele vai criar, aqui. Olha so, ele alterou a tabela Usuario, adicionou a Constraint, para falar que ele eh unico, agora, o banco nao vai deixar ter dois nomes iguais, nao eh?, dois usuarios com o mesmo nome, e, aqui, ja eh, quando ele adiciona isso, daqui, 'add constraint UKplwlwihgql09syg15ux4p1kgo', ele ja adiciona esse cara como indice,
+
+ alter table usuario 
+       add constraint UKplwlwihgql09syg15ux4p1kgo unique (nome)
+
+98. Se a gente vier, aqui, no MySQL Workbench, oh, e der uma analisada, aqui, Refresh All, Botao Direito, Alter Table..., clicar, aqui, na Guia Indexes, a gente vai ver, la, oh, que o nome eh o indice unico.
+
+99. Beleza? Entao, foi criado e ele eh um indice unico.
+
+100. Ah, vamos supor, eu vou fazer isso, daqui, so para te mostrar, talvez, nao faria tanto sentido, mas, as vezes, a gente gostaria de fazer um indice composto. Entao, a gente colocaria, @Index(), e eu vou colocar, aqui, columnList, "nome, data_nascimento", por exemplo,
+
+@Entity
+@Table(name = "usuario", indexes = { @Index(columnList = "nome", unique = true) 
+                                    , @Index(columnList = "nome, data_nascimento")
+})
+
+101. As vezes, ai, no sistema, precisa, nao eh?, pesquisar pela Data de nascimento e pelo nome, ao mesmo tempo. Entao, voce quer melhorar essa pesquisa, aqui, voce cria o indice dos dois,
+
+@Entity
+@Table(name = "usuario", indexes = { @Index(columnList = "nome", unique = true) 
+                                >>> , @Index(columnList = "nome, data_nascimento")
+})
+
+102. Se eu mandar executar, aqui, agora, oh, olha so o que que ele fez,
+
+Hibernate: create index IDXi7uf8qwbwddj1t7q5vp76m3d1 on usuario (nome, data_nascimento)
+Hibernate: 
+    
+    alter table usuario 
+       add constraint UKplwlwihgql09syg15ux4p1kgo unique (nome)
+
+, ele criou o indice do nome, que a gente tinha feito,
+
+    alter table usuario 
+       add constraint UKplwlwihgql09syg15ux4p1kgo unique (nome)
+
+, e criou um indice, agora, para usuario, usando nome e data_nascimento.
+
+103. Vamos dar uma olhada, aqui, oh, no Workbench, botao direito em usuario, Alter Table..., Guia Indexes. Agora, eu tenho o indice, aqui, no nome, e tenho o indice em nome e data_nascimento.
+
+104. Beleza? Entao, eh isso que eu gostaria de te mostrar. Tanto que melhorou, nao eh?, essa partezinha, ai, eles estao melhorando, nao eh?, estao buscando melhorar, para adicionar mais funcionalidades, ao JPA.
+
+105. Fim da     Aula 13.004. Gerando o Schema.
+
+
+
+-->

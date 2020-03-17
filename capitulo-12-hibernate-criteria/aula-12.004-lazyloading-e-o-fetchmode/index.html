@@ -1,0 +1,574 @@
+<!--
+    Aula 12.004. LazyLoading e FetchMode
+
+1. Bom, eu vou te mostrar, agora, uma aula que eh muito importante, porque eh uma situacao que, com certeza, voce vai ver no dia-a-dia, ai, com o desenvolvimento, ai, no JPA com Hibernate.
+
+2. Por que que eu estou fazendo isso?
+
+3. Eh a famosa LazyLoading.
+
+4. Eu ja te mostrei, em outras oportunidades, ai, mas eu vou te explicar, agora, com Criteria, como eh que funciona alguns outros detalhezinhos, e eu acredito que voce vai gostar bastante da aula, ai, na hora em que acontecer isso, voce vai falar, 'Ah, tah, legal, agora, eu ja lembro da aula la, e vou conseguir resolver'.
+
+5. E tem muitas pessoas que nao entendem direito.
+
+6. Eu ja vi muitos programadores trabalhando com JPA e, ai, dava, la, o LazyLoading, e eles, simplesmente, iam la e colocavam EAGER (i.e., @ManyToOne(fetch = FetchType.EAGER)), nao entendia o motivo das coisas, entao, deixa eu te explicar aqui.
+
+7. Como a gente, neste projeto, a gente o Open Session no envio, eh um pouco mais complicado de simular, aqui, mas eu vou criar um metodo, aqui, eu criei, aqui, essa classe, aqui, SimulandoLazyLoading, la dentro do pacote de teste, so criei como Teste Unitario, apesar de nao ser um Teste Unitario, so para facilitar, nao eh?, a Criacao da Factory, do Entity Manager, beleza? So por isso.
+
+8. Beleza? Mas, isso eh uma situacao que acontece, ai, no dia-a-dia, dependendo de como eh que esta sendo controlado a Sessao, no seu Sistema, no Sistema que voce for trabalhar, esse tipo de situacao pode acontecer e a resolucao, o entendimento da resolucao eh essa aqui, eh bem tranquilo.
+
+9. A primeira coisa, vamos buscar o Session, entao, a gente precisa do Session, e vamos pegar o Criteria, eu vou criar para a classe Carro, essa Consulta,
+
+@Teste
+public void simulaLazyLoading() {
+    Session session = this.manager.unwrap(Session.class);
+    Criteria criteria = session.createCriteria(Carro.class);
+
+}
+
+10. Qual que eh a Consulta? Qual que eh a ideia?
+
+11. Se eu vier, aqui, no banco de dados, fizer uma Consulta, aqui, em carro_acessorio, voce vai ver que eu tenho o Codigo de Carro 17, com o Codigo de Acessorio 1.
+
+12. O Carro 17 tem o Ar Condicionado.
+
+13. Entao, eu vou buscar o Carro de Codigo 17.
+
+14. Ah, antes de eu fazer, aqui, a Consulta, vamos olhar, aqui, na classe Carro, qual que eh o modo em que esta o fetch, aqui, oh,
+
+@ManyToMany(fetch = FetchType.LAZY)
+@JoinTable(name = "carro_acessorio"
+                , joinColumns = @JoinColumn(name = "codigo_carro")
+                , inverseJoinColumns = @JoinColumn(name = "codigo_acessorio")
+)
+public List<Acessorio> getAcessorios() {
+    return acessorios;    
+}
+
+15. Esta Lazy.
+
+16. Esta Lazy, ou seja, ele nao traz na primeira Consulta, isso significa isso, ele eh Preguicoso, entao, ele vai buscar, ele fala assim, oh, 'Eu sou Preguicoso em relacao ao atributo acessorios, nao vou buscar acessorios, nao, deixa acessorios mais para a frente, estou com preguica'.
+
+17. Entao, beleza, entao, o que que eu vou fazer? Eu vou adicionar uma Restricao, aqui, em que o codigo seja o 17, beleza?, o Carro de codigo 17,
+
+    Session session = this.manager.unwrap(Session.class);
+    Criteria criteria = session.createCriteria(Carro.class);
+
+    critera.add(Restrictions.eq("codigo"), 17);
+
+18. E, ai, eu vou, simplesmente, mostrar, aqui, eu estou buscando pelo ID, qual a possibilidade de ele me retornar mais de 1? Eh, zero, nao eh? Entao, vai retornar somente 1 Carro, entao, eu posso usar uniqueResult(),
+
+    Session session = this.manager.unwrap(Session.class);
+    Criteria criteria = session.createCriteria(Carro.class);
+
+    criteria.add(Restrictions.eq("codigo"), 17);
+    Carro c = (Carro) criteria.uniqueResult();
+
+    System.out.printf("Codigo: %d. Placa: %s", c.getCodigo(), c.getPlaca());
+
+19. Beleza? Simples, assim.
+
+20. Vamos executar esse cara, aqui, para a gente ver o que que vai acontecer.
+
+21. Retornou,
+
+Hibernate: 
+    select
+        this_.codigo as codigo1_3_0_,
+        this_.chassi as chassi2_3_0_,
+        this_.cor as cor3_3_0_,
+        this_.data_criacao as data_cri4_3_0_,
+        this_.data_modificacao as data_mod5_3_0_,
+        this_.foto as foto6_3_0_,
+        this_.codigo_modelo as codigo_m9_3_0_,
+        this_.placa as placa7_3_0_,
+        this_.valor_diaria as valor_di8_3_0_ 
+    from
+        Carro this_ 
+    where
+        this_.codigo=?
+
+Codigo: 17. Placa: BBB-1299
+
+22. Olha la. Fez o SELECT do Carro, trouxe todas as coisas do Carro, apenas em Carro, certo?, todas as outras coisas estao Lazy, nao eh?, entao, trouxe apenas em Carro, filtrando o codigo, mostrou la, o Codigo do Carro e a Placa.
+
+23. Beleza, sem problemas.
+
+24. Vou descer, aqui, um pouquinho, e vou pegar o Nome do primeiro acessorio,
+
+    System.out.printf("Primeiro acessorio do carro: %s", c.getAcessorios().get(0).getDescricao());
+
+25. Beleza. Nao estou preocupando, aqui, se vai dar null ou nao, porque a gente ja viu que esse cara, aqui, tem. O objetivo nao eh esse, o objetivo eh que eu quero te ensinar o LazyLoading e o FetchMode, isso que eu quero te mostrar, aqui, como eh que a gente seta o Fetch(), aqui, sem precisar mexer na Entidade, nesse caso, Carro.
+
+26. Entao, vamos la. Ja executei esse cara, aqui, uma vez, vamos executar mais uma vez.
+
+27. Retornou,
+
+Hibernate: 
+    select
+        this_.codigo as codigo1_3_0_,
+        this_.chassi as chassi2_3_0_,
+        this_.cor as cor3_3_0_,
+        this_.data_criacao as data_cri4_3_0_,
+        this_.data_modificacao as data_mod5_3_0_,
+        this_.foto as foto6_3_0_,
+        this_.codigo_modelo as codigo_m9_3_0_,
+        this_.placa as placa7_3_0_,
+        this_.valor_diaria as valor_di8_3_0_ 
+    from
+        Carro this_ 
+    where
+        this_.codigo=?
+
+Codigo: 17. Placa: BBB-1299
+Hibernate: 
+    select
+        acessorios0_.codigo_carro as codigo_c1_4_0_,
+        acessorios0_.codigo_acessorio as codigo_a2_4_0_,
+        acessorio1_.codigo as codigo1_0_1_,
+        acessorio1_.descricao as descrica2_0_1_ 
+    from
+        carro_acessorio acessorios0_ 
+    inner join
+        Acessorio acessorio1_ 
+            on acessorios0_.codigo_acessorio=acessorio1_.codigo 
+    where
+        acessorios0_.codigo_carro=?
+Primeiro acessorio do carro: Ar Condicionado
+
+28. Olha so. Vamos ver o que que ele fez.
+
+29. A primeira vez, foi la, fez o SELECT no Carro, beleza? Somente em Carro, mostrou, aqui, para a gente, o codigo e a placa,
+
+Codigo: 17. Placa: BBB-1299
+
+30. Depoi, ele fez um SELECT em Acessorio, from CARRO_ACESSORIO, para fazer o Relacionamento, buscou os Acessorios,
+
+    select
+        acessorios0_.codigo_carro as codigo_c1_4_0_,
+        acessorios0_.codigo_acessorio as codigo_a2_4_0_,
+        acessorio1_.codigo as codigo1_0_1_,
+        acessorio1_.descricao as descrica2_0_1_ 
+    from
+        carro_acessorio acessorios0_ 
+    inner join  
+        Acessorio acessorio1_ 
+            on acessorios0_.codigo_acessorio=acessorio1_.codigo 
+
+, o nome dos Acessorios. Ou seja, em outro Select.
+
+31. Trouxe, la, o 'Ar Condicionado'
+
+32. Entao, ele trouxe em outro Select. Por que que ele trouxe em outro Select? Porque ele eh Lazy. Ele esta preguicoso. Certo?
+
+33. Oh, o Fetch Mode dele esta Lazy,
+
+@ManyToMany(fetch = FetchType.LAZY)
+...
+public List<Acessorio> getAcessorios() {
+    return acessorios;    
+}
+
+34. Entao, o que que eu ja vi muitos caras fazendo?
+
+35. O seguinte. Nesse caso, nao vai dar problema, porque a Sessao foi aberta, ela foi criada, e ela so vai ser fechada quando terminar esse metodo, aqui.
+
+36. Muitas vezes, acontece, em um Sistema Web, o que? Vai la, fez a Requisicao no banco de dados, ai, devolveu la para o Controller.
+
+37. Se a Sessao nao estiver aberta no Controller e ele comecar a desenhar a pagina e ele tentar buscar Um Acessorio, pode dar um problema.
+
+38. E eu vou simular, aqui, agora.
+
+39. E, ai, o que que as pessoas vao la e fazem?
+
+40. Eu vou te mostrar.
+
+41. Eu vou simular o problema. Qual que eh o problema?
+
+42. A sessao ser fechada,
+
+    session.close();
+
+43. As vezes, o cara criou o Sistema, o desenvolvedor criou o Sistema, abre a Sessao na hora em que chega no DAO, saiu do DAO, fechou a Sessao, por exemplo,
+
+		Session session = this.createSession();
+		Criteria criteria = session.createCriteria(Carro.class);
+		criteria.add(Restrictions.eq("codigo", 17L));
+		Carro c = (Carro) criteria.uniqueResult();
+		
+		System.out.println();
+		System.out.printf("Codigo: %d. Placa: %s", c.getCodigo(), c.getPlaca());
+        System.out.println();
+        
+        >>> session.close();
+		
+		System.out.printf("Primeiro acessorio do carro: %s", c.getAcessorios().get(0).getDescricao());    
+
+
+44. Ou, la na parte de Negocios (Servicos), tambem. Ou seja, o que eu quero te dizer, eh, 'A sessao esta fechada quando ele chegou no Controller, chegou na parte Web'. E, ai, a parte Web tenta ler um acessorio.
+
+45. Eh isso, daqui, que eu estou simulando.
+
+46. Okay? A Sessao foi fechada, neste momento.
+
+47. 
+
+		Session session = this.manager.unwrap(Session.class);
+		Criteria criteria = session.createCriteria(Carro.class);
+		criteria.add(Restrictions.eq("codigo", 17L));
+		Carro c = (Carro) criteria.uniqueResult();
+		
+		System.out.println();
+		System.out.printf("Codigo: %d. Placa: %s", c.getCodigo(), c.getPlaca());
+        System.out.println();
+        
+        >>> session.close(); // Simulando o fechamento da Sessao em um Sistema Web
+		
+		System.out.printf("Primeiro acessorio do carro: %s", c.getAcessorios().get(0).getDescricao());
+
+48. Beleza? E, ai, vamos ver o que que vai acontecer, aqui, e, ai, eu vou te falar o que que, as vezes, alguns desenvolvedores que nao conhecem tanto, o que que eles poderiam fazer.
+
+49. Vamos executar de novo, e a gente vai ver um Errao, aqui,
+
+50. Retornou,
+
+org.hibernate.LazyInitializationException: failed to lazily initialize a collection of role: com.algaworks.curso.jpa2.modelo.Carro.acessorios, could not initialize proxy - no Session
+
+51. Olha so o erro que deu.
+
+52. Olha so, essa famosa excecao: org.hibernate.LazyInitializationException: failed to lazily initialize a collection of role: 
+
+53. Ou seja, ele falhou para inicializar, nao eh?, de fuma forma preguicosa, a colecao acessorios, ou seja, com.algaworks.curso.jpa2.modelo.Carro.acessorios.
+
+54. Ele nao consegue inicializar, porque nao tem nenhuma Sessao, a Sessao ja foi fechada.
+
+55. Entao, esse eh o erro. Isso, aqui, eh uma Excecao razoavelmente comum no desenvolvimento com JPA.
+
+56. E o que que o cara vai la e faz?
+
+57. Ah, tah, isso, aqui, esta Lazy, 
+
+@Entity
+public class Carro {
+
+    ...
+    private List<Acessorio> acessorios;
+
+    ...
+
+    @ManyToMany(fetch = >>> FetchType.LAZY <<<) 
+    ...
+    public List<Acessorio> getAcessorios() {
+        return acessorios;    
+    }
+
+}
+
+58. Ai, ele vem, aqui, e coloca Eager,
+
+    @ManyToMany(fetch = >>> FetchType.EAGER <<<) 
+    ...
+    public List<Acessorio> getAcessorios() {
+        return acessorios;    
+    }
+
+59. Ou seja, para resolver esse problema.
+
+60. Porque, na hora em que ele colocou EAGER, vamos ver o comportamento, aqui, vamos executar, de novo, o metodo simulandoLazyLoading().
+
+61. Retornou,
+
+Hibernate: 
+    select
+        this_.codigo as codigo1_3_1_,
+        this_.chassi as chassi2_3_1_,
+        this_.cor as cor3_3_1_,
+        this_.data_criacao as data_cri4_3_1_,
+        this_.data_modificacao as data_mod5_3_1_,
+        this_.foto as foto6_3_1_,
+        this_.codigo_modelo as codigo_m9_3_1_,
+        this_.placa as placa7_3_1_,
+        this_.valor_diaria as valor_di8_3_1_,
+        acessorios2_.codigo_carro as codigo_c1_4_3_,
+        acessorio3_.codigo as codigo_a2_4_3_,
+        acessorio3_.codigo as codigo1_0_0_,
+        acessorio3_.descricao as descrica2_0_0_ 
+    from
+        Carro this_ 
+    left outer join
+        carro_acessorio acessorios2_ 
+            on this_.codigo=acessorios2_.codigo_carro 
+    left outer join
+        Acessorio acessorio3_ 
+            on acessorios2_.codigo_acessorio=acessorio3_.codigo 
+    where
+        this_.codigo=?
+
+Codigo: 17. Placa: BBB-1299
+Primeiro acessorio do carro: Ar Condicionado
+
+62. Agora, nao deu, so falou que a Sessao ja foi fechada, porque eu tentei fechar novamente, aqui, novamente, oh, no @After,
+
+@After
+public void tearDown() {
+    this.manager.close();
+}
+
+63. A Excecao que deu, na verdade, falou, 'Oh, a Sessao ja esta fechada'.
+
+64. Entao, nao precisaria fechar de novo.
+
+65. Porque, depois do metodo, ele tenta fechar.
+
+66. Ai, fala, 'Opa, mas ja fechou.'
+
+67. Ja fechou, aqui,
+
+		Session session = this.manager.unwrap(Session.class);
+		Criteria criteria = session.createCriteria(Carro.class);
+		criteria.add(Restrictions.eq("codigo", 17L));
+		Carro c = (Carro) criteria.uniqueResult();
+		
+		System.out.println();
+		System.out.printf("Codigo: %d. Placa: %s", c.getCodigo(), c.getPlaca());
+        System.out.println();
+        
+        >>> session.close(); // Simulando o fechamento da Sessao em um Sistema Web
+		
+        System.out.printf("Primeiro acessorio do carro: %s", c.getAcessorios().get(0).getDescricao());
+        
+68. Entao, esse seria um problema, aqui.
+
+69. Entao, nao esquenta com esse erro, aqui, nao, org.hibernate.SessionException: Session was already closed
+
+70. O problema eh que funcionou. Por que que eu sei que funcionou? Olha so, 
+
+Hibernate: 
+    select
+        this_.codigo as codigo1_3_1_,
+        this_.chassi as chassi2_3_1_,
+        this_.cor as cor3_3_1_,
+        this_.data_criacao as data_cri4_3_1_,
+        this_.data_modificacao as data_mod5_3_1_,
+        this_.foto as foto6_3_1_,
+        this_.codigo_modelo as codigo_m9_3_1_,
+        this_.placa as placa7_3_1_,
+        this_.valor_diaria as valor_di8_3_1_,
+        acessorios2_.codigo_carro as codigo_c1_4_3_,
+        acessorio3_.codigo as codigo_a2_4_3_,
+        acessorio3_.codigo as codigo1_0_0_,
+        acessorio3_.descricao as descrica2_0_0_ 
+    from
+        Carro this_ 
+    left outer join
+        carro_acessorio acessorios2_ 
+            on this_.codigo=acessorios2_.codigo_carro 
+    left outer join
+        Acessorio acessorio3_ 
+            on acessorios2_.codigo_acessorio=acessorio3_.codigo 
+    where
+        this_.codigo=?
+
+Codigo: 17. Placa: BBB-1299
+Primeiro acessorio do carro: Ar Condicionado
+
+, "Primeiro acessorio do carro: Ar Condicionado". Ele trouxe. Ele nao deu aquela excecao de LazyLoading.
+
+71. Repara bem. Por que que ele fez isso?
+
+72. Ele ja foi la e trouxe, oh, os acessorios do Carro no Primeiro Select,
+
+    select
+        this_.codigo as codigo1_3_1_,
+        this_.chassi as chassi2_3_1_,
+        this_.cor as cor3_3_1_,
+        this_.data_criacao as data_cri4_3_1_,
+        this_.data_modificacao as data_mod5_3_1_,
+        this_.foto as foto6_3_1_,
+        this_.codigo_modelo as codigo_m9_3_1_,
+        this_.placa as placa7_3_1_,
+        this_.valor_diaria as valor_di8_3_1_,
+        acessorios2_.codigo_carro as codigo_c1_4_3_,
+        acessorio3_.codigo as codigo_a2_4_3_,
+        acessorio3_.codigo as codigo1_0_0_,
+        acessorio3_.descricao as descrica2_0_0_ 
+    from
+        Carro this_ 
+    left outer join
+        carro_acessorio acessorios2_ 
+            on this_.codigo=acessorios2_.codigo_carro 
+    left outer join
+        Acessorio acessorio3_ 
+            on acessorios2_.codigo_acessorio=acessorio3_.codigo
+
+73. Ta vendo? Ele foi la e fez isso. 
+
+74. Inicializou e trouxe. Entao, eu nao tive esse erro.
+
+75. Mas, ai, voce vai falar o seguinte, 'Po, mas eh bem ruim essa estrategia. Voce nao concorda que eh bem ruim essa estrategia?'
+
+76. Por que que eh ruim?
+
+77. Porque todo mundo que buscar o Carro vai ter que buscar os Acessorios. Por isso que a gente ja tinha colocado isso, aqui, como Lazy,
+
+@ManyToMany(fetch = FetchType.LAZY)
+...
+public List<Acessorio> getAcessorios() {
+    return acessorios;    
+}
+
+78. Alias, eu estou me repetindo, ai, mas eu quero que isso fique fixo na sua cabeca. Eu ja tinha colocado como Lazy, o certo nao eh vir, aqui, 
+
+@ManyToMany(fetch = FetchType.LAZY)
+...
+public List<Acessorio> getAcessorios() {
+    return acessorios;    
+}
+
+, e trocar isso, daqui, para EAGER.
+
+79. Entao, como eh que a gente pode fazer, aqui, 
+
+@Test
+public void simulaLazyLoading() {
+    Session session = this.mamager.unwrap(Session.class);
+
+    Criteria criteria = session.createCriteria(Carro.class);
+
+    criteria.add(Restrictions.eq("codigo"), 17L);
+
+    Carro c = (Carro) criteria.uniqueResult();
+
+    System.out.printf("Codigo: %d. Placa: %s", c.getCodigo, c.getPlaca());
+
+    session.close();    // Simulando o fechamento da Sessao em um Sistema Web
+
+    System.out.printf("Primeiro acessorio do carro: %s", c.getAcessorios().get(0).getDescricao() );
+}
+
+, para nao ter esse tipo de problema?
+
+80. A gente pode falar qual que eh o Fetch, como que a gente quer buscar determinada colecao nessa Consulta.
+
+81. Ou seja, a gente pode customizar para essa Consulta, aqui.
+
+82. Beleza?
+
+83. Entao, na hora em que eu for executar a Consulta, 
+
+@Test
+public void simulaLazyLoading() {
+    Session session = this.mamager.unwrap(Session.class);
+
+    Criteria criteria = session.createCriteria(Carro.class);
+
+    criteria.add(Restrictions.eq("codigo"), 17L);
+
+    >>> Carro c = (Carro) criteria.uniqueResult();
+
+    System.out.printf("Codigo: %d. Placa: %s", c.getCodigo, c.getPlaca());
+
+    session.close();    // Simulando o fechamento da Sessao em um Sistema Web
+
+    System.out.printf("Primeiro acessorio do carro: %s", c.getAcessorios().get(0).getDescricao() );
+}
+
+, eu ja sei como eh que eu quero fazer o relacionamento, eu quero buscar determinadas Entidades. Entao, oh, criteria.setFetchMode(associationPath, mode). associationPath: qual que eh o cara?, qual que eh o atributo, la? Nao eh acessorios? Entao, com acessorios, o que que eu quero trazer? Eles tem, aqui, um Enum, FetchMode, que tem a opcao JOIN.
+
+@Test
+public void simulaLazyLoading() {
+    Session session = this.mamager.unwrap(Session.class);
+
+    Criteria criteria = session.createCriteria(Carro.class);
+
+    criteria.setFetchMode("acessorios", FetchMode.JOIN);
+
+    criteria.add(Restrictions.eq("codigo"), 17L);
+
+    Carro c = (Carro) criteria.uniqueResult();
+
+    System.out.printf("Codigo: %d. Placa: %s", c.getCodigo, c.getPlaca());
+
+    session.close();    // Simulando o fechamento da Sessao em um Sistema Web
+
+    System.out.printf("Primeiro acessorio do carro: %s", c.getAcessorios().get(0).getDescricao() );
+}
+
+84. Entao, eu estou falando assim, oh, 'Eu quero fazer o JOIN',
+
+    criteria.setFetchMode("acessorios", >>> FetchMode.JOIN);
+
+, com 'acessorios',
+
+    criteria.setFetchMode(>>> "acessorios", FetchMode.JOIN);
+
+85. Eh isso que ele esta falando, nessa Consulta, para essa Consulta especifica,
+
+    >>> criteria.setFetchMode("acessorios", FetchMode.JOIN); <<<
+
+86. Entao, se o cara quer fazer uma consulta que busca acessorios, customiza a Consulta, nao vai la e altera a Entidade, que afeta o Sistema inteiro,
+
+@ManyToMany(fetch = FetchType.LAZY)
+...
+public List<Acessorio> getAcessorios() {
+    return acessorios;    
+}
+
+87. Pode afetar a performance do Sistema inteiro.
+
+88. Entao, eu vou mandar executar mais uma vez. Retornou,
+
+Hibernate: 
+    select
+        this_.codigo as codigo1_3_1_,
+        this_.chassi as chassi2_3_1_,
+        this_.cor as cor3_3_1_,
+        this_.data_criacao as data_cri4_3_1_,
+        this_.data_modificacao as data_mod5_3_1_,
+        this_.foto as foto6_3_1_,
+        this_.codigo_modelo as codigo_m9_3_1_,
+        this_.placa as placa7_3_1_,
+        this_.valor_diaria as valor_di8_3_1_,
+        acessorios2_.codigo_carro as codigo_c1_4_3_,
+        acessorio3_.codigo as codigo_a2_4_3_,
+        acessorio3_.codigo as codigo1_0_0_,
+        acessorio3_.descricao as descrica2_0_0_ 
+    from
+        Carro this_ 
+    left outer join
+        carro_acessorio acessorios2_ 
+            on this_.codigo=acessorios2_.codigo_carro 
+    left outer join
+        Acessorio acessorio3_ 
+            on acessorios2_.codigo_acessorio=acessorio3_.codigo 
+    where
+        this_.codigo=?
+
+Codigo: 17. Placa: BBB-1299
+
+Primeiro acessorio do carro: Ar Condicionado
+
+89. Okay. Trouxe o Codigo e trouxe o Acessorio. Ele fez num Select so, mesmo estando Lazy,
+
+@Entity
+public class Carro {
+
+    ... 
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    ...
+    public List<Acessorio> getAcessorios() {
+        return acessorios;    
+    }
+
+    ...
+}
+
+90. Okay? Viu que interessante?
+
+91. Entendeu como eh tranquilo entender essa questao do FetchMode? Nao eh complicado. Ta vendo que nao eh complicado, eh so a gente entender a situacao, cada situacao que ela quer e aprender, falar assim, oh, 'Para essa Consulta, eu quero fazer o JOIN, eu quero que traga acessorios'. Na outra Consulta, eu nao quero, eu deixo o default da forma como esta la.
+
+92. Fim da Aula 12.004. LazyLoading e FetchMode.
+
+
+-->

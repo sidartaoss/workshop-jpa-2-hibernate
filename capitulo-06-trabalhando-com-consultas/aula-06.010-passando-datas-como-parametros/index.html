@@ -1,0 +1,127 @@
+<!-- 
+
+    Aula 06.010. Passando Datas como Parametros
+
+1. Ja vimos que trabalhar com datas requer uma atencao especial, pois precisamos tomar cuidado com o tipo que escolhemos - java.util.Date ou java.util.Calendar. Isso porque alguns frameworks podem exigir um ou outro.
+
+2. Agora, vamos ver como filtrar uma query passando uma data como parametro. Lembra que, no mapeamento, fizemos uso da anotacao @Temporal e da enumeracao @TemporalType? A enumeracao indica se o campo que estamos persistindo eh somente uma data, horas ou data e horas juntos.
+
+3. Quando formos fazer o filtro, temos que informar que tipo de campo ele eh.
+
+4. Para exemplificar, vamos criar uma classe de consulta, no nosso projeto de consultas.
+Vamos, entao, filtrar os alugueis vendidos entre dois dias quaisquer.
+
+5. Para isso, salve alguns alugueis no banco de dados com datas diferentes, para que voce veja o filtro em acao.
+
+6. Crie a classe ConsultaAluguelPorData e vamos criar, primeiro, o jpql usando BETWEEN para o filtro da data,
+
+package com.algaworks.curso.jpa2.consultas;
+
+public class ConsultaAluguelPorData {
+    
+    public static void main(String[] args) {
+
+        EntityManager em = JPAUtil.createEntityManager();
+
+        String jpql = "select count(a) "
+                + "from Aluguel a "
+                + "where a.dataDevolucao BETWEEN :inicio AND :fim";
+
+        Number quantidade = (Number) em.createQuery(jpql, Number.class).getSingleResult();
+
+        System.out.println("Quantidade: " + quantidade.intValue());
+
+        em.close();
+
+    }
+}
+
+7. Repare que vamos buscar a quantidade de devolucoes em um determinado periodo.
+
+8. Uma parte importante dessa consulta eh o tipo do campo dataDevolucao. Isso porque, se for um Calendar, devemos passar um Calendar, se for um java.util.Date, devemos passar o mesmo tipo.
+
+9. Neste caso, "dataDevolucao" eh do tipo java.util.Date, e eh mapeada como TIMESTAMP.
+
+10. Portanto, vamos criar as variaveis para fazer o filtro,
+
+Calendar inicioCalendar = Calendar.getInstance();
+inicioCalendar.set(2019, 0, 25, 7, 0);  // 25 de Janeiro de 2019 7:00 horas
+Date inicio = inicioCalendar.getTime();
+
+Calendar fimCalendar = Calendar.getInstance();
+fimCalendar.set(2019, 0, 30, 16, 0); // 30 de Janeiro de 2019 16:00 horas
+Date fim = fimCalendar.getTime();
+
+11. Obs.: A contagem dos meses inicia-se com zero, Janeiro eh zero, Fevereiro 1, e assim por diante.
+
+12. Agora, basta utilizarmos o EntityManager para criar a query, executar e, entao, mostrarmos o resultado na tela.
+
+13. Retornou,
+
+Hibernate: 
+    select
+        count(aluguel0_.codigo) as col_0_0_ 
+    from
+        Aluguel aluguel0_ 
+    where
+        aluguel0_.data_devolucao between ? and ?
+Quantidade de devolucoes: 1
+
+14. Teste 2,
+
+Calendar inicioCalendar = Calendar.getInstance();
+inicioCalendar.set(2019, 0, 30, 16, 0);  // 30 de Janeiro de 2019 16:00 horas
+Date inicio = inicioCalendar.getTime();
+
+Calendar fimCalendar = Calendar.getInstance();
+fimCalendar.set(2019, 0, 31, 18, 0); // 31 de Janeiro de 2019 18:00 horas
+Date fim = fimCalendar.getTime();
+
+15. Retornou,
+
+Hibernate: 
+    select
+        count(aluguel0_.codigo) as col_0_0_ 
+    from
+        Aluguel aluguel0_ 
+    where
+        aluguel0_.data_devolucao between ? and ?
+Quantidade de devolucoes: 2
+
+
+15. Teste 3,
+
+		String jpql = "select count(a) "
+				+ "from Aluguel a "
+				+ "where a.dataEntrega >= :inicio AND a.dataDevolucao <= :fim ";
+		
+		Calendar inicioCalendar = Calendar.getInstance();
+		inicioCalendar.set(2019, 0, 21);  // 21 de Janeiro de 2019.
+		Date inicio = inicioCalendar.getTime();
+		
+		Calendar fimCalendar = Calendar.getInstance();
+		fimCalendar.set(2019, 0, 28, 20, 0);  // 28 de Janeiro de 2019 20:00 horas. 
+		Date fim = fimCalendar.getTime();
+
+		Number quantidadeDevolucoes = (Number) em.createQuery(jpql, Number.class)
+				.setParameter("inicio", inicio, TemporalType.DATE)
+				.setParameter("fim", fim, TemporalType.TIMESTAMP)
+				.getSingleResult();        
+
+16. Retornou,
+
+Hibernate: 
+    select
+        count(aluguel0_.codigo) as col_0_0_ 
+    from
+        Aluguel aluguel0_ 
+    where
+        aluguel0_.data_entrega>=? 
+        and aluguel0_.data_devolucao<=?
+Quantidade de devolucoes: 1
+
+17. Faca alguns testes, mudando o campo de aluguel para "dataEntrega", que eh do tipo Calendar e mapeada como TemporalType.DATE.
+
+18. Fim da     Aula 06.010. Passando Datas como Parametros.
+
+-->

@@ -1,0 +1,71 @@
+<!-- 
+
+    Aula 06.008. Novos Tipos de Retorno
+
+1. Se voce ficou triste com aquela List na Classe ConsultasAgregadasEmCarro, pode ficar feliz, seus problemas acabaram!
+
+2. JPA eh tao fantastico que nos podemos criar um novo objeto na hora da consulta com os valores do select. Nao entendeu? Deixa eu te mostrar.
+
+3. Nos estavamos com a seguinte consulta:
+
+    String jpql = "select c, count(a), max(a.valorTotal), avg(a.valorTotal) "
+        + "from Carro c JOIN c.alugueis a "
+        + "group by c "
+        + "having count(a) >  1"
+    
+4. Nos temos 6 campos de retorno 'c' (tipo Carro), "count(a)" pode ser um Long, "max(a.valorTotal)" pode ser um BigDecimal e "avg(a.valorTotal)" tambem pode ser um BigDecimal.
+
+5. Nos nao temos nenhuma classe que agrupe esses valores. Na verdade, nos nao tinhamos. Vamos, agora, criar, e deixar o JPA criar esse objeto na consulta.
+
+6. Crie uma classe chamada AluguelCarroInfo, no pacote com.algaworks.curso.jpa2.info. Adicione cada atributo para os tipos do retorno e um construtor que inicializa todos eles. Veja abaixo,
+
+package com.algaworks.curso.jpa2.info;
+
+public class AluguelCarroInfo {
+
+    private Carro carro;
+    private Long quantidadeAlugueis;
+    private BigDecimal valorMaximo;
+    private BigDecimal valorMedio;
+
+    public AluguelCarroInfo(Carro carro,
+        Long quantidadeAlugueis,
+        Number valorMaximo,
+        Number valorMedio) {
+            this.carro = carro;
+            this.quantidadeAlugueis = quantidadeAlugueis;
+            this.valorMaximo = BigDecimal.valueOf(valorMaximo.doubleValue());
+            this.valorMinimo = BigDecimal.valueOf(valorMinimo.doubleValue());
+        }
+
+    // getters and setters
+}
+
+7. Ja te explico o porquê estarmos recebendo Number e convertendo para BigDecimal, aguarde so um pouquinho.
+
+8. Voltando para a nossa consulta em ConsultasAgregadasEmCarro, ao inves de retornarmos diretamente as agregacoes, vamos criar um AluguelCarroInfo usando o operador new. Veja como fica nossa consulta fica agora,
+
+    String jpql = "select NEW com.algaworks.curso.jpa2.info.AluguelCarroInfo (c, count(a), max(a.valorTotal), avg(a.valorTotal) ) "
+        + "from Carro c JOIN c.alugueis a "
+        + "group by c "
+        + "having count(a) > 1 ";
+
+9. Repare que nos estamos criando um novo objeto do tipo AluguelCarroInfo chamando o seu construtor (veja o fecha-parenteses no fim do construtor).
+
+10. E, agora que vem a explicacao de termos utilizado o Number ao inves do BigDecimal diretamente. Como eh o proprio framework que chama o construtor, ele nao sabe que tem que converter para BigDecimal, por isso, deixamos Number e, na implementacao, fazemos a conversao de Number para BigDecimal. Quando terminar este exercicio, altere, diretamente, o tipo de dados no construtor para BigDecimal e veja a excecao que ira acontecer.
+
+11. Para finalizar, vamos trocar aquela lista horrorosa para o codigo mais elegante, abaixo,
+
+List<AluguelCarroInfo> resultados = em.createQuery(jpql, AluguelCarroInfo.class).getResultList();
+
+for (AluguelCarroInfo aci : resultados) {
+    System.out.println("Modelo: " + aci.getCarro().getModelo().getDescricao());
+    System.out.println("Quantidade de alugueis: " + aci.getQuantidadeAlugueis());
+    System.out.println("Valor maximo: " + aci.getValorMaximo());
+    System.out.println("Valor medio: " + aci.getValorMedio());
+    System.out.println();    
+}
+
+
+
+-->

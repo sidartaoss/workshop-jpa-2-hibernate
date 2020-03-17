@@ -1,0 +1,545 @@
+<!--
+    Aula 12.001. Introducao - Restricoes Between e Eq
+
+1. Apesar do esforco que o JPA-2 vem tentando colocar o Criteria dentro dela para a gente usar a partir so das especificacoes, o Criteria do Hibernate ainda eh mais facil de a gente trabalhar com ele.
+
+2. E, eu vou, uma serie de Relatorios que eu vou criar, agora, vai ser para te mostrar um pouco do que a gente fez, as coisas que a gente fez usando Criteria da Especificacao, so que, agora, nos vamos usar o Criteria do Hibernate e, ai, voce vai poder comparar a facilidade e dificuldade de um e de outro.
+
+3. Voce vai ver que, do Hibernate, eh muito mais facil de trabalhar, eh muito menos verboso aquele tanto de codigo que a gente precisa escrever, que nao faz sentido, nao eh?, entre aspas, e, ai, eu vou te mostrar um pouquinho, entao, sobre esse Criteria do Hibernate.
+
+4. A desvantagem de se utilizar ele eh que voce fica preso no Hibernate.
+
+5. Voce esta preso na implementacao do Hibernate.
+
+6. Okay? Voce saiu da Especificacao.
+
+7. Mas, se voce tiver algum projeto e voce falar, 'Po, cara, mas eu preciso muito de acelerar mais, aqui, o meu projeto, ou esta muito mais facil, a chance de eu trocar o Hibernate eh muito pequena, entao, eu vou utilizar o Criteria do Hibernate, mesmo.'. Entao, manda ver, comeca a aprender a partir de agora, como eh que eu vou te mostrar, aqui, e seja feliz.
+
+8. Beleza?
+
+9. Entao, vamos la. O que que eu fiz?
+
+10. Primeiro, para comecar a introducao, aqui, eu fiz, simplesmente, uma outra tela, aqui, no Menu de Relatorio, Aluguel por caro - Criteria, nos vamos usar a mesma consulta, o mesmo relatorio, so para voce ver a diferenca do Relatorio Aluguel por carro e Aluguel por carro - Criteria.
+
+11. Entao, eu coloquei, aqui, o Relatorio Aluguel por carro, so que via Criteria. Ai, aqui, em PesquisaAluguelCriteria.xml, eu alterei, aqui, oh, 'Pesquisa de aluguel Por Criteria', em <h1 />.
+
+12. Entao, eh, basicamente, a mesma Pagina, aqui. O que que voce mudou nessa Pagina, Normandes?
+
+13. pesquisarCriteria(),
+
+<p:commandButton value="Pesquisa" id="botaoPesquisa" action="#{pesquisaAluguelBean.pesquisarCriteria}" update=""...
+
+, eu chamei o metodo, no Controller, diferente. Entao, vamos ver, aqui, no Controller. 
+
+public class PesquisaAluguelBean {
+
+    ...
+
+    public void pesquisarCriteria() {
+        this.alugueis = aluguelDAO.buscarPorDataDeEntregaEModeloCarroCriteria(this.aluguel.getDataEntrega(), 
+    }
+
+
+}
+
+, ai, o que que pesquisarCriteria() faz de diferente? Ele, simplesmente, chama, la, no DAO, por Data de Entrega e Modelo do Carro Criteria. Bom, isso, aqui, ta horrivel, fazer desse jeito, voce nao vai colocar Criteria, ai, no nome dos seus metodos, nao. Isso, aqui, eh so para eu te mostrar que tem um, esse outro metodo, aqui, pesquisar(), que a gente fez usando a Especificacao e, esse, aqui,
+
+    public void pesquisarCriteria() {
+        this.alugueis = aluguelDAO.buscarPorDataDeEntregaEModeloCarroCriteria(this.aluguel.getDataEntrega(), 
+    }
+
+, eu utilizei o Criteria do Hibernate.
+
+14. Beleza? Mas, nao vai colocar esse nome, aqui, no seu metodo, nao.
+
+15. Para voce ver que a alteracao foi bem simples.
+
+16. Okay? Tanto eh que, la no GitHub, eu vou colocar apenas a classe, aqui, do DAO para voce ver, voce pegar ela, porque o resto eh muito simples mesmo.
+
+17. Bom, entao, vamos la,
+
+public List<Aluguel> buscarPorDataDeEntregaEModeloCarroCriteria(Date dataEntrega, ModeloCarro modelo) {
+
+}
+
+18. Aqui, antes, a gente tinha feito, ja, essa consulta, so que usando CriteriaBuilder, da propria Especificacao, nao tinha nada de Hibernate antes. Bom, ai, eu criei esse metodo, aqui, e a gente vai implementar, aqui, ele, agora, usando o Criteria do Hibernate.
+
+19. Beleza?
+
+20. A primeira coisa que a gente precisa, aqui, para criar o Criteria eh o Criteria, nao eh? A gente precisa do Criteria,
+
+public List<Aluguel> buscarPorDataDeEntregaEModeloCarroCriteria(Date dataEntrega, ModeloCarro modelo) {
+    Criteria 
+}
+
+, e eh o Criteria, agora, do pacote org.hibernate. Okay? Bom, entao, a gente precisa do Criteria, do hibernate, okay?
+
+21. E de onde que eu vou buscar ele? Bom, nao eh mais do EntityManager, diretamente, porque o EntityManager, ele devolve, para a gente, o CriteriaBuilder, da Especificacao. E eu quero o Criteria do Hibernate. Entao, como eh que eu faco? Eu pego ele a partir da Sessao, da Sessao do Hibernate. Entao, eu posso fazer o seguinte, eu pego a Session do Hibernate, e como eh que eu pego a Session? A partir do EntityManager. Ai, eu dou uma desempacotada nela, la de dentro,
+
+    Session session = this.manager.unwrap(Session.class);
+    Criteria criteria = session.
+
+22. Porque a gente esta usando o Hibernate, aqui, entao, eu estou falando o seguinte, 'Tira la de dentro, desempacota, ai, a Session do Hibernate'. Ai, aqui, a partir da Session, eu consigo falar, 'Cria a Criteria.', que sao os Criterios de Consulta. Para qual classe Persistente? Para a classe Aluguel,
+
+    Session session = this.manager.unwrap(Session.class);
+    Criteria criteria = session.createCriteria(Aluguel.class);
+
+23. Bom, para retornar, antes, aqui, a gente vai colocar os filtros, mas, la no final, criteria.list(), ele vai retornar a lista,
+
+@SuppressWarnings("unchecked")
+public List<Aluguel> buscarPorDataDeEntregaEModeloCarro(Date dataEntrega, ModeloCarro modelo) {
+    Session session = this.manager.unwrap(Session.class);
+    Criteria criteria = session.createCriteria(Aluguel.class);
+    
+    return criteria.list();
+}
+
+, que anotacao que eh essa, Normandes? Ta vendo, aqui? return criteria.list();, ele fica amarelinho, pela questao do Generics. Entao, para nao ficar esse amarelinho, a gente vem, aqui, e adiciona essa anotacao, suprime esse Warning, ai, para nao ficar mais amarelinho, ali, o meu metodo.
+
+24. Bom, beleza.
+
+25. Entao, o que que eu vou fazer, agora? Entao, veja bem, se a Data da entrega for diferente de null, a gente precisa fazer alguma coisa, adicionar o filtro, e, se o modelo tambem for diferente de null, a gente vai fazer o filtro,
+
+    Session session = this.manager.unwrap(Session.class);
+    Criteria criteria = session.createCriteria(Aluguel.class);
+
+    if (dataEntrega != null) {
+
+    }
+
+    if (modelo != null) {
+
+    }
+
+    return criteria.list();
+
+26. Okay? Simples assim mesmo.
+
+27. E diretao, aqui, e ja acabou. Nao precisa fazer em duas etapas, igual a gente fez, aqui, com JPA-2.
+
+28. Okay? Aqui, com JPA-2, a gente precisava, primeiro, criar os parametros, e, depois, a gente teve que setar os parametros.
+
+29. Aqui, com Hibernate, nao, vai ser diretao, se a data de entrega for null, ja vamos setar, aqui.
+
+30. E, ai, para facilitar, aqui, eu vou criar esse cara, aqui, oh, como metodo, aqui, ja me retorna o Date, do java.util, eu vou passar, aqui, geraDataInicial(), 
+
+private Date geraDataInicial(Date dataEntrega) {
+	Calendar dataEntregaInicial = Calendar.getInstance();
+	dataEntregaInicial.setTime(dataEntrega);
+	dataEntregaInicial.set(Calendar.HOUR_OF_DAY, 0);
+	dataEntregaInicial.set(Calendar.MINUTE, 0);
+    dataEntregaInicial.set(Calendar.SECOND, 0);    
+    return dataEntregaInicial.getTime();
+}
+
+31. Okay? Ele recebe, aqui, dataEntrega, e eu retorno dataEntregaInicial.getTime(), ele me retorna, ja, como Date.
+
+32. E vamos criar outro metodo, aqui, geraDataFinal(Date dataEntrega),
+
+private Date geraDataFinal(Date dataEntrega) {
+    Calendar dataEntregaFinal = Calendar.getInstance();
+    dataEntregaFinal.setTime(dataEntrega);
+    dataEntregaFinal.set(Calendar.HOUR_OF_DAY, 23);
+    dataEntregaFinal.set(Calendar.MINUTE, 59);
+    dataEntregaFinal.set(Calendar.SECOND, 59);    
+    return dataEntregaFinal.getTime();
+}
+
+33. E, aqui, como eh que a gente vai fazer isso, daqui? Olha o tanto que eh complicado,
+
+    if (dataEntrega != null) {
+        criteria.add()
+    }
+
+, quando eu faco criteria.add(), eu vou adicionar, agora, as restricoes que eu quero fazer nessa minha Criteria. Okay?
+
+34. Se eu, simplesmente, aqui, fizesse,
+
+Criteria criteria = session.createCriteria(Aluguel.class);
+return criteria.list();
+
+, eh um 'select * from aluguel', beleza?
+
+35. Agora, eu estou adicionando, aqui, as clausulas where.
+
+36. Entao, where, o and, por ai, vai.
+
+37. Entao, eu estou adicionando, aqui, o Restrictions.between(). O Restrictions.between que vai fazer o between la no where,
+
+    if (dataEntrega != null) {
+        criteria.add(Restictions.between("", "", ""));
+    }
+
+38. Entao, qual que eh a propriedade? dataEntrega eh o nome da propriedade, la na minha classe Aluguel, nao eh nela que eu estou querendo fazer o entre, aqui,
+
+    if (dataEntrega != null) {
+        criteria.add(Restrictions.between("dataEntrega", "low", "high"));
+    }
+
+39. Para o segundo parametro, a data debaixo, a menor data ("low"), eh o metodo geraDataInicial(). E, no terceiro parametro, a data final, ou seja, o metodo geraDataFinal(), onde eu passo a Data de entrega,
+
+    if (dataEntrega != null) {
+        criteria.add(Restrictions.between("dataEntrega", geraDataInicial(dataEntrega), this.geraDataFinal(dataEntrega)));
+    }
+
+40. Pronto. Acredita? Eh isso mesmo.
+
+41. Entao, oh, mais uma vez, eu vou fazer criteria.add(), eu vou adicionar as restricoes.
+
+42. Restrictions., voce vai encontrar varios e varios metodos, aqui, para a gente fazer as restricoes.
+
+43. Vamos ver mais um dele, aqui?
+
+44. 
+
+if (modelo != null) {
+    criteria.add()
+}
+
+, eu preciso fazer o Restriction, agora, do ModeloCarro.
+
+45. Restrictions.eq, de equals(), entao, aqui, equals(), o nome da propriedade, ai, vai ter uma diferencazinha, aqui, eu ja vou falar, e o modelo,
+
+    if (modelo != null) {
+        criteria.add(Restrictions.eq("", modelo));
+    }
+
+46. Okay?
+
+47. O que que eu tenho que passar, aqui?
+
+48. Vamos la. Em aluguel, nao tem o relacionamento modelo, direto. O Aluguel faz relacionamento com Carro, que faz o relacionamento com ModeloCarro.
+
+49. Entao, vamos voltar, la.
+
+50. Entao, eu preciso, aqui, como, aqui, essa Criteria, eu estou em cima de Aluguel, entao, eu tenho que fazer o seguinte, oh, para eu chegar la, em ModeloCarro, eu tenho que chegar em Carro, entao, eu tenho que passar por Aluguel, e passar por Carro.
+
+51. Certo? Entao, eu vou criar, criteria.createAlias(), eu vou falar o seguinte, eu vou criar um apelidozinho, um alias, para essa minha entidade Carro,
+
+    if (modelo != null) {
+        criteria.createAlias("carro", "c");
+        criteria.add(Restrictions.eq("", modelo));
+    }
+
+52. Pra que?
+
+53. Porque eu estou falando o seguinte, para essa minha propriedade Carro, agora, vai se chamar "c". E, ai, agora, no eq(), eu posso fazer ("c.modelo", "modelo"), ou seja, agora, eu sei que "c" representa o relacionamento carro,
+
+    if (modelo != null) {
+        >>> criteria.createAlias("carro", "c"); <<<
+        criteria.add(Restrictions.eq("c.modelo", modelo));
+    }
+
+, ai, agora, eu posso navegar dentro desse relacionamento,
+
+    if (modelo != null) {
+        criteria.createAlias("carro", "c");
+        >>> criteria.add(Restrictions.eq("c.modelo", modelo)); <<<
+    }
+
+54. Pronto, acabou. Essa, aqui, eh a mesma consulta que a gente fez, aqui, em cima, no metodo pesquisar(), com JPA-2, so que usando o Criteria do Hibernate.
+
+55. Okay?
+
+56. Bom, vamos ver se funciona?
+
+57. Deixa eu reiniciar o Servidor, fazer o Deploy de tudo que a gente fez, aqui, vamos ver se nao vai ter nenhum errinho, eu ja fiz alguns cadastros de Aluguel, ali, para a gente ter dados, o Servidor iniciou, http://localhost:8080/locadora-veiculo-web/aluguel/PesquisaAluguelCriteria.xhtml, okay, ja carregou, se eu mandar Pesquisa, aqui, trouxe, la, todos os alugueis,
+
+Hibernate: 
+    select
+        this_.codigo as codigo1_1_3_,
+        this_.codigo_apolice_seguro as codigo_a6_1_3_,
+        this_.codigo_carro as codigo_c7_1_3_,
+        this_.data_devolucao as data_dev2_1_3_,
+        this_.data_entrega as data_ent3_1_3_,
+        this_.data_pedido as data_ped4_1_3_,
+        this_.codigo_motorista as codigo_m8_1_3_,
+        this_.valor_total as valor_to5_1_3_,
+        apoliceseg2_.codigo as codigo1_2_0_,
+        apoliceseg2_.protecao_causas_naturais as protecao2_2_0_,
+        apoliceseg2_.protecao_roubo as protecao3_2_0_,
+        apoliceseg2_.protecao_terceiro as protecao4_2_0_,
+        apoliceseg2_.valor_franquia as valor_fr5_2_0_,
+        carro3_.codigo as codigo1_3_1_,
+        carro3_.chassi as chassi2_3_1_,
+        carro3_.cor as cor3_3_1_,
+        carro3_.data_criacao as data_cri4_3_1_,
+        carro3_.data_modificacao as data_mod5_3_1_,
+        carro3_.foto as foto6_3_1_,
+        carro3_.codigo_modelo as codigo_m9_3_1_,
+        carro3_.placa as placa7_3_1_,
+        carro3_.valor_diaria as valor_di8_3_1_,
+        motorista4_.codigo as codigo2_9_2_,
+        motorista4_1_.cpf as cpf3_9_2_,
+        motorista4_1_.data_nascimento as data_nas4_9_2_,
+        motorista4_1_.nome as nome5_9_2_,
+        motorista4_1_.sexo as sexo6_9_2_,
+        motorista4_.numero_cnh as numero_c1_8_2_ 
+    from
+        Aluguel this_ 
+    left outer join
+        apolice_seguro apoliceseg2_ 
+            on this_.codigo_apolice_seguro=apoliceseg2_.codigo 
+    left outer join
+        Carro carro3_ 
+            on this_.codigo_carro=carro3_.codigo 
+    left outer join
+        Motorista motorista4_ 
+            on this_.codigo_motorista=motorista4_.codigo 
+    left outer join
+        Pessoa motorista4_1_ 
+            on motorista4_.codigo=motorista4_1_.codigo
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+
+, oh, ele fez o select grandao, ai, do jeito que esta mapeado, que esta feito o mapeamento.
+
+58. Okay? Vamos, por exemplo, colocar a Data de entrega, aqui, oh, dia 28/02/2019. 
+
+59. Retornou,
+
+Hibernate: 
+    select
+        this_.codigo as codigo1_1_3_,
+        this_.codigo_apolice_seguro as codigo_a6_1_3_,
+        this_.codigo_carro as codigo_c7_1_3_,
+        this_.data_devolucao as data_dev2_1_3_,
+        this_.data_entrega as data_ent3_1_3_,
+        this_.data_pedido as data_ped4_1_3_,
+        this_.codigo_motorista as codigo_m8_1_3_,
+        this_.valor_total as valor_to5_1_3_,
+        apoliceseg2_.codigo as codigo1_2_0_,
+        apoliceseg2_.protecao_causas_naturais as protecao2_2_0_,
+        apoliceseg2_.protecao_roubo as protecao3_2_0_,
+        apoliceseg2_.protecao_terceiro as protecao4_2_0_,
+        apoliceseg2_.valor_franquia as valor_fr5_2_0_,
+        carro3_.codigo as codigo1_3_1_,
+        carro3_.chassi as chassi2_3_1_,
+        carro3_.cor as cor3_3_1_,
+        carro3_.data_criacao as data_cri4_3_1_,
+        carro3_.data_modificacao as data_mod5_3_1_,
+        carro3_.foto as foto6_3_1_,
+        carro3_.codigo_modelo as codigo_m9_3_1_,
+        carro3_.placa as placa7_3_1_,
+        carro3_.valor_diaria as valor_di8_3_1_,
+        motorista4_.codigo as codigo2_9_2_,
+        motorista4_1_.cpf as cpf3_9_2_,
+        motorista4_1_.data_nascimento as data_nas4_9_2_,
+        motorista4_1_.nome as nome5_9_2_,
+        motorista4_1_.sexo as sexo6_9_2_,
+        motorista4_.numero_cnh as numero_c1_8_2_ 
+    from
+        Aluguel this_ 
+    left outer join
+        apolice_seguro apoliceseg2_ 
+            on this_.codigo_apolice_seguro=apoliceseg2_.codigo 
+    left outer join
+        Carro carro3_ 
+            on this_.codigo_carro=carro3_.codigo 
+    left outer join
+        Motorista motorista4_ 
+            on this_.codigo_motorista=motorista4_.codigo 
+    left outer join
+        Pessoa motorista4_1_ 
+            on motorista4_.codigo=motorista4_1_.codigo 
+    where
+        this_.data_entrega between ? and ?
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+
+60. Se eu mandar pesquisar, so trouxe, aqui, o registro da Data de entrega do dia 28/02/2019.
+
+61. Se a gente olhar a consulta que ele gerou, oh, olha la, 
+
+    where
+        this_.data_entrega between ? and ?
+
+62. where, e a data entre uma e outra.
+
+63. Vou limpar, aqui, de novo.
+
+64. E, na tela, eu vou tirar, aqui, a Data de entrega e vou colocar o Modelo.
+
+65. Vou selecionar o Cruze, aqui. Clicar em Pesquisar, trouxe os registros correspondentes. Vamos olhar, la, a Query?
+
+66. Retornou,
+
+Hibernate: 
+    select
+        this_.codigo as codigo1_1_3_,
+        this_.codigo_apolice_seguro as codigo_a6_1_3_,
+        this_.codigo_carro as codigo_c7_1_3_,
+        this_.data_devolucao as data_dev2_1_3_,
+        this_.data_entrega as data_ent3_1_3_,
+        this_.data_pedido as data_ped4_1_3_,
+        this_.codigo_motorista as codigo_m8_1_3_,
+        this_.valor_total as valor_to5_1_3_,
+        apoliceseg3_.codigo as codigo1_2_0_,
+        apoliceseg3_.protecao_causas_naturais as protecao2_2_0_,
+        apoliceseg3_.protecao_roubo as protecao3_2_0_,
+        apoliceseg3_.protecao_terceiro as protecao4_2_0_,
+        apoliceseg3_.valor_franquia as valor_fr5_2_0_,
+        c1_.codigo as codigo1_3_1_,
+        c1_.chassi as chassi2_3_1_,
+        c1_.cor as cor3_3_1_,
+        c1_.data_criacao as data_cri4_3_1_,
+        c1_.data_modificacao as data_mod5_3_1_,
+        c1_.foto as foto6_3_1_,
+        c1_.codigo_modelo as codigo_m9_3_1_,
+        c1_.placa as placa7_3_1_,
+        c1_.valor_diaria as valor_di8_3_1_,
+        motorista5_.codigo as codigo2_9_2_,
+        motorista5_1_.cpf as cpf3_9_2_,
+        motorista5_1_.data_nascimento as data_nas4_9_2_,
+        motorista5_1_.nome as nome5_9_2_,
+        motorista5_1_.sexo as sexo6_9_2_,
+        motorista5_.numero_cnh as numero_c1_8_2_ 
+    from
+        Aluguel this_ 
+    left outer join
+        apolice_seguro apoliceseg3_ 
+            on this_.codigo_apolice_seguro=apoliceseg3_.codigo 
+    inner join
+        Carro c1_ 
+            on this_.codigo_carro=c1_.codigo 
+    left outer join
+        Motorista motorista5_ 
+            on this_.codigo_motorista=motorista5_.codigo 
+    left outer join
+        Pessoa motorista5_1_ 
+            on motorista5_.codigo=motorista5_1_.codigo 
+    where
+        c1_.codigo_modelo=?
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+
+67. Fez o select, onde, 
+
+    where
+        modelocarr0_.codigo=?
+
+68. Ele fez o select e ja fez o where do modelo.
+
+69. Vamos adicionar os 2 filtros?
+
+70. Onde a Data de entrega for 25/02/2019 e o Modelo do carro for Cruze.
+
+71. Retornou,
+
+Hibernate: 
+    select
+        this_.codigo as codigo1_1_3_,
+        this_.codigo_apolice_seguro as codigo_a6_1_3_,
+        this_.codigo_carro as codigo_c7_1_3_,
+        this_.data_devolucao as data_dev2_1_3_,
+        this_.data_entrega as data_ent3_1_3_,
+        this_.data_pedido as data_ped4_1_3_,
+        this_.codigo_motorista as codigo_m8_1_3_,
+        this_.valor_total as valor_to5_1_3_,
+        apoliceseg3_.codigo as codigo1_2_0_,
+        apoliceseg3_.protecao_causas_naturais as protecao2_2_0_,
+        apoliceseg3_.protecao_roubo as protecao3_2_0_,
+        apoliceseg3_.protecao_terceiro as protecao4_2_0_,
+        apoliceseg3_.valor_franquia as valor_fr5_2_0_,
+        c1_.codigo as codigo1_3_1_,
+        c1_.chassi as chassi2_3_1_,
+        c1_.cor as cor3_3_1_,
+        c1_.data_criacao as data_cri4_3_1_,
+        c1_.data_modificacao as data_mod5_3_1_,
+        c1_.foto as foto6_3_1_,
+        c1_.codigo_modelo as codigo_m9_3_1_,
+        c1_.placa as placa7_3_1_,
+        c1_.valor_diaria as valor_di8_3_1_,
+        motorista5_.codigo as codigo2_9_2_,
+        motorista5_1_.cpf as cpf3_9_2_,
+        motorista5_1_.data_nascimento as data_nas4_9_2_,
+        motorista5_1_.nome as nome5_9_2_,
+        motorista5_1_.sexo as sexo6_9_2_,
+        motorista5_.numero_cnh as numero_c1_8_2_ 
+    from
+        Aluguel this_ 
+    left outer join
+        apolice_seguro apoliceseg3_ 
+            on this_.codigo_apolice_seguro=apoliceseg3_.codigo 
+    inner join
+        Carro c1_ 
+            on this_.codigo_carro=c1_.codigo 
+    left outer join
+        Motorista motorista5_ 
+            on this_.codigo_motorista=motorista5_.codigo 
+    left outer join
+        Pessoa motorista5_1_ 
+            on motorista5_.codigo=motorista5_1_.codigo 
+    where
+        this_.data_entrega between ? and ? 
+        and c1_.codigo_modelo=?
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+
+72. Se a gente olhar a Query, aqui, olha la, a Data de entrega esta entre ? and ? e o modelo eh o modelo informado.
+
+73. Beleza? Entao, como eu disse, vou repetir, so para finalizar essa aula, com o Criteria do Hibernate, 
+
+@RequestScoped
+public Session createHibernateSession() {
+    EntityManagerFactory factory = Persistence.createEntityManagerFactory("locadoraVeiculoPU");
+    return (Session) factory.createEntityManager();
+}
+
+public List<Aluguel> buscarPorDataDeEntregaEModeloCarroCriteria(Date dataEntrega, ModeloCarro modelo) {
+    Session session = this.createHibernateSession();
+    Criteria criteria = session.createCriteria(Aluguel.class);
+    
+    if (dataEntrega != null) {
+        criteria.add(Restrictions.add("dataEntrega", this.geraDataInicial(dataEntrega)), this.geraDataFinal(dataEntrega));
+    }
+
+    if (modelo != null) {
+        criteria.createAlias("carro", "c");
+        criteria.add(Restrictions.eq("c.modelo", modelo));
+    }
+    
+    return criteria.list();
+}
+
+, fica mais facil, realmente, de se fazer a pesquisa.
+
+74. Concorda comigo? De voce ter que fazer todas essas questoes, nao eh? De voce ter que criar as Expressoes de Parametros, os Predicados, e por ai vai. 
+
+75. Aqui, fica muito mais direto. Mas, voce fica preso ao Hibernate. Beleza? Mas, se isso nao for um problema para voce, e eu acredito que nao eh, na maioria das aplicacoes, nao eh um problema, voce pode usar o Hibernate, ai, que vai ser mais facil, mais direto.
+
+76. Fim da     Aula 12.001. Introducao - Restricoes Between e Eq.
+
+-->

@@ -1,0 +1,242 @@
+<!--
+    Aula 16.005. Introducao ao Multi-Tenancy
+
+1. Vamos falar, agora, sobre o Multi-Tenant.
+
+2. Bom, As vezes, voce nunca ouviu falar sobre o que que eh isso.
+
+3. Entao, esta aula eh uma introducao para te explicar um pouquinho sobre o que que eh isso, que situacoes voce pode usar, e as formas que existem de Multi-Tenant, que sao 3.
+
+4. Depois, eu vou te mostrar, em outras aulas, como a gente faz isso, usando o Hibernate.
+
+5. Beleza?
+
+6. Bom, vamos comecar traduzindo essa palavra, ai, Multi-Tenant.
+
+7. Tenant, a traducao do ingles para o portugues, seria inquilino.
+
+8. Eh o cara que esta alugando uma casa, por exemplo, eh um Tenant.
+
+9. Multi, eh de varios.
+
+10. Entao, sao Varios Inquilinos.
+
+11. Normandes, agora, a gente vai falar de Aluguel?
+
+12. Nao, nao.
+
+13. Nao eh isso.
+
+14. Eu quero dizer o seguinte, a gente vai ter uma Aplicacao e, nessa Aplicacao, nos vamos ter varios inquilinos nela.
+
+15. Vamos trocar, ao inves de chamar de Inquilinos, vamos chamar de Cliente, de Empresa, por exemplo.
+
+16. Entao, eu poderia ter varias Empresas na minha Aplicacao e, cada uma delas, usando dados separados.
+
+17. Eh isso que significa usar o Multi-Tenant.
+
+18. Sao varias empresas usando a mesma aplicacao, so que os dados de cada empresa eh unico.
+
+19. Onde que a gente usa isso?
+
+20. Normalmente, em SaaS, ou seja, Software como Servico, Service As A Service.
+
+21. Voce cria uma aplicacao, vamos pensar na locadora-veiculo-web, ai, deste Curso.
+
+22. E, ai, voce quer que esse Sistema, locadora-veiculo-web, seja usado para varias empresas, voce vai vender para varias locadoras de veiculos, no Brasil afora, okay?, voce deixou ele redondinho, ai, terminou 100% das coisas dele, e resolveu vender ele para as Locadoras de Veiculo.
+
+23. E, ai, voce vai ter uma unica maquina, sei la, ou, um Unico Servidor, na Internet, por exemplo, e, ai, voce quer que cada Locadora de Veiculo, se cadastre no seu Sistema.
+
+24. So que os Carros da Locadora de Veiculo A nao podem misturar com os Carros da Locadora de Veiculo B.
+
+25. Okay? Eles nao podem ser misturados.
+
+26. Cada locadora tem o seu proprio conjunto de Carros.
+
+27. Concorda comigo?
+
+28. Nao eh? Quando Uma fizer o Aluguel, eh so Daquela Locadora, nao eh de Todas.
+
+29. Beleza? Entao, a gente vai separar esses dados, assim. Eu vou mostrar numa aplicacao, mais simples, aqui, para ficar mais facil de voce reproduzir, ai.
+
+30. Okay?
+
+31. Qual que eh o grande Tcha, disso dai, nao eh?
+
+32. Eh a Seguranca dos Dados.
+
+33. Eh voce ter certeza que os dados da empresa A nao vao misturar com os dados da empresa B.
+
+34. Nao eh?
+
+35. Que isso eh importante, na hora em que voce for vender o Servico, se a empresa ficar sabendo, nao eh?, as vezes, quando voce vai vender, dependendo do tipo de sistema, voce tem que falar para ela, "Olha, pode ficar tranquilo, que os seus dados nao vao confundir com a outra empresa, por causa disso, disso, disso..."
+
+36. Nao eh?
+
+37. Voce vai explicar como eh que isso funciona?
+
+38. Okay?
+
+39. Bom, existem 3 formas de a gente gerenciar esse tipo de situacao com Multi-Tenant.
+
+40. Eu vou passar as 3, aqui, depois, eu explico um pouquinho mais sobre cada uma delas.
+
+41. A primeira, eh Separar o Banco de Dados,
+
+                            Multi-Tenant
+
+                        3 Formas de Gerenciar:
+
+                        1. Separar o Banco de Dados
+
+42. Ou seja, varios Bancos de Dados, Cada Tenant, Cada Inquilino em Um Banco de Dados, separado.
+
+43. A gente pode Separar o Schema,
+
+                        Multi-Tenant
+
+
+                    3 Formas de Gerenciar:
+
+                    1. Separar o Banco de Dados
+
+                    2. Separar o Schema
+
+44. Ou seja, Cada Empresa vai ter o seu Schema, dentro Do Mesmo Banco de Dados, a gente criar Schemas diferentes.
+
+45. Ou, um Identificador na Tabela,
+
+
+                                        Multi-Tenant
+
+
+                            3 Formas de Gerenciar:
+
+                                    1. Separar o Banco de Dados
+
+
+                                    2. Separar o Schema
+
+
+                                    3. Identificador na Tabela
+
+
+46. Tambem, a gente pode ter Uma Tabela e Uma Coluna, especifica, na Tabela, vai representar Um Tenant.
+
+47. Okay?
+
+48. Bom, essa ultima opcao, esta com Previsao de o Hibernate suportar na Versao 5. Okay?
+
+49. Na versao 4.3 do Hibernate, que eh a que a gente esta trabalhando, nao tem esse Suporte, a gente nao vai ver mais detalhes dela.
+
+50. Okay?
+
+51. Bom, vamos la.
+
+51. 1. Separar o Banco de Dados
+
+52. Bom, eu acho que a ideia eh simples, nao eh?
+
+
+                                2. Separar o Banco de Dados
+
+
+
+                     Tenant 1                    Tenant 2                    Tenant 3
+                     Empresa A                   Empresa B                   Empresa C
+
+
+53. Eh voce ter Varios Bancos de Dados, varias instancias de Bancos de Dados, e cada Tenant, cada Cliente, cada Empresa, vai ter os seus dados salvos em Um Unico Banco de Dados.
+
+54. Qual que eh a vantagem disso dai?
+
+55. Imagina que o Banco de Dados, ai, do Tenant 2 deu Um Problema.
+
+56. Os outros continuam funcionando, okay?
+
+57. E, para voce recuperar o BAckup, desse camarada, vai ser mais facil.
+
+58. Voce pega o ultimo Backup do Tenant 2, e, pah, levanta ele, voce vai ter recuperado os dados do Tenant 2.
+
+59. Nao eh? O Tenant 1 e o Tenant 3 nem vao ficar sabendo que isso aconteceu.
+
+60. Nao eh?
+
+61. Vai ser bem mais facil de voce recuperar.
+
+62. Qual que eh a Desvantagem?
+
+63. O custo.
+
+64. Voce vai ter que ter varias Instancias de Bancos de Dados.
+
+65. E, dependendo, ai, pode ficar caro. Se voce for colocar, ai, se hospedar isso em um Servidor, na Internet, que ele cobra por Instancia de Banco de Dados, isso vai ficar mais caro para voce.
+
+66. Bom, 2. Separar o Schema.
+
+67. Qual que eh a ideia?
+
+68. A gente vai ter Um unico Banco de Dados. Porem, cada conjunto de tabelas, ali, do Tenant 1, vai estar em um Schema diferente.
+
+69. Entao, a gente pode criar um Schema la no Tenant 1, chamado,..., da o nome da Empresa, mesmo, Tenant 1 eh o nome do Schema, Tenant 2 eh o nome de outro Schema.
+
+70. Okay? Uma vantagem, nesse cara, eh que eh mais facil automatizar isso.
+
+71. Eh mais facil voce provisionar um novo Schema do que voce provisionar um novo Banco de Dados.
+
+72. Entao, dependendo, ai, do Tipo de Situacao, pode ser que voce precise de uma coisa mais automatizada, mais facil, nao eh?, voce criar esse Schema novo, de forma automatica, vai ser mais facil, usando o Schema. 
+
+73. A vantagem dele eh o custo, tambem.
+
+74. Pode ficar um pouco mais barato, porque voce vai ter Uma Instancia de Banco de Dados, so, com varios Schemas diferentes.
+
+75. Qual que eh a desvantagem?
+
+76. Ai, o Backup, se der algum problema, voce vai precisar recuperar o Backup, e, ai, voce vai ter que, assim, voce consegue recuperar, vamos supor, deu problema no banco, no Schema do Tenant 2, voce vai recuperar o ultimo Backup, mas, voce nao pode substituir todo mundo, porque, porque, senao, voce vai estar interferindo no Tenant 1 e no Tenant 3. Entao, voce vai precisar passar isso para um outro Banco, recuperar aqueles dados do Tenant 2, e, ai, depois, fazer um Script, e migrar os dados do Tenant 2 para o Banco Principal, para recolocar aquela aplicacao no ar.
+
+77. Nao eh?
+
+78. E, a ultima opcao, com Identificador na Tabela,
+
+        ID          Cliente         Telefone            TenantID
+        23          Joao             323232                 1
+        25          Maria            324325                 2
+        66          Ricardo          325643                 3
+
+79. Eh Uma Coluna A Mais, em cada Tabela, ai, do Sistema.
+
+80. Uma vantagem, tambem, eh o custo. Voce vai precisar de Um Banco de Dados, so.
+
+81. O provisionameto desse eh o mais direto. Eu criei um novo Cliente, eh so colocar o novo ID dele, ali, na Tabela, nao eh?, vai ser mais facil.
+
+82. A dificuldade de recuperar Backup eh mais ou menos a mesma do Schema. Voce nao pode recuperar de todo mundo, senao, voce vai atrapalhar todos os Tenants.
+
+83. Entao, o que que voce faz?
+
+84. Vai la, coloca um outro Banco, recupera o Ultimo Backup, e, ai, o TenantID que deu problema, voce vai la e recupera ele, se acontecer alguma coisa assim.
+
+85. Ou, na verdade, aqui, como eh Um Schema so, nao eh?, se der problema no Schema, pode ser que de problema em todo mundo.
+
+86. Nao eh? Entao, ai, os dados estao mais misturados.
+
+87. Ah, voltando, aqui, para a Estrategia 1. Separar o Banco de Dados.
+
+88. Em Bancos de Dados Separados, nao parece, para a gente, que, realmente, eh, nao eh? Os dados estao bem separados, mesmo, nao eh?, nao tem chance de o Tenant 1 misturar com o Tenant 2. Entao, essa, aqui, eh a forma que os dados esta mais separados, possivel, nao se misturam mesmo.
+
+89. Aqui, na Estrategia de Separar o Schema, esta no mesmo Banco de Dados, mas, como sao Schemas separados, ja comeca a ter um intermediario, ali.
+
+90. Ai, a Estrategia de Identificador na Tabela, ja, a chance de misturar ja eh maior, nao eh? Entao, isso, aqui, eh onde teria mais probabilidade de ter uma Interferencia entre os dados, ai.
+
+91. Mas, a forma de Provisionamento eh mais direto, o custo, tambem, eh mais barato.
+
+92. Entao, ou seja, nao existe aquela: "Faca assim". Eu nao vou falar, aqui, "Faz assim, que vai dar certo.".
+
+93. Nao, voce vai ter que avaliar, cada caso eh um caso. So lembrando que a Estrategia 3. Identificador na Tabela, esta com previsao de suporte do Hibernate na versao 5. Entao, nao tem como a gente fazer nada de exemplo desse cara.
+
+94. Beleza? Bom, era isso, ai, que eu queria mostrar de introducao para voce, e, nas proximas aulas, a gente vai tentar implementar isso, dai.
+
+95. Fim da     Aula 16.005. Introducao ao Multi-Tenancy.
+
+
+
+-->

@@ -1,0 +1,476 @@
+<!--
+    Aula 12.003. Criando Subselect's
+
+1. Agora, eu vou fazer com voce um outro relatorio, aqui, uma outra consulta, para os Carros nunca alugados.
+
+2. Vamos supor que o cara, la, o dono da locadora falou, 'Eu quero saber quais sao os carros que nao sao alugados. Por que? As vezes, o Carro tem algum problema, as vezes, o modelo, etc., ele quer saber o relatorio assim.
+
+3. Entao, voce tem que saber qual Carro que nunca foi alugado.
+
+4. Beleza?
+
+5. Se eu fizer um select, aqui, so para te mostrar quais sao, se eu vier, aqui, em Carro, na minha base de dados, agora, eu tenho 4 carros,
+
+select * from carro;
+
+# codigo, chassi, cor, placa, valor_diaria, codigo_modelo, data_criacao, data_modificacao, foto
+1, , , AAA-1111, 200.00, , 2019-02-26 01:29:59, , 
+15, , Branco, AAA-1234, 200.00, 1, 2019-02-28 12:02:40, 2019-02-28 12:02:40, 
+16, , Preto, AEE-1122, 500.00, 3, 2019-02-28 13:26:46, 2019-02-28 13:26:46, 
+17, , Preto, BBB-1299, 600.00, 2, 2019-02-28 13:27:16, 2019-02-28 13:27:16, 
+
+6. E, se eu pegar em alugueis, 
+
+select * from aluguel;
+
+# codigo, data_devolucao, data_entrega, data_pedido, valor_total, codigo_apolice_seguro, codigo_carro, codigo_motorista
+6, 2019-03-07 19:00:00, 2019-02-28 13:00:00, 2019-02-28, 200.00, 6, , 1
+7, 2019-02-28 18:00:00, 2019-02-25 20:00:00, 2019-02-28, 400.00, 7, 15, 14
+8, 2019-02-28 21:00:00, 2019-02-19 00:00:00, 2019-02-28, 300.00, 8, 15, 17
+9, 2019-02-26 17:00:00, 2019-02-11 18:00:00, 2019-02-28, 600.00, 9, 15, 18
+10, 2019-02-28 20:00:00, 2019-02-25 14:00:00, 2019-02-28, 600.00, 10, 1, 20
+
+
+, eu tenho, aqui, 4 alugueis, entao, eu tenho, aqui, oh, o primeiro, aqui, o codigo_carro eh 15, depois, 15, 16 e 17.
+
+7. As vezes, esse primeiro, aqui, foi algum teste, alguma coisa assim que foi feito, mas vai ser importante para eu te mostrar um detalhe, aqui, tambem.
+
+8. E o Carro foi alugado, tambem, oh, para o 15, 16 e 17. Entao, deixa eu escrever aqui, oh.
+
+9. Tem o Carro, de Codigos 1, 15, 16 e 17,
+
+Carro: 1, 15, 16, 17
+
+10. E eu tenho Aluguel para o Carro 15, 16 e 17,
+
+Carro: 1, 15, 16, 17
+Aluguel: 1, 15 (alem de null)
+
+11. Vou colocar, aqui,
+
+Carro: 1, 15, 16, 17
+Aluguel: 1, 15 (alem de null)
+
+Resposta: 16 e 17
+
+12. Entao, a nossa Resposta no select, deve ser o que?
+
+13. Quais carros que nunca foram alugados, nesse caso?
+
+14. O Carro de Codigo 16 e 17.
+
+15. Entao, quando a gente fizer o SELECT, os carros de codigo 16 e 17 devem aparecer.
+
+16. Beleza? Entao, vamos la. Vamos, as vezes, eh interessante voce comecar o select, aqui, ate voce pegar mais fluencia com Criteria, voce comecar o select, aqui, no SQL normal, e, depois, ir para la.
+
+17. Bom, imagina o seguinte. 
+
+18. A gente precisa selecionar o Carro,
+
+select *
+    from Carro
+
+, entao, eu preciso pegar todos os Carros. So que, onde o que? Onde o Codigo do carro nao esta em uma lista. Qual lista? 
+
+    select *
+        from Carro 
+        where codigo not in (select codigo_carro from aluguel);
+
+19. Entao, eu tenho que fazer, basicamente, esse select.
+
+20. Eu tenho que buscar todos os carros em que o codigo dele nao esteja nessa lista,
+
+        (select codigo_carro from aluguel)
+
+, ou seja, em uma lista de carros que ja foram alugados.
+
+21. Concorda comigo? Eu tenho que fazer um subselect, aqui.
+
+22. E nos vamos fazer esse subselect com Criteria.
+
+23. Beleza? Vamos fazer esse select aqui, no Workbench, para ver o que que ele vai retornar.
+
+24. Retornou,
+
+# codigo, chassi, cor, placa, valor_diaria, codigo_modelo, data_criacao, data_modificacao, foto
+
+25. Por que que nao retornou nada?
+
+26. Justamente, por causa daquele null.
+
+27. Lembra daquele null que estava aqui, oh?, no registro de codigo 6?
+
+# codigo, data_devolucao, data_entrega, data_pedido, valor_total, codigo_apolice_seguro, codigo_carro, codigo_motorista
+6, 2019-03-07 19:00:00, 2019-02-28 13:00:00, 2019-02-28, 200.00, 6, , 1
+7, 2019-02-28 18:00:00, 2019-02-25 20:00:00, 2019-02-28, 400.00, 7, 15, 14
+8, 2019-02-28 21:00:00, 2019-02-19 00:00:00, 2019-02-28, 300.00, 8, 15, 17
+9, 2019-02-26 17:00:00, 2019-02-11 18:00:00, 2019-02-28, 600.00, 9, 15, 18
+10, 2019-02-28 20:00:00, 2019-02-25 14:00:00, 2019-02-28, 600.00, 10, 1, 20
+
+28. Porque isso, daqui, na verdade, a gente poderia traduzir para algo assim, oh, 
+
+select * from carro
+where not (codigo = )
+
+, ai, esse select, aqui,
+
+select codigo_carro from aluguel
+
+, vai retornar la, por exemplo, 'codigo = 15 or codigo = 1 or codigo = null', eh a mesma coisa que ele faz, aqui, oh,
+
+select * from carro
+where not (codigo = 15 or codigo = 1 or codigo = null)
+
+, quando a gente faz esse where, aqui,
+
+        where codigo not in (select codigo_carro from aluguel)
+
+29. Beleza? Entao, ele vai ser traduzido nisso, daqui,
+
+select * from carro
+where not (codigo = 15 or codigo = 1 or codigo = null)
+
+30. Entao, vamos executar isso, daqui,
+
+select * from carro
+where not (codigo = 15 or codigo = 1 or codigo = null)
+
+, no Workbench, para voce ver que ele nao vai trazer nada.
+
+31. Retornou,
+
+# codigo, chassi, cor, placa, valor_diaria, codigo_modelo, data_criacao, data_modificacao, foto
+
+32. Se voce tirar esse codigo = null, aqui, voce vai ver que funciona,
+
+select * from carro
+where not (codigo = 15 or codigo = 1)
+
+33. Retornou,
+
+# codigo, chassi, cor, placa, valor_diaria, codigo_modelo, data_criacao, data_modificacao, foto
+16, , Preto, AEE-1122, 500.00, 3, 2019-02-28 13:26:46, 2019-02-28 13:26:46, 
+17, , Preto, BBB-1299, 600.00, 2, 2019-02-28 13:27:16, 2019-02-28 13:27:16, 
+
+
+34. Trouxe, la, oh, o 16 e o 17, que eh a resposta que a gente espera.
+
+35. Entao, esse codigo = null, aqui, oh,
+
+select * from carro
+where not (codigo = 15 or codigo = 1 or codigo = null)
+
+, eh o que esta nos atrapalhando, aqui, oh, nao traz mais nada,
+
+# codigo, chassi, cor, placa, valor_diaria, codigo_modelo, data_criacao, data_modificacao, foto
+
+36. Por que? Imagina o seguinte, oh, o codigo veio com o valor 15, 
+
+select * from carro
+where not (>>> codigo = 15 <<< or codigo = 1 or codigo = null)
+
+, beleza, entao, 15. Eh igual a 15? Sim, true, inverteu,
+
+select * from carro
+where >>> not <<< (codigo = 15 or codigo = 1 or codigo = null)
+
+, retornou false, nao eh?
+
+37. O codigo 1, veio o codigo 1. 1 eh igual a 1?
+
+select * from carro
+where not (codigo = 15 or >>> codigo = 1 <<< or codigo = null)
+
+38. Eh. true, inverteu, retornou false.
+
+39. Beleza. O Codigo do Carro 16, o 16 nao vai nem ser nem 15 nem 1 e nem null, 16 eh 16,
+
+select * from carro
+where not (codigo = 15 or codigo = 1 or codigo = null)
+
+, nao eh? Entao, esse codigo = null esta falhando todas as possibilidades.
+
+40. Entao, quando eu buscar, eu vou ter que falar o seguinte, 'Eu quero que voce busque todos os alugueis onde tenha um carro'.
+
+41. Certo?
+
+42. Entao, eh assim que a gente tem que resolver o nosso SQL.
+
+43. Entao, aqui,
+
+select * from carro
+where codigo not in (select codigo_carro from aluguel)
+
+, tem que buscar todos os codigos de carro de aluguel onde codigo_carro is not null,
+
+select * from carro
+where codigo not in (select codigo_carro from aluguel where codigo_carro is not null)
+
+44. Agora, sim. Se eu mandar executar esse cara, vai retornar,
+
+# codigo, chassi, cor, placa, valor_diaria, codigo_modelo, data_criacao, data_modificacao, foto
+16, , Preto, AEE-1122, 500.00, 3, 2019-02-28 13:26:46, 2019-02-28 13:26:46, 
+17, , Preto, BBB-1299, 600.00, 2, 2019-02-28 13:27:16, 2019-02-28 13:27:16, 
+
+
+45. Entao, o que eu quero fazer eh esse select,
+
+select * from carro
+where codigo not in (select codigo_carro from aluguel where codigo_carro is not null)
+
+, no meu CarroDAO.
+
+46. Aqui, para voce ver o que eu fiz, eu criei uma paginazinha simples, mesmo, porque tem que ser so o Carro, porque tem que ser so o carrosTable.
+
+47. No PesquisaCarrosNuncaAlugadosBean.java, para ficar bem simples, tem o DAO, aqui, do CarroDAO, ai, eu vou buscar la, oh, com o metodo buscarCarrosNuncaAlugados().
+
+48. Vamos criar esse metodo, aqui, em CarroDAO.
+
+49. E, ai, vamos implementar a Criteria, aqui,
+
+public List<Carro> buscarCarrosNuncaAlugados() {
+    Session session = this.em.urwrap(Session.class);
+    Criteria criteria = session.createCriteria(Carro.class);
+
+
+    return criteria.list();
+}
+
+50. Bom, a primeira coisa, voce ja esta cansado de saber, nao eh? Eu preciso da Session, e, no final, eu vou retornar criteria.list();
+
+51. Deixa eu pegar, de novo, aqui, o SQL, e eu vou copiar ele aqui, oh,
+
+public List<Carro> buscarCarrosNuncaAlugados() {
+    Session session = this.em.urwrap(Session.class);
+    Criteria criteria = session.createCriteria(Carro.class);
+
+    /** 
+        select * 
+          from carro
+          where codigo not in (
+              select codigo_carro from aluguel 
+                  where codigo_carro is not null
+          )    
+    **/
+
+    return criteria.list();
+}
+
+52. Eh esse select, aqui, que eu quero fazer, usando o Criteria, do Hibernate.
+
+53. Beleza? Bom, vamos la.
+
+54. Para criar esse select, aqui, de fora,
+
+              select codigo_carro from aluguel 
+                  where codigo_carro is not null
+
+, ta vendo que eh um select, nao eh dentro do nosso Criteria principal, aqui. Ta vendo que eh como se fosse um outro Criteria?
+
+        select * 
+          from carro
+          where codigo not in (
+              >>> select codigo_carro from aluguel 
+                  where codigo_carro is not null
+
+55. Voce poderia, ate, fazer um outro, que seria a melhor forma, logico, que, com certeza, nao, porque voce vai duas vezes no banco, nao eh a toa, mas, voce poderia criar um Criteria para esse,
+
+        select * 
+          from carro
+          where codigo not in (
+              >>> select codigo_carro from aluguel 
+                  where codigo_carro is not null
+
+, dar o list() nele, nao eh?, criar o Criteria, la, tem o Restriction.isNotNull(), para o Carro, e voce colocaria Not In, e tal, na colecao.
+
+56. So que iria 2 vezes no banco a toa.
+
+57. Entao, como eh que a gente vai fazer?
+
+58. A gente vai criar essa Consulta, aqui,
+
+        select * 
+          from carro
+          where codigo not in (
+              >>> select codigo_carro from aluguel 
+                  where codigo_carro is not null
+
+, esse Criteria eh um Criteria especial, eh um Criteria desamarrado, aqui, desatachado.
+
+59. E, ai, o nome dele eh DetachedCriteria, que eu vou chamar, aqui, de criteriaAluguel.
+
+60. Beleza? Entao, eu vou comecar a criar essa Consulta em cima desse criteria, aqui. criteriaAluguel.setProjection(projection), por que setProjection(projection)? A gente viu, nao eh?, eu quero trazer so o codigo_carro, entao, eu coloco projection. Entao, eu quero trazer uma propriedade, nao eh? Projections.property(""), qual que eh nome da propriedade? "carro",
+
+public List<Aluguel> buscarCarrosNuncaAlugados() {
+    Session session = this.em.unwrap(Session.class);
+    Criteria criteria = session.createCriteria(Carro.class);
+
+    /** 
+        select * 
+          from carro
+          where codigo not in (
+              select codigo_carro from aluguel 
+                  where codigo_carro is not null    
+    **/
+
+    DetachedCriteria criteriaAluguel = DetachedCriteria.forClass(Aluguel.cass);
+    criteriaAluguel.setProjection(Projections.property("carro"));
+
+
+}
+
+61. Aqui,
+
+    criteriaAluguel.setProjection(Projections.property("carro"));
+
+, ele vai saber, ele eh esperto o suficiente para saber que nao eh o carro que voce quer, eh o Codigo do Carro, porque, na tabela Aluguel, o que que tem em Aluguel que eh referente a Carro? O Codigo do Carro.
+
+62. Beleza?
+
+63. criteriaAluguel.add(criterion), vamos adicionar a Restricao?
+
+64. criteriaAluguel.add(Restrictions.isNotNull("")), em qual propriedade? "carro",
+
+    Session session = this.em.unwrap(Session.class);
+    Criteria criteria = session.createCriteria(Carro.class);
+
+    DetachedCriteria criteriaAluguel = DetachedCriteria.forClass(Aluguel.class);
+    criteriaAluguel.setProjection(Projections.property("carro"));
+    criteriaAluguel.add(Restrictions.isNotNull("carro"));
+
+    return criteria.list();
+
+65. Entao, ele ja vai saber que o Codigo do Carro nao pode ser nulo.
+
+66. Se voce quiser, voce pode encavalar as chamadas, para mostrar que a gente esta chamando em cima do mesmo objeto,
+
+    DetachedCriteria criteriaAluguel = DetachedCriteria.forClass(Aluguel.class)
+            .setProjection(Projections.property("carro")
+            .add(Restrictions.isNotNull("carro"))
+    );
+
+67. Para economizar um pouquinho de linha de codigo, ele vai retornando a mesma instancia, pode ir dando, so, a mesma coisa com Criteria, o set(), e o ponto,.algumaCoisa(), e ir continuando.
+
+68. criteria.add(criterion). Agora, eu vou adicionar, aqui, na minha Criteria Principal, que eu estou com esse cara, aqui,
+
+        >>> select * 
+        >>>  from carro
+          where codigo not in (
+              select codigo_carro from aluguel 
+                  where codigo_carro is not null
+
+, nao eh?
+
+69. Eu tenho que adicionar essa condicao,
+
+        select * 
+          from carro
+          >>> where codigo not in (
+              select codigo_carro from aluguel 
+                  where codigo_carro is not null
+
+70. Onde o codigo nao esta dentro de criteriaAluguel.
+
+71. Ou seja, onde a Propriedade, agora, eu vou usar o Property.forName("codigo"), ai, o legal dela eh que ela tem, oh, o metodo notIn(), e olha so o que que ele recebe?
+
+72. Um DetachedCriteria, entao, eu posso passar, ali, oh, o criteriaAluguel,
+
+    Session session = this.em.unwrap(Session.class);
+
+    /** select * from Carro **/
+    Criteria criteria = session.createCriteria(Carro.class);
+
+    /** select codigo_carro from Aluguel where codigo_carro is not null **/
+    DetachedCriteria criteriaAluguel = DetachedCriteria.forClass(Aluguel.class)
+        .setProjection(Projections.property("carro"))
+        .add(Restrictions.isNotNull("carro"));
+
+    /** where codigo not in ( select codigo_carro from Aluguel where codigo_carro is not null ) */
+    criteria.add(Property.forName("codigo").notIn(criteriaAluguel));
+
+    return criteria.list();
+    
+73. Voce acredita que ja esta pronto?
+
+74. Eh isso, aqui, mesmo.
+
+75. Bem simples, nao eh?
+
+76. Se eu reiniciar, aqui, o meu Servidor, para a gente testar, e, ai, tem que aparecer os carros de codigo 16 e 17.
+
+77. Vamos dar uma olhada, aqui, em http://localhost:8080/locadora-veiculo-web/aluguel/CarrosNuncaAlugados.xhtml. Ao clicar em Pesquisa, retornou,
+
+Hibernate: 
+    select
+        this_.codigo as codigo1_3_0_,
+        this_.chassi as chassi2_3_0_,
+        this_.cor as cor3_3_0_,
+        this_.data_criacao as data_cri4_3_0_,
+        this_.data_modificacao as data_mod5_3_0_,
+        this_.foto as foto6_3_0_,
+        this_.codigo_modelo as codigo_m9_3_0_,
+        this_.placa as placa7_3_0_,
+        this_.valor_diaria as valor_di8_3_0_ 
+    from
+        Carro this_ 
+    where
+        this_.codigo not in (
+            select
+                this_.codigo_carro as y0_ 
+            from
+                Aluguel this_ 
+            where
+                this_.codigo_carro is not null
+        )
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_7_0_,
+        modelocarr0_.categoria as categori2_7_0_,
+        modelocarr0_.descricao as descrica3_7_0_,
+        modelocarr0_.codigo_fabricante as codigo_f4_7_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    where
+        modelocarr0_.codigo=?
+
+78. O Select, que a gente queria que ele fizesse, ele fez,
+
+    select
+        this_.codigo as codigo1_3_0_,
+        this_.chassi as chassi2_3_0_,
+        this_.cor as cor3_3_0_,
+        this_.data_criacao as data_cri4_3_0_,
+        this_.data_modificacao as data_mod5_3_0_,
+        this_.foto as foto6_3_0_,
+        this_.codigo_modelo as codigo_m9_3_0_,
+        this_.placa as placa7_3_0_,
+        this_.valor_diaria as valor_di8_3_0_ 
+    from
+        Carro this_ 
+    where
+        this_.codigo not in (
+            select
+                this_.codigo_carro as y0_ 
+            from
+                Aluguel this_ 
+            where
+                this_.codigo_carro is not null
+        )
+
+79. So que a gente usou Criteria, usou uma abordagem mais Orientada a Objetos. Legal, nao eh?
+
+80. Fim da     Aula 12.003. Criando Subselect's.
+
+
+
+-->

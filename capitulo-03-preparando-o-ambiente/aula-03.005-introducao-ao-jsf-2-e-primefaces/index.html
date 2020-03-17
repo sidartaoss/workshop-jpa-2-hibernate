@@ -1,0 +1,318 @@
+<!-- 
+
+Aula 03.005. Introducao ao JSF 2 e Primefaces
+
+1. Bom, esta aqui vai ser uma pequena, mas muito pequena mesmo, introducao ao JSF 2, com Primefaces, okay?
+
+2. Por que que eu estou falando isso, bem, bem pequena, mesmo?
+
+3. Porque este curso nao eh sobre JSF, eh, simplesmente, por esse motivo.
+
+4. O nosso curso eh sobre JPA, nao eh?, com Hibernate. Entao, deixa eu voltar, aqui, no Sisteminha, so para a gente dar uma lembradinha. 
+
+5. Lembra que esse Sisteminha, aqui, que eu vou te mostrar o codigo, rapidamente, eu quero te mostrar como eh que a gente, normalmente, o que que a gente faz para enviar um formulario, onde eh que esse formulario chega em uma classe Java. Como eh que ele transforma daqui da Pagina para chegar la no Java, para a gente trabalhar no JPA.
+
+6. Okay? Entao, so para lembrar, quando voce escreve, aqui, algum texto, voce clicou em Enviar, esse texto que voce escreveu vai passar para maiusculo.
+
+7. Okay? Bom, vamos la, deixa eu te explicar esse projetinho, aqui, de forma bem rapida, comecando pelo pom.xml.
+
+8. Entao, lembra la que a gente viu o Maven, a gente instalou o Maven? O pom.xml eh o arquivinho principal, eh o arquivinho que gerencia todo o seu projeto, eh nele que a gente adiciona as configuracoes.
+
+9. Entao, ele tem esse cabecalho, aqui,
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+, temos que colocar a versao,
+
+	<modelVersion>4.0.0</modelVersion>
+
+, a gente coloca um groupId, um artifactId, e um version, para identificar esse Projeto,
+
+	<groupId>com.algaworks</groupId>
+	<artifactId>primeiro-projeto-jsf</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
+
+10. Entao, o Projeto participa de um grupo, com.algaworks, tem o nome do artefato, primeiro-projeto-jsf, e uma versao, 1.0.0-SNAPSHOT, -SNAPSHOT eh a versao de desenvolvimento.
+
+11. Eu falo qual que eh o empacotamento, 
+
+<packaging>war</packaging>
+
+, war, porque eh um Projeto Web.
+
+12. Falo, aqui, quais sao as propriedades, de Encoding do fonte, UTF-8, para a gente nao ter problemas de acentuacao,
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+13. Aqui, eu vou definir duas coisas dentro dessa tag build aqui, eu vou definir que o compiler-plugin eh o 3.1 e que eu estou usando a versao 1.8 do Java,
+
+<build>
+		<finalName>primeiro-projeto-jsf</finalName>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.1</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+, isso para ele conseguir processar as anotacoes e alguma coisa que a gente utilize do Java 8.
+
+14. Como a gente esta usando Java 8, eh importante colocar isso daqui.
+
+15. E, aqui, no finalName,
+
+<finalName>primeiro-projeto-jsf</finalName>
+
+, eh o nome final que ele ira gerar deste Projeto.
+
+16. Okay?
+
+17. Bom, dependencias.
+
+18. Caimos, aqui, em dependencias, e isso daqui, do Maven, eh uma coisa sensacional, fantastica, nao eh?, ele gerenciar as dependencias para a gente,
+
+	<dependencies>
+		<!-- Mojarra (Implementação JSF 2) --
+		<dependency>
+			<groupId>org.glassfish</groupId>
+			<artifactId>javax.faces</artifactId>
+			<version>2.1.17</version>
+			<scope>compile</scope>
+		</dependency>
+
+		<!-- Primefaces --
+		<dependency>
+			<groupId>org.primefaces</groupId>
+			<artifactId>primefaces</artifactId>
+			<version>3.5</version>
+			<scope>compile</scope>
+		</dependency>
+	</dependencies>
+
+19. Eu, simplesmente, coloco, aqui, eu quero usar o JSF. Coloco, aqui, o groupId, o artifactId, a versao, coloco o escopo, aqui, 'compile', que eh o default, mas a gente costuma colocar, aqui, a versao, o escopo definido, para evitar alguns probleminhas, ai, que possa ter no Eclipse, entao, voce coloca, ai, a dependencia com escopo de compile, entao, essa, aqui, eh a implementacao do JSF 2,
+
+		<!-- Mojarra (Implementação JSF 2) --
+		<dependency>
+			<groupId>org.glassfish</groupId>
+			<artifactId>javax.faces</artifactId>
+			<version>2.1.17</version>
+			<scope>compile</scope>
+		</dependency>
+
+, e a implementacao do Primefaces, eh essa outra dependencia,
+
+		<!-- Primefaces --
+		<dependency>
+			<groupId>org.primefaces</groupId>
+			<artifactId>primefaces</artifactId>
+			<version>3.5</version>
+			<scope>compile</scope>
+		</dependency>
+
+20. Eh so voce definir isso daqui, 
+
+		<!-- Primefaces --
+		<dependency>
+			<groupId>org.primefaces</groupId>
+			<artifactId>primefaces</artifactId>
+			<version>3.5</version>
+			<scope>compile</scope>
+		</dependency>
+
+, ele ja vai conseguir buscar na Internet. So que onde que ele vai buscar?
+
+21. No Repositorio Default do Maven.
+
+22. Ja tem um Repositorio Default do Maven.
+
+23. No caso, aqui, esse, aqui, existe no Repositorio Default do Maven,
+
+		<!-- Mojarra (Implementação JSF 2) --
+		<dependency>
+			<groupId>org.glassfish</groupId>
+			<artifactId>javax.faces</artifactId>
+			<version>2.1.17</version>
+			<scope>compile</scope>
+		</dependency>
+
+, a implementacao do JSF.
+
+24. O Primefaces, ate o momento, nao. Entao, como o Primefaces nao tem, ate o momento, isso, la no Repositorio oficial do Maven, a gente adiciona, aqui, o Repositorio do Primefaces,
+
+<!-- Repositorio Primefaces --
+		<repository>
+			<id>prime-repo</id>
+			<name>PrimeFaces Maven Repository</name>
+			<url>http://repository.primefaces.org</url>
+			<layout>default</layout>
+		</repository>
+
+25. A gente adiciona, aqui, <repository />, essas tags, coloca o nome, e define uma URL, entao, na hora em que ele for baixar essa dependencia, 
+
+		<!-- Primefaces --
+		<dependency>
+			<groupId>org.primefaces</groupId>
+			<artifactId>primefaces</artifactId>
+			<version>3.5</version>
+			<scope>compile</scope>
+		</dependency>
+
+, ele vai sair procurando nos repositorios, inclusive, no Repositorio que a gente adicionou aqui, dentro, do pom.xml.
+
+26. Okay? Bom, essa foi mais uma visao, aqui, do Maven, vamos para o JSF.
+
+27. Na pageninha, aqui, que eu coloco aqui, oh, em 'src/main/webapp', tem o OlaJSF.xhtml, que eh essa pagina, aqui.
+
+28. O cabecalho vai ser, basicamente, isso daqui que a gente vai utilizar, 
+
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:h="http://java.sun.com/jsf/html"
+    xmlns:f="http://java.sun.com/jsf/core"
+    xmlns:ui="http://java.sun.com/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui">
+
+, aqui, tem o cabecalho do sistema HTML, 
+
+    <h:head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title><ui:insert name="titulo">Primeiro projeto JSF</ui:insert></title>
+    </h:head>
+
+, e, aqui, eh onde a gente vai trabalhar dentro do corpo, e o formulario,
+
+    <h:body>
+        <h:form id="formulario">
+            <p:outputLabel value="Digite o seu nome" />
+            <p:inputText value="#{meuBean.nome}" />
+            <p:commandButton value="Enviar" action="#{meuBean.transformar}" update="formulario" />
+        </h:form>
+    </h:body>
+
+</html>
+
+, e, a partir daqui que eu quero, a gente vai mexer mais, dentro do formulario, 
+
+    <h:form id="formulario">
+        <p:outputLabel value="Digite o seu nome" />
+        <p:inputText value="#{meuBean.nome}" />
+        <p:commandButton value="Enviar" action="#{meuBean.transformar}" update="formulario" />
+    </h:form>
+
+
+, e ai, a gente vai mexer de uma forma muito, muito simples, durante todo o curso.
+
+29. O que eu estou colocando la, oh, um Label, "Digite o seu nome", 
+
+    <p:outputLabel value="Digite o seu nome" />
+
+, voce viu, la na Pagina, um input text, 
+
+    <p:inputText value="#{meuBean.nome}" />
+
+, o que que eh esse #{meuBean.nome}, com esse jogo-da-velha, e essas chaves, aqui?
+
+30. Esse meu Bean, aqui, vai ser uma classe Java, aqui, oh, MeuBean.java.
+
+31. '.nome' eh um atributo desse Bean. Entao, MeuBean.nome eh exatamente esse atributo.
+
+32. E, ai, lembra que a gente tem um botao, la? O botao, aqui, oh,
+
+<p:commandButton value="Enviar" action=#{meuBean.transformar} update="formulario" />
+
+33. Quando eu clicar, la, no Enviar, ele vai chamar o metodo transformar(), passando, nao eh?, os inputs que ja estao dentro do formulario.
+
+34. Quando ele terminar, a gente tem que falar, 'Atualiza o formulario, ai, pra mim', 
+
+<p:commandButton value="Enviar" action=#{meuBean.transformar} 
+    >>> update="formulario"<<< />
+
+, so para ele dar uma especie de Refresh na tela, so que, aqui, ele usa, por Default, ajax, ele faz isso sem ter que atualizar o Browser.
+
+35. Mas, vamos la, voltando, aqui, para o assunto, entao, o meuBean.transformar, ele vai pegar todos os meus inputs, aqui, e submeter, ou seja, no final das contas, o que que a gente tem que entender?
+
+36. Que, dentro do metodo transformar(),
+
+       public void transformar() {
+           this.nome = this.nome.toUpperCase();
+       } 
+
+, quando eu chegar aqui, eu ja vou ter os atributos preenchidos.
+
+37. Resumindo, eh isso, o que a gente precisa entender pra estudar neste Curso.
+
+38. Cliquei no botao, vai chamar o metodo transformar(), com todos os atributos, aqui, preenchidos, porque eu ja vou colocar, em meuBean.nome, o que eu estiver escrevendo la no inputText, na caixa de texto de entrada,
+
+    <p:inputText value="#{meuBean.nome}" />
+
+, vai sendo setado, configurado la naquela variavel nome.
+
+39. E, ai, entao, a partir daqui, desse nome, aqui,
+
+       public void transformar() {
+           >>> this.nome = this.nome.toUpperCase(); <<<
+       }
+
+, que a gente vai, a gente ja esta dentro de um codigo Java, e, a partir desse codigo Java, a gente ja consegue acessar Banco de Dados, consegue acessar os nossos Modelos, e trabalhar com JPA.
+
+40. Beleza?
+
+41. Bom, passando, aqui, pelos arquivos de configuracao, dentro do WEB-INF, o web.xml, a gente tem mais algumas configuracoes, aqui, como o servlet,
+
+	<servlet>
+		<servlet-name>Faces Servlet</servlet-name>
+		<servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+	</servlet>
+
+, e o JSF,
+
+	<servlet-mapping>
+		<servlet-name>Faces Servlet</servlet-name>
+		<url-pattern>*.xhtml</url-pattern>
+	</servlet-mapping>
+
+42. Quando a gente for utilizar, no projeto do curso, provavelmente, a gente vai utilizar CDI, para fazer Injecao de Dependencia para a gente, tambem. La na frente, eu te falo um pouquinho sobre isso.
+
+43. Tem esse arquivo faces-config.xml, que, basicamente, a gente vai deixar ele, aqui, so com as configuracoes do local, falar que a gente esta usando as opcoes de local do Brasil. 
+
+44. Tem o arquivo beans.xml, que nao tem nada. Nesse arquivo, aqui, a gente vai precisar, la, tambem, para trabalhar com CDI, entao, o que tem, aqui, basicamente, nesse Projeto, eh essa classe MeuBean.java, que esta anotado com @ManagedBean. Por que que eu tenho que anotar esse cara?
+
+45. Para eu conseguir fazer, justamente, essa amarracao aqui, oh,
+
+    <p:inputText value="#{ >>> meuBean <<< .nome}" />
+
+, la da pagina, nao eh?, xhtml, eu acessar um atributo, conseguir chamar um metodo, aqui, 
+
+@ManagedBean
+public class MeuBean implements Serializable {
+
+    private String nome;
+
+    public void transformar() {
+        this.nome = this.nome.toUpperCase();
+    }
+
+    ...
+
+}
+
+, a partir daquela pagina, eu preciso ter anotado esse cara como @ManagedBean.
+
+46. Ou, no caso do CDI, que a gente vai ver, pode ser que a gente troque isso daqui, o instrutor esta decidindo, ainda.
+
+47. Bom, eh so isso daqui mesmo, a pagina OlaJSF.xhtml eh bem simples. Se voce chegou ate aqui, acredito que esse Projeto ja esta cofigurado ai, no seu Eclipse, mas, se tiver mais alguma duvida, e quiser fazer mais alguma pergunta...
+
+48. Fim da Aula 03.005. Introducao ao JSF 2 e Primefaces.
+
+
+-->

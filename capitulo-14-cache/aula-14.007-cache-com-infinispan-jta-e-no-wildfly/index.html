@@ -1,0 +1,1233 @@
+<!--
+    Aula 14.007. Cache com Infinispan, JTA e no Wildfly
+
+1. Bom, nesta aula, eu vou te mostrar como eh que a gente pega esse Projeto, nosso, ai, de gerenciador-de-acesso, para a gente configurar ele usando o Cache com Infinispan, okay?
+
+2. Tambem te mostrar como eh que a gente configura, ai, o Wildfly, para receber esse Projeto. Wildfly eh o novo JBoss AS, okay?, mudou o nome, para Wildfly, e te mostrar, ai, como eh que a gente vai instalar o Driver do MySQL, como eh que a gente vai configurar o DataSource, no Wildfly, vamos atualizar as LIB's do Hibernate, para 4.3.6, porque a gente viu que ela corrigiu, ai, um Bug importante, nos vamos alterar o pom.xml do nosso projeto para as bibliotecas, nao eh?, como a gente esta indo para um Container Java EE completo, nao eh? Entao, la ja tem um monte de LIB's que a gente nao precisa encapsular, enquanto a gente estava fazendo no Tomcat, nao eh?
+
+3. O jeito de injetar o EntityManager ja vai mudar tambem.
+
+4. Beleza? E, ai, nos vamos configurar algumas coisinhas, e voce vai ver que mudou um pouquinho.
+
+5. A primeira coisa. Garanta, ai, que o seu Tomcat esta parado, nao eh? As vezes, voce esta vindo direto da outra aula, o seu Tomcat esta no ar. Entao, garanta, ai, que ele esta Stopped.
+
+6. Bom, entao, a primeira coisa que a gente vai fazer eh instalar o Wildfly, eh so entrar, aqui, no wildfly.org/downloads. Eu baixei essa versao, aqui, 8.1.0.Final, aqui.
+
+7. Entao, vamos la.
+
+8. Vou extrair o arquivo wildfly-8.1.0.Final.zip.
+
+9. Beleza, estou com ele, aqui, descompactado na minha maquina.
+
+10. Nos vamos usar a versao standalone, entao, eu vou entrar, aqui, na pasta \wildfly-8.1.0.Final\bin,
+
+> cd C:\Users\SEMPR\Downloads\wildfly-8.1.0.Final\bin
+> standalone.bat
+
+11. E nos vamos subir a versao com standalone dele. Beleza?
+
+12. Eu estou subindo com o Java 8, entao, nao tem problema, ele funciona, ja, com o Java 8, beleza?
+
+13. Bom, ja subiu.
+
+14. Se voce entrar, aqui, agora, oh, http://localhost:9990, eh a Telinha de Boas-Vindas dele, ai.
+
+15. Beleza? Para a gente acessar a Tela de Administracao, que a gente vai precisar, a gente precisa adicionar o Usuario de Adiministracao.
+
+16. A gente acessou, falou que deu certo, so que ele esta, aqui, dando as dicas para a gente adicionar esse Usuario. Entao, vamos la.
+
+17. Vamos parar, ele, aqui, CTRL+C. E, aqui, na mesma pastinha \wildfly-8.1.0.Final\bin, add-user.bat,
+
+> add-user.bat
+
+18. Bom, o nosso Usuario vai ser o Usuario Gerente, Management User, entao, eh a opcao a),
+
+What type of user do you wish to add?                                                                            a) Management User (mgmt-users.properties)                                                                       b) Application User (application-users.properties)                                                               (a):
+
+19. A opcao a) ja eh default, eh so dar um <ENTER>
+
+20. Qual que vai ser o Username?
+
+Enter the details of the new user to add.                                                                        Using realm 'ManagementRealm' as discovered from the existing property files.                                    Username :  
+
+21. Eu vou colocar admin.
+
+22. Ele esta falando, oh, 'Voce tem certeza?'
+
+The username 'admin' is easy to guess                                                                            Are you sure you want to add user 'admin' yes/no?  
+
+23. Tenho. Qual que eh a senha? admin, tambem.
+
+Password recommendations are listed below. To modify these restrictions edit the add-user.properties configuration file.                                                                                            - The password should not be one of the following restricted values {root, admin, administrator}                   - The password should contain at least 8 characters, 1 alphabetic character(s), 1 digit(s), 1 non-alphanumeric symbol(s)
+- The password should be different from the username                                                             Password :     
+
+24. Ele vai falar, 'Voce tem certeza?'. Sim,
+
+JBAS152565: Password must not be equal to 'admin', this value is restricted.                                     Are you sure you want to use the password entered yes/no?    
+
+25. Re-enter Password :
+
+26. admin
+
+27. Quais Grupos que esse Usuario vai pertencer?
+
+What groups do you want this user to belong to? (Please enter a comma separated list, or leave blank for none)[  ]:
+
+28. Vou deixar vazio.
+
+29. Entao, esta tudo correto? yes
+
+About to add user 'admin' for realm 'ManagementRealm'                                                            Is this correct yes/no? 
+
+30. Beleza. 
+
+Added user 'admin' to file 'C:\Users\SEMPR\Downloads\wildfly-8.1.0.Final\standalone\configuration\mgmt-users.properties'                    Added user 'admin' to file 'C:\Users\SEMPR\Downloads\wildfly-8.1.0.Final\domain\configuration\mgmt-users.properties'                        Added user 'admin' with groups  to file 'C:\Users\SEMPR\Downloads\wildfly-8.1.0.Final\standalone\configuration\mgmt-groups.properties'                   Added user 'admin' with groups  to file 'C:\Users\SEMPR\Downloads\wildfly-8.1.0.Final\domain\configuration\mgmt-groups.properties'                       Is this new user going to be used for one AS process to connect to another AS process? e.g. for a slave host controller connecting to the master or for a Remoting connection for server to server EJB calls. yes/no?  
+
+31. Ele adicionou. Esse novo Usuario sera usado para conectar esse Application Server a outro Application Server? Nao eh?, se a gente estivesse trabalhando, aqui, com varios Servidores, no nosso caso, nao, entao, eu vou colocar no, aqui.
+
+32. Beleza. Posso subir, de novo, aqui, agora, o standalone.bat,
+
+> standalone.bat
+
+33. Beleza, ele ja subiu.
+
+34. Volto, aqui, http://localhost:9990, ele ja vai pedir o Usuario e Senha, que eu acabei de criar, admin / admin.
+
+35. E, ai, a gente caiu na Tela de Administracao, que eh onde a gente vai fazer o Deploy dele, e umas configuracoes a mais, aqui, tambem.
+
+36. Beleza?
+
+37. Okay. Entao, vamos la.
+
+38. Vamos, agora, configurar, vamos continuar, aqui, e configurar o Driver do MySQL.
+
+39. Eu vou parar o Servidor, aqui, para a gente poder fazer essas instalacoes todas.
+
+40. Bom, para a gente instalar o Driver do MySQL, a gente vem, aqui, oh, na pasta principal dele, ou seja, em \wildfly-8.1.0.Final, 
+
+> cd C:\Users\SEMPR\Downloads\wildfly-8.1.0.Final
+
+, e, ai, a gente vai em modules/system/layers/base/, vem, aqui, em base,
+
+> cd modules/system/layers/base
+
+41. Entao, a gente entra no diretorio com/
+
+> cd com
+
+42. E cria, aqui, dentro, o diretorio mysql,
+
+> mkdir mysql
+
+43. Entra dentro de mysql,
+
+> cd mysql
+
+44. Aqui, dentro, a gente vai criar outro diretorio, que vai chamar de main,
+
+> mkdir main
+
+45. Entra dentro desse main,
+
+> cd main
+
+46. E beleza. Entao, a gente criou, dentro da pasta wildfly-8.1.0.Final, a pasta modules/system/layers/base/mysql/main.
+
+47. Aqui dentro, o que que a gente vai fazer?
+
+48. Primeiro, vamos copiar o Driver do MySQL, a gente copia ele para ca, a versao mysql-connector-java-5.1.25.jar,
+
+> copy C:\temp\mysql-connector-java-5.1.25.jar .  
+
+49. E a gente vai criar o arquivo module.xml,
+
+> copy con module.xml
+
+50. E, dentro desse arquivo, voce pode usar o editor de texto seu preferido, ai, eu prefiro usar o vi, entao, voce coloca esse conteudo, ai,
+
+<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.1" name="com.mysql">
+    <resources>
+        <resource-root path="mysql-connector-java-5.1.25.jar" />
+    </resources>
+    <dependencies>
+        <module name="javax.api" />
+        <module name="javax.transaction.api" />
+        <module name="javax.servlet.api" optional="true" />
+    </dependencies>
+</module>
+
+51. Entao, voce coloca esse conteudo, ai.
+
+52. Beleza?
+
+53. Eu vou colocar isso tudo, esta no codigo-fonte da Aplicacao, se voce quiser copiar la, nao precisa dar pause e ficar digitando, nao.
+
+54. Bom, isso, aqui, eh o que a gente precisa para instalar o Driver do MySQL no Wildfly.
+
+55. Beleza?
+
+56. Vamos configurar o DataSource, agora, para conectar no Banco?
+
+57. Entao, a gente pode ir voltando, aqui, na raiz do Wildfly,
+
+> cd C:\Users\SEMPR\Downloads\wildfly-8.1.0.Final
+
+58. Agora, a gente entra na pasta standalone,
+
+> cd standalone
+
+59. Dentro da pasta configuration
+
+> cd configuration
+
+60. E, aqui, a gente pode editar, abrir, aqui, o standalone.xml, 
+
+> start notepad++.exe standalone.xml
+
+61. Vamos la, eh so procurar, aqui, datasource, ele vai cair, aqui, oh, nesse <subsystem xmlns="urn:jboss:domain:datasources:2.0">
+
+62. Oh, ja tem o DataSource, aqui, que eh o DataSource de exemplo, aqui, que ele tem, para conectar no h2, nao eh?, aquele banco de dados de teste,
+
+<datasources>
+    <datasource jndi-name="java:jboss/datasources/ExampleDS" pool-name="ExampleDS" enabled="true" use-java-context="true">
+        <connection-url>jdbc:h2:mem:test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE</connection-url>
+        <driver>h2</driver>
+        <security>
+            <user-name>sa</user-name>
+            <password>sa</password>
+        </security>
+    </datasource>
+    <drivers>
+        <driver name="h2" module="com.h2database.h2">
+            <xa-datasource-class>org.h2.jdbcx.JdbcDataSource</xa-datasource-class>
+        </driver>
+    </drivers>
+</datasources>
+
+63. Vamos colocar o DataSource, aquiu, do MySQL, deixa esse cara, ai, nesse canto, em logo abaixo, aqui, configura, ai, o DataSource do MySQL,
+
+    <datasource jta="true" jndi-name="java:jboss/datasources/gerenciador-acesso-ds" pool-name="gerenciador_acesso" enabled="true" use-java-context="true">
+        <connection-url>jdbc:mysql://localhost:3306/gerenciador_acesso</connection-url>
+        <driver>mysql</driver>
+        <transaction-isolation>TRANSACTION_READ_COMMITED</transaction-isolation>
+        <pool>
+            <min-pool-size>10</min-pool-size>
+            <max-pool-size>100</max-pool-size>
+        </pool>
+        <security>
+            <user-name>root</user-name>
+            <password>admin</password>
+        </security>
+    </datasource>
+
+64. E, aqui, oh, eu coloquei o nome JNDI, java:jboss/datasources/gerenciador-acesso-ds, aqui, para ele, tem o nome gerenciador_acesso, conexao, fala que esta habilitada, usar o contexto do Java, Sim.
+
+65. A URL de conexao com o Banco, o nome do Driver, a gente criou, la, como mysql, entao, esse, aqui, eh o nome desse driver que a gente ja vai usar, aqui, embaixo, agora mesmo. Na verdade, esse <driver>mysql</driver>, aqui, vai ser o driver que a gente vai referenciar aqui,
+
+    <drivers>
+        <driver>...</driver>
+    </drivers>
+
+, e, aqui, dentro, a gente vai estar falando onde esta o modulo que a gente configurou la com mysql.
+
+66. <transaction-isolation>TRANSACTION_READ_COMMITTED</transaction-isolation>, significa que ele so vai ler as coisas que estiverem comitadas no Banco de Dados, ou seja, tudo que estiver ja persistido, ja, no Banco de Dados, eh o que ele vai ler. Enquanto esta persistindo, ali, enquanto esta na memoria, as vezes, do banco, ali, do Banco de dados, ele nao vai ler, nao.
+
+67. Qual eh o minimo de conexoes, e o maximo,
+
+    <pool>
+        <min-pool-size>10</min-pool-size>
+        <max-pool-size>100</max-pool-size>
+    </pool>
+
+, que voce quer nesse pool, aqui, okay? Username e password, e, como eu disse, a gente precisa colocar o Driver, aqui, tambem.
+
+68. Vamos colocar o Driver, aqui, oh,
+
+    <driver name="mysql" module="com.mysql">
+        <driver-class>com.mysql.jdbc.Driver</driver-class>
+    </driver>
+
+69. name="mysql", eh esse mesmo nome, aqui,
+
+    <driver>mysql</driver>
+
+, e o modulo, foi aquela pastinha que a gente criou, com/mysql, a gente colocou la, e coloca a classe do Driver do MySQL, aqui.
+
+70. Beleza?
+
+================================================================================
+
+Rodar os 4 comandos abaixo:
+
+I. module add --name=com.mysql --resources=C:\Users\SEMPR\Downloads\wildfly-8.1.0.Final\modules\system\layers\base\com\mysql\main\mysql-connector-java-5.1.25.jar --dependencies=javax.api,javax.transaction.api
+
+
+II. /subsystem=datasources/jdbc-driver=mysql:add(driver-name="mysql",driver-module-name="com.mysql",driver-class-name=com.mysql.jdbc.Driver) 
+
+
+III. data-source add --name=gerenciador-acesso-ds --driver-name=mysql --connection-url=jdbc:mysql://localhost:3306/gerenciador_acesso --jndi-name=java:jboss/datasources/gerenciador-acesso-ds --user-name=root --password=admin
+
+
+IV. data-source enable --name=gerenciador-acesso-ds
+
+
+================================================================================
+
+
+71. Entao, a gente, oh, vamos relembrar, a gente instalou o Wildfly, que eh so descompactar, nao eh?
+
+72. A gente criou o Driver, nao eh?, o Modulo para o Driver do MySQL, okay?
+
+73. E, agora, a gente acabou de configurar o DataSource.
+
+74. Bom, vamos atualizar a lib do Hibernate, para 4.3.6?
+
+75. Entao, vamos la.
+
+76. Ela vai ficar em /wildfly-8.1.0.Final/modules/system/layers/base/org/hibernate/main,
+
+> cd modules/system/layers/base/org/hibernate/main
+
+77. A gente esta com a versao 4.3.5. E a gente quer colocar a 4.3.6. Entao, eu vou copiar os JAR's 4.3.6 do Hibernate para ca,
+
+> copy C:\TEMP\hibernate .
+
+C:\TEMP\hibernate\hibernate-core-4.3.6.Final.jar                                                                 C:\TEMP\hibernate\hibernate-entitymanager-4.3.6.Final.jar                                                        C:\TEMP\hibernate\hibernate-infinispan-4.3.6.Final.jar                                                           3 arquivo(s) copiado(s).  
+
+78. Oh, o core-4.3.6, o entitymanager-4.3.6, e o infinispan-4.3.6, vou copiar eles para ca.
+
+79. Entao, eles foram copiados para ca, e eu preciso editar o arquivo module.xml,
+
+> start notepad++ module.xml
+
+, para colocar a versao correta, aqui, eu estou com o hibernate-core-4.3.5, eu vou colocar 4.3.6, o entitymanager-4.3.6, e o infinispan-4.3.6,
+
+    <resources>
+        <resource-root path="hibernate-core-4.3.6.Final.jar" />
+        <resource-root path="hibernate-envers-4.3.5.Final.jar" />
+        <resource-root path="hibernate-entitymanager-4.3.6.Final.jar" />
+        <resource-root path="hibernate-infinispan-4.3.6.Final.jar" />
+        <resource-root path="" />
+    </resources>
+
+, que eh o que a gente esta usando, a gente vai usar nesta aplicacao.
+
+80. Beleza? Salvo, aqui. Eh isso.
+
+81. Eu acredito que, se eu nao esqueci nada, o Wildfly ja esta configurado.
+
+82. Okay?
+
+83. A gente so precisa, agora, configurar, nao eh?, alterar a nossa Aplicacao.
+
+84. Entao, vamos la, vamos ver o que que a gente tem que fazer aqui, na Aplicacao, para ele funcionar.
+
+85. Vamos dar uma olhada, aqui, no pom.xml, e ver, aqui, algumas coisas que a gente pode tirar, aqui, do escopo compile, ou seja, empacotado com a Aplicacao, porque o Wildfly ja prove essas bibliotecas, como o Mojarra, nao eh?, a implementacao do JSF ja tem la. Entao, a gente pode por provided,
+
+    <dependency>
+        <groupId>org.glassfish</groupId>
+        <artifactId>javax.faces</artifactId>
+        <version>2.2.7</version>
+        <scope>provided</scope>
+    </dependency>
+
+86. Okay? O Primefaces a gente precisa.
+
+87. O Weld, a implementacao do CDI, ele ja prove tambem, a gente pode por provided,
+
+    <dependency>
+        <groupId>org.jboss.weld.servlet</groupId>
+        <artifactId>weld-servlet</artifactId>
+        <version>2.2.1.Final</version>
+        <scope>provided</scope>
+    </dependency>
+
+88. O nucleo do Hibernate, tambem, ele ja tem,
+
+    <dependency>
+        <groupId>org.hibernate</groupId>
+        <artifactId>hibernate-core</artifactId>
+        <version>4.3.6.Final</version>
+        <scope>provided</scope> 
+    </dependency>
+
+89. O EntityManager, ele ja tem,
+
+    <dependency>
+        <groupId>org.hibernate</groupId>
+        <artifactId>hibernate-entitymanager</artifactId>
+        <version>4.3.6.Final</version>
+        <scope>provided</scope>
+    </dependency>
+
+90. Ehcache a gente nao vai usar. Entao, eu vou, simplesmente, comentar,
+
+		<-- Ehcache --
+	    <dependency>
+                <groupId>net.sf.ehcache</groupId>
+                <artifactId>ehcache-core</artifactId>
+                <version>2.6.9</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-ehcache</artifactId>
+                <version>4.3.6.Final</version>
+                <scope>compile</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>1.7.7</version>
+                <scope>compile</scope>
+            </dependency>
+
+91. O Driver do MySQL, a gente pode ir deixando comentado, porque ele, tambem, ja esta dentro do Servidor de Aplicacao.
+
+92. Entao, se voce ver bem, aqui, oh, a gente esta empacotando, apenas, o Primefaces, com o Omnifaces. O resto, o Wildfly ja prove para a gente, ai.
+
+93. Okay, okay.
+
+94. O pom.xml ja esta configurado.
+
+95. Vamos ver, aqui, o EntityManagerProducer, nao eh?
+
+96. Nao, antes disso, vamos configurar o persistence.xml.
+
+97. Vamos modificar ele, aqui.
+
+98. O que que a gente vai modificar, aqui?
+
+99. Primeiro, o DataSource.
+
+100. Agora, a gente esta usando JTA.
+
+101. Vamos voltar, aqui, em standalone.xml, a gente vai usar o JTA, ou seja,
+
+<datasource >>> jta="true" jndi-name="java:jboss/datasources/gerenciador-acesso-ds" pool-name="gerenciador_acesso" enabled="true" use-java-context="true">
+    ...
+</datasource>
+
+, a Transacao, quem controla a Transacao, a gente ainda vai precisar abrir a Transacao, comitar e tal, mas quem tem o Controle de Injetar Transacao, la para a gente, ja eh o proprio Container.
+
+102. Ele ja faz mais o controle, para a gente, da Transacao.
+
+103. A gente esta usando JTA para fazer isso.
+
+104. Beleza? Entao, o DataSource, aqui, em persistence.xml, ao inves de ser <non-jta-data-source>, vai ser <jta-data-source>. Entao, eh so tirar esse non-, aqui,
+
+    <persistence-unit name="gerenciadorAcessoPU" transaction-type="JTA">
+        <jta-data-source></jta-data-source>
+
+        ...
+    
+    ...
+
+105. So que o nome, aqui, do JNDI, eh esse, aqui, definido em standalone.xml, aqui, que eu coloquei,
+
+        <datasource jta="true" jndi-name="java:jboss/datasources/gerenciador-acesso-ds" ...
+
+106. Entao, vamos substituir esse nome, aqui, pelo nome do DataSource que a gente configurou,
+
+        <jta-data-source>java:jboss/datasources/gerenciador-acesso-ts</jta-data-source>
+
+107. Okay? Aqui, continua comentado,
+
+			<-- property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/gerenciador_acesso" />
+			<property name="javax.persistence.jdbc.user" value="root" />
+			<property name="javax.persistence.jdbc.password" value="admin" />
+            <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver" /--
+            
+, o RegionFactory, nao eh mais do EhCache, eh do infinispan. So que, do Infinispan, eles fizeram para que voce nao precise colocar nada no persistence.xml.
+
+108. Entao, quando voce nao coloca nada no persistence.xml, a gente so precisa falar, eh para a gente usar o Cache de Segundo Nivel, 
+
+        <property name="hibernate.cache.use_second_level_cache" value="true" />
+
+, e a gente quer usar Cache de Query,
+
+        <property name="hibernate.cache.use_query_cache" value="true" />
+
+109. Mas, a Factory, la, da Regiao do Cache ja eh o Infinispan, a gente nao precisa colocar nada, no persistence.xml.
+
+110. Beleza?
+
+111. Bom, eu acho que o persistence.xml eh isso, daqui.
+
+112. Vamos voltar, aqui, entao, para o Eclipse.
+
+113. Para o EntityManagerProducer.java.
+
+114. Aqui, a gente nao vai precisar mais fazer a criacao, aqui, do EntityManagerFactory, dessa forma,
+
+public EntityManagerProducer() {
+    >>> this.factory = Persistence.createEntityManagerFactory("gerenciadorAcessoPU");
+}
+
+115. A gente ja consegue injetar direto o EntityManager. A gente nao precisa fazer esse create, aqui,
+
+@Produces
+@RequestScoped
+public EntityManager create() {
+    return factory. >>> createEntityManager();
+}
+
+116. O EntityManager vai ser criado para a gente.
+
+117. Entao, eu vou deixar isso tudo, aqui, comentado,
+
+// private EntityManagerFactory factory;
+
+public EntityManagerProducer() {
+    // this.factory = Persistence.createEntityManagerFactory("gerenciadorAcessoPU");
+}
+
+, vou comentar, para te mostrar que a gente nao precisa disso,
+
+public EntityManager create() {
+    // return this.factory.createEntityManager();
+    return null;
+}
+
+118. Okay?
+
+119. A gente vai, agora, receber, direto, aqui, o EntityManager,
+
+private EntityManager manager;
+
+, beleza?
+
+120. E, para a gente injetar ele, a gente so precisa colocar, aqui, o PersistenceContext(unitName = "gerenciadorAcessoPU"), que eh esse nome, aqui, do <persistence-unit />, 
+
+    <persistence-unit name=">>> gerenciadorAcessoPU" transaction-type="JTA">
+        ...
+    </persistence-unit>
+
+, continua esse nome, aqui, "gerenciadorAcessoPU",
+
+    @PersistenceContext(unitName = "gerenciadorAcessoPU")
+    private EntityManager manager;
+
+121. Entao, se eu estou injetando o EntityManager direto, na hora de eu retornar, aqui, eu ja retorno o manager,
+
+@Produces
+@RequestScoped
+public EntityManager create() {
+    return this.manager;
+}
+
+122. Beleza?
+
+123. Entao, eu ja estou retornando o EntityManager.
+
+124. No Escopo de Requisicao,
+
+@Produces
+>>> @RequestScoped
+public EntityManager create() {
+    return this.manager;
+}
+
+125. Aqui, esta com Escopo de Aplicacao, oh,
+
+>>> @ApplicationScoped
+public class EntityManagerProducer {
+
+    ...
+}
+
+126. Esse Escopo de Aplicacao, aqui, vai ficar errado, se eu deixar assim.
+
+127. Por que? Porque eu preciso colocar como @RequestScoped, aqui, do pacote javax.enterprise.context, cuidado para nao importar o errado, ai,
+
+@RequestScoped
+public class EntityManagerProducer {
+
+    ...
+}
+
+128. Beleza? Porque o EntityManager, quem esta gerando ele para a gente, ja vai ser o proprio Container, vai conseguir injetar ele, aqui, para mim, nao eh?
+
+129. E, ai, ele nao vai ser para a Aplicacao inteira, o EntityManager, ele tem que ser para a Requisicao, ou seja, comecou a Requisicao, abre o EntityManager, e ele ja vai fechar o EntityManager para a gente tambem. Entao, se ele vai fechar o EntityManager para mim, ja arranca esse metodo close(), aqui, tambem,
+
+public void close(@Disposes EntityManager manager) {
+    manager.close();
+}
+
+130. Beleza?
+
+131. Vou arrancar essas partes comentadas, aqui, so para voce ver como eh que ele ficou, fazendo so efeito de comparacao.
+
+132. Esse, aqui, agora, eh o nosso EntityManagerProducer,
+
+package com.algaworks.gerenciador.util.jpa;
+
+@RequestScoped
+public class EntityManagerProducer {
+
+    @PersistenceContext(unitName = "gerenciadorAcessoPU")
+    private EntityManager manager;
+
+    @Produces
+    @RequestScoped
+    public EntityManager create() {
+        return this.manager;
+    }
+
+}
+
+133. Poderia, inclusive, injetar, direto, esse EntityManager, 
+
+    @PersistenceContext(unitName = "gerenciadorAcessoPU")
+    private EntityManager manager;
+
+, la, no meu ManagedBean.
+
+134. Nao teria problema nenhum.
+
+135. Mas, como, eu vou deixar ele, aqui, dessa forma, mesmo, so para ter um efeito de comparacao para voce ver como era feito antes e como ficou agora.
+
+136. Okay?
+
+137. Beleza?
+
+138. Entao, a configuracao do nosso persistence.xml acabou. O EntityManagerProducer tambem.
+
+139. E eu ja estou querendo colocar a Aplicacao la, para a gente ver os problemas acontecerem, nao eh?, porque nada funciona de primeira.
+
+140. Entao, vamos la. Como eh que eu faco, aqui, entao?
+
+141. Eu vou na Raiz do Projeto / Botao direito / Run As / Maven build...
+
+142. Eu vou colocar, aqui, oh, em Goals, clean install.
+
+143. Lembrando que eu estou usando a ultima versao do Eclipse, nessa atualizacao desta aula, ele ja vem com o Plugin do Maven instalado, entao, eh so dar um Run, ai, e ele vai comecar, vai gerar o WAR da aplicacao.
+
+144. Vamos la pegar ele? 
+
+145. Dentro da pasta /gerenciador-acesso-com-cache/target, gerenciador-acesso.war.
+
+146. Eh so voce entrar la, na pastinha do seu workspace, e vai estar la o war que ele gerou.
+
+147. Foi gerado agora, entao, o que que a gente vai fazer? Vamos la no Wildfly, aqui, vamos subir ele, aqui, oh, 
+
+> cd bin
+
+> standalone.bat
+
+148. Vamos fazer o deploy, aqui, pela Telinha, http://localhost:9990,
+
+149. Entao, recarrega a Pagina, ai, http://localhost:9990/console/App.html#home.
+
+150. Clicar na Guia Runtime / Manage Deployments. A gente vai gerenciar todos os deploys que a gente tem nesse Wildfly, no JBoss, aqui. Dou 1 Add, aqui, vai aparecer, aqui, para eu Escolher o Arquivo, vou em C:\Users\SEMPR\workshop-jpa-2-hibernate\capitulo-14-cache\aula-14.007-cache-com-infinispan-jta-e-no-wildfly\gerenciador-acesso-com-cache\target\, escolho gerenciador-acesso.war.
+
+151. Dou um Next, vamos ficar olhando, aqui, no Log do Servidor, o que que vai acontecer.
+
+152. Clicar em Save. Primeiro, ele so colocou o arquivo aqui, em Available Deployments. E, agora, a gente vai dar um Enable/Disable, e ele vai perguntar, la, se a gente quer habilitar essa aplicacao? So Da um Confirm.
+
+153. Ele vai comecar o Deploy. 
+
+154. Deu um erro,
+
+Caused by: org.jboss.as.server.deployment.DeploymentUnitProcessingException: JBAS017302: Failed to parse XML descriptor "/C:/Users/SEMPR/Downloads/wildfly-8.1.0.Final/bin/content/gerenciador-acesso.war/WEB-INF/web.xml" at [11,13]                                                                                                                                                                                                         at org.wildfly.extension.undertow.deployment.WebParsingDeploymentProcessor.deploy(WebParsingDeploymentProcessor.java:121)                                                                                          at org.jboss.as.server.deployment.DeploymentUnitPhaseService.start(DeploymentUnitPhaseService.java:159) [wildfly-server-8.1.0.Final.jar:8.1.0.Final]                                                               ... 5 more                                                                                                                                                                                                 Caused by: javax.xml.stream.XMLStreamException: ParseError at [row,col]:[11,13]                                                                                                                                    Message: Unexpected element '{http://java.sun.com/xml/ns/javaee}res-auto' encountered
+
+155. Apos comentar, em web.xml, 
+
+	<resource-ref>
+		<res-ref-name>jdbc/GerenciadorAcessoDB</res-ref-name>
+		<res-type>javax.sql.DataSource</res-type>
+		<-- <res-auto>Container</res-auto> --
+	</resource-ref>
+
+, e refazer o build e Re-Escolher o arquivo gerenciador-acesso.war para Deploy e Re-habilitar o arquivo gerenciador-acesso.war, deu um novo erro. Para variar, vamos ver o que que eu fiz de errado, aqui.
+
+156. Ah, sim, oh, algumas coisas que ja comecam a gente ter que mudar la na aplicacao.
+
+157. O Infinispan nao suporta nonstrict-read-write,
+
+19:09:50,245 ERROR [org.jboss.msc.service.fail] (ServerService Thread Pool -- 50) MSC000001: Failed to start service jboss.persistenceunit."gerenciador-acesso.war#gerenciadorAcessoPU": org.jboss.msc.service.StartException in service jboss.persistenceunit."gerenciador-acesso.war#gerenciadorAcessoPU": org.hibernate.cache.CacheException: Unsupported access type [nonstrict-read-write]   
+
+158. De forma, entao, que a gente vai ter que entrar, aqui, na Aplicacao, e modificar, colocar o modo que ele suporta, que eh o TRANSACTIONAL,
+
+@Entity
+@Table(name = "grupo")
+@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
+public class Grupo implements Serializable {
+
+    ...
+}
+
+159. Ou seja, ele vai controlar a concorrencia dentro da Transacao.
+
+160. Vamos trocar, tambem, na Entidade Usuario,
+
+@Entity
+@Table(name = "usuario")
+@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
+public class Usuario implements Serializable {
+
+    ...
+
+    @ManyToMany
+    @JoinTable(name = "usuario_grupo",
+        joinColumns = @JoinColumn(name = "codigo_usuario"),
+        inverseJoinColumns = @JoinColumn(name = "codigo_grupo")
+    )
+    @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
+    public List<Grupo> getGrupos() {
+        return grupos;    
+    }
+}
+
+161. Que significa que ele vai fazer o Controle das alteracoes em cima dessa Entidade dentro da Transacao.
+
+162. Como a Transacao, agora, eh controlada pelo JTA, nao eh?, entao, na hora em que estiver alterando, o JTA sabe quem esta alterando esse cara e ele vai conseguir fazer o Controle de Concorrencia, quem vai conseguir alterar esse cara, ou nao, e isso tudo dentro de uma Transacao.
+
+163. Beleza?
+
+164. Bom, eu passei todo mundo, aqui, para TRANSACTIONAL. Beleza, vamos compilar de novo e fazer o Deploy mais uma vez.
+
+165. Em http://localhost:9990/console/App.html#deployments, Manage Deployments, eh so clicar no botao Replace / Next / Save. E, vamos tentar habilitar, de novo, a Aplicacao.
+
+166. Oh, no Log do Wildfly, esta criando as tabelas, so falou que deu tudo certo.
+
+167. Se a gente acessar, aqui, a Aplicacao, vamos acessar, aqui, a Tela de Pesquisa, http://localhost:8080/gerenciador-acesso/PesquisaUsuario.xhtml.
+
+168. Nao teve nenhum problema, aqui.
+
+169. So que, vamos modificar alguma coisinha.
+
+170. Ta vendo que ele nao gerou nenhuma mensagem de log, aqui, no Console do Servidor, do Hibernate?
+
+171. Ele fez essas Consultas, aqui, lembra, nao eh?, que a gente tem essas 2 Consultas,
+
+Total usuarios: 2
+Usuarios ativos: 1
+
+, mas nao mostrou no Log.
+
+172. Isso porque a gente precisa habilitar primeiro.
+
+173. A gente vem, aqui, na Guia Configuration, em http://localhost:9990/console/App.html#datasources, vamos ver, aqui, em Core / Logging / Guia LOG CATEGORIES.
+
+174. A gente vai adicionar, ou seja, clicar em Add, em Name: org.hibernate.SQL. Em Log Level, vamos colocar, aqui, no Nivel TRACE, e desmarca essa opcao, Use Parent Handlers. Da um Save, aqui.
+
+175. Okay. Handlers, aqui, a gente nao tem nenhum. Vamos criar um, na Guia HANDLER, para mostrar num arquivo separado para a gente.
+
+176. Entao, a gente clica, aqui, em HANDLER / Guia File / Botao Add / em Name, vamos chamar, aqui, de GerenciadorAcesso. Qual o nivel, aqui, que eu vou colocar, o TRACE, tambem.
+
+177. Em File Path, gerenciador-acesso.log, eu vou chamar o nome desse arquivo.
+
+178. Vou dar um Save, aqui.
+
+179. Vamos dar um Edit, aqui, oh, falando que eh para dar um Append, e para dar um Auto Flush, tambem. Append eh para ele nao apagar o arquivo, nao eh?, sempre adicionar nele.
+
+180. Beleza. So clicar em Salvar, aqui.
+
+181. Volto, aqui, em LOG CATEGORIES, na Guia Handlers, aqui, na lista de Log Categories, aparece org.hibernate.SQL, ao navegarmos na lista, que eh o que a gente criou, certo? A gente vai adicionar um Handler, para ele. Clicar no botao Add, em Name, selecionamos o GerenciadorAcesso, clicar em Save.
+
+182. Beleza? Acho que eh isso daqui que a gente precisa.
+
+183. Vou abrir um novo prompt. Se eu for na pasta \wildfly-8.1.0.Final\standalone\log, aparece o arquivo gerenciador-acesso.log.
+
+184. Ao abri o arquivo, vemos que nao tem nada. Deixa eu recarregar essa Tela de Pesquisa, para a gente ver se aparece alguma coisa no arquivo de log gerenciador-acesso.log.
+
+185. Okay, apareceu, no arquivo de Log, as consultas,
+
+21:42:26,041 DEBUG [org.hibernate.SQL] (default task-3) 
+    select
+        count(usuario0_.codigo) as col_0_0_ 
+    from
+        usuario usuario0_
+21:42:26,048 DEBUG [org.hibernate.SQL] (default task-3) 
+    select
+        count(this_.codigo) as y0_ 
+    from
+        usuario this_ 
+    where
+        this_.status=?
+
+186. Apareceu a consulta, aqui, do Hibernate, ta vendo? 
+
+>>> [org.hibernate.SQL] (default task-3) 
+
+187. Bom, acho que eh isso daqui.
+
+188. Vamos tentar fazer uma Pesquisa aqui?
+
+189. Eu acho que vai ter um probleminha, a gente ja ve como resolver ele.
+
+190. Vamos pesquisar pelo Usuario de Codigo 1.
+
+191. Realmente, deu um erro. Qual foi o erro que ele deu, aqui?
+
+192. Famoso LazyInitialization, nao eh?
+
+21:46:56,480 SEVERE [javax.enterprise.resource.webcontainer.jsf.application] (default task-13) Error Rendering View[/PesquisaUsuario.xhtml]: org.hibernate.LazyInitializationException: failed to lazily initialize a collection of role: com.algaworks.gerenciador.model.Usuario.grupos, could not initialize proxy - no Session
+
+193. Nao tem a Sessao para buscar os grupos daquele Usuario,
+
+21:46:56,480 SEVERE [javax.enterprise.resource.webcontainer.jsf.application] (default task-13) Error Rendering View[/PesquisaUsuario.xhtml]: org.hibernate.LazyInitializationException: failed to lazily initialize a collection of role: com.algaworks.gerenciador.model.Usuario. >>> grupos, could not initialize proxy - no Session
+
+194. failed to lazily initialize a collection, entao, ele nao conseguiu buscar os grupos.
+
+195. Por que que ele nao conseguiu buscar os grupos?
+
+196. Em PesquisaUsuarioBean,
+
+public void pesquisar() {
+    this.usuario = this.manager.find(Usuario.class, this.codigoUsuario);
+}
+
+197. Bom, como o EntityManager, nao eh?, mais uma vez, agora, ja eh gerenciado, nao eh?, nao eh o nosso EntityManagerProducer, aqui, que fecha ele, mais, a gente so esta, aqui, injetando, aqui, o EntityManager e retornando. Como eu disse, a gente poderia colocar esse cara, aqui, direto,
+
+    >>> @PersistenceContext(unitName = "gerenciadorAcessoPU")
+    >>> private EntityManager manager;
+
+    ...
+
+198. Como, quem esta criando ele, e fechando ele para a gente, eh o proprio Container, na hora que chegar la, ele nao vai conseguir.
+
+199. Na hora que ele busca, aqui, o Usuario, 
+
+public void pesquisar() {
+    this.usuario = this.manager.find(Usuario.class, this.codigoUsuario);
+}
+
+, ele so faz a consulta do Usuario, oh, 
+
+21:46:56,345 DEBUG [org.hibernate.SQL] (default task-13) 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        usuario0_.status as status3_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+
+, mas ele nao consegue buscar os grupos desse Usuario.
+
+200. Okay? 
+
+201. Porque, aqui, Relacionamento @ManyToMany,
+
+	@ManyToMany
+	@JoinTable(name = "usuario_grupo", 
+			joinColumns = @JoinColumn(name = "codigo_usuario"), inverseJoinColumns = @JoinColumn(name = "codigo_grupo"))
+	@Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
+	public List<Grupo> getGrupos() {
+		return grupos;
+    }
+    
+, o padrao do FetchType eh LAZY, entao, ele nao consegue fazer isso, ele nao consegue buscar.
+
+202. Entao, a gente tem algumas opcoes, como, por exemplo, colocar esse cara EAGER, aqui, se fosse o caso, a gente falar, 'Vamos transformar esse cara em EAGER', que ele vai conseguir buscar.
+
+203. Ou, entao, a gente pode alterar essa consulta, aqui,
+
+public void pesquisar() {
+    this.usuario = this.manager.find(Usuario.class, this.codigoUsuario);
+}
+
+, e colocar essa consulta ja fazendo o Fetch dos Grupos.
+
+204. Entao, eu vou fazer com JPQL, mesmo, normal, porque, depois, a gente altera uma outra coisa, from Usuario u, vamos fazer o inner join fetch, ou seja, buscar, eu quero buscar o u.grupos, onde u.codigo = :codigo, vai ser igual ao codigo,
+
+public void pesquisar() {
+    this.usuario = this.manager.createQuery("from Usuario u join fetch u.grupos where u.codigo = :codigo")
+}
+
+205. Esse cara, aqui, vai nos retornar um cara do tipo Usuario, ou seja, Usuario.class, .setParameter("codigo", this.codigoUsuario);, ou seja, eh o codigo do usuario informado na tela, .getSingleResult(). Pronto. A gente esta fazendo o Select em Usuario, faz o Join Fetch com Grupos, ou seja, eh o Fetch, lembrando, ele vai trazer o Grupo nessa mesma consulta, onde o Codigo do Usuario vai ser igual ao codigo que esta informando, aqui, que eh o codigo da tela,
+
+public void pesquisar() {
+    this.usuario = this.manager.createQuery(
+        "from Usuario u join fetch u.grupos where u.codigo = :codigo", Usuario.class)
+        .setParameter("codigo", this.codigoUsuario)
+        .getSingleResult();
+}
+
+206. Beleza. Vamos compilar mais uma vez e fazer o deploy, la, de novo.
+
+207. Beleza. Nao deu erro nenhum.
+
+208. Aqui, no arquivo gerenciador-acesso.log, Vamos voltar, aqui, na Tela de Pesquisa de Usuario. Vamos pesquisar, aqui, o Usuario 1.
+
+209. Oh, trouxe os Grupos, e nao deu erro nenhum, aqui, no Log do Servidor, ele mostrou a consulta sendo feita aqui,
+
+22:22:04,899 DEBUG [org.hibernate.SQL] (default task-29) 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        grupo2_.codigo as codigo1_0_1_,
+        usuario0_.nome as nome2_1_0_,
+        usuario0_.status as status3_1_0_,
+        grupo2_.nome as nome2_0_1_,
+        grupos1_.codigo_usuario as codigo_u1_1_0__,
+        grupos1_.codigo_grupo as codigo_g2_2_0__ 
+    from
+        usuario usuario0_ 
+    inner join
+        usuario_grupo grupos1_ 
+            on usuario0_.codigo=grupos1_.codigo_usuario 
+    inner join
+        grupo grupo2_ 
+            on grupos1_.codigo_grupo=grupo2_.codigo 
+    where
+        usuario0_.codigo=?
+
+
+210. Beleza?
+
+211. Bom, se eu pesquisar de novo, ele vai fazer a Consulta novamente no Banco. Se eu pesquisar de novo, fez a Consulta novamente no Banco,
+
+22:22:04,899 DEBUG [org.hibernate.SQL] (default task-29) 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        grupo2_.codigo as codigo1_0_1_,
+        usuario0_.nome as nome2_1_0_,
+        usuario0_.status as status3_1_0_,
+        grupo2_.nome as nome2_0_1_,
+        grupos1_.codigo_usuario as codigo_u1_1_0__,
+        grupos1_.codigo_grupo as codigo_g2_2_0__ 
+    from
+        usuario usuario0_ 
+    inner join
+        usuario_grupo grupos1_ 
+            on usuario0_.codigo=grupos1_.codigo_usuario 
+    inner join
+        grupo grupo2_ 
+            on grupos1_.codigo_grupo=grupo2_.codigo 
+    where
+        usuario0_.codigo=?
+
+212. Mas, por que, Normandes?
+
+213. A gente nao colocou em Cache a Entidade Usuario?
+
+214. Exatamente. A Entidade Usuario esta em Cache. Mas repara que isso, aqui, agora, se transformou no que?
+
+public void pesquisar() {
+		this.usuario = this.manager.createQuery(
+				"from Usuario u join fetch u.grupos where u.codigo = :codigo", Usuario.class)
+				.setParameter("codigo", this.codigoUsuario)
+				.getSingleResult();    
+}
+
+215. Numa Consulta.
+
+216. Se se transformou numa Consulta, a gente tem que colocar ele no Cache de Queries.
+
+217. Okay?
+
+218. E, para a gente colocar ele no Cache de Queries, a gente precisa da Session do Hibernate,
+
+public void pesquisar() {
+    Session session = this.manager.unwrap(Session.class);
+    this.usuario = session.
+
+}
+
+, vamos criar, isso, aqui, com Criteria? this.usuario = session.createCriteria(Usuario.class)., okay?, a gente tem que buscar grupos, nao eh?, entao, a gente tem que mudar o FetchMode, aqui, para JOIN, porque eu quero que voce busque esse cara,
+
+public void pesquisar() {
+    Session session = this.manager.unwrap(Session.class);
+    this.usuario = session.createCriteria(Usuario.class)
+            .setFetchMode("grupos", FetchMode.JOIN)
+            .
+}
+
+219. Nos vamos adicionar a Restrictions, falando que o codigo eh o this.codigoUsuario. Vamos falar que essa Query esta cacheada, e retornar o uniqueResult(),
+
+public void pesquisar(){
+    Session session = this.manager.unwrap(Session.class);
+    this.usuario = (Usuario) session.createCriteria(Usuario.class)
+                .setFetchMode("grupos", FetchMode.JOIN)
+                .add(Restrictions.eq("codigo", this.codigoUsuario))
+                .setCacheable(true)
+                .uniqueResult();
+}
+
+220. So adicionar o Casting para Usuario.
+
+221. E comentamos a Consulta feita com JPQL.
+
+222. Beleza? Entao, assim, a gente vai adicionar essa Consulta no Cache.
+
+223. Vamos testar de novo?
+
+224. Vamos dar uma olhada no Log. Parece que nao deu nenhum problema.
+
+225. Vamos la, vamos recarregar essa Pagenazinha, aqui, http://localhost:8080/gerenciador-acesso/PesquisaUsuario.xhtml.
+
+226. Fez os SELECT's, aqui, do Total de usuarios e Usuarios ativos,
+
+22:55:16,813 DEBUG [org.hibernate.SQL] (default task-2) 
+    select
+        count(usuario0_.codigo) as col_0_0_ 
+    from
+        usuario usuario0_
+22:55:16,817 DEBUG [org.hibernate.SQL] (default task-2) 
+    select
+        count(this_.codigo) as y0_ 
+    from
+        usuario this_ 
+    where
+        this_.status=?
+
+, que a gente ja tinha colocado. Vou pesquisar, aqui, o Usuario de codigo 1, buscou, fez o primeiro Select no Baco,
+
+select
+        this_.codigo as codigo1_1_1_,
+        this_.nome as nome2_1_1_,
+        this_.status as status3_1_1_,
+        grupos2_.codigo_usuario as codigo_u1_1_3_,
+        grupo3_.codigo as codigo_g2_2_3_,
+        grupo3_.codigo as codigo1_0_0_,
+        grupo3_.nome as nome2_0_0_ 
+    from
+        usuario this_ 
+    left outer join
+        usuario_grupo grupos2_ 
+            on this_.codigo=grupos2_.codigo_usuario 
+    left outer join
+        grupo grupo3_ 
+            on grupos2_.codigo_grupo=grupo3_.codigo 
+    where
+        this_.codigo=?
+
+, vamos ver se ele vai fazer, agora, de novo? Ao clicar em Pesquisar, nao fez um outro Select no Banco, ja colocou essa Consulta em Cache.
+
+227. Okay?
+
+228. Bom, Vamos so tentar fazer um Cadastro?
+
+229. Vamos colocar, aqui, sei la, o Pedro, Salvar. Deu problema,
+
+Caused by: java.lang.IllegalStateException: A JTA EntityManager cannot use getTransaction()
+
+230. Ja era previsivel esse problema.
+
+231. Porque, quando a gente esta usando o JTA, a gente nao pode usar o getTransaction().
+
+232. Okay? Entao, a gente tem que, a Transacao, como eu disse, eh gerenciada pelo Container, nao eh?, pelo JTA.
+
+233. Entao, esse getTransaction().begin e getTransaction.commit(), aqui, 
+
+public void salvar() {
+try {
+			// manager.getTransaction().begin();
+			manager.merge(usuario);
+			// manager.getTransaction().commit();
+			usuario = new Usuario();
+		} catch (Exception e) {
+			throw new RuntimeException("Erro salvando usuario", e);
+		}    
+}
+
+, nao existe mais.
+
+234. Entao, para a gente fazer isso, a gente vai pegar, aqui, um @Resource private UserTransaction transaction,
+
+    @Resource
+    private UserTransaction transaction;
+
+    ...
+
+    public void salvar() {
+        try {
+            this.transaction.begin();
+            this.manager.merge(this.usuario);
+            this.transaction.commit();
+            this.usuario = new Usuario();
+        } catch (Exception e) {
+            throw new RuntimeException("Erro salvando usuario", e);
+        }
+    }
+
+235. Beleza? Fazer o Deploy novamente.
+
+236. Funcionou. Vamos voltar, aqui, http://localhost:9990/console/App.html#deployments, dar o Replace. Esperar, aqui, o Log do Servidor, ver se deu algum problema.
+
+237. Parece que nao.
+
+238. Vamos voltar na nossa Telinha, aqui, de http://localhost:8080/gerenciador-acesso/CadastroUsuario.xhtml, entrar, de novo, em Cadastro de Usuario, e tentar cadastrar, agora, o Pedro.
+
+239. Oh, agora, nao deu erro nenhum, na Tela de Cadastro. Se a gente olhar, aqui, no arquivo de Log,
+
+23:19:52,147 DEBUG [org.hibernate.SQL] (default task-21) 
+    insert 
+    into
+        usuario
+        (nome, status) 
+    values
+        (?, ?)
+23:19:52,371 DEBUG [org.hibernate.SQL] (default task-21) 
+    select
+        count(usuario0_.codigo) as col_0_0_ 
+    from
+        usuario usuario0_
+23:19:52,379 DEBUG [org.hibernate.SQL] (default task-21) 
+    select
+        count(this_.codigo) as y0_ 
+    from
+        usuario this_ 
+    where
+        this_.status=?
+
+, ele fez o Insert, la, do Usuario, nao eh?, ele fez, novamente, as Consultas, como era de se esperar, nao eh?, porque a gente alterou a Entidade Usuario.
+
+240. Se a gente pesquisar, aqui, o cara de codigo 3, oh, apareceu o Pedro, aqui, na tela de Pesquisa.
+
+241. Beleza?
+
+242. Bom, para terminar esta aula, aqui, deixa so eu te mostrar um negocio legal, que a gente consegue fazer, que sao as configuracoes de Expirar.
+
+243. Como eu mostrei, la, no EhCache, aqui, como eh que a gente faz Wildfly.
+
+244. Entao, a gente pode vir aqui, oh, http://localhost:9990/console/App.html#datasourcesm, na Guia Configuration / Infinispan / Local Caches, http://localhost:9990/console/App.html#local-cache, que eh o que a gente esta trabalhando, e, aqui, oh, o Cache Container, do Hibernate, ta vendo?, tem das Entidades (entity), e tem das Consultas (local-query), das Queries, okay? Vamos selecionar local-query.
+
+245. Se a gente vier, aqui, na Guia Expiration, dar uma olhada aqui, como eh que esta configurado, o tempo que ele vai esperar em Idle, isso, aqui, esta em milissegundos. Entao, voce tira 3 zeros, aqui, sao 100 segundos.
+
+246. O Idle, ou seja, quando nao esta Consultando.
+
+247. O Lifespan eh, se estiver Consultando, -1 significa que ele nunca vai expirar, ou seja, se continua consultando aquela Entidade la, ele nunca vai tirar do Cache.
+
+248. Esse interval, aqui, eh o tempo que ele vai ficar verificando. Entao, 'Deixa eu verificar se ja passou, se ja expirou o Max Idle, e o Lifespan'. Em 1 em 1 minuto, ele vai conferir as outras opcoes.
+
+249. Eh isso que significa.
+
+250. Entao, para a gente mostrar, aqui, nao ficar esperando esse tempo todo, para eu te mostrar isso acontecendo, vamos la, a gente vai, para o Max Idle, ou seja, o cara que esta,..., vamos colocar 30 segundos,
+
+Max Idle: 30000
+
+251. 30 segundos, entao, sao 30000 milissegundos.
+
+252. Em Lifespan, vamos colocar 60000. Ou seja, entao, vamos la, Max Idle de 30 segundos, ou seja, nao estou consultando, ele vai, em 30 segundos, expirar.
+
+253. Estou consultando? Em 60 segundos, ele vai expirar.
+
+254. Se clicar em Need Help?, aqui, ele tem uma explicacaozinha, oh, para isso, ai, que eu acabei de explicar para voce.
+
+255. E, aqui, em Interval, ele esta verificando de 60 em 60 segundos. Vamos colocar para ele verificar de 10 em 10 segundos, para ser mais rapido, aqui, que a gente nao ficar muito tempo na aula, que ja esta bem grande, nao eh?
+
+256. Dar um Save, aqui. Fiz essas alteracoes, tem que reiniciar o Servidor, aqui, para subir novamente.
+
+257. Ele vai fazer o deploy da aplicacao, agora, esta criando as tabelas, beleza.
+
+258. Vamos deixar, aqui, aberto o arquivo de log, para a gente observar, ai, o que que ele esta fazendo, ai.
+
+259. Beleza,
+
+23:50:36,178 DEBUG [org.hibernate.SQL] (default task-1) 
+    select
+        count(usuario0_.codigo) as col_0_0_ 
+    from
+        usuario usuario0_
+23:50:36,224 DEBUG [org.hibernate.SQL] (default task-1) 
+    select
+        count(this_.codigo) as y0_ 
+    from
+        usuario this_ 
+    where
+        this_.status=?
+
+260. Vamos voltar, aqui. Bom, veja bem, eu coloquei, oh, para 30 segundos em Idle, se ele nao estiver Consultando, em 30 segundos, ele vai expirar.
+
+261. Ou seja, se a gente esperar 30 segundinhos, aqui, e eu recarregar a tela de pesquisa de usuario, voce vai ver que ele vai fazer essa consulta novamente.
+
+262. Beleza? Imagina que ja passaram, ai, os 30 segundinhos, eu vou recarregar essa tela, http://localhost:8080/gerenciador-acesso/PesquisaUsuario.xhtml, olha la, fez a consulta novamente,
+
+23:52:38,841 DEBUG [org.hibernate.SQL] (default task-2) 
+    select
+        count(usuario0_.codigo) as col_0_0_ 
+    from
+        usuario usuario0_
+23:52:38,850 DEBUG [org.hibernate.SQL] (default task-2) 
+    select
+        count(this_.codigo) as y0_ 
+    from
+        usuario this_ 
+    where
+        this_.status=?
+
+263. Se eu estou dentro dos 30 segundos, posso ficar recarregando a tela, aqui, que ele nao faz a consulta.
+
+264. Vamos Consultar o Usuario de Codigo 1, agora,
+
+23:56:12,211 DEBUG [org.hibernate.SQL] (default task-36) 
+    select
+        this_.codigo as codigo1_1_1_,
+        this_.nome as nome2_1_1_,
+        this_.status as status3_1_1_,
+        grupos2_.codigo_usuario as codigo_u1_1_3_,
+        grupo3_.codigo as codigo_g2_2_3_,
+        grupo3_.codigo as codigo1_0_0_,
+        grupo3_.nome as nome2_0_0_ 
+    from
+        usuario this_ 
+    left outer join
+        usuario_grupo grupos2_ 
+            on this_.codigo=grupos2_.codigo_usuario 
+    left outer join
+        grupo grupo3_ 
+            on grupos2_.codigo_grupo=grupo3_.codigo 
+    where
+        this_.codigo=?
+
+265. Se eu clicar, novamente em Pesquisar, ele nao vai mais buscar no Banco, porque esta no Cache.
+
+266. Se eu ficar, aqui, agora, 1 minuto, posso ficar, aqui, agora, pesquisando, pesquisando, volto, aqui, no arquivo de log, oh, esta pesquisando so no cache, se a gente ficar, aqui, pesquisando, na hora que der 1 minuto, independente de ele tirar do cache, porque eu configurei aqui, oh, o Lifespan eh independente se esta usando ou nao, em 1 minuto, eu quero que voce expire essa Entidade Usuario.
+
+267. Vou pesquisar, aqui, oh, mais um pouquinho, ja deram, ai, uns 30 segundos, olha la, beleza, se voce olhar, aqui, oh na hora, oh, no arquivo de Log, passaram-se, realmente, 1 minuto, e ele tirou aquele cara do Cache, e adicionou de novo. Agora, ja esta no Cache de novo. Se eu nao ficar consultando, em 30 segundos, ele tira do Cache,
+
+00:02:49,845 DEBUG [org.hibernate.SQL] (default task-53) 
+    select
+        this_.codigo as codigo1_1_1_,
+        this_.nome as nome2_1_1_,
+        this_.status as status3_1_1_,
+        grupos2_.codigo_usuario as codigo_u1_1_3_,
+        grupo3_.codigo as codigo_g2_2_3_,
+        grupo3_.codigo as codigo1_0_0_,
+        grupo3_.nome as nome2_0_0_ 
+    from
+        usuario this_ 
+    left outer join
+        usuario_grupo grupos2_ 
+            on this_.codigo=grupos2_.codigo_usuario 
+    left outer join
+        grupo grupo3_ 
+            on grupos2_.codigo_grupo=grupo3_.codigo 
+    where
+        this_.codigo=?
+00:03:50,431 DEBUG [org.hibernate.SQL] (default task-20) 
+    select
+        this_.codigo as codigo1_1_1_,
+        this_.nome as nome2_1_1_,
+        this_.status as status3_1_1_,
+        grupos2_.codigo_usuario as codigo_u1_1_3_,
+        grupo3_.codigo as codigo_g2_2_3_,
+        grupo3_.codigo as codigo1_0_0_,
+        grupo3_.nome as nome2_0_0_ 
+    from
+        usuario this_ 
+    left outer join
+        usuario_grupo grupos2_ 
+            on this_.codigo=grupos2_.codigo_usuario 
+    left outer join
+        grupo grupo3_ 
+            on grupos2_.codigo_grupo=grupo3_.codigo 
+    where
+        this_.codigo=?
+
+268. Se eu ficar Consultando, em 1 minuto, ele tira do Cache, e, eh aqui, http://localhost:9990/console/App.html#local-cache, que a gente configura isso, para as Consultas de Query (local-query), e para as Entidades (entity), eh aqui. Okay? E a gente ja viu esses 2 caras, ai.
+
+269. Bom, eh isso, ai, que eu queria falar para voce. Repara que nao eh dificil, nao eh? Sao varios passos, na verdade, sao muitas coisas a se fazer, sao muitas coisas a se configurar, nao eh?, para deixar a aplicacao funcionando. Mas nao eh nada assim, 'Nossa, mas que coisa complicada'.
+
+270. Nao sei se voce concorda comigo, mas sao muitos passos a se fazerem, para conseguir deixar tudo funcionando belezinha, nao eh?, ou seja, eh so saber onde encontrar as informacoes, eh so saber juntar isso tudo, que vai dar certo.
+
+271. Fim da     Aula 14.007. Cache com Infinispan, JTA e no Wildfly.
+
+
+
+-->

@@ -1,0 +1,155 @@
+<!--
+
+Aula 04.005. Mapeando a Primary Key
+
+1. Quando a gente estava fazendo o Mapemanto do Primary Key, la da Entidade Fabricante, vamos dar uma olhada nela aqui, 
+
+@Entity
+public class Fabricante {
+
+    private Long codigo;
+    private String nome;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    public Long getCodigo() {
+        return codigo;
+    }
+}
+
+, a gente tem o codigo, que eh a nossa Primary Key, eh a chave primaria, que identifica unicamente essa Entidade na tabela.
+
+2. Okay? Entao, a gente mapeou ela, anotou ela como @Id, e a gente falou para gerar o valor usando o Tipo IDENTITY, ja volto nisso daqui.
+
+3. Vamos falar, agora, antes, a respeito desse tipo de dado,
+
+    private >>> Long <<< codigo;
+
+4. Que tipo de dado, Long, String, o que que eu posso colocar aqui para fazer esse mapeamento?
+
+5. E tambem qual que eh o nome da minha coluna que vai ser gerado no banco de dados? Tem que ser codigo? Eu posso trocar esse nome?
+
+6. Sim, voce consegue vir aqui e trocar esse nome, a gente consegue vir aqui, por exemplo, e anotar como @Column, dessa forma, do javax.persistence, 
+
+    @Column(name = "id")
+    public Long getCodigo() {
+        return codigo;
+    }
+
+e voce consegue vir aqui e definir o nome, e colocar assim, eu nao quero que seja codigo, vamos supor que voce esta programando em portugues, mas, no banco de dados, esteja la so 'id', ou, no banco de dados, tem algum outro nome, tem muitas empresas que costumam colocar as iniciais da empresa, em todo nome de tabela, no nome das colunas, tem empresa que gosta disso. 
+
+7. Entao, a gente colocaria, por exemplo, aw_codigo,
+
+    @Column(name = "aw_codigo")
+    public Long getCodigo() {
+        return codigo;
+    }
+
+, coisas desse tipo, ou aw_id. 
+
+8. Entao, se eu quisesse trocar o nome la na tabela do banco de dados, eu poderia colocar isso daqui, oh, colocar @Column, name="aw_id", ai, eu conseguiria trocar o nome,
+
+    @Column(name = "aw_id")
+    public Long getCodigo() {
+        return codigo;
+    }
+
+9. Como eu disse, isso daqui apareceria so no banco de dados, mas, voce manteria um nome mais interessante aqui na sua Entidade, para o seu codigo ficar mais legivel, nao eh?, entao, o codigo, aqui, ficaria como getCodigo(), bem mais legal do que getAw_id(), nao eh verdade?
+
+10. Entao, se voce quiser so no banco de dados, voce coloca esse @Column.
+
+11. E o tipo de dado, aqui, 
+
+    private Long codigo;
+
+12. Bom, vamos falar, la, sobre esse tipo de dado.
+
+13. Entao, eu ja falei do @Column, para a gente trocar o nome. E o tipo? O que que a gente pode colocar?
+
+14. A gente pode colocar esses Tipos Primitivos, aqui,
+
+byte, int, short, long, char
+
+15. As Classes Wrapper, tambem, nao eh?, que sao os objetos relacionados a esses tipos primitivos, ou seja,
+
+Byte, Integer, Short, Long, Character
+
+16. A gente pode usar String, tambem.
+
+17. E podemos, ainda, utilizar BigInteger e, ate, o java.util.Date, como Tipo de Dado para a nossa Primary Key.
+
+18. Bem, mas, entao, esta tudo ai, Normandes?
+
+19. Nao, nao esta tudo, nao.
+
+20 Nao eh recomendado voce usar float, double ou BigDecimal, nem as classes Wrapper, aqui, ou seja, Float, Double, eh recomendado nos usarmos.
+
+21. Porque sao questoes de precisao, como ele vai conseguir armazenar esse float, esse double, na hora dele trazer isso, de volta, remontar o float, o double, sao valores por aproximacao, entao, pode ser que voce nao consiga montar, de novo, aquele valor daquela Primary Key, okay?
+
+22. Entao, nao utilize esses tipos de dados aqui,
+
+    float, Float, double, Double, BigDecimal
+
+, para a Primary Key.
+
+23. Entao, la, trocar o nome da coluna, no Banco de Dados, o tipo de dado. Agora, vamos falar um pouquinho dessa anotacao aqui,
+
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+, @GeratedValue, que a gente colocou, aqui, estrategia como GenerationType.IDENTITY.
+
+24. Bom, vamos la, deixa eu te mostrar.
+
+25. Existem 4 Tipos de Formas de a gente gerar o ID, existem quatro estrategias, existem valores que eu posso trocar, ali, naquele IDENTITY,
+
+        @GeneratedValue(strategy = GenerationType. >>> IDENTITY <<<)
+
+26. Um que eh o AUTO, ou seja, automatico.
+
+27. O outro eh o TABLE.
+
+28. O outro eh o SEQUENCE.
+
+29. E o outro eh o IDENTITY, que eh o que a gente esta utilizando.
+
+30. Deixa eu falar primeiro do IDENTITY, que eh o que a gente esta utilizando. IDENTITY, ou, as vezes, eles chamam de AUTO-GERACAO, eh quando o banco de dados suporta, ai, que eh muito importante voce verificar, voce fala, 'Nao, eu vou usar so IDENTITY para sempre'.
+
+31. Nao, tem banco de dados que nao vai suportar voce colocar IDENTITY. O MySQL suporta. Entao, quando voce coloca IDENTITY, o MySQL, que eh o AUTO-INCREMENT do MySQL, ele vai conseguir, para cada linha que voce for inserir, o MySQL cria o valor da Primary Key, ele incrementa e adiciona la.
+
+32. O Sequence tambem eh o banco de dados que tem que suportar. Tem banco de dados que suporta Sequence, como, por exemplo, o Oracle.
+
+33. O Oracle eh um que eu sei que suporta Sequence.
+
+34. Entao, voce pode usar Sequence e, ai, o Hibernate, voce vai ter que definir o nome da Sequence, eu vou deixar isso descrito em um exercicio, porque eu nao tenho o banco Oracle, aqui, para te mostrar, okay?, mas eu vou deixar descrito em um exercicio, como eh que voce mapearia com o Sequence.
+
+35. Okay? Entao, vai mapear, trabalhar o banco de dados Oracle? Tem Sequence la? Entao, voce coloca la a estrategia, o tipo, la, como Sequence. Eh so voce vir aqui, oh, e definir a estrategia como Sequence,
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    public Long getCodigo() {
+        return codigo;
+    }
+
+, e, ai, a gente tem que definir o nome da Sequence, tambem. 
+
+36. TABLE eh a forma mais portavel que tem, porque TABLE, ele vai funcionar, praticamente, para todos os bancos de dados. Mas como eh que ele funciona? Ele vai criar uma nova tabela no Banco de Dados, e essa Tabela vai armazenar o valor que tem que ser colocado na Primary Key. Entao, ele vai criar uma Tabela com uma coluna com o nome, la, como se fosse o nome da Tabela, e, na frente, uma tabela com duas colunas. Tambem vou deixar esse ai como exercicio para voce fazer. 
+
+37. Entao, e a gente vai fazer, tambem, eu vou, nas proximas entidades que a gente for mapeando, a gente da uma brincadinha, tem hora que eu crio com TABLE, tem hora que eu vou criar com IDENTITY, okay? Entao, na tabela, ele cria uma tabela no banco de dados, na primeira coluna, ele coloca o nome, la, da Entidade, na segunda coluna, o valor do ID, e ele vai incrementando o valor desse ID, ali, na tabela, okay?
+
+38. E AUTO, de automatico, ele vai deixar o JPA, la, escolher a melhor forma para aquele banco de dados. Entao, dependendo do banco de dados que voce estiver trabalhando, pode ser que ele escolha TABLE, SEQUENCE, ou IDENTITY.
+
+39. Okay? AUTO, entao, nao eh tao comum deixar AUTO, nao, porque voce meio que perde o controle, nao eh?, voce nao sabe o jeito que vai ser gerado. Entao, AUTO, o instrutor nao costuma usar muito, nao. O instrutor utiliza, para ser honesto conosco, bastante o IDENTITY, ou o SEQUENCE. IDENTITY, para quando o instrutor esta trabalhando no MySQL. SEQUENCE quando o instrutor esta trabalhando com algum projeto ORACLE.
+
+40. Okay? E eh sempre aqui, na estrategia, a gente vai trocando a estrategia,
+
+    @Id
+    @GeneratedValue(>>> strategy <<< = GenerationType.IDENTITY)
+    public Long getCodigo() {
+        return codigo;
+    }
+
+41. Eu vou deixar um exercicio, o proximo exercicio, ai, para voce brincar, trocando IDENTITY e TABLE, para voce fazer o TABLE e me dizer o que que voce achou.
+
+42. Fim da Aula 04.005. Mapeando a Primary Key.
+
+-->

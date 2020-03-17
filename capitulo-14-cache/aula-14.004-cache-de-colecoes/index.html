@@ -1,0 +1,1210 @@
+<!--
+    Aula 14.004. Cache de Colecoes
+
+1. Vamos falar a respeito de Cache de Colecoes, e o resto das aulas, aqui, deste modulo, eu resolvi criar uma outra Aplicacao, para fazer um pouco mais de sentido, no sentido de negocio.
+
+2. Que, mostrar, assim, 'Ah, nao, aqui, realmente, faz um pouco mais de sentido a gente usar Cache, para a gente nao ficar forcando muito a barra'.
+
+3. Beleza?
+
+4. E eh bom que voce treina, ai, mais um pouquinho, nao eh?, criar os projetos, se ainda tem alguma duvida, nisso dai.
+
+5. Beleza?
+
+6. Eu criei a Aplicacao, chama-se Gerenciador Acesso com Cache, e, ai, deixa eu falar, antes de explicar de eu explicar a aplicacao, eu coloquei esse Com Cache, aqui, no nome, para eu lembrar, aqui, para ficar facil, aqui, para mim, mas, na hora de eu digitar, eu nao vou digitar esse com-cache, nao. E, ai, se voce clicar com o botao direito na raiz do projeto / Properties / Web Project Settings / Context root, esse nome que voce coloca, aqui, eh o nome que voce vai digitar la na frente, no Browser.
+
+7. Entao, ou seja, localhost:8080/gerenciador-acesso, okay? Eh esso nomezinho que vai aparecer la.
+
+8. Outra duvida frequente que me perguntam, ai, eh como eh que faz o mapeamento, ai, das pastas, aqui, do Maven, nao eh?, do Projeto, para um Projeto Web. Como eh que ele vai montar, fazer esse mapeamento e montar isso, na hora de gerar no Projeto Web? 
+
+9. E, aqui, oh, / Properties / Deployment Assembly, voce, clicando aqui, vai aparecer, aqui, oh, como deve estar, como deve estar configurado esse mapeamento.
+
+10. Entao, oh, src/main/java, e src/main/resources, devem estar mapeados para WEB-INF/classes. Ou seja, na hora em que ele gerar o pacote, la, para fazer o Deployment no Tomcat, ele vai pegar esses cara, ou seja, src/main/java, o conteudo desse cara, obviamente, compilado, nao eh?, os bytecodes, e vai jogar, aqui, para WEB-INF/classes. Do src/main/resources, ele joga, aqui, tambme, para dentro de WEB-INF/classes. Tudo que esta dentro de src/main/webapp, tem que ir para o barra, /, ou seja, para a Raiz dessa Aplicacao.
+
+11. Okay?
+
+12. E as dependencias do Maven, vao para WEB-INF/lib.
+
+13. Beleza?
+
+14. Entao, esses dois carinhas, aqui, sao importantes, ai, voce dar uma conferida, sempre que voce importa um Projeto, sempre que voce cria um novo projeto, da uma conferida nisso dai.
+
+15. Beleza?
+
+16. Bom, voltando, aqui, eu estava falando, aqui, sobre o Projeto Gerenciador de Acesso, esse Projeto eh para ser, a ideia dele seria um cara que gerenciaria o acesso a determinadas partes de um sistema.
+
+17. Voce poderia criar esse cara como um cara separado, e, a medida que voce precisar, por exemplo, acessar determinada tela, a tela iria, aqui, perguntaria, 'Olha, esse Usuario, aqui, ele pode acessar essa Tela?'
+
+18. Entao, ele participaria de um grupo, ali, que deixaria ou nao ele participar. Entao, aqui, o Usuario, oh, tem um nome, tem um Status, esse Status eh um Enum, apenas para falar se eh Ativo ou Inativo, Okay?, eu vou usar isso mais para frente, e ele participa de um Grupo, certo?, ele pode, participa de varios grupos. Ele pode ser Administrador, ele pode ser Vendedor, por ai vai,
+
+@Entity
+@Table(name = "usuario")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+public class Usuario implements Serializable {
+
+    ...
+
+    private Long codigo;
+    private String nome;
+    >>> private Status status;
+    >>> private List<Grupo> grupos;
+
+    ...
+}
+
+19. A gente poderia brincar, assim.
+
+20. Okay? Entao, o Grupo, so tem, la, o codigo e o nome.
+
+21. E esse Relacionamento eh um Relacionamento @ManyToMany.
+
+22. Ou seja, o Usuario pode participar de Varios Grupos, e Um Grupo pode pertencer, tambem, a varios Usuarios.
+
+@Entity
+@Table(name = "usuario")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_WRITE_READ)
+public class Usuario implements Serializable {
+
+    ...
+
+    @ManyToMany
+    @JoinTable(name = "usuario_grupo",
+        joinColumns = @JoinColumn(name = "codigo_usuario"), inverseJoinColumn = @JoinColumn(name = "codigo_grupo")
+    )
+    public List<Grupo> getGrupos() {
+        return grupos;    
+    }
+}
+
+23. Okay?
+
+24. Essa eh a ideia do sistema, e, aqui, essa parte, esse sistema, aqui, o que a gente vai mexer, aqui, agora, eh na parte de cadastro de pesquisa do Usuario, para a gente simular essa Consulta da aplicacao: uma outra aplicacao, terceira, vindo, aqui, consultar.
+
+25. So que eu criei uma telinha para fazer isso. Mas, a ideia que eu quero que voce abstraia, que voce entenda, eh, a gente esta trabalhando com Cache, nao eh?, a gente esta no Contexto de Cache, entao, assim, de onde esta vindo a Requisicao nao importa muito, pode ser que voce tenha criado algum Servico, um Web Service, alguma coisa, assim, para fazer essa Consulta, mas a ideia que eu quero simular eh o Cache.
+
+26. Entao, eu criei uma telinha, para a gente fazer essa Consulta.
+
+27. Beleza? Mas, eu quero que voce se concentre no JPA, aqui, e como o Cache vai diminuir, nao eh?, o acesso ao Banco de Dados, e, com isso, a Resposta, entao, vai ser mais rapida.
+
+28. Okay? Vamos focar nisso daqui.
+
+29. Entao, o seguinte.
+
+30. Eu, como eu disse, eu criei uma telinha, em que a gente vai pesquisar o Usuario, e mostrar os Grupos a que ele Pertence.
+
+31. Eu criei essa telinha, e eu vou te mostrar, la, agora.
+
+32. Acho que eh isso daqui, deixa eu subir, aqui, o Sistema, para a gente poder testar algumas coisas.
+
+33. O que eu coloquei de Cache, aqui?
+
+34. Eu coloquei, por enquanto, so o Usuario com Cache.
+
+35. Okay?
+
+36. A gente esta falando de Cache em Colecoes, entao, nos vamos mexer, aqui, agora, mesmo,
+
+@ManyToMany
+@JoinTable(name = "usuario_group"
+    joinColumns = @JoinColumn(name = "codigo_usuario"), inverseJoinColumns = @JoinColumn(name = "codigo_grupo")    
+)
+public List<Grupo> getGrupos() {
+    return grupos;
+}
+
+, mas, por enquanto, so para voce ver, nao tem nenhum Cache, aqui, nada de anotacao de Cache.
+
+37. E, aqui, na classe Grupo, nao ha, por enquanto, definicao de Cache, ou seja, nao tem Cache em Grupo, tambem.
+
+38. Okay?
+
+39. Entao, Usuario esta com Cache, mas Grupo nao.
+
+40. Essa telinha vai ser a telinha em que a gente vai pesquisar o Usuario, PesquisaUsuario.xhtml, e, se a gente olhar, aqui, na classe PesquisaUsuarioBean.java, olha so, eu ja injetei, direto, o EntityManager, aqui, para..., como a partezinha do Sistema esta muito simples, assim, 
+
+public void pesquisar() {
+    this.usuario = this.manager.find(Usuario.class, this.codigoUsuario);
+}
+
+, nao tem muita coisa, eu quero que voce foque, aqui, no JPA, no Cache, que a gente esta fazendo. Entao, nem criei DAO, nem criei nada disso, nao. 
+
+41. Se voce for criar no seu Sistema, crie, os DAO's, okay? A gente ja viu um pouquinho, eu vou, tem aulas, ai, mais para a frente, explicando mais detalhes, ai, sobre DAO's, sobre repositorio. Entao, eu so quero que voce foque no JPA, por isso que eu deixei o EntityManager para a gente ver direto o JPA.
+
+42. Okay?
+
+43. Vamos la, vamos subir, aqui, o Sistema.
+
+44. A gente vai na Pesquisa de Usuario, http://localhost:8080/gerenciador-acesso/PesquisaUsuario.xhtml, que eh essa telinha, aqui, eu vou digitar o Codigo, do Usuario, vai aparecer, aqui, o Nome dele, logo abaixo, e, embaixo, vai listar os Grupos daquele Usuario.
+
+45. E, ai, vamos dar uma olhada, aqui, no persistence.xml, nao mostrei, nao eh?, o que que eu estou fazendo, aqui, oh,
+
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.1"
+  xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
+
+	<persistence-unit name="gerenciadorAcessoPU" transaction-type="RESOURCE_LOCAL">
+		<properties>
+			<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/gerenciador_acesso" />
+			<property name="javax.persistence.jdbc.user" value="root" />
+			<property name="javax.persistence.jdbc.password" value="admin" />
+			<property name="javax.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver" />
+			
+			<property name="hibernate.dialect" value="org.hibernate.dialect.MySQL57Dialect"/>
+			
+			<property name="javax.persistence.schema-generation.database.action" value="drop-and-create" />
+			<property name="javax.persistence.schema-generation.create-source" value="metadata" />
+			<property name="javax.persistence.sql-load-script-source" value="META-INF/sql/carregar-dados.sql"/>
+			
+			<property name="hibernate.show_sql" value="true" />
+			<property name="hibernate.format_sql" value="true" />
+			
+			<property name="hibernate.cache.use_second_level_cache" value="true"/>
+			<property name="hibernate.cache.region.factory_class" value="org.hibernate.testing.cache.CachingRegionFactory"/>
+		</properties>
+	</persistence-unit>
+
+</persistence>
+
+46. Eu criei esse schema, gerenciador_acesso, okay?, na hora em que esta subindo, eu crio, carrego alguns dados, 
+
+			<property name="javax.persistence.schema-generation.database.action" value="drop-and-create" />
+			<property name="javax.persistence.schema-generation.create-source" value="metadata" />
+            <property name="javax.persistence.sql-load-script-source" value="META-INF/sql/carregar-dados.sql"/>
+            
+, la, sao esses dados, que estao vindo daqui,
+
+insert into usuario (nome, status) values ("João", "ATIVO");
+insert into usuario (nome, status) values ("Maria", "INATIVO");
+insert into grupo (nome) values ('ADMINISTRADOR');
+insert into grupo (nome) values ('VENDEDOR');
+insert into usuario_grupo (codigo_usuario, codigo_grupo) values (1, 1);
+insert into usuario_grupo (codigo_usuario, codigo_grupo) values (1, 2);
+insert into usuario_grupo (codigo_usuario, codigo_grupo) values (2, 2);
+
+47. Entao, vamos la, Usuario, eu estou inserindo 2, o Joao e a Maria.
+
+48. 2 Grupos, ADMINISTRADOR e o VENDEDOR.
+
+49. E o Joao vai ser o Usuario 1 e a Maria o Usuario 2.
+
+50. Entao, oh, o Joao tem os 2 Grupos, e a Maria eh so Vendedor, okay?
+
+51. Uma coisa, aqui, importante, no persistece.xml, que eu quero destacar, eh o seguinte. 
+
+52. Eu ainda estou usando, aqui, o Caching de Teste do Hibernate, 
+
+<property name="hibernate.cache.region.factory_class" value="org.hibernate.testing.cache.CachingRegionFactory" />
+
+53. Daqui a pouco, a gente vai falar sobre EhCache, InfiniSpan. Ai, sao formas mais profissionais de a gente testar, mas, por enquanto, a gente esta aprendendo o Cache, nao eh?
+
+54. Eh essa propriedade, aqui, o "cache_use_second_level_cache",
+
+<property name="hibenate.cache.use_second_level_cache" value="true" />
+
+, colocando o valor de true.
+
+55. Esse, na aula passada, eu nao coloquei, e, quando voce nao coloca, dependendo, aqui, da Factory Class que voce estiver colocando, pode ser que o caso que o Hibernate, fala, 'Ah, entao, esta querendo usar o Cache de Segundo Nivel', ele ja considera como true.
+
+56. Mas eh bom a gente deixar, aqui, deixar explicito isso, okay? Falar, 'Nao, estamos usando o Cache de Segundo Nivel'.
+
+57. Okay? Entao, so reforcando isso, daqui. Beleza? Entao, vamos voltar, aqui, na aplicacao. Antes, deixa eu so limpar o Console, aqui. Na hora em que eu fizer a primeira pesquisa, aqui, ele vai iniciar o Hibernate, nao eh?, ele vai comecar a carregar e a gente vai dar uma olhada, aqui, o que que ele esta fazendo.
+
+58. Comecou a criar as tabelas, inserir os dados, aqui, nao eh?, 
+
+Hibernate: 
+    
+    drop table if exists grupo
+Hibernate: 
+    
+    drop table if exists usuario
+Hibernate: 
+    
+    drop table if exists usuario_grupo
+Hibernate: 
+    
+    create table grupo (
+       codigo bigint not null auto_increment,
+        nome varchar(255),
+        primary key (codigo)
+    ) engine=InnoDB
+2019-03-05 17:46:22,451 [http-nio-8080-exec-10] INFO  org.hibernate.orm.connections.access - HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@3c17ee0f] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.
+Hibernate: 
+    
+    create table usuario (
+       codigo bigint not null auto_increment,
+        nome varchar(255),
+        status varchar(255),
+        primary key (codigo)
+    ) engine=InnoDB
+Hibernate: 
+    
+    create table usuario_grupo (
+       codigo_usuario bigint not null,
+        codigo_grupo bigint not null
+    ) engine=InnoDB
+Hibernate: 
+    
+    alter table usuario_grupo 
+       add constraint FK4yweq9u2sokki6o060mejfw8r 
+       foreign key (codigo_grupo) 
+       references grupo (codigo)
+Hibernate: 
+    
+    alter table usuario_grupo 
+       add constraint FKcx5f61jsftmpnlu4ec8fyndg3 
+       foreign key (codigo_usuario) 
+       references usuario (codigo)
+2019-03-05 17:46:26,251 [http-nio-8080-exec-10] INFO  org.hibernate.tool.schema.internal.SchemaCreatorImpl - HHH000476: Executing import script 'file:/C:/Users/SEMPR/workshop-jpa-2-hibernate/capitulo-14-cache/aula-14.004-cache-de-colecoes/.metadata/.plugins/org.eclipse.wst.server.core/tmp0/wtpwebapps/gerenciador-acesso-com-cache/WEB-INF/classes/META-INF/sql/carregar-dados.sql'
+Hibernate: 
+    insert into usuario (nome, status) values ("João", "ATIVO")
+Hibernate: 
+    insert into usuario (nome, status) values ("Maria", "INATIVO")
+Hibernate: 
+    insert into grupo (nome) values ('ADMINISTRADOR')
+Hibernate: 
+    insert into grupo (nome) values ('VENDEDOR')
+Hibernate: 
+    insert into usuario_grupo (codigo_usuario, codigo_grupo) values (1, 1)
+Hibernate: 
+    insert into usuario_grupo (codigo_usuario, codigo_grupo) values (1, 2)
+Hibernate: 
+    insert into usuario_grupo (codigo_usuario, codigo_grupo) values (2, 2)
+2019-03-05 17:46:26,857 [http-nio-8080-exec-10] INFO  org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator - HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.JBossStandAloneJtaPlatform]
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        usuario0_.status as status3_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+Hibernate: 
+    select
+        grupos0_.codigo_usuario as codigo_u1_2_0_,
+        grupos0_.codigo_grupo as codigo_g2_2_0_,
+        grupo1_.codigo as codigo1_0_1_,
+        grupo1_.nome as nome2_0_1_ 
+    from
+        usuario_grupo grupos0_ 
+    inner join
+        grupo grupo1_ 
+            on grupos0_.codigo_grupo=grupo1_.codigo 
+    where
+        grupos0_.codigo_usuario=?
+
+
+, e, aqui, ele caiu la na nossa aplicacao,
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        usuario0_.status as status3_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+Hibernate: 
+    select
+        grupos0_.codigo_usuario as codigo_u1_2_0_,
+        grupos0_.codigo_grupo as codigo_g2_2_0_,
+        grupo1_.codigo as codigo1_0_1_,
+        grupo1_.nome as nome2_0_1_ 
+    from
+        usuario_grupo grupos0_ 
+    inner join
+        grupo grupo1_ 
+            on grupos0_.codigo_grupo=grupo1_.codigo 
+    where
+        grupos0_.codigo_usuario=?
+
+59. Entao, olha so o que ele fez.
+
+60. Fez o SELECT do Usuario,
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        usuario0_.status as status3_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+
+61. Depois, como eu estava precisando dos Grupos, ele fez o SELECT dos Grupos.
+
+62. Okay?
+
+63. Para mostrar, aqui, na Tela, o nome dos Grupos. Entao, eu pesquisei, aqui, o Joao, ele trouxe, la, ADMINISTRADOR e VENDEDOR.
+
+64. Okay?
+
+65. E olha so. A primeira vez, o que que ele fez?
+
+66. Ele fez o SELECT do Usuario, e, depois, fez o SELECT dos Grupos.
+
+67. Certo?
+
+68. Como eu coloquei o Cache em cima de Usuario, 
+
+@Entity
+@Table(name = "usuario")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+public class Usuario implements Serializable {
+
+    ...
+}
+
+, e a gente ja viu, na introducao, aqui, do Cache, pensa comigo, 'Voce acha que ele vai fazer a Consulta novamente do Usuario e dos Grupos daquele Usuario?
+
+69. Vamos la, vamos pensar, aqui.
+
+70. Se eu for limpar o log, aqui, vou executar mais uma vez.
+
+71. Olha so,
+
+Hibernate: 
+    select
+        grupos0_.codigo_usuario as codigo_u1_2_0_,
+        grupos0_.codigo_grupo as codigo_g2_2_0_,
+        grupo1_.codigo as codigo1_0_1_,
+        grupo1_.nome as nome2_0_1_ 
+    from
+        usuario_grupo grupos0_ 
+    inner join
+        grupo grupo1_ 
+            on grupos0_.codigo_grupo=grupo1_.codigo 
+    where
+        grupos0_.codigo_usuario=?
+
+72. Agora, ele so fez o SELECT, aqui, para saber os Grupos que aquele Usuario pertence.
+
+73. Porque ele ja colocou aquela Entidade Usuario em Cache.
+
+74. Nao eh? A Entidade de Codigo 1, em que o ID eh 1, ele ja pos no Cache.
+
+75. Entao, agora, ele vai fazer o SELECT, apenas, dos Grupos.
+
+76. Okay?
+
+77. Se eu buscar, aqui, a Maria, vou limpar, aqui, de novo, o Console, a Maria eu nao fiz nenhuma busca, ainda, que eh de Codigo 2, olha la, buscou a Maria, so pertence ao Grupo VENDEDOR, 
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        usuario0_.status as status3_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+Hibernate: 
+    select
+        grupos0_.codigo_usuario as codigo_u1_2_0_,
+        grupos0_.codigo_grupo as codigo_g2_2_0_,
+        grupo1_.codigo as codigo1_0_1_,
+        grupo1_.nome as nome2_0_1_ 
+    from
+        usuario_grupo grupos0_ 
+    inner join
+        grupo grupo1_ 
+            on grupos0_.codigo_grupo=grupo1_.codigo 
+    where
+        grupos0_.codigo_usuario=?
+
+78. Ele vai ter feito o SELECT do Usuario dela, que ainda nao tinha feito, e dos Grupos.
+
+79. Se eu limpar e pesquisar Maria, de novo, so vai ter 1 SELECT, que eh o Select dos Grupos,
+
+Hibernate: 
+    select
+        grupos0_.codigo_usuario as codigo_u1_2_0_,
+        grupos0_.codigo_grupo as codigo_g2_2_0_,
+        grupo1_.codigo as codigo1_0_1_,
+        grupo1_.nome as nome2_0_1_ 
+    from
+        usuario_grupo grupos0_ 
+    inner join
+        grupo grupo1_ 
+            on grupos0_.codigo_grupo=grupo1_.codigo 
+    where
+        grupos0_.codigo_usuario=?
+
+80. Okay?
+
+81. Bom, e se eu falo, assim, 'Bom, entao, eh so a gente colocar o Cache o Grupo',
+
+@Entity
+@Table(name = "grupo")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+public class Grupo implements Serializable {
+
+    ...
+}
+
+82. Ueh, Normandes, vamos ver se eh?
+
+83. Voce vai ver que nao.
+
+84. Vamos colocar, aqui, falar que a gente esta usando o Cache, tambem, no Grupo, NONSTRICT_READ_WRITE, porque a atualizacao disso, aqui, eh bem pouca, entao, a gente pode deixar NONSTRICT_READ_WRITE, okay?
+
+85. Vamos iniciar, de novo, aqui, o Servidor.
+
+86. Vou pedir para ele recarregar a telinha, aqui, http://localhost:8080/gerenciador-acesso/PesquisaUsuario.xhtml. Okay, mandar Pesquisar, de novo, Codigo 1, e vai aparecer no Console das Consultas.
+
+87. Retornou,
+
+Hibernate: 
+    
+    alter table usuario_grupo 
+       drop 
+       foreign key FK4yweq9u2sokki6o060mejfw8r
+2019-03-05 18:13:57,909 [http-nio-8080-exec-6] INFO  org.hibernate.orm.connections.access - HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@3b2a6efa] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.
+Hibernate: 
+    
+    alter table usuario_grupo 
+       drop 
+       foreign key FKcx5f61jsftmpnlu4ec8fyndg3
+Hibernate: 
+    
+    drop table if exists grupo
+Hibernate: 
+    
+    drop table if exists usuario
+Hibernate: 
+    
+    drop table if exists usuario_grupo
+Hibernate: 
+    
+    create table grupo (
+       codigo bigint not null auto_increment,
+        nome varchar(255),
+        primary key (codigo)
+    ) engine=InnoDB
+2019-03-05 18:13:58,998 [http-nio-8080-exec-6] INFO  org.hibernate.orm.connections.access - HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@1a6e62d6] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.
+Hibernate: 
+    
+    create table usuario (
+       codigo bigint not null auto_increment,
+        nome varchar(255),
+        status varchar(255),
+        primary key (codigo)
+    ) engine=InnoDB
+Hibernate: 
+    
+    create table usuario_grupo (
+       codigo_usuario bigint not null,
+        codigo_grupo bigint not null
+    ) engine=InnoDB
+Hibernate: 
+    
+    alter table usuario_grupo 
+       add constraint FK4yweq9u2sokki6o060mejfw8r 
+       foreign key (codigo_grupo) 
+       references grupo (codigo)
+Hibernate: 
+    
+    alter table usuario_grupo 
+       add constraint FKcx5f61jsftmpnlu4ec8fyndg3 
+       foreign key (codigo_usuario) 
+       references usuario (codigo)
+2019-03-05 18:14:01,477 [http-nio-8080-exec-6] INFO  org.hibernate.tool.schema.internal.SchemaCreatorImpl - HHH000476: Executing import script 'file:/C:/Users/SEMPR/workshop-jpa-2-hibernate/capitulo-14-cache/aula-14.004-cache-de-colecoes/.metadata/.plugins/org.eclipse.wst.server.core/tmp0/wtpwebapps/gerenciador-acesso-com-cache/WEB-INF/classes/META-INF/sql/carregar-dados.sql'
+Hibernate: 
+    insert into usuario (nome, status) values ("João", "ATIVO")
+Hibernate: 
+    insert into usuario (nome, status) values ("Maria", "INATIVO")
+Hibernate: 
+    insert into grupo (nome) values ('ADMINISTRADOR')
+Hibernate: 
+    insert into grupo (nome) values ('VENDEDOR')
+Hibernate: 
+    insert into usuario_grupo (codigo_usuario, codigo_grupo) values (1, 1)
+Hibernate: 
+    insert into usuario_grupo (codigo_usuario, codigo_grupo) values (1, 2)
+Hibernate: 
+    insert into usuario_grupo (codigo_usuario, codigo_grupo) values (2, 2)
+2019-03-05 18:14:02,021 [http-nio-8080-exec-6] INFO  org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator - HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.JBossStandAloneJtaPlatform]
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        usuario0_.status as status3_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+Hibernate: 
+    select
+        grupos0_.codigo_usuario as codigo_u1_2_0_,
+        grupos0_.codigo_grupo as codigo_g2_2_0_,
+        grupo1_.codigo as codigo1_0_1_,
+        grupo1_.nome as nome2_0_1_ 
+    from
+        usuario_grupo grupos0_ 
+    inner join
+        grupo grupo1_ 
+            on grupos0_.codigo_grupo=grupo1_.codigo 
+    where
+        grupos0_.codigo_usuario=?
+
+88. Entao, olha la, a primeira vez, ele vai ter que buscar as consultas mesmo, nao eh?, nao tem jeito, fez as duas, igual tinha acontecido antes,
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        usuario0_.status as status3_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+Hibernate: 
+    select
+        grupos0_.codigo_usuario as codigo_u1_2_0_,
+        grupos0_.codigo_grupo as codigo_g2_2_0_,
+        grupo1_.codigo as codigo1_0_1_,
+        grupo1_.nome as nome2_0_1_ 
+    from
+        usuario_grupo grupos0_ 
+    inner join
+        grupo grupo1_ 
+            on grupos0_.codigo_grupo=grupo1_.codigo 
+    where
+        grupos0_.codigo_usuario=?
+
+89. Agora, eu vou fazer, mais uma vez, aqui, a Pesquisa do Codigo 1, do Joao. Retornou,
+
+Hibernate: 
+    select
+        grupos0_.codigo_usuario as codigo_u1_2_0_,
+        grupos0_.codigo_grupo as codigo_g2_2_0_,
+        grupo1_.codigo as codigo1_0_1_,
+        grupo1_.nome as nome2_0_1_ 
+    from
+        usuario_grupo grupos0_ 
+    inner join
+        grupo grupo1_ 
+            on grupos0_.codigo_grupo=grupo1_.codigo 
+    where
+        grupos0_.codigo_usuario=?
+
+
+90. Olha la. Nao fez a do Usuario, mas fez a dos Grupos, aqui. Ai, voce fala, 'Entao, nao funciona'.
+
+91. Nao, funciona.
+
+92. Eh que a gente estava fazendo, a gente imaginou uma coisa que, colocando, la, no Grupo, ele ia funcionar. Mas, aqui, o Cache, que a gente esta querendo fazer, em Usuario, eh na Colecao de Grupos, concorda comigo?
+
+@Entity
+@Table(name = "usuario")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+public class Usuario implements Serializable {
+
+    ...
+    private Status status;
+    >>> private List<Grupo> grupos;
+
+    ...
+    @ManyToMany
+    @JoinTable(...)
+    public List<Grupo> getGrupos() {
+        return grupos;
+    }
+    ...
+}
+
+93. Eh nessa colecao que a gente esta querendo fazer.
+
+94. E a gente pode vir, aqui, 
+
+    ...
+    @ManyToMany
+    @JoinTable(...)
+    public List<Grupo> getGrupos() {
+        return grupos;
+    }
+    ...
+
+, e anotar, aqui, tambem, com @Cache(), essa colecao.
+
+95. Entao, posso vir, aqui, tambem, colocar a mesma Estragegia, de Atualizacao, aqui, dos Grupos, nao eh?, modificar os grupos de um Usuario, tambem. Eh bem pouca, essa possibilidade, entao, a gente deixa, aqui, NONSTRICT_READ_WRITE, okay?,
+
+    ...
+    @ManyToMany
+    @JoinTable(...)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    public List<Grupo> getGrupos() {
+        return grupos;
+    }
+    ...
+
+96. E, ai, eu vou fazer o seguinte. Eu vou remover, na classe Grupo,
+
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+
+97. As vezes, voce pode pensar, assim, 'Ah, nao, entao, eh so eu fazer o Cache da Colecao'.
+
+98. Nao eh? Pode pensar nisso.
+
+99. Entao, nos vamos fazer so o Cache da Colecao, e eu nao preciso fazer o Cache da Classe Grupo.
+
+100. Eu quero te mostrar o que que vai acontecer quando a gente pensa dessa forma.
+
+101. Entao, agora, eu estou com o Cache em Usuario. Eu estou com o Cache na colecao grupos, e eu vou te falar o que que significa o Cache dessa Colecao, aqui, e tirei o Cache da classe Grupo.
+
+102. Okay? Vamos la testar mais uma vez.
+
+103. Esperar recarregar a telinha, http://localhost:8080/gerenciador-acesso/PesquisaUsuario.xhtml.
+
+104. Okay, pesquisar pelo Codigo 1.
+
+105. Retornou,
+
+Hibernate: 
+    
+    alter table usuario_grupo 
+       drop 
+       foreign key FK4yweq9u2sokki6o060mejfw8r
+2019-03-05 18:32:37,758 [http-nio-8080-exec-7] INFO  org.hibernate.orm.connections.access - HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@2a61d2ca] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.
+Hibernate: 
+    
+    alter table usuario_grupo 
+       drop 
+       foreign key FKcx5f61jsftmpnlu4ec8fyndg3
+Hibernate: 
+    
+    drop table if exists grupo
+Hibernate: 
+    
+    drop table if exists usuario
+Hibernate: 
+    
+    drop table if exists usuario_grupo
+Hibernate: 
+    
+    create table grupo (
+       codigo bigint not null auto_increment,
+        nome varchar(255),
+        primary key (codigo)
+    ) engine=InnoDB
+2019-03-05 18:32:38,591 [http-nio-8080-exec-7] INFO  org.hibernate.orm.connections.access - HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@37d48d2a] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.
+Hibernate: 
+    
+    create table usuario (
+       codigo bigint not null auto_increment,
+        nome varchar(255),
+        status varchar(255),
+        primary key (codigo)
+    ) engine=InnoDB
+Hibernate: 
+    
+    create table usuario_grupo (
+       codigo_usuario bigint not null,
+        codigo_grupo bigint not null
+    ) engine=InnoDB
+Hibernate: 
+    
+    alter table usuario_grupo 
+       add constraint FK4yweq9u2sokki6o060mejfw8r 
+       foreign key (codigo_grupo) 
+       references grupo (codigo)
+Hibernate: 
+    
+    alter table usuario_grupo 
+       add constraint FKcx5f61jsftmpnlu4ec8fyndg3 
+       foreign key (codigo_usuario) 
+       references usuario (codigo)
+2019-03-05 18:32:40,818 [http-nio-8080-exec-7] INFO  org.hibernate.tool.schema.internal.SchemaCreatorImpl - HHH000476: Executing import script 'file:/C:/Users/SEMPR/workshop-jpa-2-hibernate/capitulo-14-cache/aula-14.004-cache-de-colecoes/.metadata/.plugins/org.eclipse.wst.server.core/tmp0/wtpwebapps/gerenciador-acesso-com-cache/WEB-INF/classes/META-INF/sql/carregar-dados.sql'
+Hibernate: 
+    insert into usuario (nome, status) values ("João", "ATIVO")
+Hibernate: 
+    insert into usuario (nome, status) values ("Maria", "INATIVO")
+Hibernate: 
+    insert into grupo (nome) values ('ADMINISTRADOR')
+Hibernate: 
+    insert into grupo (nome) values ('VENDEDOR')
+Hibernate: 
+    insert into usuario_grupo (codigo_usuario, codigo_grupo) values (1, 1)
+Hibernate: 
+    insert into usuario_grupo (codigo_usuario, codigo_grupo) values (1, 2)
+Hibernate: 
+    insert into usuario_grupo (codigo_usuario, codigo_grupo) values (2, 2)
+2019-03-05 18:32:41,542 [http-nio-8080-exec-7] INFO  org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator - HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.JBossStandAloneJtaPlatform]
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        usuario0_.status as status3_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+Hibernate: 
+    select
+        grupos0_.codigo_usuario as codigo_u1_2_0_,
+        grupos0_.codigo_grupo as codigo_g2_2_0_,
+        grupo1_.codigo as codigo1_0_1_,
+        grupo1_.nome as nome2_0_1_ 
+    from
+        usuario_grupo grupos0_ 
+    inner join
+        grupo grupo1_ 
+            on grupos0_.codigo_grupo=grupo1_.codigo 
+    where
+        grupos0_.codigo_usuario=?
+
+106. Beleza, na Primeira vez, funciona como a gente esta esperando,
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        usuario0_.status as status3_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+Hibernate: 
+    select
+        grupos0_.codigo_usuario as codigo_u1_2_0_,
+        grupos0_.codigo_grupo as codigo_g2_2_0_,
+        grupo1_.codigo as codigo1_0_1_,
+        grupo1_.nome as nome2_0_1_ 
+    from
+        usuario_grupo grupos0_ 
+    inner join
+        grupo grupo1_ 
+            on grupos0_.codigo_grupo=grupo1_.codigo 
+    where
+        grupos0_.codigo_usuario=?
+
+107. Vai la, busca o Usuario, depois, vai la e busca o Grupo. Beleza.
+
+108. Agora, eu vou pesquisar mais uma vez.
+
+109. Olha so o que ele fez,
+
+Hibernate: 
+    select
+        grupo0_.codigo as codigo1_0_0_,
+        grupo0_.nome as nome2_0_0_ 
+    from
+        grupo grupo0_ 
+    where
+        grupo0_.codigo=?
+Hibernate: 
+    select
+        grupo0_.codigo as codigo1_0_0_,
+        grupo0_.nome as nome2_0_0_ 
+    from
+        grupo grupo0_ 
+    where
+        grupo0_.codigo=?
+
+110. Olha so o que que aconteceu agora. 
+
+111. Ele, nao sei se voce reparou.
+
+112. O SELECT que ele estava fazendo antes de a gente colocar o @Cache na colecao era um outro SELECT.
+
+113. Era aquele SELECT em que ele fazia o Join entre a tabela USUARIO_GRUPO e o GRUPO.
+
+114. Nao eh?
+
+115. Oh, ele iria fazer, assim, bom, ele precisaria saber quais sao os Grupos daquele Usuario.
+
+116. Entao, ele precisava fazer aquele Join, nao eh?, com USUARIO_GRUPO, para chegar no Grupo.
+
+117. Beleza? Entao, o que que a gente fez?
+
+118. Nao eh? O que que a gente acabou fazendo, aqui,
+
+Hibernate: 
+    select
+        grupo0_.codigo as codigo1_0_0_,
+        grupo0_.nome as nome2_0_0_ 
+    from
+        grupo grupo0_ 
+    where
+        grupo0_.codigo=?
+Hibernate: 
+    select
+        grupo0_.codigo as codigo1_0_0_,
+        grupo0_.nome as nome2_0_0_ 
+    from
+        grupo grupo0_ 
+    where
+        grupo0_.codigo=?
+
+119. A gente fez o Cache da Colecao. O que que significa fazer o Cache da Colecao?
+
+120. A gente nao fez o Cache da classe Grupo.
+
+121. Eh isso que eu vou explicar, agora.
+
+122. Quando a gente fez, la, o Cache, da Colecao, eu vou pegar, aqui, oh, eu vou escrever o que ele estaria salvando na Memoria, aqui, oh, alguma coisa assim,
+
+Usuario
+    Codigo = 1
+
+, ele esta fazendo o Cache desse cara.
+
+123. Ele iria colocar, la, no Cache, tambem, o Nome
+
+Usuario
+    Codigo = 1
+    Nome = "Joao"
+
+124. E, ai, ele teria, aqui, grupos,
+
+Usuario
+    Codigo = 1
+    Nome = "Joao"
+    grupos = 
+
+, so que, aqui, ele nao vai colocar os objetos Grupo's, do tipo, assim, oh, teria o Grupo de Codigo 1, ta errado isso, aqui, e Nome ADMINISTRADOR,
+
+Usuario
+    Codigo = 1
+    Nome = "Joao"
+    grupos = (Grupo 1, ADMINISTRADOR)
+
+125. Nao, ele nao faz isso.
+
+126. Nao, nao, nao. Isso esta errado.
+
+127. Ele vai colocar assim, olha. O Usuario de Codigo 1, o Cache que ele esta fazendo, aqui, da Colecao, ele esta colocando, aqui, isso daqui, oh, [1,2], ele tem os ID's 1 e 2,
+
+Usuario
+    Codigo = 1
+    Nome = "Joao"
+    grupos = [1, 2]
+
+128. Ou seja, ele tem o Grupo de ID 1 e de ID 2.
+
+129. Okay?
+
+130. Oh, ai, ele ja colocou no Cache, de ID 1 e de ID 2.
+
+131. Vamos fazer a pesquisa, aqui, da Maria, ou seja, pelo Codigo 2.
+
+132. Retornou,
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        usuario0_.status as status3_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+Hibernate: 
+    select
+        grupos0_.codigo_usuario as codigo_u1_2_0_,
+        grupos0_.codigo_grupo as codigo_g2_2_0_,
+        grupo1_.codigo as codigo1_0_1_,
+        grupo1_.nome as nome2_0_1_ 
+    from
+        usuario_grupo grupos0_ 
+    inner join
+        grupo grupo1_ 
+            on grupos0_.codigo_grupo=grupo1_.codigo 
+    where
+        grupos0_.codigo_usuario=?
+
+
+, para a gente ver o outro SELECT que vai fazer. Olha so, repara, aqui, oh. Ele fez o SELECT do USUARIO, nao eh?, porque a gente nao tinha feito, ainda, vai colocar esse cara no  Cache,
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        usuario0_.status as status3_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+
+, porque ele tem Cache. Fez o SELECT, aqui, do GRUPO. Por que que ele teve que fazer? Para saber quais Grupos que ela tem. E, agora, ele ja colocou, nao eh?, o JoinTable, aqui, no Cache, que ele vai fazer, aqui, o seguinte, oh, 
+
+Usuario
+    Codigo = 2
+    Nome = "Maria"
+    grupos = [2]
+
+133. O Usuario de Codigo 2, que vai ficar no Cache, o Nome eh Maria, e, aqui, vai colocar os Grupos que ela pertence, eh, apenas, o Grupo 2, que a Maria pertence.
+
+134. Okay?
+
+135. Se eu fizer o SELECT da Maria de novo, olha la, so fez o SELECT, de novo, de Grupo.
+
+136. Por que? 
+
+137. Nao esta em Cache o nome daquele Grupo.
+
+138. So tem o Codigo.
+
+139. So esta falando, la, a Maria tem o Grupo de Codigo 2, 
+
+Usuario
+    Codigo = 2
+    Nome = "Maria"
+    grupos = >>> [2]
+
+
+, mas, como eu nao coloquei o Grupo no Cache, lembra, la, oh, eu falei, oh, 'Eu vou tirar a classe Grupo do Cache, de proposito', justamente para te mostrar isso, que, quando a gente coloca a Colecao no Cache, eu estou colocando apenas os ID's, oh, no caso, aqui, do Joao, eu coloquei, la, ele esta participando do Grupo 1 e do 2,
+
+Usuario
+    Codigo = 1
+    Nome = "Joao"
+    grupos = >>> [1, 2]
+
+, eh o ID 1 e o 2. 
+
+140. Ai, ele fala o seguinte: 'Vai la e busca o Cara de Codigo 1 e de Codigo 2'. Eh isso que ele esta falando.
+
+141. Beleza, oh?
+
+142. Aqui, eu estou falando, 
+
+Usuario
+    Codigo = 2
+    Nome = "Maria"
+    grupos = >>> [2]
+
+, busca, la, o de Grupo de Codigo 2. Entao, ele sempre vai fazer o SELECT para os Grupos,
+
+Hibernate: 
+    select
+        grupo0_.codigo as codigo1_0_0_,
+        grupo0_.nome as nome2_0_0_ 
+    from
+        grupo grupo0_ 
+    where
+        grupo0_.codigo=?
+
+143. Vamos limpar, aqui, o Console e pesquisar, de novo, o Joao, de Codigo 1.
+
+144. Retornou,
+
+Hibernate: 
+    select
+        grupo0_.codigo as codigo1_0_0_,
+        grupo0_.nome as nome2_0_0_ 
+    from
+        grupo grupo0_ 
+    where
+        grupo0_.codigo=?
+Hibernate: 
+    select
+        grupo0_.codigo as codigo1_0_0_,
+        grupo0_.nome as nome2_0_0_ 
+    from
+        grupo grupo0_ 
+    where
+        grupo0_.codigo=?
+
+145. Vao ter 2 SELECT's dos Grupos, para buscar, aqui, o nome ADMINISTRADOR e VENDEDOR.
+
+146. Beleza?
+
+147. Entao, o importante, aqui, para finalizar esta aula, o importante eh: 'Quando voce coloca o Cache da Colecao',
+
+@ManyToMany
+@JoinTable(name = "usuario_grupo", ...)
+>>> @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+public List<Grupo> getGrupos() {
+    return grupos;
+}
+
+, voce nao esta salvando a Lista,
+
+@ManyToMany
+@JoinTable(name = "usuario_grupo", ...)
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+public >>> List<Grupo> <<< getGrupos() {
+    return grupos;
+}
+
+, aqui, aqui, de Grupos. Voce esta salvando o Codigo de cada um desses Grupos.
+
+148. E, se o Grupo nao estiver no Cache, 
+
+@Entity
+@Table(name = "grupo")
+>>> <<<
+public class Grupo implements Serializable {
+
+    ...
+}
+
+, ele vai ter que ir la buscar toda vez.
+
+149. Okay?
+
+150. O que que a gente faz, aqui, so para finalizar?
+
+151. Coloca, aqui, o @Cache, no Grupo,
+
+@Entity
+@Table(name = "grupo")
+>>> @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+public class Grupo implements Serializable {
+
+    ...
+}
+
+, porque, ai, agora, ele nao vai precisar mais buscar o Grupo no Banco de Dados.
+
+152. Ele busca a Primeira vez, coloca em Cache, e nao precisa ir novamente.
+
+153. Beleza?
+
+154. Vamos la, recarregar a telinha, http://localhost:8080/gerenciador-acesso/PesquisaUsuario.xhtml.
+
+155. Pesquisar o Joao, de Codigo 1. Retornou,
+
+Hibernate: 
+    
+    alter table usuario_grupo 
+       drop 
+       foreign key FK4yweq9u2sokki6o060mejfw8r
+2019-03-05 19:18:25,239 [http-nio-8080-exec-5] INFO  org.hibernate.orm.connections.access - HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@60b90f1b] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.
+Hibernate: 
+    
+    alter table usuario_grupo 
+       drop 
+       foreign key FKcx5f61jsftmpnlu4ec8fyndg3
+Hibernate: 
+    
+    drop table if exists grupo
+Hibernate: 
+    
+    drop table if exists usuario
+Hibernate: 
+    
+    drop table if exists usuario_grupo
+Hibernate: 
+    
+    create table grupo (
+       codigo bigint not null auto_increment,
+        nome varchar(255),
+        primary key (codigo)
+    ) engine=InnoDB
+2019-03-05 19:18:26,026 [http-nio-8080-exec-5] INFO  org.hibernate.orm.connections.access - HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@4a637ad1] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.
+Hibernate: 
+    
+    create table usuario (
+       codigo bigint not null auto_increment,
+        nome varchar(255),
+        status varchar(255),
+        primary key (codigo)
+    ) engine=InnoDB
+Hibernate: 
+    
+    create table usuario_grupo (
+       codigo_usuario bigint not null,
+        codigo_grupo bigint not null
+    ) engine=InnoDB
+Hibernate: 
+    
+    alter table usuario_grupo 
+       add constraint FK4yweq9u2sokki6o060mejfw8r 
+       foreign key (codigo_grupo) 
+       references grupo (codigo)
+Hibernate: 
+    
+    alter table usuario_grupo 
+       add constraint FKcx5f61jsftmpnlu4ec8fyndg3 
+       foreign key (codigo_usuario) 
+       references usuario (codigo)
+2019-03-05 19:18:28,309 [http-nio-8080-exec-5] INFO  org.hibernate.tool.schema.internal.SchemaCreatorImpl - HHH000476: Executing import script 'file:/C:/Users/SEMPR/workshop-jpa-2-hibernate/capitulo-14-cache/aula-14.004-cache-de-colecoes/.metadata/.plugins/org.eclipse.wst.server.core/tmp0/wtpwebapps/gerenciador-acesso-com-cache/WEB-INF/classes/META-INF/sql/carregar-dados.sql'
+Hibernate: 
+    insert into usuario (nome, status) values ("João", "ATIVO")
+Hibernate: 
+    insert into usuario (nome, status) values ("Maria", "INATIVO")
+Hibernate: 
+    insert into grupo (nome) values ('ADMINISTRADOR')
+Hibernate: 
+    insert into grupo (nome) values ('VENDEDOR')
+Hibernate: 
+    insert into usuario_grupo (codigo_usuario, codigo_grupo) values (1, 1)
+Hibernate: 
+    insert into usuario_grupo (codigo_usuario, codigo_grupo) values (1, 2)
+Hibernate: 
+    insert into usuario_grupo (codigo_usuario, codigo_grupo) values (2, 2)
+2019-03-05 19:18:28,786 [http-nio-8080-exec-5] INFO  org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator - HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.JBossStandAloneJtaPlatform]
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        usuario0_.status as status3_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+Hibernate: 
+    select
+        grupos0_.codigo_usuario as codigo_u1_2_0_,
+        grupos0_.codigo_grupo as codigo_g2_2_0_,
+        grupo1_.codigo as codigo1_0_1_,
+        grupo1_.nome as nome2_0_1_ 
+    from
+        usuario_grupo grupos0_ 
+    inner join
+        grupo grupo1_ 
+            on grupos0_.codigo_grupo=grupo1_.codigo 
+    where
+        grupos0_.codigo_usuario=?
+
+156. Ele fez o SELECT do Usuario, depois, da Tabela do Join, nao eh?, do JoinTable(), com o Grupo.
+
+157. Pesquisar mais uma vez.
+
+158. Nao faz nada, oh.
+
+159. Pesquisar a Maria. Retornou,
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        usuario0_.status as status3_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+Hibernate: 
+    select
+        grupos0_.codigo_usuario as codigo_u1_2_0_,
+        grupos0_.codigo_grupo as codigo_g2_2_0_,
+        grupo1_.codigo as codigo1_0_1_,
+        grupo1_.nome as nome2_0_1_ 
+    from
+        usuario_grupo grupos0_ 
+    inner join
+        grupo grupo1_ 
+            on grupos0_.codigo_grupo=grupo1_.codigo 
+    where
+        grupos0_.codigo_usuario=?
+
+
+160. Vamos prever o SELECT que ele vai fazer? 
+
+161. Ele vai buscar o USUARIO, que a gente, ainda, nao buscou nenhuma vez, e vai buscar, na @JoinTable(), quais sao os grupos que a Maria pertence. Buscou o Usuario, e, na @JoinTable(), ou seja, USUARIO_GRUPO, la, quais os Grupos que ela pertence, nao eh?, junto com o GRUPO.
+
+162. Agora, ao pesquisar novamente, nao busca mais nada.
+
+163. Ja esta pronto.
+
+164. Voltei para o Joao, clicar em Pesquisar, continua nao buscando nada, no Console do Servidor.
+
+165. Beleza? Entao, essa era a ideia, ai, do Cache de Colecoes.
+
+166. Fim da     Aula 14.004. Cache de Colecoes.
+
+-->

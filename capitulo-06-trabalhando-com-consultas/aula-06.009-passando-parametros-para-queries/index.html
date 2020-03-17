@@ -1,0 +1,237 @@
+<!-- 
+
+    Aula 06.009. Passando Parametros Para Queries
+
+1. Existem duas formas de a gente passar parametro, aqui, para as nossas Queries. Quando eu estou dizendo parametro, eu estou falando aqui, oh, 'Chevrolet', eu deixei fixo, aqui, no codigo, certo?, mas isso, aqui, nem sempre vai acontecer,
+
+    String jpql = "select mc.descricao from ModeloCarro mc "
+                + "where mc.fabricante.nome = 'Chevrolet';
+
+, as vezes, isso daqui esta em um metodo, por exemplo, a gente vai receber isso de algum lugar, entao, a gente esta no metodo, aqui, no metodo main(), nao, mas, vamos supor que a gente tivesse um metodo, aqui, em que a gente recebesse assim, 
+
+    public static void main(String >>> modelo <<<) {
+
+        ...
+
+        String jpql = "select mc.descricao from ModeloCarro mc "
+                    + "where mc.fabricante.nome = 'Chevrolet'";
+
+
+    }
+
+, por exemplo, para a gente fazer algum filtro. Ai, entao, a gente nao vai deixar, assim, sempre fixo aqui,
+
+    String jpql = "select mc.descricao from ModeloCarro mc "
+                + "where mc.fabricante.nome = '>>> Chevrolet <<<'";
+
+2. Entao, eu vou simular, aqui, esse parametro, colocando, aqui, o modelo dessa forma, 
+
+    String modelo = "Chevrolet";
+
+, okay?
+
+package com.algaworks.curso.jpa2.consultas;
+
+public class ConsultaPassandoParametros {
+
+    public static void main(String[] args) {
+
+        EntityManager em = JPAUtil.createEntityManager();
+
+        String modelo = "Chevrolet";
+
+        String jpql = "select mc.descricao from ModeloCarro mc "
+                + "where mc.fabricante.nome = 'Chevrolet'";
+
+        List<String> modelos = em.createQuery(jpql, String.class).getResultList();
+
+        for (String modelo : modelos) {
+            System.out.println(modelo);
+        }
+
+        em.close();
+
+    }
+
+}
+
+, e, ai, voce imagina esse modelo vindo como parametro do metodo, por exemplo.
+
+3. Bom, como eu disse, entao, existem duas formas. Na verdade, existem 3. Mas, essa terceira forma, aqui, eh muito feia, nos nao vamos fazer isso nao.
+
+4. Voce promete para mim que voce nao vai fazer dessa forma, nao. Seria algo assim,
+
+        String jpql = "select mc.descricao from ModeloCarro mc "
+                + "where mc.fabricante.nome = '" + modelo + "'";
+
+, alguma coisa nessa sentido.
+
+5. Nao eh? Olha so, eu estou passando o modelo, aqui. Vai funcionar? Vai.
+
+6. Funcionar vai. Mas, ficar concatenando strings, aqui, eh muito dificil de ler, a manutencao fica ruim. Nessa Query simplezinha, aqui, ja ficou feio, ja ficou estranho, ta vendo que eu tenho que colocar, oh, as aspas simples, aqui, para concatenar, isso comeca a ficar muito feio, muito trabalhoso, e, se essa consulta fosse maior, iria ficar muito, muito pior.
+
+7. Okay?
+
+8. Retornou,
+
+Hibernate: 
+    select
+        modelocarr0_.descricao as col_0_0_ 
+    from
+        ModeloCarro modelocarr0_ cross 
+    join
+        Fabricante fabricante1_ 
+    where
+        modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+        and fabricante1_.nome='Chevrolet'
+Cruze
+
+9. Bom, entao, vamos aprender a forma correta, nao eh? Entao, vamos la. Aqui, entao, esta assim, hoje,
+
+		String jpql = "select mc.descricao from ModeloCarro mc "
+				+ "where mc.fabricante.nome = 'Chevrolet'";
+
+10. A gente esta passando 'Chevrolet'. Okay? Estavamos fazendo dessa maneira.
+
+11. Bom, as formas que existem, as duas formas que existem, a primeira delas eh a gente colocar por posicao.
+
+12. Eu coloco, aqui, um ponto de interrogacao 1, por exemplo,
+
+		String jpql = "select mc.descricao from ModeloCarro mc "
+				+ "where mc.fabricante.nome = ?1";
+
+, entao, essa eh a primeira posicao. A gente poderia ter outras posicoes, a gente poderia ter,
+
+		String jpql = "select mc.descricao from ModeloCarro mc "
+				+ "where mc.fabricante.nome = ?1"
+                + "and xxx = ?2";
+
+, e, assim, sucessivamente, posicao 3, posicao 4.
+
+13. Okay? E, ai, beleza, coloquei, aqui, posicao 1. Ta vendo, que facilita um pouquinho, eu nem preciso colocar as aspas simples, aqui. E, ai, no Java, ja vai saber, o JPA, que eh a API, ja vai saber.
+
+14. Entao, aqui, como eh que eu faco para passar o parametro, na primeira posicao?
+
+15. Na hora que eu acabei de cirar a Query, antes de eu executar o getResultList(), eu vou colocar aqui, oh, setParameter(), recebendo um inteiro, ou seja, na posicao 1, eu vou passar, aqui, o modelo do carro,
+
+		String jpql = "select mc.descricao from ModeloCarro mc "
+				+ "where mc.fabricante.nome = ?1";
+
+        List<String> modelos = em.createQuery(jpql, String.class)
+                .setParameter(1, modelo)
+                .getResultList();
+
+16. Vamos executar? 
+
+17. Retornou,
+
+Hibernate: 
+    select
+        modelocarr0_.descricao as col_0_0_ 
+    from
+        ModeloCarro modelocarr0_ cross 
+    join
+        Fabricante fabricante1_ 
+    where
+        modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+        and fabricante1_.nome=?
+Cruze
+
+18. Passamos o modelo, executou, funcionou sem problemas.
+
+19. Bom, essa aqui eh a forma passando por posicao,
+
+    String jpql = "select mc.descricao from ModeloCarro mc "
+            + "where mc.fabricante.nome = >>> ?1 <<<";
+
+20. Eu prefiro essa outra forma aqui, oh, onde a gente coloca :modelo, por exemplo,
+
+    String jpql = "select mc.descricao from ModeloCarro mc "
+            + "where mc.fabricante.nome = >>> :modelo <<<";
+
+, isso aqui,
+
+    String jpql = "select mc.descricao from ModeloCarro mc "
+            + "where mc.fabricante.nome = >>> :modelo <<<";
+
+, virou um parametro.
+
+21. E, aqui, agora, eu vou colocar o modelo, modelo,
+
+    .setParameter("modelo", modelo)
+
+, eu nao preciso colocar os dois pontos, aqui,
+
+    .setParameter(">>> <<<modelo", modelo)
+
+22. Okay? Entao, eu estou falando, isso aqui, :modelo, virou um nome, eu quero definir ele aqui,
+
+    String jpql = "select mc.descricao from ModeloCarro mc "
+            + "where mc.fabricante.nome = >>> :modelo <<<";
+
+, e, aqui,
+
+    .setParameter(">>> modelo <<<", modelo)
+
+, eu passo o valor desse nome e ele vai conseguir substituir.
+
+23. Vamos executar para a gente ver?
+
+24. Bem simples, nao eh?
+
+25. Vamos executar, para a gente ver. Retornou,
+
+Hibernate: 
+    select
+        modelocarr0_.descricao as col_0_0_ 
+    from
+        ModeloCarro modelocarr0_ cross 
+    join
+        Fabricante fabricante1_ 
+    where
+        modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+        and fabricante1_.nome=?
+Cruze
+
+26. Bem simples, nao eh? Ai, tambem conseguiu passar e funcionou.
+
+27. Eu prefiro essa ultima forma, aqui, 
+
+    String jpql = "select mc.descricao from ModeloCarro mc "
+            + "where mc.fabricante.nome = >>> :modelo <<<";
+
+, porque, depois, quando voce for dar manutencao, voce olha, ah, o setParameter(), modelo, ai, no fim, eu acho que fica mais facil de ver.
+
+28. Mas, existem as duas opcoes. Qual que eh a mais certa? Eu nao acho que tem mais certa, nao. Existe essa opcao de voce passar por posicao,
+
+    String jpql = "select mc.descricao from ModeloCarro mc "
+            + "where mc.fabricante.nome = >>> ?1 <<<";
+
+ De repente, algum framework que voce esta criando, voce vai passar assim, oh, primeiro, segundo, terceiro argumento, ou se voce esta recebendo em um array, ele vai inserindo, sei, la, alguma coisa nesse sentido. Do contrario, no dia-a-dia, eu acredito que essa forma, aqui, seja a mais comum,
+
+     String jpql = "select mc.descricao from ModeloCarro mc "
+            + "where mc.fabricante.nome = >>> :modelo <<<";
+
+, de se executar.
+
+29. Fim da Aula 06.009. Passando Parametros Para Queries.
+
+
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-->

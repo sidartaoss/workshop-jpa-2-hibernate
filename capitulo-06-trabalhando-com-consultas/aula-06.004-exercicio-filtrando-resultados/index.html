@@ -1,0 +1,72 @@
+<!--
+    Aula 06.004. Exercicio: Filtrando Resultados
+
+1. Para voce brincar um pouco mais com os filtros em JPQL, vamos criar uma outra classe de consulta e fazer duas pesquisas de modelo de carro.
+
+2. Para a primeira consulta, iremos fazer um filtro utilizando "in" e a outra utilizando "like".
+
+3. Crie a classe ConsultaModeloFiltroEmFabricanteECategoria e crie o metodo main(). Inicialize o EntityManager.
+
+package com.algaworks.curso.jpa2.consultas;
+
+import javax.persistence.EntityManager;
+
+import com.algaworks.curso.jpa2.util;
+
+public class ConsultaModeloFiltroEmFabricanteECategoria {
+
+    public static void main(String[] args) {
+        EntityManager em = JPAUtil.createEntityManager();
+
+
+
+        em.close();
+    }
+}
+
+4. Para a primeira consulta, eu quero buscar os modelos dos carros de um determinado fabricante que esteja dentro de algumas categorias especificas.
+
+5. OBS.: Se quiser popular o seu banco de dados com diversos fabricantes e modelos de carro, para ter uma base maior, fique a vontade.
+
+6. Vamos comecar a montar a nossa Consulta. Ja vimos que, para buscar a descricao de ModeloCarro, basta fazermos o select no atributo do objeto,
+
+    List<String> modelos = em.createQuery("select mc.descricao from ModeloCarro mc", String.class).getResultList();
+
+7. Para fazermos o filtro no nome do fabricante, adicionamos 'where' e fazemos o filtro como se estivessemos trabalhando com objetos,
+
+    List<String> modelos = em.createQuery("select mc.descricao from ModeloCarro mc where mc.fabricante.nome = 'Honda'").getResultList();
+
+8. Agora, precisamos adicionar outro filtro, isso eh bem simples, basta usarmos a palavra-chave 'and' e filtrar apenas as categorias que queremos com a palavra-chave 'in',
+
+    List<String> modelos = em.createQuery("select mc.descricao from ModeloCarro mc where mc.fabricante.nome = 'Honda' and mc.categoria in ('SEDAN_MEDIO', 'SEDAN_GRANDE')").getResultList();
+
+9. Pronto! Nossa consulta ja esta pronta para ser executada.
+
+10. Retornou,
+
+Hibernate: 
+    select
+        modelocarr0_.descricao as col_0_0_ 
+    from
+        ModeloCarro modelocarr0_ cross 
+    join
+        Fabricante fabricante1_ 
+    where
+        modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+        and fabricante1_.nome='Honda' 
+        and (
+            modelocarr0_.categoria in (
+                'SEDAN_MEDIO' , 'SEDAN_GRANDE'
+            )
+        )
+Modelo: Civic
+
+11. Vou deixar uma dica importante. Quando voce colocar essa consulta dentro de String do Java e voce utilizar quebra de linha, tenha cuidado de deixar um espaco vazio no fim ou inicio de cada linha. Veja abaixo como ficaria a consulta completa.
+
+String jpql = "select mc.descricao from ModeloCarro mc "
+                + "where mc.fabricante.nome = 'Honda' "
+                + "and mc.categoria in ('SEDAN_MEDIO', 'SEDAN_GRANDE')";
+List<String> modelos = em.createQuery(jpql, String.class).getResultList();
+
+12. Fim da     Aula 06.004. Exercicio: Filtrando Resultados.
+-->

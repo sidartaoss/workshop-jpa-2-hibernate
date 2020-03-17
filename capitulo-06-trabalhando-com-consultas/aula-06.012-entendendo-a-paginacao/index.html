@@ -1,0 +1,587 @@
+<!-- 
+
+    Aula 06.012. Entendendo a Paginacao
+
+1. Nesta aula, eu vou te explicar sobre a Paginacao.
+
+2. Bem, mas e o que seria Paginacao, para voce que nunca viu?
+
+3. Quando nos temos uma Consulta que vai trazer varios resultados, a gente gostaria de separar isso em varias paginas, para nao ficar uma Unica Pagina gigantesca, assim como o Google faz, por exemplo, se eu pesquisar, aqui, algaworks, ele vai trazer, aqui, os resultados, e vai trazer, tambem, varias paginas, para a gente ir poder clicando, nao eh?
+
+4. Isso daqui eh o que a gente vai fazer agora, nos vamos fazer paginacao em cima do nosso sistema.
+
+5. Em cima de onde?
+
+6. Bom, imagina que a gente vendeu esse nosso sistema, aqui, para uma locadora de veiculos enorme. E ela tem, la, 1000 carros. Voce nao quer que apareca, aqui, na Pagina de Cadastro de Carro, 1000 carros numa pagina so, nao eh? Vai ficar bem ruim na hora que ela for fazer essa consulta, vai ficar muito pesado carregar esses 1000 carros na memoria, nao parece ser uma coisa muito legal de se fazer, nao eh verdade?
+
+7. Entao, o que que a gente vai fazer?
+
+8. Eu cadastrei mais um tanto de Carros, aqui, eu nao vou cadastrar 1000 Carros, aqui, mas, eu cadastrei, aqui, 8 Carros, e vamos imaginar que a gente quer mostrar, sei la, de 5 em 5, 4 em 4, aqui, so como a titulo de exemplo.
+
+9. Depois, na hora em que voce estiver fazendo o seu sistema, ai, se voce quiser cadastrar, ai, 500 Carros e mexer na paginacao, fique a vontade.
+
+10. Entao, vamos la. Eu vou colocar, aqui, vamos dividir isso daqui em 5. 
+
+11. Vamos colocar, aqui, para trazer 5 carros, por pagina.
+
+12. Okay? Bom, vamos la, entao.
+
+13. Para a gente fazer isso daqui, se a gente for la na telinha de Pesquisa de Carros, no JSF, aqui, no Primefaces, a gente tem a tag <p:dataTable>, que eh a tag que a gente viu que traz os carros.
+
+14. Ou seja, la no Carro, ele vai la na PesquisaCarroBean, entao, o nosso ManagedBean, aqui, e ele vai, no metodo inicializar(), buscar todos os carros,
+
+@PostConstruct
+public void inicializar() {
+    this.carros = this.carroDAO.buscarTodos();
+}
+
+15. Se a gente for la no DAO, no metodo buscarTodos(), ele esta usando a Named Query que a gente criou la na nossa Entidade Carro, "Carro.buscarTodos",
+
+public List<Carro> buscarTodos() {
+    return this.em.createNamedQuery("Carro.buscarTodos").getResultList();    
+}
+
+16. Okay? Esta fazeno um Select Geral para buscar todos os carros.
+
+17. Aqui, na Pagina de Pesquisa de Carros, se voce olhar, aqui, na tag <p:dataTable>, voce da uma olhadinha, aqui, o atributo 'rows=20', ou seja, ele esta falando que, com 20 Carros, ele ja vai fazer uma paginacao,
+
+    <p:dataTable id="carrosTable" value="#{pesquisaCarroBean.carros}" var="carro" style="margin-top:20px" emptyMessage="Nenhum carro encontrado." rows="20" paginator="true" paginatorAlwaysVisible="false" paginatorPosition="bottom">
+        ...
+    </dataTable>
+
+, porque o atributo paginator, aqui, esta 'true'. E, ai, ele esta falando que sempre eh para ter paginacao, mas so quando alcancarmos as 20 linhas, por que? Porque o paginator nao esta sempre visivel, paginatorAlwaysVisible="false", ele esta apagado.
+
+18. Entao, vamos fazer o seguinte, 'Oh, Normandes, voce esta gravando a aula so para falar que eh para trazer, para colocar de 20 para 5, aqui, de rows="20" para rows="5"?'.
+
+19. Nao, perai que voce vai ver que isso aqui nao vai ficar muito legal.
+
+20. Entao, olha so, rows="5", okay?
+
+21. Vou fazer o deploy disso daqui, vou no Servers, aqui, e vou dar um Publish, okay?, ele sincronizou, quando a gente mexe apenas na Pagina, aqui, normalmente, eh mais rapido.
+
+22. Beleza, eu vou limpar o log, aqui, e vou fazer, de novo, aqui, a pesquisa. Ele vai inicializar, aqui, beleza.
+
+23. Trouxe, aqui, apenas 5 Carros e trouxe a Paginacao para mim, oh.
+
+24. So que, antes de eu clicar na Pagina 2, aqui, eu vou te mostrar as Consultas que ele fez, aqui, rapidamente,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_2_,
+        carro0_.chassi as chassi2_2_,
+        carro0_.cor as cor3_2_,
+        carro0_.codigo_modelo as codigo6_2_,
+        carro0_.placa as placa4_2_,
+        carro0_.valor_diaria as valor5_2_ 
+    from
+        Carro carro0_
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_5_1_,
+        modelocarr0_.categoria as categori2_5_1_,
+        modelocarr0_.descricao as descrica3_5_1_,
+        modelocarr0_.codigo_fabricante as codigo4_5_1_,
+        fabricante1_.codigo as codigo1_3_0_,
+        fabricante1_.nome as nome2_3_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    left outer join
+        Fabricante fabricante1_ 
+            on modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+    where
+        modelocarr0_.codigo=?
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_5_1_,
+        modelocarr0_.categoria as categori2_5_1_,
+        modelocarr0_.descricao as descrica3_5_1_,
+        modelocarr0_.codigo_fabricante as codigo4_5_1_,
+        fabricante1_.codigo as codigo1_3_0_,
+        fabricante1_.nome as nome2_3_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    left outer join
+        Fabricante fabricante1_ 
+            on modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+    where
+        modelocarr0_.codigo=?
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_5_1_,
+        modelocarr0_.categoria as categori2_5_1_,
+        modelocarr0_.descricao as descrica3_5_1_,
+        modelocarr0_.codigo_fabricante as codigo4_5_1_,
+        fabricante1_.codigo as codigo1_3_0_,
+        fabricante1_.nome as nome2_3_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    left outer join
+        Fabricante fabricante1_ 
+            on modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+    where
+        modelocarr0_.codigo=?
+
+
+25. Essas, aqui, para inicializar o Modelo do Carro, que a gente esta mostrando o Modelo do Carro, mas essa Consulta, aqui, 
+
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_2_,
+        carro0_.chassi as chassi2_2_,
+        carro0_.cor as cor3_2_,
+        carro0_.codigo_modelo as codigo6_2_,
+        carro0_.placa as placa4_2_,
+        carro0_.valor_diaria as valor5_2_ 
+    from
+        Carro carro0_
+
+, que eh a principal que eu quero mostrar. Eh a primeira que ele fez, foi a consulta em cima do Carro, certo?
+
+26. Entao, ele trouxe, la, todos os carros.
+
+27. Vou limpar esse log, aqui. Se ele trouxe todos os Carros, numa unica consulta, se eu clicar nesse 2, aqui, e a gente for la ver qual consulta ele fez, nenhuma.
+
+28. Se eu clicar no 1 de volta, qual consulta ele fez?
+
+29. Nenhuma.
+
+30. O que que significa, entao, essa Paginacao, da forma que eu fiz, aqui?
+
+31. Essa Paginacao que eu estou fazendo, ela esta toda na memoria. O Primefaces ja tomou conta disso para mim, de uma forma muito, muito simples. E ele colocou esses dados na memoria.
+
+32. Bem, isso pode ser bom e pode ser ruim.
+
+33. Pode ser bom quando?
+
+34. Quando a gente tem poucos dados, a gente sabe que essa tabela nao vai crescer, e voce tem certeza que o cara vai navegar, aqui, entre todas as paginas da consulta. Entao, pode ser que a gente utilize esse modelo, aqui, de paginacao,
+
+    <p:dataTable id="carrosTable" value="#{pesquisaCarroBean.carros}" var="carro" style="margin-top:20px" emptyMessage="Nenhum carro encontrado." 
+    
+    >>>rows="20" paginator="true" paginatorAlwaysVisible="false" 
+
+    paginatorPosition="bottom">
+        ...
+    </dataTable>
+
+35. Mas, e se, na nossa Pesquisa, vierem, aqui, 1000 Carros, 10.000 Carros, sei la, alguma coisa nesse sentido? As vezes, uma empresa tem varios pedidos, vai fazer a paginacao, tem la diversos, diversos pedidos, nao eh uma coisa legal a gente fazer essa paginacao, porque vai colocar tudo em memoria, 100% da nossa Consulta vai para a memoria.
+
+36. Entao, a gente pode utilizar uma paginacao um pouco mais inteligente, em que eu quero trazer apenas esses 5 Carros, e, quando eu clicar, aqui, no 2, eu trago a Pagina 2 de Carros, nesse caso, esses ultimos 3 Carros, aqui.
+
+37. Mas, como que a gente consegue fazer isso?
+
+38. Bom, existe um recurso, cada banco de dados tem a sua forma de fazer. 
+
+39. No MySQL, se eu fizer la, entao, 'select * from carro', eu trago todos os carros. Okay? Se eu colocar, aqui, 'select * from carro limit 4', por exemplo, o que que esse select vai fazer? Ele vai trazer o Carro ate o limite de 4 Carros. Oh, trouxe la apenas 4 Carros. E, se eu quiser trazer do Carro 5 e mais 2 Carros, por exemplo?
+
+-- MySQL
+select * from carro limit 4, 2
+-- HSQLDB
+SELECT * FROM CARRO LIMIT 2 OFFSET 4
+
+40. Eu coloco uma virgula, aqui, e 2. O que eu estou falando? Eu preciso passar, agora, eu estou falando, 'Eu quero pegar a partir do Carro 5, porque o 4 nao vai entrar, 2 Carros, a quantidade de 2 carros'.
+
+41. Entao, ele vai trazer aqui, oh, o Carro de Codigo 5 e 6, o Carro de Codigo 4 nao entra, eh a quarta linha. E nao eh pelo Codigo nao, eh um detalhe importante, isso daqui, ou seja, 'limit 4, 2' nao eh pelo Codigo, eh a quantidade de linhas, eh a partir da quarta linha, nao conta a quarta linha, e traz os proximos 2 Carros. Se eu quisesse trazer mais Um, 
+
+-- MySQL
+select * from carro limit 4, 3
+-- HSQLDB
+SELECT * FROM CARRO LIMIT 3 OFFSET 4
+
+42. Olha la, traz 3 Carros. Se eu quiser comecar a partir da linha 3, trazendo 3 Carros,
+
+-- MySQL
+select * from carro limit 2, 3
+-- HSQLDB
+SELECT * FROM CARRO LIMIT 3 OFFSET 2
+
+43. Entao, ele vai trazer, la, oh, os registros de codigo 3, 4 e 5.
+
+44. Certo? Entao, usando o limit, aqui, do MySQL (e LIMIT, OFFSET, no HSQLDB), a gente consegue fazer isso.
+
+45. Bom, mas como eu disse, em outros bancos de dados, pode ser que a sintaxe seja diferente. Oh, Normandes, entao, eu vou ter que deixar o meu sistema amarrado?
+
+46. Nao.
+
+47. O legal eh que o JPA ja tem uma coisa que vai resolver para a gente, a gente vai aprender agora a utilizar os metodos e a forma do JPA para fazer isso para a gente.
+
+48. E, ai, para a gente habilitar isso aqui no JSF, eu vou fazer seguinte, oh, para eu nao colocar tudo na memoria, eu tenho que informar, aqui, para o JSF, que essa pesquisa eh uma pesquisa, esse dataTable, eh um dataTable lazy, eh um dataTable que nao vai trazer tudo,
+
+    <p:dataTable id="carrosTable" value="#{pesquisaCarroBean.carros}" var="carro" style="margin-top:20px" emptyMessage="Nenhum carro encontrado." rows="20" paginator="true" paginatorAlwaysVisible="false" paginatorPosition="bottom"
+    
+    >>> lazy="true"
+
+    >
+        ...
+    </dataTable>    
+
+, quando eu coloco lazy="true", eu falo 'Nao traga tudo, vamos utilizar uma forma de buscar lazy, ou seja, a gente vai atrasar a busca'.
+
+49. Eh uma busca tardia.
+
+50. E eu quero mostrar, aqui, tambem, porque aqui nao esta aparecendo, na Tela de Pesquisa de Carros. Sabe quando eu coloco, assim, oh, Linhas por Pagina, quantas linhas eu quero trazer em cada pagina? Vamos colocar, aqui, tambem, atraves dessa propriedade, aqui, oh, rowsPerPageTemplate, a gente pode colocar, oh, 'Eu quero trazer 5,10,15', por exemplo, e, ai, sao as 3 formas, mostra 5 linhas Por Pagina, 10, ou 15, voce pode definir, ai, outra forma tambem,
+
+    <p:dataTable id="carrosTable" value="#{pesquisaCarroBean.carros}" var="carro" style="margin-top:20px" emptyMessage="Nenhum carro encontrado." rows="20" paginator="true" paginatorAlwaysVisible="false" paginatorPosition="bottom"
+    
+    lazy="true" rowsPerPageTemplate="5,10,15"
+
+    >
+        ...
+    </dataTable>
+
+51. Beleza? So isso daqui, simplezinho.
+
+52. No JSF, eh so isso que a gente precisa fazer.
+
+53. E alterar os carros, aqui, a gente esta trazendo todos os carros, nos vamos buscar, agora, uma lista de carros lazy, uma lista de carros tardia, nao vai trazer todo mundo de uma vez.
+
+54. Para a gente fazer isso, nos vamos criar aqui, uma nova classe que o Primefaces precisa, para fazer isso para a gente.
+
+55. Vamos criar uma classe, que eu vou chamar essa classe de LazyCarroDataModel, e vou colocar ela, aqui, no pacote modelolazy,
+
+package com.algaworks.jpa2.curso.modelolazy;
+
+public class LazyCarroDataModel {
+
+}
+
+56. Vamos ver o que que esse cara, aqui, esta fazendo.
+
+57. Esse LazyCarroDataModel vai representar, para a gente, a colecao de carros, deixa eu vir, aqui, na PesquisaCarroBean.java, para te explicar.
+
+58. A gente nao tem essa colecao de carros, aqui, que eh esse ArrayList?, 
+
+public class PesquisaCarroBean implements Serializable {
+
+    ...
+
+    private List<Carro> carros = new ArrayList<>();
+}
+
+, que eh o carinha que vai para ca, oh, #{pesquisaCarroBean.carros},
+
+    <p:dataTable id="carrosTable" value="#{pesquisaCarroBean.>>> carros <<<}" var="carro" style="margin-top:20px" emptyMessage="Nenhum carro encontrado." rows="20" paginator="true" paginatorAlwaysVisible="false" paginatorPosition="bottom"
+    lazy="true" rowsPerPageTemplate="5,10,15"
+    >
+        ...
+    </dataTable>
+
+59. Eu preciso inicializar essa lista,
+
+public class PesquisaCarroBean implements Serializable {
+
+    ...
+
+    private List<Carro> carros = new ArrayList<>();
+}
+
+60. Mas essa lista ja vem com todos os carros pronto. Eu nao posso usar essa lista, aqui, com todos os carros prontos.
+
+61. Entao, eu vou usar a classe LazyCarroDataModel, que eh um recurso, ai, que a gente pode usar, para apresentacao, no Primefaces. Mas a ideia, la no JPA, ja vou te mostrar, vai servir para qualquer framework que voce utilizar.
+
+62. Eu preciso, entao, estender o LazyDataModel, ai, do Primefaces, e falando que eh para o meu modelo Carro, e vou implementar Serializable, que ele precisa, ai,
+
+public class LazyCarroDataModel extends LazyDataModel<Carro> implements Serializable {
+
+}
+
+63. Bom, aqui, o que que eu vou fazer? Eu vou pegar o CarroDAO, para a gente conseguir fazer a Consulta, e eu vou receber o CarroDAO no construtor, aqui, 
+
+64. Pronto, recebi o CarroDAO no construtor. Na hora que for construir esse LazyCarroDataModel, a gente vai receber, aqui, o CarroDAO.
+
+public class LazyCarroDataModel extends LazyDataModel<Carro> implements Serializable {
+
+    private CarroDAO carroDAO;
+
+    public LazyCarroDataModel(CarroDAO carroDAO) {
+        this.carroDAO = carroDAO;
+    }
+
+}
+
+65. O LazyDataModel a gente vai sobrescreve o metodo load(),
+
+    public List<Carro> load(int first, int pageSize, String sortField,
+        SortOrder sortOrder, Map<String, String> filters) {
+            
+    }
+
+, que comeca com primeira linha (int first), onde ele vai comecar a fazer a busca, como se fosse esse cara, aqui,
+
+    -- MySQL
+    select * from carro limit >>> 2 <<<, 3
+
+, a primeira parte, aqui, do limit.
+
+66. A quantidade de registros, int pageSize, que eu vou querer trazer, tambem.
+
+67. Entao, isso daqui,
+
+    public List<Carro> load(>>> int first, int pageSize <<<, String sortField,
+
+, sao as informacoes que o Primefaces ja vai trazer para a gente.
+
+68. E o resto a gente nao vai precisar nao.
+
+69. E, ai, o que que a gente precisa fazer com isso?
+
+70. Criar uma lista de carros, para retornar,
+
+public List<Carro> load(inf first, int pageSize, String sortField,
+    SortOrder sortOrder, Map<String, String> filters) {
+    List<Carro> carros        
+}
+
+71. E, ai, a gente vai la no CarroDAO e, aqui, nos vamos criar uma busca com a Paginacao, a gente nao tem esse metodo, ainda,
+
+    public List<Carro> load(int first, int pageSize, String sortField,
+        SortOrder sortOrder, Map<String, String> filters) {
+        List<Carro> carros = this.carroDAO.buscarComPaginacao()        
+    }
+
+, onde eu vou passar qual que eh a primeira, ou seja, de onde eu quero comecar, e qual o tamanho daquela pagina,
+
+    List<Carro> carros = this.carroDAO.buscarComPaginacao(first, pageSize);
+
+72. Entao, eu vou fazer dessa forma. Entao, ele ja vai fazer para mim, oh, eu estou passando para esse metodo, aqui, como se fosse esse limit, aqui,
+
+    -- MySQL
+    select * from carro >>> limit 2, 3 <<<
+
+73. Entao, ele ja vai fazer para mim, oh, o 2 e o 3, que eu estou fazendo, certo?
+
+74. Passando onde eu quero comecar e a quantidade de registros.
+
+75. E ai, depois disso daqui, eu preciso avisar..., como que o JSF, la, o Primefaces, vai saber em qual pagina ele esta, nao eh? A quantidade de registros que ele tem que mostrar, que ele tem que calcular para mostrar aqui embaixo, oh, sao 1, sao 2, sao 3, sao 4 paginas de registros. Se ele nao vai trazer tudo de uma vez, a gente tem que falar para ele, de alguma forma, olha, aqui, eu vou ter 4 paginas, 5 paginas, 6 paginas, entao, ele precisa saber isso.
+
+76. Como eh que ele vai saber isso? Se ele mostra aqui, oh, 5 registros por Pagina, qual eh a quantidade de registros que tem nesse banco para ele calcular a quantidade por pagina?
+
+76. Entao, mais uma vez, ele ja sabe a Quantidade de Registros por Pagina, a gente ja informou isso para o Primefaces, eu preciso informar, agora, so a quantidade de registros. Para eu informar a quantidade de registros, eu tenho que setar, eu tenho que usar esse metodo, aqui, oh, setRowCount(), e, aqui, usando o CarroDAO, eu vou encontrar a quantidade de carros, this.carroDAO.encontrarQuantidadeDeCarros(), e vou colocar um intValue(), aqui, porque eu vou retornar um Long, la,
+
+public List<Carro> load(int first, int pageSize, String sortField, 
+    SortOrder sortOrder, Map<String, String> filters) {
+
+        List<Carro> carros = this.carroDAO.buscarComPaginacao(first, pageSize);
+
+        this.setRowCount(this.carroDAO.encontrarQuantidadeDeCarros().intValue());
+
+
+}
+
+77. Vamos la, entao, setRowCount(), e, agora, so esta faltando retornar os carros,
+
+    List<Carro> carros = this.carroDAO.buscarComPaginacao(first, pageSize);
+    this.setRowCount(this.carroDAO.encontrarQuantidadeDeCarros().intValue());
+    return carros;
+
+78. Bom, nao existe esse metodo, aqui, buscarComPaginacao(), la, no CarroDAO, entao, vamos criar ele,
+
+    public List<Carro> buscarComPaginacao(int first, int pageSize) {
+        return null;    
+    }
+
+79. Agora, vamos la. Para a gente criar essa busca com paginacao, nos vamos usar a Named Query, da mesma forma que a gente fez aqui, oh, no metodo buscarTodos(),
+
+public List<Carro> buscarComPaginacao(int first, int pageSize) {
+    return this.em.createNamedQuery("Carro.buscarTodos").getResultList();
+}
+
+80. Nos vamos comecar utilizando a NamedQuery. So que, ao inves de a gente retornar, diretamente, aqui, a lista, ou seja, .getResultList(), existe um metodo que eu vou falar, oh, setFirstResult(), onde eu vou passar a primeira posicao,
+
+    public List<Carro> buscarComPaginacao(int first, int pageSize) {
+        return this.em.createNamedQuery("Carro.buscarTodos")
+                        .setFirstResult(first)
+                        .getResultList();    
+    }
+
+, e o metodo setMaxResults(), onde eu passo o pageSize,
+
+    public List<Carro> buscarComPaginacao(int first, int pageSize) {
+        return this.em.createNamedQuery("Carro.buscarTodos")
+                    .setFirstResult(first)
+                    .setMaxResults(pageSize)
+                    .getResultList();
+    }
+
+
+, agora, sim, eu dou o ResultList().
+
+81. Olha so o tanto que, no JPA, eh facil, nao eh?
+
+82. setFirstResult(first), setMaxResults(pageSize), pronto. first e pageSize, o Primefaces ja vai passar, para a gente, os valores e, quando ele passar um pageSize 0, ou, se ele nao passar nada, ele vai fazer o limit dessa forma,
+
+'select * from carro limit 2'
+
+, ou seja, na primeira pagina, ele vai fazer o select apenas assim,
+
+'select * from carro limit 2'
+
+83. Oh, eu quero trazer, no nosso caso, os 5 primeiros registros,
+
+'select * from carro limit 5'
+
+84. E, ai, o JPA ja vai saber, o Hibernate ja vai saber traduzir, gerar essa Query, aqui, com apenas a primeira opcao aqui, com apenas 1 parametro no 'limit', vai trazer apenas 5 registros.
+
+85. Quando eu comecar a navegar nas outras paginas, ele ja vai comecar a fazer algo desse tipo,
+
+--MySQL
+'select * from carro limit 5, 5'
+--HSQLDB
+'SELECT * FROM CARRO LIMIT 5 OFFSET 5'
+
+e, ai, ele traz o restante das linhas para a gente.
+
+86. Bom, criamos, aqui, entao, em CarroDAO, a busca com paginacao, la para o nosso LazyCarroDataModel. Agora, para a gente encontrar a quantidade de Carros, tambem, eu vou criar, aqui, e, ai, a gente vai usar as Queries Agregadas, em CarroDAO, que a gente aprendeu, 
+
+public Number encontrarQuantidadeDeCarros() {
+    return em.createQuery("", Number.class);
+}
+
+87. Vamos criar o JPQL, aqui, que vai retornar o count(), a quantidade de carros, 'select count(c) from Carro c', ou seja, vai buscar, ele vai contar quantos tem la na lista, mais uma vez, para ele saber fazer aquela conta. Isso aqui vai devolver um Number, e so vai ter 1 resultado,
+
+public Number encontrarQuantidadeDeCarros() {
+    return this.em.createQuery("select count(c) from Carro c", Number.class).getSingleResult();
+}
+
+, vai retornar um Number, que eh a quantidade de registros.
+
+88. 'select count(c) from Carro c', selecionou a quantidade de carros que a gente tem na tabela.
+
+89. Vamos la, aqui, em LazyCarroModeloCarro, nao temos que mexer em mais nada aqui.
+
+90. Bom, so esta faltando, agora, a gente alterar o nosso ManagedBean, PesquisaCarroBean, que vai, ao inves de retornar essa Lista de Carro,
+
+public class PesquisaCarroBean implements Serializable {
+
+
+    ...
+    private List<Carro> carros = new ArrayList<>();
+}
+
+91. Entao, nos vamos retornar o que? Nos vamos usar o que?
+
+92. Nos vamos usar o LazyCarroDataModel,
+
+public class PesquisaCarroBean implements Serializable {
+
+
+    ...
+    private List<Carro> carros = new ArrayList<>();
+    private LazyCarroDataModel lazyCarros;
+}
+
+93. E, no metodo inicializar(), desse nosso ManagedBean, como eh que a gente vai fazer aqui? Vou comentar a linha que a gente nao precisa mais,
+
+@PostConstruct
+public void inicializar() {
+    // this.carros = this.carroDAO.buscarTodos();
+}
+
+, nos nao vamos usar mais essa colecao, essa lista de carros, e nos vamos usar, agora, o lazyCarros, eu vou inicializar ele aqui, lembra que a gente ia passar o CarroDAO aqui, como parametro no Construtor?,
+
+@PostConstruct
+public void inicializar() {
+    // this.carros = this.carroDAO.buscarTodos();
+    this.lazyCarros = new LazyCarroDataModel(this.carroDAO);
+
+}
+
+94. E so esta faltando, agora, retornar esse lazyCarros la para a Pagina de Pesquisa, PesquisaCarros.xhtml. Ao inves de #{pesquisaCarroBean.carros}, eu vou usar o lazyCarros, #{pesquisaCarroBean.lazyCarros},
+
+    <p:dataTable id="carrosTable" value="#{pesquisaCarroBean.lazyCarros}" var="carro" style="margin-top:20px" emptyMessage="Nenhum carro encontrado." rows="20" paginator="true" paginatorAlwaysVisible="false" paginatorPosition="bottom"
+    lazy="true" rowsPerPageTemplate="5,10,15"
+    >
+        ...
+    </dataTable>
+
+95. Se eu estou usando o lazyCarros, eu preciso criar o getter para ele em PesquisaCarroBean,
+
+	public LazyCarroDataModel getLazyCarros() {
+		return lazyCarros;
+	}
+
+96. Tem o getLazyCarros(), agora, eu estou retornando o LazyCarroDataModel, que foi o que a gente acabou de criar aqui. Perfeito?
+
+97. A nossa Pesquisa de Carros ja esta usando ela, 
+
+<p:dataTable id="carrosTable" value="#{pesquisaCarroBean.lazyCarros}" var="carro"
+...
+lazy="true" 
+rowsPerPageTemplate="5,10,15"
+
+, a gente ja falou que eh para esse dataTable ser lazy, 
+
+<p:dataTable id="carrosTable" value="#{pesquisaCarroBean.lazyCarros}" var="carro"
+...
+>>> lazy="true" <<<
+rowsPerPageTemplate="5,10,15"
+
+, estamos mostrando, aqui, a quantidade de linhas por pagina,
+
+<p:dataTable id="carrosTable" value="#{pesquisaCarroBean.lazyCarros}" var="carro"
+...
+lazy="true" 
+>>> rowsPerPageTemplate="5,10,15" <<<
+
+, ja criamos a nossa busca paginada, 
+
+public List<Carro> buscarComPaginacao(int first, int pageSize) {
+    return this.em.createNamedQuery("Carro.buscarTodos")
+            .setFirstResult(first)
+            .setMaxResults(pageSize)
+            .getResultList();    
+}
+
+, ja criamos uma busca para retornar a quantidade de carros,
+
+public Number encontrarQuantidadeDeCarros() {
+    return this.em.createQuery("select count(c) from Carro(c)", Number.class).getSingleResult();
+}
+
+98. Bom, se eu nao esqueci de nada, eu acredito que vai funcionar.
+
+99. Vamos ver aqui, vamos, ate, dar um Re-start, aqui, no Servidor, para Publicar tudo de novo, a gente mexeu muito, nao eh?, e vamos la, eh so esperar um pouquinho, aqui, e, se eu nao estiver mentindo para voce, vai funcionar.
+
+100. Eh para funcionar, vamos la. Deixa eu limpar, antes, o log, aqui, no Console, para voce ver o que que ele vai trazer, qual eh a consulta que ele vai fazer.
+
+101. http://localhost:8080/locadora-veiculo-web/carro/PesquisaCarros.xhtml. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_2_,
+        carro0_.chassi as chassi2_2_,
+        carro0_.cor as cor3_2_,
+        carro0_.codigo_modelo as codigo6_2_,
+        carro0_.placa as placa4_2_,
+        carro0_.valor_diaria as valor5_2_ 
+    from
+        Carro carro0_ limit ?
+
+102. Trouxe uma busca paginada, os rowsPerPage, 5/10/15, mas deixa eu te mostrar, aqui, a consulta que ele fez para o Carro.
+
+103. Olha a diferenca, agora, do que pela primeira vez que a gente fez. Ele trouxe, la, fez o select, mas colocando o 'limit'.
+
+104. Como a gente esta na primeira pagina, ele nao precisou colocar o OFFSET e o outro parametro, no HSQLDB, ou virgula e o outro parametro, no MySQL.
+
+105. Certo? Entao, ele trouxe os 5 primeiros. Se eu limpar o log, aqui, agora, e clicar no 2, na Pagina de Pesquisa, olha so o que que vai acontecer,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_2_,
+        carro0_.chassi as chassi2_2_,
+        carro0_.cor as cor3_2_,
+        carro0_.codigo_modelo as codigo6_2_,
+        carro0_.placa as placa4_2_,
+        carro0_.valor_diaria as valor5_2_ 
+    from
+        Carro carro0_ offset ? limit ?
+
+106. Trouxe os outros 3 registros, mas, agora, se a gente voltar, aqui, oh, e olhar o select, olha, agora, limit <parametro_1>, <parametro_2>, no MySQL, ou offset <parametro_1> limit <parametro_2> no HSQLDB.
+
+107. Ou seja, agora, ele fez o select para a gente de uma forma correta. Ou seja, ele fez a paginacao, agora, a paginacao usando o recurso do banco de dados, usando uma forma mais inteligente para dados muito grandes. Se voce tiver uma tabela muito grande, e precisar fazer essa paginacao, nessa forma, aqui, a gente vai fazer pequenos selects no banco de dados de cada vez, ao inves de fazer varios selects enormes. Okay?
+
+108. Bom, eh isso daqui.
+
+109. Fim da     Aula 06.012. Entendendo a Paginacao.
+
+-->

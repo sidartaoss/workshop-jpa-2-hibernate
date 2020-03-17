@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated 17/03/2019 18:04:26 by Hibernate Tools 3.5.0.Final -->
+<hibernate-mapping>
+    <class name="com.algaworks.locadora.model.ApoliceSeguro" table="APOLICESEGURO">
+        <id name="codigo" type="java.lang.Long">
+            <column name="CODIGO" />
+            <generator class="assigned" />
+        </id>
+        <property name="protecaoCausasNaturais" type="java.lang.Boolean">
+            <column name="PROTECAOCAUSASNATURAIS" />
+        </property>
+        <property name="protecaoRoubo" type="java.lang.Boolean">
+            <column name="PROTECAOROUBO" />
+        </property>
+        <property name="protecaoTerceiro" type="java.lang.Boolean">
+            <column name="PROTECAOTERCEIRO" />
+        </property>
+        <property name="valorFranquia" type="java.math.BigDecimal">
+            <column name="VALORFRANQUIA" />
+        </property>
+        <set name="aluguels" table="ALUGUEL" inverse="false" lazy="true">
+            <key>
+                <column name="CODIGO" />
+            </key>
+            <one-to-many class="com.algaworks.locadora.model.Aluguel" />
+        </set>
+        <set name="aluguels_1" table="ALUGUEL" inverse="false" lazy="true">
+            <key>
+                <column name="CODIGO" />
+            </key>
+            <one-to-many class="com.algaworks.locadora.model.Aluguel" />
+        </set>
+    </class>
+</hibernate-mapping>

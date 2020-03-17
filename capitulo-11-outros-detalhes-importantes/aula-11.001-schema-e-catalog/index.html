@@ -1,0 +1,76 @@
+<!--
+
+    Aula 11.001. Schema e Catalog
+
+1. Tem situacoes, dependendo do jeito que cria, o DBA, as vezes, cria o banco, ou voce mesmo cria o banco, uma situacao comum que acontece, comigo, pelo menos, ja aconteceu, quando eu estou trabalhando em bancos Oracle, por exemplo, e la existe o schema do banco de dados.
+
+2. E, ai, voce precisa definir esse Schema.
+
+3. O Schema eh como se fosse o Owner, eh um Dono, onde todas as tabelas estao inseridas. 
+
+4. E, ai, para voce fazer a Consulta, la, voce precisaria colocar esse Owner sempre na frente.
+
+5. Eh como se, aqui, no nosso caso, a gente tivesse que colocar assim, oh, locadora.apolice_seguro,
+
+@Entity
+@Table(name = "locadora.apolice_seguro")
+public class ApoliceSeguro {
+
+
+    ...
+}
+
+6. Se nao me engano, foi locadora mesmo que a gente usou como banco de dados, vamos conferir em persistence.xml, 
+<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/locadora?useTimezone=true&amp;serverTimezone=UTC" />
+
+7. Mas o MySQL nao precisa disso. 
+
+8. Tem alguns bancos que sim. O Oracle, voce coloca, normalmente, o Owner da Tabela. So que, para voce nao precisar ficar escrevendo, aqui, nao eh?, na frente dessa String,
+
+@Entity
+@Table(name = ">>> <<<apolice_seguro")
+public class ApoliceSeguro {
+
+    ...
+}
+
+, existe uma propriedade chamada schema, em que a gente poderia colocar ela aqui,
+
+@Entity
+@Table(name = "apolice_seguro", schema = "locadora")
+public class ApoliceSeguro {
+
+    ...
+}
+
+9. E, ai, toda vez que ele fosse fazer o select, ele iria colocar locadora.apolice_seguro, nao eh?
+
+10. A gente ja viu que, no @Table, a gente consegue alterar o nome da tabela, nao eh?, entao, eu quero trocar o nome da tabela mapeada, eu coloco o @Table. E, tambem, consigo definir o Schema.
+
+11. Como eu disse, se voce for trabalhar, algum dia, com Oracle, voce vai precisar disso daqui, okay?, definir o Schema.
+
+12. E o legal desse Schema, aqui, eh que, quando voce coloca, aqui, no @Table, aqui, ele ja vai saber fazer para todos os JoinColumn's que existirem, todos os Relacionamentos que existirem, o Hibernate ja vai conseguir saber, 'Opa, deixa eu colocar o "locadora", aqui, nesse caso, na frente.'.
+
+13. Okay?
+
+14. Tambem existe o catalog,
+
+@Entity
+@Table(name = "apolice_seguro", catalog="locadora")
+public class ApoliceSeguro {
+
+    ...
+}
+
+15. O catalog eh, exatamente, a mesma ideia do Schema, so que ele eh para banco de dados que suportam o Catalogo. Se eu nao me engano, o Oracle suporta, mas eu nao tenho certeza, eu tenho certeza que o Schema eh um cara que eh bastante usado. 
+
+16. Bom, se voce estiver trabalhando com algum banco, ai, que precise de schema ou de catalog, lembre-se da anotacao @Table e dessas propriedades, aqui, okay?
+
+@Entity
+@Table(name = "apolice_seguro", schema = "locadora")
+
+17. Fim da     Aula 11.001. Schema e Catalog.
+
+
+
+-->

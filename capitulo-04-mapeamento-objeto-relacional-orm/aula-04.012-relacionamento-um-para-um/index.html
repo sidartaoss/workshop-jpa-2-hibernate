@@ -1,0 +1,326 @@
+<!--
+
+    Aula 04.012. Relacionamento Um-Para-Um
+
+1. O Relacionamento Um Para Um segue a mesma linha ai dos Mapeamentos que a gente ja fez, certo?
+
+2. So que, aqui, tem um segredinho que voce vai ver bem legal. A telinha eh essa daqui, Novo Aluguel. Nos vamos fazer, a gente esta criando, agora, a telinha para criar o Novo Aluguel, eu nao vou colocar um monte de informacoes aqui, porque a gente ainda vai ver Mapeamento de data, entao, eu tirei essas coisas, eu quero mostrar, para voce, por enquanto, o Relacioanamento Um-Para-Um, aqui, entre o Aluguel e Uma Apolice de Seguro.
+
+3. Entao, quando eu estiver cadastrando o Aluguel, eu tenho a Apolice de Seguro daquele Aluguel.
+
+4. Okay? Que tem, la, o Valor da Franquia, e alguns Booleanos, aqui, que a gente ja aproveita a ja ve como eh que esse Booleano vai ficar no Banco de Dados.
+
+5. Bom, entao, olha so, porque voce pode estar se perguntando, 'Mas, por que que voce faz o Relacionamento Um Para Um, se, para Cada Aluguel, eu vou ter uma Apolice de Seguro, entao, nos poderiamos jogar esses atributos, da Apolice de Seguro, dentro da Tabela Aluguel, dentro da Classe Aluguel, fazer o Mapemanto em Aluguel.'
+
+6. Eh, voce esta certo, funcionaria tambem, colocando na Classe Aluguel, iria funcionar, so que essa Classe Aluguel ficaria com muitas informacoes em uma coisa que nao eh dela. Quando a gente pensa no Aluguel, voce pensa la, Data do Pedido, a Data da Entrega, a Data da Devolucao, o Valor daquele Aluguel, e o Seguro, eh uma coisa de fora, pertence ao Aluguel, mas sao mais informacoes relacionadas a Apolice de Seguros.
+
+7. Entao, ha, simplesmente, uma separacao de Responsabilidades aqui, okay?
+
+8. Entao, vamos la. Eu ja criei, aqui, algumas coisas, para a gente andar aqui, oh. Entao, a Apolice de Seguro, eh o mapeamento que nao tem nem graca para voce ai, oh, nao tem nada, so tem, aqui, o @Id. Eu vou te mostrar um negocinho, aqui, oh, eu vou mostrar mais para frente, mas vamos supor que voce nao quer que o nome da tabela seja gerado como ApoliceSeguro, junto, voce quer colocar um underline separando ali, voce pode mapear aqui, oh, @Table, e voce vai colocar aqui, oh, @Table(name = "apolice_seguro"), por exemplo, ou seja, voce esta trocando o nome da tabela que ira ser gerada no Banco de Dados.
+
+9. Isso eh comum, eu, ainda, vou mostrar mais propriedades, aqui, da anotacao @Table, mas eh comum, como eu ja disse em algumas outras ocasioes, quando voce esta o banco de dados pronto, e o nome do banco de dados eh diferente, ou quando voce precisa colocar, muito comum, voce precisar colocar, as vezes, o nome da tabela, tem muitas empresas que gostam de colocar, no nome da tabela, as iniciais do nome da empresa na frente do nome da tabela, no caso da AlgaWorks nos poderiamos colocar,
+
+@Table(name = "aw_apolice_seguro")
+
+10. Bom, vamos la. Entao, aqui, em ApoliceSeguro.java, nao tem nada de especial, como eu coloco um Booleano ou um BigDecimal como propriedade, nao muda nada, oh, continua simplezinho o mapeamento da ApoliceSeguro.
+
+11. Eh somente uma direcao. 
+
+12. Como assim? 
+
+13. Eu nao estou mapeando o ApoliceSeguro para Aluguel. Eh somente de Aluguel para ApoliceSeguro, eh o que a setinha esta indicando. Entre Aluguel e Carro, por exemplo, ainda falta criar o Relacioamento em todas as direcoes, nos vamos fazer isso mais para a frente.
+
+14. Entao, okay. Vamos la em Aluguel, agora.
+
+15. O Aluguel, tambem, nao tem muito segredo, tem os atributos codigo, valorTotal, carro, que tipo de mapeamento eh para a associacao carro?
+
+16. Muitos Para Um, nao eh? 
+
+    @ManyToOne
+    @JoinColumn(name = "codigo_carro")
+    public Carro getCarro() {
+        return carro;
+    }
+
+, eu estou trocando, aqui, o nome da coluna para deixar mais em portugues, codigo_carro, okay? 
+
+17. E como que a gente faz o mapeamento da ApoliceSeguro?
+
+18. Se eh Um Para Um, Um Aluguel tem Uma Apolice de Seguro, simples assim, nao eh?
+
+19. Entao, a gente vem aqui, na associacao apoliceSeguro, e adivinha qual que eh a anotacao para a associacao apoliceSeguro?
+
+20. @OneToOne
+
+21. So isso, Normandes?
+
+22. So isso. Mas, nao vai dar certo se a gente deixar so isso daqui, nao, por conta, eu vou te mostrar por que agora mesmo.
+
+23. Bom, ai, eu criei a telinha, eu ja te mostrei aqui, oh, que vai o ComboBox do Carro, o Valor Total daquele carro, e, aqui, para as propriedades Booleanas da Apolice Seguro, eu deixei com Check Box.
+
+24. Entao, Protecao Terceiro, se a pessoa quiser, ela marca aqui, se quiser Protecao de causas naturais, ela vai marcando, e, ai, Valor da Franquia, ele vai la e calcula o Valor da Franquia, na mao mesmo, e coloca o valor, e o Valor da Franquia ira para a propriedade valorFranquia.
+
+25. O DAO, eu criei, aqui, o AluguelDAO, tem o BuscarPeloCodigo(), o Salvar(), o Excluir(). O salvar() vai ser o metodo que, quando a gente clicar no botao Salvar, vai ser o metodo invocado la no DAO.
+
+26. Olha so. Eu nao tenho DAO para Apolice de Seguro. Por que nao? Porque eu nao preciso, por enquanto, criar esse DAO. Eu vou te mostrar por que eu nao vou precisar criar esse DAO. Mas, se voce quiser criar, eu vou, ate, deixar isso como exercicio para voce.
+
+27. Entao, vamos la.
+
+28. O novo Aluguel do Bean, aqui, em NovoAluguelBean.java, simplesmente, vai pegar o Aluguel ja preenchido com a Apolice de Seguro configurada, eu vou criar, aqui, o Aluguel, setApoliceSeguro, eu crio o objeto Novo Apolice de Seguro,
+
+    public void limpar() {
+        this.aluguel = new Aluguel();
+        this.aluguel.setApoliceSeguro(>>> new ApoliceSeguro() <<<);
+    }
+
+, e deixo o JSF setar as propriedades, aqui, para mim, de ApoliceSeguro.java.
+
+29. Entao, mais uma vez, independente do framework que voce estiver utilizando, a partir do momento que voce tem o seu objeto, o seu modelo, preenchido, eh que entra o JPA.
+
+30. Entao, o que voce precisa fazer? Qualquer framework que voce estiver trabalhando, no seu Controller, voce vai configurar o objeto que voce quer salvar, assim como a gente tinha feito la naquelas aulas, la atras, que a gente dava os new's, setava cada atributo, o framework vai fazer isso para voce.
+
+31. Entao, quando eu clicar em Salvar, eu vou chamar o Servico de Salvar(), passando o objeto Aluguel, ja, com toda a arvore de objetos preenchidos, faco algumas validacoes aqui, deixei so uma, aqui, simplezinho, e vou chamar o DAO, e o metodo salvar(), simples assim.
+
+32. Bom, vamos reiniciar o Servidor aqui, e, ai, voce vai ver um probleminha na hora em que eu for salvar esse Aluguel, e a gente vai resolver de uma forma bem simplezinha.
+
+33. Vamos chamar, aqui, a Pagina, a primeira vez demora, para ele inicializar, http://localhost:8080/locadora-veiculo-web/aluguel/NovoAluguel.xhtml, criar a tabela, oh, nao encontrou a tabela apolice_seguro, vai criar ela, beleza, beleza, trouxe a telinha do Novo Aluguel para mim.
+
+34. Vou selecionar o Carro, aqui, e o Valor do Aluguel do i3 que eu tenho configurado vai ser 200,00. Protecao terceiro Sim, Protecao causas naturais Nao, Protecao roubo Sim. Valor da franquia 600,00. Vou Salvar isso aqui, nao vai dar certo, voce vai ver por que nao vai dar certo. Vamos la dar uma olhadinha no Erro,
+
+Hibernate: select carro0_.codigo as codigo1_2_2_, carro0_.chassi as chassi2_2_2_, carro0_.cor as cor3_2_2_, carro0_.codigo_modelo as codigo6_2_2_, carro0_.placa as placa4_2_2_, carro0_.valor_diaria as valor5_2_2_, modelocarr1_.codigo as codigo1_4_0_, modelocarr1_.descricao as descrica2_4_0_, modelocarr1_.codigo_fabricante as codigo3_4_0_, fabricante2_.codigo as codigo1_3_1_, fabricante2_.nome as nome2_3_1_ from Carro carro0_ left outer join ModeloCarro modelocarr1_ on carro0_.codigo_modelo=modelocarr1_.codigo left outer join Fabricante fabricante2_ on modelocarr1_.codigo_fabricante=fabricante2_.codigo where carro0_.codigo=?
+Hibernate: select carro0_.codigo as codigo1_2_2_, carro0_.chassi as chassi2_2_2_, carro0_.cor as cor3_2_2_, carro0_.codigo_modelo as codigo6_2_2_, carro0_.placa as placa4_2_2_, carro0_.valor_diaria as valor5_2_2_, modelocarr1_.codigo as codigo1_4_0_, modelocarr1_.descricao as descrica2_4_0_, modelocarr1_.codigo_fabricante as codigo3_4_0_, fabricante2_.codigo as codigo1_3_1_, fabricante2_.nome as nome2_3_1_ from Carro carro0_ left outer join ModeloCarro modelocarr1_ on carro0_.codigo_modelo=modelocarr1_.codigo left outer join Fabricante fabricante2_ on modelocarr1_.codigo_fabricante=fabricante2_.codigo where carro0_.codigo=?
+Hibernate: insert into Aluguel (codigo_apolice_seguro, codigo_carro, valor_total) values (?, ?, ?)
+jan 07, 2019 8:43:00 AM com.sun.faces.lifecycle.InvokeApplicationPhase execute
+ADVERTÊNCIA: #{novoAluguelBean.salvar}: javax.persistence.RollbackException: Error while committing the transaction
+javax.faces.FacesException: #{novoAluguelBean.salvar}: javax.persistence.RollbackException: Error while committing the transaction
+	at com.sun.faces.application.ActionListenerImpl.processAction(ActionListenerImpl.java:117)
+	at javax.faces.component.UICommand.broadcast(UICommand.java:315)
+	at javax.faces.component.UIViewRoot.broadcastEvents(UIViewRoot.java:786)
+	at javax.faces.component.UIViewRoot.processApplication(UIViewRoot.java:1251)
+	at com.sun.faces.lifecycle.InvokeApplicationPhase.execute(InvokeApplicationPhase.java:81)
+	at com.sun.faces.lifecycle.Phase.doPhase(Phase.java:101)
+	at com.sun.faces.lifecycle.LifecycleImpl.execute(LifecycleImpl.java:118)
+	at javax.faces.webapp.FacesServlet.service(FacesServlet.java:593)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:231)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:199)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:96)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:490)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:139)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:92)
+	at org.apache.catalina.valves.AbstractAccessLogValve.invoke(AbstractAccessLogValve.java:668)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:343)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:408)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:66)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:834)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1417)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:49)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
+	at java.lang.Thread.run(Thread.java:748)
+Caused by: javax.faces.el.EvaluationException: javax.persistence.RollbackException: Error while committing the transaction
+	at javax.faces.component.MethodBindingMethodExpressionAdapter.invoke(MethodBindingMethodExpressionAdapter.java:101)
+	at com.sun.faces.application.ActionListenerImpl.processAction(ActionListenerImpl.java:101)
+	... 29 more
+Caused by: javax.persistence.RollbackException: Error while committing the transaction
+	at org.hibernate.ejb.TransactionImpl.commit(TransactionImpl.java:92)
+	at com.algaworks.curso.jpa2.util.jpa.TransactionInterceptor.invoke(TransactionInterceptor.java:47)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jboss.weld.interceptor.proxy.SimpleMethodInvocation.invoke(SimpleMethodInvocation.java:30)
+	at org.jboss.weld.interceptor.proxy.SimpleInterceptionChain.invokeNextInterceptor(SimpleInterceptionChain.java:69)
+	at org.jboss.weld.interceptor.proxy.InterceptorMethodHandler.executeInterception(InterceptorMethodHandler.java:112)
+	at org.jboss.weld.interceptor.proxy.InterceptorMethodHandler.invoke(InterceptorMethodHandler.java:88)
+	at org.jboss.weld.bean.proxy.CombinedInterceptorAndDecoratorStackMethodHandler.invoke(CombinedInterceptorAndDecoratorStackMethodHandler.java:55)
+	at com.algaworks.curso.jpa2.service.CadastroAluguelService$Proxy$_$$_WeldSubclass.salvar(CadastroAluguelService$Proxy$_$$_WeldSubclass.java)
+	at com.algaworks.curso.jpa2.controller.NovoAluguelBean.salvar(NovoAluguelBean.java:44)
+	at com.algaworks.curso.jpa2.controller.NovoAluguelBean$Proxy$_$$_WeldClientProxy.salvar(NovoAluguelBean$Proxy$_$$_WeldClientProxy.java)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.el.parser.AstValue.invoke(AstValue.java:247)
+	at org.apache.el.MethodExpressionImpl.invoke(MethodExpressionImpl.java:267)
+	at org.jboss.weld.util.el.ForwardingMethodExpression.invoke(ForwardingMethodExpression.java:39)
+	at org.jboss.weld.el.WeldMethodExpression.invoke(WeldMethodExpression.java:50)
+	at com.sun.faces.facelets.el.TagMethodExpression.invoke(TagMethodExpression.java:105)
+	at javax.faces.component.MethodBindingMethodExpressionAdapter.invoke(MethodBindingMethodExpressionAdapter.java:87)
+	... 30 more
+Caused by: java.lang.IllegalStateException: org.hibernate.TransientPropertyValueException: object references an unsaved transient instance - save the transient instance before flushing: com.algaworks.curso.jpa2.modelo.Aluguel.apoliceSeguro -> com.algaworks.curso.jpa2.modelo.ApoliceSeguro
+	at org.hibernate.ejb.AbstractEntityManagerImpl.convert(AbstractEntityManagerImpl.java:1384)
+	at org.hibernate.ejb.AbstractEntityManagerImpl.convert(AbstractEntityManagerImpl.java:1310)
+	at org.hibernate.ejb.TransactionImpl.commit(TransactionImpl.java:80)
+	... 53 more
+Caused by: org.hibernate.TransientPropertyValueException: object references an unsaved transient instance - save the transient instance before flushing: com.algaworks.curso.jpa2.modelo.Aluguel.apoliceSeguro -> com.algaworks.curso.jpa2.modelo.ApoliceSeguro
+	at org.hibernate.engine.spi.CascadingAction$8.noCascade(CascadingAction.java:380)
+	at org.hibernate.engine.internal.Cascade.cascade(Cascade.java:177)
+	at org.hibernate.event.internal.AbstractFlushingEventListener.cascadeOnFlush(AbstractFlushingEventListener.java:162)
+	at org.hibernate.event.internal.AbstractFlushingEventListener.prepareEntityFlushes(AbstractFlushingEventListener.java:153)
+	at org.hibernate.event.internal.AbstractFlushingEventListener.flushEverythingToExecutions(AbstractFlushingEventListener.java:89)
+	at org.hibernate.event.internal.DefaultFlushEventListener.onFlush(DefaultFlushEventListener.java:51)
+	at org.hibernate.internal.SessionImpl.flush(SessionImpl.java:1234)
+	at org.hibernate.internal.SessionImpl.managedFlush(SessionImpl.java:404)
+	at org.hibernate.engine.transaction.internal.jdbc.JdbcTransaction.beforeTransactionCommit(JdbcTransaction.java:101)
+	at org.hibernate.engine.transaction.spi.AbstractTransactionImpl.commit(AbstractTransactionImpl.java:175)
+	at org.hibernate.ejb.TransactionImpl.commit(TransactionImpl.java:75)
+	... 53 more
+
+35. Ele deu erro aqui, e, na ultima Causa aqui, oh, quando a gente for ler, ele vai falar o seguinte, oh, 'O objeto esta referenciando uma instancia nao salva. Salve primeiro essa instancia transiente, que significa que ela nao esta salva antes de descarregar as coisas no banco de dados.'. Qual instancia que ele esta falando? A instancia, dentro de Aluguel, apoliceSeguro, da classe ApoliceSeguro,
+
+Caused by: org.hibernate.TransientPropertyValueException: object references an unsaved transient instance - save the transient instance before flushing: com.algaworks.curso.jpa2.modelo.Aluguel.apoliceSeguro -> com.algaworks.curso.jpa2.modelo.ApoliceSeguro
+
+, entao, ele esta falando que essa propriedade apoliceSeguro,
+
+com.algaworks.curso.jpa2.modelo.Aluguel.apoliceSeguro
+
+, nao esta Salva no Banco de Dados. Isso faz bastante sentido, por que?
+
+36. Deixa eu fazer um select, aqui, em Aluguel,
+
+select * from aluguel
+
+# codigo, valor_total, codigo_apolice_seguro, codigo_carro
+    NULL      NULL            NULL                NULL
+
+, o Codigo da Apolice de Seguro, caso nao informar nada no Mapeamento, na Classe Aluguel,
+
+	@OneToOne
+	public ApoliceSeguro getApoliceSeguro() {
+		return apoliceSeguro;
+	}
+
+vai criar assim no banco de dados,
+
+apoliceSeguro_codigo
+
+37. Para corrigir, ou seja, para trocarmos o nome da coluna, para, da proxima vez, ficar certo, dentro da Classe Aluguel, nos adicionamos a anotacao @JoinColumn(name = "codigo_apolice_seguro"),
+
+    @OneToOne
+    @JoinColumn(name = "codigo_apolice_seguro")
+	public ApoliceSeguro getApoliceSeguro() {
+		return apoliceSeguro;
+    }
+    
+38. Mas olha so. Entao, ele precisa do codigo da apolice de seguro para poder fazer essa referencia, aqui, na tabela, entao, na tabela Aluguel, eu vou ter o codigo da apolice de seguro, ou seja, a foreign key, que vai apontar para a tabela Apolice_Seguro, certo?
+
+39. Entao, eu preciso, em Aluguel, que eu tenha esse codigo, aqui, ja definido, ou seja, codigo_apolice_seguro.
+
+40. Mas, se eu nao Salvei a Apolice de Seguro, como eh que ele vai ter esse codigo?
+
+41. Ele precisa salvar ela no banco de dados primeiro.
+
+42. Okay? Entao, se eu preciso desse codigo da apolice de seguro antes de salvar o Aluguel, eu preciso ter a Apolice de Seguro salvo primeiro.
+
+43. O que que a gente pode fazer?
+
+44. Nos nao vamos fazer essa abordagem agora nao. Nos poderiamos criar o DAO da Apolice de Seguro. Antes, um pouquinho, salva a Apolice de Seguro, ai, ela ja vai passar a ser um objeto persistido, ja vai ser um objeto gerenciado pelo Entity Manager, e ele vai ter o codigo para poder setar.
+
+45. Ou, entao, olha so que legal. A gente pode utilizar essa propriedade aqui, oh, cascade,
+
+    @OneToOne(cascade=)
+    @JoinColumn(name="codigo_apolice_seguro")
+    public ApoliceSeguro getApoliceSeguro() {
+        return apoliceSeguro;
+    }
+
+, e, ai, a gente pode colocar aqui quais sao, ele recebe um array aqui, aqui, o que que a gente quer fazer. Entao, a gente vai colocar o CascadeType, do javax.persistence, .ALL, por exemplo, ou seja, para todas as operacoes. 
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name="codigo_apolice_seguro")
+    public ApoliceSeguro getApoliceSeguro() {
+        return apoliceSeguro;
+    }
+
+46. O que que significa o cascade? Esse cascade eh igual ao cascade do Banco de Dados, so que, aqui, ele tem para todas as propriedades,
+
+    @OneToOne(cascade = >>> CascadeType.ALL <<<)
+
+, o que que significa, aqui, colocar o ALL? 
+
+47. Se eu estiver salvando o Aluguel, e eu tenho uma Apolice de Seguro que nao esta salva, ele vai la e salva ela primeiro.
+
+48. Se ele estiver apagando o Aluguel e ele vai ter essa Apolice de Seguro, vamos apagar essa Apolice de Seguro, junto no Banco de Dados.
+
+49. Ele vai fazer isso tudo.
+
+50. Se voce quiser fazer so para determinadas operacoes, voce pode colocar aqui, oh, cascade = { CascadeType. }, 'Ah, eu quero so para quando eu estiver Persistindo, e o CascadeType para quando eu quiser fazer um MERGE', por exemplo,
+
+    @OneToOne(cascade = { CascadeType.PERSIST, CascadeType.MERGE })
+
+, eu quero so esses caras, se eu estiver deletando, eu nao quero. Coisas desse tipo. E, ai, ele vai fazer so dessas operacoes.
+
+51. Se voce deixar ALL, ele vai fazer para todas as operacoes.
+
+52. 'Ah, Normandes, qual que eh o certo utilizar'?
+
+53. Nao tem o certo e o errado. Depende do seu negocio, como que voce esta fazendo a Aplicacao.
+
+54. Okay? Entao, vai chegar para voce, falando, 'Olha, se apagar o Aluguel, eu quero que apague a Apolice de Seguro', ou, e quando estiver Salvando, eu quero sempre que salve essa Apolice de Seguro, etc.
+
+55. E, ai, voce vai analisando cada caso, ai, que voce ja sabe, agora, que existe essa propriedade, eh so voce configurar ela nos seus projetos. Beleza?
+
+56. Bom, coloquei so isso daqui, voce viu, que eu nao sai daqui nenhum minutinho, e, ai, vamos ver o que que vai acontecer agora, so adicionei esse CascadeType.ALL aqui,
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name="codigo_apolice_seguro")
+    public ApoliceSeguro getApoliceSeguro() {
+        return apoliceSeguro;
+    }
+
+57. Vamos em http://localhost:8080/locadora-veiculo-web/aluguel/NovoAluguel.xhtml. Se voce mexer no Modelo, no Banco de Dados, depois que voce ja testou, o seu Modelo comeca a ficar baguncado.
+
+58. Entao, vamos la, o valor total, aqui, vamos colocar, aqui, 250,00, vamos marcar Protecao terceiro e Protecao causas naturais, e valor da franquia 600,00, por exemplo. Vou mandar salvar, vamos ver se vai dar certo? Oh, exibiu a mensagem 'Aluguel salvo com sucesso!'. Retornou, no Console do Servidor,
+
+Hibernate: select carro0_.codigo as codigo1_2_2_, carro0_.chassi as chassi2_2_2_, carro0_.cor as cor3_2_2_, carro0_.codigo_modelo as codigo6_2_2_, carro0_.placa as placa4_2_2_, carro0_.valor_diaria as valor5_2_2_, modelocarr1_.codigo as codigo1_4_0_, modelocarr1_.descricao as descrica2_4_0_, modelocarr1_.codigo_fabricante as codigo3_4_0_, fabricante2_.codigo as codigo1_3_1_, fabricante2_.nome as nome2_3_1_ from Carro carro0_ left outer join ModeloCarro modelocarr1_ on carro0_.codigo_modelo=modelocarr1_.codigo left outer join Fabricante fabricante2_ on modelocarr1_.codigo_fabricante=fabricante2_.codigo where carro0_.codigo=?
+Hibernate: insert into apolice_seguro (protecao_causas_naturais, protecao_roubo, protecao_terceiro, valor_franquia) values (?, ?, ?, ?)
+Hibernate: select carro0_.codigo as codigo1_2_2_, carro0_.chassi as chassi2_2_2_, carro0_.cor as cor3_2_2_, carro0_.codigo_modelo as codigo6_2_2_, carro0_.placa as placa4_2_2_, carro0_.valor_diaria as valor5_2_2_, modelocarr1_.codigo as codigo1_4_0_, modelocarr1_.descricao as descrica2_4_0_, modelocarr1_.codigo_fabricante as codigo3_4_0_, fabricante2_.codigo as codigo1_3_1_, fabricante2_.nome as nome2_3_1_ from Carro carro0_ left outer join ModeloCarro modelocarr1_ on carro0_.codigo_modelo=modelocarr1_.codigo left outer join Fabricante fabricante2_ on modelocarr1_.codigo_fabricante=fabricante2_.codigo where carro0_.codigo=?
+Hibernate: insert into Aluguel (codigo_apolice_seguro, codigo_carro, valor_total) values (?, ?, ?)
+
+59. Se eu selecionar, agora, aqui, o aluguel, 
+
+select * from aluguel
+
+# codigo, valor_total, codigo_apolice_seguro, codigo_carro
+    2,      200.00,             1,                  1
+
+
+, temos o codigo_carro com o valor 1 e o codigo_apolice_seguro com o valor 1.
+
+60. E, se eu selecionar o Apolice_Seguro, 
+
+select * from apolice_seguro
+
+# codigo, protecao_causas_naturais, protecao_roubo, protecao_terceiro, valor_franquia
+    1,              0,                      1,              1,              600.00
+
+, se voce olhar no log do servidor, ele inseriu a apolice de seguro. E, ai, so para voce ver, quando eh um Booleano que esta setado, ele coloca 1 no banco de dados, quando eh false, ele deixa 0 no banco de dados.
+
+61. Vamos criar um novo registro, aqui, do mesmo carro, so tem 1, por enquanto, para o valor total, vamos colocar 333,00, vou marcar todas as opcoes da apolice de seguro, Protecao terceiro, Protecao Causas Naturais, Protecao Roubo, e vou colocar 820,00. Vou Salvar.
+
+62. Retornou, no Console do Servidor,
+
+Hibernate: select carro0_.codigo as codigo1_2_2_, carro0_.chassi as chassi2_2_2_, carro0_.cor as cor3_2_2_, carro0_.codigo_modelo as codigo6_2_2_, carro0_.placa as placa4_2_2_, carro0_.valor_diaria as valor5_2_2_, modelocarr1_.codigo as codigo1_4_0_, modelocarr1_.descricao as descrica2_4_0_, modelocarr1_.codigo_fabricante as codigo3_4_0_, fabricante2_.codigo as codigo1_3_1_, fabricante2_.nome as nome2_3_1_ from Carro carro0_ left outer join ModeloCarro modelocarr1_ on carro0_.codigo_modelo=modelocarr1_.codigo left outer join Fabricante fabricante2_ on modelocarr1_.codigo_fabricante=fabricante2_.codigo where carro0_.codigo=?
+Hibernate: insert into apolice_seguro (protecao_causas_naturais, protecao_roubo, protecao_terceiro, valor_franquia) values (?, ?, ?, ?)
+Hibernate: select carro0_.codigo as codigo1_2_2_, carro0_.chassi as chassi2_2_2_, carro0_.cor as cor3_2_2_, carro0_.codigo_modelo as codigo6_2_2_, carro0_.placa as placa4_2_2_, carro0_.valor_diaria as valor5_2_2_, modelocarr1_.codigo as codigo1_4_0_, modelocarr1_.descricao as descrica2_4_0_, modelocarr1_.codigo_fabricante as codigo3_4_0_, fabricante2_.codigo as codigo1_3_1_, fabricante2_.nome as nome2_3_1_ from Carro carro0_ left outer join ModeloCarro modelocarr1_ on carro0_.codigo_modelo=modelocarr1_.codigo left outer join Fabricante fabricante2_ on modelocarr1_.codigo_fabricante=fabricante2_.codigo where carro0_.codigo=?
+Hibernate: insert into Aluguel (codigo_apolice_seguro, codigo_carro, valor_total) values (?, ?, ?)
+
+63. Okay, salvou. Vamos selecionar, aqui, de novo a apolice de seguro,
+
+select * from apolice_seguro
+
+# codigo, protecao_causas_naturais, protecao_roubo, protecao_terceiro, valor_franquia
+    1,              0,                      1,              1,              600.00
+    2,              1,                      1,              1,              820.00
+
+64. Okay, salvou o registro no banco de dados. 
+
+65. Fim da Aula 04.012. Relacionamento Um-Para-Um.
+
+-->

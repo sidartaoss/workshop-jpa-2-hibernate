@@ -1,0 +1,396 @@
+<!-- 
+
+Aula 04.003. Implementando a Consulta e Exclusao
+
+1. Para a gente implementar a Pesquisa e a Exclusao, ai, eu ja criei, la, a Pagina de Pesquisa, nao eh?, entao, voce vai baixa essa Pagina de Pesquisa, PesquisaFabricante.xhtml, la do GitHub, okay?
+
+2. Pode copiar so a Pagina, la, se voce quiser, beleza?, e tambem ja coloquei, aqui, o Managed Bean, PesquisaFabricanteBean.java.
+
+3. Ja injetei, aqui, o DAO,
+
+    @Inject
+    private FabricanteDAO fabricanteDAO;
+
+4. Entao, isso aqui eh um caso onde a gente consegue, la, oh, la do Controller, por exemplo, eu acessar o DAO diretamente, nao preciso passar por um Servico, porque o que a gente vai fazer, aqui, eh diretamente no DAO. Beleza?
+
+5. E, ai, olha, so.
+
+6. Resumindo, aqui, para a gente nao ficar falando sobre JSF, a gente tem o metodo excluir(), e a gente tem o metodo inicializar(), que eh o metodo que vai fazer a pesquisa,
+
+    @PostConstruct
+    public void inicializar() {
+        this.fabricantes = fabricanteDAO.buscarTodos();
+    }
+
+7. Bom, no metodo excluir(), a gente tem la, o fabricanteDAO.excluir(), ai, eu nao criei esse metodo, aqui, por isso que ele esta reclamando, aqui, justamente, porque isso faz parte do JPA.
+
+8. E tambem nem do metodo buscarTodos(). Entao, vamos fazer o seguinte, vamos criar, primeiro, a pesquisa, depois, a gente cria a Exclusao.
+
+9. Entao, vou deixar comentado, aqui, todo o metodo excluir().
+
+10. E vamos criar o metodo buscarTodos, la no FabricanteDAO.
+
+11. Esse metodo, buscarTodos, ele tem que retornar uma lista de Fabricantes, essa eh lista de Fabricantes que vai ser exibida na tela, beleza?
+
+12. Se eu clicar nesse vermelhinho aqui, oh, no Eclipse, ele ja vai falar, 'Crie para a gente la o metodo buscarTodos, no FabricanteDAO'.
+
+13. Bom, e, aqui, na classe FabricanteDAO, nao sei se voce lembra, la, mas, para a gente implementar a pesquisa, o que que a gente vai fazer? 
+
+public List<Fabricante> buscarTodos() {
+    return this.em.createQuery("from Fabricante", Fabricante.class).getResultList();
+}
+
+14. A gente, entao, pegao do EntityManager, cria, ai, a Query, aqui, a gente vai escrever o JPQL, 'from Fabricante', a gente esta buscando, a gente esta fazendo um select * from fabricante, recuperando getResultList().
+
+15. Entao, eu estou retornando essa lista.
+
+16. Ele fica amarelo, aqui, por que que fica esse warning, aqui, para a gente? Porque ele esta reclamando questoes de conversao, justamente, por conta desse Generics, por conta do Generics, aqui, entao, ele esta reclamando, falando, 'Ah, voce tem certeza que isso aqui eh seguro?'. Entao, se voce nao quiser ver esse warning, voce pode clicar, aqui, no amarelinho, falar assim, oh, adiciona essa anotacao, aqui, oh, @SuppressWarnings("unchecked"), para suprimir o warning, aqui. Eh so por conta desse warning nao ser tao grave, nao, por conta do Generics, aqui.
+
+17. Beleza? Entao, o metodo buscarTodos(), aqui, no DAO, ja esta pronto. Na teoria, aqui, ja esta tudinho pronto.
+
+18. Ah, deixa eu cadastrar, la, o menu da pesquisa, eh so a gente vir aqui, em LayouPadrao.xhtml, se a gente procurar, aqui, oh, 'Cadastros', 'Fabricante', ai, voce pode ir, ai, colocando, um outcome, para ele ir para '/fabricante/PesquisaFabricante', so escrever isso daqui,
+
+<p:submenu label="Cadastros">
+    <p:menuitem value="Fabricante" outcome="/fabricante/PesquisaFabricante"/>
+
+, o nome da pagina eh PesquisaFabricante.xhtml, beleza?, que eu acho que ele ja vai conseguir direcionar para la.
+
+19. Inicializo, aqui. A gente tem 3 Fabricantes cadastrados, la, no Banco de dados, vamos ver se eles aparecem na telinha de pesquisa, para a gente.
+
+20. Vamos em http://localhost:8080/locadora-veiculo-web/fabricante/PesquisaFabricante.xhtml, a primeira vez vai demorar, porque ele esta inicializando, aqui, o JPA, e, ai, trouxe a pesquisa, para a gente.
+
+21. Beleza?
+
+21.1. Retornou, nos logs do console,
+
+Hibernate: 
+    select
+        fabricante0_.codigo as codigo1_0_,
+        fabricante0_.nome as nome2_0_ 
+    from
+        Fabricante fabricante0_
+
+
+22. Trouxe, ai, oh, os 3 carinhas, la, pra gente.
+
+23. E, aqui, a gente tem 2 botoes, um para Editar, que a gente vai ver em um outro video, e o de Excluir. Vamos implementar o Excluir agora?
+
+24. Entao, vamos la.
+
+25. Deixa eu parar, aqui, o Servidor, para ele nao ficar atualizando, toda hora, okay.
+
+26. O Excluir, nos vamos criar o metodo em FabricanteDAO.java,
+
+    public void excluir(Fabricante fabricante) {
+
+    }    
+
+, passando, la, o Fabricante que foi selecionado, aqui, quando eu cliquei, aqui, na tela de Pesquisa, no botao Excluir, ele vai passar pelo ManagedBean, PesquisaFabricanteBean.java, metodo excluir, esse fabricanteSelecionado ja vai ser o objeto que eu selecionei, aqui na tela,
+
+    public void excluir() {
+        try {
+            this.fabricanteDAO.excluir(this.fabricanteSelecionado);
+            ...
+        } catch (NegocioException e) {}
+        ...
+    }
+
+27. Entao, ele ja vai fazer isso, o JSF ja vai fazer isso. Para mim, criar o objeto Fabricante, e entregar para mim, aqui, o objeto Fabricante,
+
+    public void excluir() {
+        try {
+            this.fabricanteDAO.excluir(>>> this.fabricanteSelecionado <<<);
+            ...
+        } catch (NegocioException e) {}
+        ...
+    }
+
+28. Aqui em PesquisaFabricanteBean.java, ele esta reclamando da excecao, 
+
+	public void excluir() {
+		try {
+			fabricanteDAO.excluir(this.fabricanteSelecionado);
+			this.fabricantes.remove(this.fabricanteSelecionado);
+			FacesUtil.addSuccessMessage("Fabricante " + fabricanteSelecionado.getNome() + " excluido com sucesso!");
+		} catch (>>> NegocioException e <<< ) {
+			FacesUtil.addErrorMessage(e.getMessage());
+		}
+	}
+
+ainda, porque eu tenho que lancar la NegocioException, la no meu FabricanteDAO. Entao, vamos la, 
+
+	public void excluir(Fabricante fabricante)  throws NegocioException {
+		
+	}
+
+29. Se deu alguma coisa errada, aqui, no DAO, a gente vai lancar uma NegocioException, okay?
+
+30. Bom, vamos la. Para a gente excluir, a gente precisa estar com esse objeto conectado no EntityManager. Entao, vamos la, deixa eu te mostrar esse slide, aqui, novamente.
+
+31. A gente tem, aqui, um objeto Fabricante, que eh um objeto simples.
+
+32. Por que que ele eh um objeto simples, Normandes?
+
+33. Voce nao trouxe ele utilizando o EntityManager, aqui, nesse metodo buscarTodos()?
+
+34. Foi exatamente, eu busquei ele, esse objeto, vamos voltar, aqui, na telinha de Pesquisa de Fabricantes. Eu busquei todos esse objetos aqui a partir do Entity Manager,
+
+	public List<Fabricante> buscarTodos() {
+		return this.em.createQuery("from Fabricante", Fabricante.class).getResultList();
+	}
+
+35. Beleza.
+
+36. Foi isso mesmo que eu fiz.
+
+37. So que, a medida que eu entreguei ele la para a Pagina do JSF, e ele entregou a Requisicao la para o Browser, esse Entity Manager, aqui, ja era, eu ja perdi ele,
+
+Em FabricanteDAO.java,
+
+    @Inject
+    private EntityManager em;
+
+38. Significa, entao, que quando eu chegar aqui, no metodo excluir(), esse objeto Fabricante,
+
+	public void excluir(Fabricante >>> fabricante <<<)  throws NegocioException {
+		
+	}
+
+, ja eh um objeto novo.
+
+39. Mas, o que que significa isso, Normandes?
+
+40. Vamos fazer o seguinte, vamos tentar apagar esse objeto, vamos colocar, aqui, o Entity Manager, .remove(fabricante), vamos tentar apagar o Fabricante.
+
+41. Vamos mandar dar um flush(), aqui, para falar, 'Faz isso aqui agora', eu ja quero que voce faca isso, o que voce colocou no Entity Manager, agora, descarregue isso no Banco de Dados. So para a gente tentar, realmente, apagar esse objeto. Por que?
+
+42. Se der alguma coisa errada, a gente vai capturar, aqui, uma Excecao, PersistenceException, e a gente vai lancar um erro, falando que nao consegue apagar esse objeto,
+
+    public void excluir(Fabricante fabricante) throws NegocioException {
+        try {
+            em.remove(fabricante);
+            em.flush();
+        } catch (PersistenceException e) {
+
+        }
+    }
+
+43. Ou melhor, estou pensando em deixar isso aqui sem try / catch, sem capturar a excecao, para quando der o problema, la na frente, eu te mostrar por que que deu esse problema, e a gente vem aqui e trata ele, vamos deixar isso aqui dessa forma, mesmo,
+
+    public void excluir(Fabricante fabricante) throws NegocioException {
+        em.remove(fabricante);
+        em.flush();
+    }
+
+44. Pode deixar o flush(), aqui, o flush(), simplesmente, significa, o que voce fez, ai, no Entity Manager, que esta armazenado, porque nao necessariamente ele vai executar esse remove() neste instante, entao, com o flush(), voce fala, 'Eu quero que voce va la e execute esse SQL no banco de dados agora'.
+
+45. Beleza? Isso significa o flush().
+
+46. Ah, vamos la. Implementamos o metodo excluir(), dessa forma. Vamos levantar, aqui, de novo, o Tomcat, e vamos tentar excluir o objeto, la, da Pesquisa.
+
+47. Bom, subiu.
+
+48. Em http://localhost:8080/locadora-veiculo-web/fabricante/PesquisaFabricante.xhtml, ou seja, na Pesquisa de Fabricantes, entao, a primeira vez vai demorar um pouquinho. Beleza, trouxe, aqui, para a gente, os registros.
+
+49. Eu vou tentar excluir a Fiat, o objeto 2. Vamos ver. Eh para nao funcionar.
+
+50. Retornou,
+
+Caused by: java.lang.IllegalArgumentException: Removing a detached instance com.algaworks.curso.jpa2.modelo.Fabricante#2
+
+51. Olha so o que ele falou, que eu estou tentando remover uma instancia desatachada.
+
+52. O que que eh uma instancia destachada? Eh um Objeto Simples.
+
+53. Eh um objeto que nao esta dentro do Entity Manager,
+
+                                               ----------------
+Objeto Simples                                 |Entity Manager|
+ ----------                                    |              |
+|Fabricante|                                   |--------------|      
+ ----------                                           |
+                                                      |
+                                                      V
+                                                   BD MySQL
+
+
+54. Lembra que tem o Entity Manager? Ele nao precisa estar com esse objeto la dentro do Entity Manager para eu conseguir fazer operacoes com ele?
+
+                                               ----------------
+Objeto Simples                                 |Entity Manager|
+                                               |              |
+                                               |  ----------  |
+                                               | |Fabricante| |
+                                               |  ----------  |  
+                                               |--------------|
+                                                      |
+                                                      |
+                                                      |
+                                                      V
+                                                   BD MySQL
+
+55. Entao, as formas que a gente tem de colocar um objeto o Entity Manager, ou eh salvando ele ou buscando ele.
+
+56. Bom, mas, como eu te disse, a gente buscou esse objeto aqui,
+
+    public List<Fabricante> buscarTodos() {
+        return >>> em.createQuery("from Fabricante").getResultList(); <<<
+    }
+
+57. A gente buscou e colocou nessa lista,
+
+    public >>> List<Fabricante> <<< buscarTodos() {
+        return em.createQuery("from Fabricante").getResultList(); <<<
+    }
+
+58. Mas, repetindo. Quando eu levei isso la para a Web, o Entity Manager foi fechado. Perdi o Entity Manager.
+
+59. Okay?
+
+60. Ele injeta esse Entity Manager aqui,
+
+    @Inject
+    >>> private EntityManager em; <<<
+
+    ...
+
+    public List<Fabricante> buscarTodos() {
+        return em.createQuery("from Fabricante").getResultList();
+    }    
+
+, quando ele sai dessa Pagina, ele fecha esse EntityManager.
+
+61. Entao, esse Fabricante, aqui,
+
+    public void excluir(Fabricante >>> fabricante <<< ) {
+        em.remove(fabricante);
+        em.flush();
+    }
+
+, eh um objeto novo. Ele so esta preenchido, nao eh?, com as informacoes, mas ele eh um objeto desatachado.
+
+62. Entao, uma forma da gente fazer isso daqui eh usar o EntityManager e, ai, a gente vai fazer um find, aqui, oh, colocando Fabricante.class, e, aqui, a gente pega fabricante.getCodigo(),
+
+    public void excluir(Fabricante fabricante) {
+        fabricante = em.find(Fabricante.class, fabricante.getCodigo());
+        em.remove(fabricante);
+        em.flush();
+    }
+
+63. Entao, olha so o que eu estou fazendo, agora. Eu vou no EntityManager, e busco, passando, aqui, a classe Fabricante, e passo o codigo, aqui, desse mesmo objeto Fabricante, que veio por parametro, no mesmo objeto fabricante.
+
+64. Se eu quiser, ou, entao, eu posso criar um novo objeto, aqui, oh, fabricanteTemp, por exemplo,
+
+    public void excluir(Fabricante fabricante) {
+        Fabricante fabricanteTemp = em.find(Fabricante.class, fabricante.getCodigo());
+        em.remove(fabricanteTemp);
+        em.flush();
+    }
+
+, e apago ele, para voce nao ter nenhuma duvida, ai, do que eu estou fazendo.
+
+65. Entao, olha so, esse objeto fabricante,
+
+    public void excluir(Fabricante >>> fabricante <<< ) {
+        Fabricante fabricanteTemp = em.find(Fabricante.class, fabricante.getCodigo());
+        em.remove(fabricanteTemp);
+        em.flush();
+    }
+
+, que veio, nos estamos pegando o codigo dele, aqui, 
+
+    public void excluir(Fabricante fabricante) {
+        Fabricante fabricanteTemp = em.find(Fabricante.class, >>> fabricante.getCodigo()<<< );
+        em.remove(fabricanteTemp);
+        em.flush();
+    }
+
+, passando para esse fabricante temporario,
+
+    public void excluir(Fabricante fabricante) {
+        Fabricante >>> fabricanteTemp <<< = em.find(Fabricante.class, fabricante.getCodigo());
+        em.remove(fabricanteTemp);
+        em.flush();
+    }
+
+, e removendo esse objeto do banco de dados.
+
+66. Agora, a gente vai conseguir excluir esse objeto, do banco de dados. Quer ver?
+
+67. Espera o Servidor reiniciar, ai. Iniciou, vamos chamar, aqui, a Pagina de Pesquisa. Beleza, iniciou, vou tentar, entao, apagar o Fiat.
+
+68. E,... ainda nao deu. Deu alguma coisa errada.
+
+69. Retornou o erro,
+
+Caused by: javax.persistence.TransactionRequiredException: no transaction is in progress
+
+70. 'No transaction is in progress'. Esqueci mais uma vez. Por que que ele esta falando isso aqui, oh, 'No transaction is in progress'?
+
+71. O que que eu tentei fazer? Eu nao tentei fazer uma alteracao no banco de dados?
+
+72. Nao tentei remover alguma coisa do banco de dados?
+
+73. E a Transacao?
+
+74. Eu nao posso esquecer da Transacao.
+
+75. Entao, eu vou colocar, aqui, a anotacao @Transactional.
+
+76. Agora, quando eu chamar o metodo excluir, eu quero uma Transacao, para excluir,
+
+    @Transactional
+    public void excluir(Fabricante fabricante) throws NegocioException {
+        ...
+    }
+
+77. Agora, vai funcionar. vamos chamar, aqui, a Pagina de Pesquisa. Beleza, iniciou, vou tentar, entao, apagar o Fiat. 
+
+78. Retornou, na tela, 'Fabricante Fiat excluido com sucesso!', no Console do Servidor,
+
+Hibernate: 
+    select
+        fabricante0_.codigo as codigo1_0_,
+        fabricante0_.nome as nome2_0_ 
+    from
+        Fabricante fabricante0_
+Hibernate: 
+    select
+        fabricante0_.codigo as codigo1_0_0_,
+        fabricante0_.nome as nome2_0_0_ 
+    from
+        Fabricante fabricante0_ 
+    where
+        fabricante0_.codigo=?
+Hibernate: 
+    delete 
+    from
+        Fabricante 
+    where
+        codigo=?
+
+79. Oh, nem aparece mais nessa Pesquisa, nao aparece mais. Se a gente for la, no Banco de dados, select * from fabricante, 
+
+codigo          nome
+1               Chevrolet
+3               Honda
+
+, nao esta la mais o fabricante Fiat, que a gente apagou, de ID 2. Okay?
+
+80. Bom, na proxima aula, ai, a gente vai ver questao de atualizar o objeto, so para a gente terminar de fechar esse ciclo de CRUD, aqui, neste projeto. Okay?
+
+81. Fim da Aula 04.003. Implementando a Consulta e Exclusao.
+
+-->
+
+
+
+
+
+
+
+
+
+
+
+

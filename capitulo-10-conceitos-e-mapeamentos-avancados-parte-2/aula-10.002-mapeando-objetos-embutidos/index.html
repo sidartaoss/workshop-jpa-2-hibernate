@@ -1,0 +1,337 @@
+<!--
+
+    Aula 10.002. Mapeando Objetos Embutidos
+
+1. Bom, vamos continuar nos nossos exemplos, agora, para eu te mostrar objetos embutidos, mas, sem ser como uma chave composta. Vou te mostrar, aqui, vamos continuar no exemplo do video anterior, usando, ai, esse sistema solto.
+
+2. Bem, pode ter situacoes em que voce quer manter os dados em uma unica tabela, para que o banco de dados nao fique fazendo muita associacao e, por consequencia, ficar fazendo muito Join, durante as consultas, nao eh? Isso, perdendo performance, as vezes, o seu sistema precisa de uma performance maior, e voce gostaria que tudo ficasse dentro de Uma Mesma Tabela.
+
+3. So que, na orientacao a objetos, ficaria meio ruim voce colocar varios atributos, aqui, dentro da mesma classe, os atributos que, talvez, ficariam mais elegantes dentro de uma outra classe.
+
+4. Mas, seria dentro da mesma tabela.
+
+5. Entao, por exemplo. Vamos supor que a gente queira colocar, aqui, em Veiculo, mapear dados do proprietario desse Veiculo, tambem. Como, por exemplo, a gente iria colocar, aqui, o nome, o telefone, e, por exemplo, o email,
+
+@Entity
+@Table(name = "tab_veiculo") 
+public class Veiculo {
+
+    private VeiculoId codigo;
+    private String fabricante;
+    private String modelo;
+
+    ...
+
+    private String nome;
+    private String telefone;
+    private String email;
+
+    ...
+}
+
+, alguma coisa assim. Bom, como eu disse, voce quer que tudo fique na mesma tabela, para voce ganhar, ai, em termos de performance, nao eh?, ficar evitando Join nas tabelas. Uma outra situacao comum, tambem, eh, as vezes, pode ser em um Sistema Legado, onde voce nao consegue alterar a estrutura das tabelas.
+
+6. As vezes, a tabela ja esta pronta, la, desse jeito, com todas as colunas la, so que faria mais sentido ficar separado, so que voce nao pode mexer na tabela. Entao, voce pode usar desse recurso, tambem.
+
+7. Entao, olha so. Vamos imaginar que a gente quer fazer isso daqui,
+
+@Entity
+@Table(name = "tab_veiculo") 
+public class Veiculo {
+
+    private VeiculoId codigo;
+    private String fabricante;
+    private String modelo;
+
+    ...
+
+    >>>
+    private String nome;
+    private String telefone;
+    private String email;
+<<<
+    ...
+}
+
+, quer colocar o nome, telefone, email dentro da tabela Veiculo. Mas, nao fica meio estranho a gente fazer isso daqui?
+
+@Entity
+@Table(name = "tab_veiculo") 
+public class Veiculo {
+
+    private VeiculoId codigo;
+    private String fabricante;
+    private String modelo;
+
+    ...
+
+ >>>
+    private String nome;
+    private String telefone;
+    private String email;
+<<<
+    ...
+}
+
+8. Fica, nao eh? Talvez, seria mais interessante a gente colocar, ficar mais organizado, ja que a gente quer utilizar esse beneficio de Uma Mesma Tabela, ou eh a unica forma de se fazer, entao, vamos supor que a gente vai criar uma classe, aqui, chamada de Proprietario.
+
+9. Entao, nos vamos criar essa classe, Proprietario, para representar o Proprietario desse Veiculo, e ficar separado, nao ficar os atributos, direto, ali, igual ao que eu estava fazendo.
+
+10. Entao, eu mandei criar essa classe, Proprietario, vou colocar, aqui, os atributos,
+
+package com.algaworks.curso.jpa2.modelo;
+
+public class Proprietario {
+
+    private String nome;
+    private String telefone;
+    private String email;
+}
+
+, vou mandar gerar os Getters e os Setters, para todo mundo.
+
+11. Bom, e, aqui, o que que a gente vai anotar aqui?
+
+12. Essa classe, tambem, eh uma classe @Embeddable,
+
+import javax.persistence.Embeddable;
+
+@Embeddable
+public class Proprietario {
+
+
+    ...
+}
+
+13. Ou seja, ela pode ser embutida em outras classes, sem nenhum problema.
+
+14. E, aqui, so para deixar claro, ai, voce pode continuar fazendo as suas anotacoes, aqui, normais, como, por exemplo, @Column, eu quero trocar tudo isso aqui, oh, 'nome_proprietario',
+
+@Embeddable
+public class Proprietario {
+
+
+    ...
+
+    @Column(name = "nome_proprietario")
+    public String getNome() {
+        return nome;
+    }
+}
+
+, eu quero trocar e eu quero, sempre, colocar esse _proprietario, aqui, no final.
+
+15. Eu posso ir colocando, aqui, sem problema, posso vir, aqui, 
+
+    @Column(name = "telefone_proprietario") 
+    public String getTelefone() {
+        return telefone;
+    }
+
+    ...
+
+    @Column(name = "email_proprietario") 
+    public String getEmail() {
+        return email;
+    }
+
+16. Okay? Entao, voce pode continuar fazendo o seu mapeamento, ai, sem problema.
+
+17. Bom, ai, vamos voltar, aqui, em Veiculo,
+
+    ...
+    private Proprietario proprietario;
+
+    ...
+
+, a gente tem o Proprietario, vamos mandar gerar o Getter e o Setter, dele, aqui, Generate o Getter e o Setter, do proprietario.
+
+18. Bom, lembra que, aqui, em Veiculo, no ID, a gente colocou @EmbeddedId, falando que eh um cara que esta sendo embutido, so que eh o ID,
+
+    @EmbeddedId
+    public VeiculoID getCodigo() {
+        return codigo;
+    }
+
+19. Nesse caso, aqui, 
+
+	public Proprietario getProprietario() {
+		return proprietario;
+	}
+	
+	public void setProprietario(Proprietario proprietario) {
+		this.proprietario = proprietario;
+    }
+    
+, ele nao eh o ID, o proprietario nao eh o ID, concorda? Eh somente uma classe que a gente quer embutir. 
+
+20. Entao, a gente vai usar o @Embedded,
+
+    @Embedded
+    public Proprietario getProprietario() {
+        return proprietario;
+    }
+
+    public void setProprietario(Proprietario val) {
+        this.proprietario = val;
+    }
+
+21. O @Embedded eh para falar: 'Embute essa classe, aqui, dentro, para mim, utilize em uma mesma tabela. Okay? Ele nao vai criar uma nova tabela para Proprietario.',
+
+    @Embedded
+    public >>> Proprietario <<< getProprietario() {
+        return proprietario;
+    }
+
+22. Repare que eu nem coloquei, aqui, oh, @Entity, nada disso, em Proprietario,
+
+@Embeddable
+public class Proprietario {
+
+    ...
+}
+
+23. Okay? E, aqui, a gente coloca @Embedded,
+
+    @Embedded
+    public Proprietario getProprietario() {
+        return proprietario;
+    }
+
+, pronto. Ele vai pegar e embutir todos os atributos, aqui, e, na classe, la na TAB_VEICULO, a gente vai ver, aqui, na tabela, que vao ser criados mais 3 coluninhas,
+
+select * from tab_veiculo;
+
+# cidade, placa, fabricante, modelo
+Ouro Preto, ABC-1235, Volks, Gol
+Rio Claro, ABC-1234, Chevrolet, Corsa
+
+24. Okay?
+
+25. Vamos vir, aqui, entao, oh, ExemploObjetoEmbutido,
+
+    public static void main(String[] args) {
+        EntityManager manager = JPAUtil.createEntityManager();
+
+        Veiculo veiculo = new Veiculo();
+        veiculo.setCodigo(new VeiculoID("AAA-1111", "Rio de Janeiro"));
+        veiculo.setFabricante("Volks");
+        veiculo.setModelo("Jeta");
+
+        Proprietario proprietario = new Proprietario();
+        proprietario.setNome("Joao da Silva");
+        proprietario.setTelefone("54991111111");
+        proprietario.setEmail("joao@silva.com");
+        veiculo.setProprietario(proprietario);
+
+        manager.getTransaction().begin();
+        manager.persist(veiculo);
+        manager.getTransaction().commit();
+
+        manager.close();
+    }
+
+26. Okay? Vamos ver se isso, daqui, vai funcionar?
+
+27. Eh so mandar a gente executar essa classe. Ele deve fazer a alteracao na tabela, e ja fazer esse insert, ai, para a gente.
+
+28. E, para consulta, eu nao preciso nem te falar, eh a mesma coisa, eh so criar o objeto proprietario e consultar.
+
+29. Vamos la. 
+
+30. Retornou,
+
+Hibernate: 
+    
+    alter table tab_veiculo 
+       add column nome_email varchar(255)
+Hibernate: 
+    
+    alter table tab_veiculo 
+       add column nome_proprietario varchar(255)
+Hibernate: 
+    
+    alter table tab_veiculo 
+       add column nome_telefone varchar(255)
+fev 23, 2019 10:14:45 AM org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator initiateService
+INFO: HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+Hibernate: 
+    insert 
+    into
+        tab_veiculo
+        (fabricante, modelo, nome_email, nome_proprietario, nome_telefone, cidade, placa) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+
+
+31. Olha la, eu vou fazer um SELECT, aqui, 
+
+select * from tab_veiculo;
+
+# cidade, placa, fabricante, modelo, nome_email, nome_proprietario, nome_telefone
+Ouro Preto, ABC-1235, Volks, Gol, , , 
+Rio Claro, ABC-1234, Chevrolet, Corsa, , , 
+Rio de Janeiro, AAA-1111, Volks, Jeta, joao@silva.com, Joao da Silva, 54991111111
+
+, olha la, criou as 3 colunas a mais, que a gente tinha combinado, que a gente viu, e adicionou o novo Veiculo, com os dados do Proprietario, que a gente colocou.
+
+32. Simples, nao?
+
+33. Entao, com isso, voce consegue, repetindo, mais uma vez, voce consegue, entao, melhorar a questao de performance, as vezes, o seu sistema, la, voce nao quer ficar fazendo Join, e quer colocar tudo numa mesma tabela, voce pode utilizar desse recurso.
+
+34. Ou, voce poderia, tambem, ter um sistema legado que ja esta pronto, ja tem uma Tabelona, la, cheio de colunas, mas voce gostaria de fazer mais orientado a objeto, mais separado, entao, voce poderia, tambem, utilizar esse recurso, mapeando, aqui, como Objeto Embutido,
+
+>>> @Embeddable
+public class Proprietario {
+
+
+    private String nome;
+    private String telefone;
+    private String email;
+
+    @Column(name = "nome_proprietario")
+    public String getNome() {
+        return nome;
+    }
+    ...
+}
+
+35. E, na hora de embutir, voce coloca ele com @Embedded,
+
+public class Veiculo {
+
+    ...
+
+    private Proprietario proprietario;
+
+    @Embedded
+    public Proprietario getProprietario() {
+        return proprietario;
+    }
+
+    public void setProprietario(Proprietario proprietario) {
+        this.proprietario = proprietario;
+    }
+}
+
+36. Bem parecido com a Chave Composta,
+
+public class Veiculo {
+
+    ...
+
+    private VeiculoID codigo;
+
+    @EmbeddedId
+    public VeiculoID getCodigo() {
+        return codigo;
+    }
+
+    public void setCodigo(VeiculoID codigo) {
+        this.codigo = codigo;
+    }
+}
+
+37. Fim da     Aula 10.002. Mapeando Objetos Embutidos.
+
+-->

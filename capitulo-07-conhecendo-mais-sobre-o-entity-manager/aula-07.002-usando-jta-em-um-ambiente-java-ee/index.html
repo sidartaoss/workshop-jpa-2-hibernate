@@ -1,0 +1,708 @@
+<!--
+
+    Aula 07.002. Usando JTA em um ambiente Java EE
+
+1. Nesta aula, eu acho que voce vai ficar, ate, emocionado, de tanta coisa legal, diferente, que a gente vai ver agora, okay?
+
+2. Bom, nos vamos usar, ate, o jboss como um container java ee para a gente poder fazer os testes e eu te mostrar o exemplo desta aula, ai, funcionando.
+
+3. Okay? O nome da aula eh JTA mesmo, porque a gente nao vai usar, mais, o controle de Transacao a gente controlando, nos vamos deixar o container controlar. Por isso, a gente vai usar ate EJB nesta aula.
+
+4. Okay? Bom, eu criei, no GitHub, pra te mostrar, aqui, no GitHub, la nas Aulas / Usando JTA em ambiente Java EE, tem 2 projetos, o inicio-projeto-jboss, eh, justamente, a casca inicial, que eh esse projeto JBoss que a gente vai fazer agora e vai fazer o deploy nele, la.
+
+5. O outro, projeto-jboss, aqui, esse cara, aqui, ja eh o cara final, ja ta o cara finalizado, okay?
+
+6. Entao, se voce quiser baixar esse daqui, inicio-projeto-jboss, renomeia ele, na hora que voce baixar ele, renomeia ele para projeto-jboss, importar dentro do Eclipse e, a medida que a aula for passando e voce completando, beleza. Se voce ja quiser o projeto final, eh esse daqui, i.e., projeto-jboss.
+
+7. Bom, entao, vamos la. Por que que eu estou falando isso daqui?
+
+8. Entao, nos vamos criar esse novo projetinho JBoss, aqui, para a gente fazer um cadastro simples, aqui, usando a tabela que eu ate tinha, aqui, no banco, que eh essa cadastro_cliente, que a gente tinha feito, oh.
+
+9. Eu fiz uns testes, aqui, agora, entao, eu estou com 8 registros nessa tabela, aqui, certo? Entao, eu fiz algumas brincadeiras, aqui, e a gente vai trabalhar em cima da tabela de cliente apenas.
+
+10. A ideia, aqui, eh eu te mostrar como que a gente passa o Controle da Transacao para o Container Java EE. Como eh que a gente faz o deploy da nossa aplicacao e usa dentro de um Container Java EE, como o JBoss.
+
+11. Okay? Entao, a primeira coisa que a gente vai fazer eh baixar ele. www.jboss.org, e, ai, a gente clica, aqui, em projects, https://redhatofficial.github.io/#!/main.
+
+12. Okay? E, ai, a gente procura aqui, oh, no JBoss Application Server, www.jboss.org/jbossas/downloads, http://jbossas.jboss.org/downloads, nos vamos usar essa versao aqui, oh, 7.1.1.Final, eh um Application Server, Certificado, oh, para o Java EE 6, entao, a gente consegue baixa, eh so clicar no ZIP, ai, eu ja fiz o download dele. Entao, nos vamos, apenas, extrair ele, aqui. Entao, aqui, oh, o JBoss, ja foi feito o download dele, aqui, na minha maquina. Quando voce, para instalar ele, eh muito simples, eh so extrair, mandar extrair para, eu ja fiz isso, aqui, coloquei ele extraido dentro de C:\AlgaWorks, la, onde estao as outras extracoes que a gente fez, jboss-as-7.1.1.Final, okay?
+
+13. Entao, esta ele, aqui, purinho. Entrando, aqui, dentro da pasta bin, clicando em standalone.bat, no Windows, no Linux, standalone.sh, ele sobe bem rapidinho, ja subiu.
+
+14. Se a gente voltar, aqui, e digitar http://localhost:8080, a gente tem que ver essa telinha, ai, de Bem-Vindo ao JBoss Application Server 7. Tranquilo? Bom, pode deixar ele iniciado, ai, nao tem nenhum problema, nao, nos vamos ele la.
+
+15. Esse projetinho, aqui, entao, vamos falar um pouqinho dele, vai ser um projeto bem simples, nao usei CSS para melhorar ele, nao estou usando nem Primefaces, apenas JSF puro para a gente fazer o Cadastro e eu te mostrar o Controller.
+
+16. A primeira coisa que eu quero te mostrar, entao, eh a diferenca entre os persistence.xml's. 
+
+17. O persistence.xml, aqui, do locadora-veiculo-web e o do projeto-jboss. A gente vai comecar a alterar o nosso, aqui. 
+
+18. O que que eu mudei em relacao ao locadora-veiculo-web, la, que a gente ja tinha?
+
+19. Mudei o nome o persistence-unit, transaction-type, RESOURCE_LOCAL, isso daqui, a gente ja vai mudar.
+
+20. A gente ja vai colocar, aqui, oh, como JTA, porque eu estou falando que, agora, eu quero utilizar o Java Transaction API para controlar a minha Transacao, e nao mais eu vou controlar na mao,
+
+    <persistence-unit name="projetoJbossPU" transaction-type="JTA">
+		<properties>
+			<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/cadastro_cliente?useTimezone=true&amp;serverTimezone=UTC"/>
+			<property name="javax.persistence.jdbc.user" value="root"/>
+			<property name="javax.persistence.jdbc.password" value="admin"/>
+			<property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
+    </persistence-unit>
+
+21. Bom, quando eu faco isso, existem algumas outras questoes, tambem, como, por exemplo, essa conexao com o banco de dados.
+
+22. A gente nao vai fazer ela mais aqui, nos vamos utilizar atraves de um DataSource.
+
+23. Okay?, entao, mais uma alteracao que a gente vai fazer aqui, nos vamos tirar isso daqui,
+
+			<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/cadastro_cliente?useTimezone=true&amp;serverTimezone=UTC"/>
+			<property name="javax.persistence.jdbc.user" value="root"/>
+            <property name="javax.persistence.jdbc.password" value="admin"/>
+            
+, porque nos vamos configurar isso la no Servidor de Aplicacao.
+
+24. E, aqui, nos vamos so completar as informacoes, colocando, bom, se eu nao vou controlar a Transacao mais, nao vou criar o Entity Manager, quem sao os caras que fazem isso pra gente?
+
+25. Entao, eu tenho que definir, ai, essa propriedade provider,
+
+    <persistence-unit name="projetoJbossPU" transaction-type="JTA">
+        <provider></provider>
+        ...
+    </persistence-unit>
+
+, e colocar, aqui, falando, olha, eu estou usando o HibernatePersistence como o meu Provider,
+
+    <persistence-unit name="projetoJbossPU" transaction-type="JTA">
+        <provider>org.hibernate.ejb.HibernatePersistence</provider>
+        ...
+    </persistence-unit>
+
+26. E a propriedade <jta-data-source>, eu vou falar quem que eh o data source em que eu vou obter a conexao, vao ter todas essas informacoes,
+
+    <persistence-unit name="projetoJbossPU" transaction-type="JTA">
+        <provider>org.hibernate.ejb.HibernatePersistence</provider>
+        <jta-data-source>java:/projetoJbossDS</jta-data-source>
+        ...
+    </persistence-unit>    
+
+27. Eu estou chamando ele, aqui, de projetoJbossDS. Bom, onde eh que eu vou configurar isso daqui?
+
+        <jta-data-source>java:/projetoJbossDS</jta-data-source>
+
+28. La no Application Server.
+
+29. Entao, deixa eu parar, aqui, o Application Server (JBoss), parei ele, e vamos la para a gente configurar ele. Se a gente voltar, aqui, em /jboss-as-7.1.1.Final/modules/com/, nos vamos criar um novo modulo, ou seja, nos vamos criar uma nova pastinha, aqui, que eh o modulo da conexao com o mysql, o modulo do mysql. Entao, a gente cria, aqui, uma pastinha mysql. Dentro dessa pasta, a gente cria a pastinha main. E o que que eu vou colocar aqui dentro?
+
+30. Eu vou colocar, aqui dentro, o driver, lembra que a gente tinha baixado o driver do mysql? Entao, eu vou colocar ele la, ou seja, dentro da pastinha main. E tambem vou criar um novo arquivo chamado de module.xml. Okay? Presta atencao, ai, para voce alterar a extensao do seu arquivo, as vezes, se ela nao estiver mostrando no Windows, voce tem que forcar a alteracao dela.
+
+31. Okay? E, ai, eu vou abrir esse module.xml, e o que que nos vamos escrever aqui dentro?
+
+32. Eu deixei aqui, oh, na pastinha docs esse README.txt, onde esta essa descricao. Ali, a gente tem que configurar o modulo, a gente copiou o jar para la. Depois, a gente cria o module.xml, e, ai, a gente vai colocar esse conteudo dentro do arquivo module.xml,
+
+33. Okay? Pode usar, ai, o editor de sua preferencia, okay? para voce criar esse arquivo. Repara aqui, oh, que esse nome, aqui,
+
+    <resources>
+        <resource-root path="mysql-connector-java-8.0.13.jar" />
+    </resources>
+
+, eh exatamente o nome do jar que a gente copiou la para dentro.
+
+34. Agora, eu preciso la configurar, oh, <jboss_home>, la onde voce instalou o jboss, /standalone/configuration/standalone.xml, nos vamos adicionar esse data source, e, depois, esse driver, dentro de drivers,
+
+<datasource jta="true" jndi-name="java:/projetoJbossDS" pool-name="MySqlDS" enabled="true" use-java-context="true" use-ccm="true">
+    <connection-url>jdbc:mysql://localhost:3306/cadastro_cliente</connection-url>
+    <driver>mysql</driver>
+    <security>
+        <user-name>root</user-name>
+        <password>admin</password>
+    </security>
+    <timeout>
+        <idle-timenout-minutes>0</idle-timeout-minutes>
+        <query-timeout>600</query-timeout>
+    </timeout>
+</datasource>
+
+<drivers>
+    <driver name="mysql" module="com.mysql" />
+</drivers>
+
+35. Eu volto, aqui, no jboss_home, /standalone/configuration/standalone.xml.
+
+36. E, aqui dentro, a gente vai pesquisar por 'datasource'. Aqui, ja tem um datasource que ele usa como exemplo, vamos dar um <ENTER>, aqui, e vou colar esse meu novo datasource,
+
+<datasources>
+                <datasource jndi-name="java:jboss/datasources/ExampleDS" pool-name="ExampleDS" enabled="true" use-java-context="true">
+                    <connection-url>jdbc:h2:mem:test;DB_CLOSE_DELAY=-1</connection-url>
+                    <driver>h2</driver>
+                    <security>
+                        <user-name>sa</user-name>
+                        <password>sa</password>
+                    </security>
+                </datasource>
+                <datasource jta="true" jndi-name="java:/projetoJbossDS" pool-name="MySqlDS" enabled="true" use-java-context="true" use-ccm="true">
+                    <connection-url>jdbc:mysql://localhost:3306/cadastro_cliente</connection-url>
+                    <driver>mysql</driver>
+                    <security>
+                        <user-name>root</user-name>
+                        <password>root</password>
+                    </security>
+                    <timeout>
+                        <idle-timeout-minutes>0</idle-timeout-minutes>
+                        <query-timeout>600</query-timeout>
+                    </timeout>
+                </datasource>                
+                <drivers>
+                    <driver name="h2" module="com.h2database.h2">
+                        <xa-datasource-class>org.h2.jdbcx.JdbcDataSource</xa-datasource-class>
+                    </driver>
+                </drivers>
+            </datasources>
+
+37. Olha so o que que eu estou falando, aqui, oh, o nome JNDI do meu DataSource eh, justamente, o nome que eu estou colocando aqui, oh, em persistence.xml,
+
+            <jta-data-source>java:/projetoJbossDS</jta-data-source>
+
+38. Okay? A URL de conexao vem para ca, agora, em standalone.xml, ela saiu, la, do meu persistence.xml, o driver, ja vamos colocar, o usuario e senha.
+
+39. Okay?
+
+40. O driver. Entao, o driver, a gente tem que colocar, aqui, embaixo, mais um driver, em standalone.xml,
+
+                <drivers>
+                    <driver name="h2" module="com.h2database.h2">
+                        <xa-datasource-class>org.h2.jdbcx.JdbcDataSource</xa-datasource-class>
+                    </driver>
+                    <driver name="mysql" module="com.mysql" />
+                </drivers>
+
+, Entao, esse mysql, aqui,
+
+                <driver name=">>> mysql <<<" module="com.mysql" />
+
+, esta referenciando esse cara, aqui, 
+
+                <datasource jta="true" jndi-name="java:/projetoJbossDS" pool-name="MySqlDS" enabled="true" use-java-context="true" use-ccm="true">
+                    <connection-url>jdbc:mysql://localhost:3306/cadastro_cliente</connection-url>
+
+                    >>> <driver>mysql</driver> <<<
+
+                    <security>
+                        <user-name>root</user-name>
+                        <password>root</password>
+                    </security>
+                    <timeout>
+                        <idle-timeout-minutes>0</idle-timeout-minutes>
+                        <query-timeout>600</query-timeout>
+                    </timeout>
+                </datasource>
+
+, que esta referenciando aquele modulo que a gente criou,
+
+                <driver name="mysql" module=">>> com.mysql <<<" />
+
+41. Bom, para a nossa configuracao do datasource, eh isso daqui. Se voce quiser garantir, ai, que esta funcionando, que o JBoss esta tudo certo, entra la dentro de jboss_home\bin, de novo, executa o standalone.bat, entao, vamos ver se a gente nao copiou nada errado, se nao vai dar nenhum erro, aqui, na hora de subir o modulo, que, agora, ele vai subir o modulo do mysql. Bom, aparentemente, nao deu nenhum problema, aqui, nao reclamou de nada.
+
+====================================================================================================
+====================================================================================================
+
+1. Baixar Wildfly, https://download.jboss.org/wildfly/15.0.1.Final/wildfly-15.0.1.Final.zip.
+
+2. Baixar JConnector 8, https://dev.mysql.com/downloads/connector/j/8.0.html.
+
+2. Rodar C:\Users\SEMPR\Downloads\wildfly-15.0.1.Final\bin\jboss-cli.bat.
+
+3. connect.
+
+4. Rodar os 4 comandos abaixo:
+
+4.1.
+module add --name=com.mysql.driver8 --resources=C:\Users\SEMPR\Downloads\wildfly-15.0.1.Final\modules\system\layers\base\com\mysql\driver8\main\mysql-connector-java-8.0.14.jar --dependencies=javax.api,javax.transaction.api
+
+4.2. 
+/subsystem=datasources/jdbc-driver=mysql:add(driver-name="mysql8",driver-module-name="com.mysql.driver8",driver-class-name=com.mysql.jdbc.Driver) 
+
+4.3.
+data-source add --name=MySQLDS --driver-name=mysql8 --connection-url=jdbc:mysql://localhost:3306/cadastro_cliente?useTimezone=true&amp;serverTimezone=UTC --jndi-name=java:jboss/jdbc/MySQLDS --user-name=root --password=admin
+
+4.4.
+data-source enable --name=MySQLDS
+
+====================================================================================================
+====================================================================================================
+
+42. Vamos la, agora, no nosso projeto.
+
+43. Nos vamos, ainda, ter uma alteracao, aqui, no persistence.xml.
+
+44. Ah, uma coisa que eu coloquei aqui eh o dialeto do MySQL, a gente precisa colocar o dialeto,
+
+                    <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect" />
+
+, para falar, olha, essa configuracao do hibernate vai falar com o dialeto do MySQL, uo seja, as Queries vao ser traduzidas para o MySQL, eh isso que diz essa propriedade.
+
+45. Vamos, agora, mexer la no nosso projetinho, o projeto-jboss.
+
+46. Entao, okay. O nosso projetinho, deixa eu te mostrar, primeiro, a telinha dele, so tem essa Home, aqui, que eh uma tela muito, muito simples, bem feia, tambem, nao tem nada de CSS, ai,
+
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+	
+	<h:head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <title>Projeto Java EE</title>
+	</h:head>
+
+	<h:body>
+	    <h1>Cadastro contato</h1>
+        <h:form>
+            <h:panelGrid columns="2">
+                <h:outputLabel>Nome:</h:outputLabel>
+                <h:inputText value="#{cadastroClienteBean.cliente.nome}" />
+                
+                <h:outputLabel>Idade:</h:outputLabel>
+                <h:inputText value="#{cadastroClienteBean.cliente.idade}" />
+                
+                <h:outputLabel>Sexo:</h:outputLabel>
+                <h:inputText value="#{cadastroClienteBean.cliente.sexo}" />
+                
+                <h:outputLabel>Profissão:</h:outputLabel>
+                <h:inputText value="#{cadastroClienteBean.cliente.profissao}" />
+            </h:panelGrid>
+            <h:commandButton value="Salvar" action="#{cadastroClienteBean.salvar}"/>
+        </h:form>
+    
+    	<br/>    
+	        
+        <h:dataTable value="#{cadastroClienteBean.clientes}" var="cliente" border="1" cellpadding="5">
+        	<h:column>
+        		<h:outputText value="#{cliente.codigo}"/>
+        	</h:column>
+        	<h:column>
+        		<h:outputText value="#{cliente.nome}"/>
+        	</h:column>
+        	<h:column>
+        		<h:outputText value="#{cliente.idade}"/>
+        	</h:column>
+        	<h:column>
+        		<h:outputText value="#{cliente.sexo}"/>
+        	</h:column>
+        	<h:column>
+        		<h:outputText value="#{cliente.profissao}"/>
+        	</h:column>
+        </h:dataTable>
+	</h:body>
+</html>
+
+, olha so, eh so o cadastro, mesmo, de um Contato.
+
+47. Nos vamos cadastrar na tabela, aqui, de Cliente, tem as colunas codigo, nome, idade, sexo, profissao.
+
+48. Entao, coloquei, la, na tela, os campos Nome, Idade, Sexo e Profissao, diretao, aqui, como, no cadastroClienteBean.cliente.nome, idade, sexo e profissao, e vai ter que ter um botao, la, Salvar, cadastroClienteBean.salvar.
+
+49. Entao, se a gente for la no nosso modulo war, no pacote com.algaworks.jboss.controller, classe CadastroClienteBean, nao tem nada. Como eu disse, eu deixei aqui bem simplezao para a gente ir fazendo.
+
+50. Entao, eu ja vejo, aqui,
+
+    <h:inputText value="#{cadastroClienteBean.cliente.nome}" />
+
+, que eu preciso da propriedade cliente.
+
+51. Entao, eu ja vou criar, aqui, o cliente,
+
+@Named
+@SessionScoped
+public class CadastroClienteBean implements Serializable {
+
+    private Cliente cliente;
+
+}
+
+52. Mas quem que eh esse Cliente, Normandes?
+
+53. Muito boa pergunta. Vamos la dar uma olhada no nosso modelo,
+
+public class Cliente {
+
+}
+
+54. Tambem nao tem nada. Entao, nos vamos ter que criar, aqui, uam entidade, que tem o codigo, nome, idade, sexo, profissao,
+
+@Entity
+public class Cliente {
+
+    private Long codigo;
+    private String nome;
+    private Integer idade;
+    private String sexo;
+    private String profissao;
+}
+
+55. Mandar gerar os Getters And Setters, seleciona todo mundo, 
+
+56. No codigo, nos vamos mapear o Id,
+
+import javax.persistence.Id;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+
+@Entity
+public class Cliente {
+
+    private Long codigo;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    public Long getCodigo() {
+
+    }
+}
+
+, e como essa chave vai ser gerada, que eh usando IDENTITY, ou seja, deixa o MySQL tomar conta disso la para mim.
+
+57. E a ultima coisa, aqui, eh definir o hashcode() e equals(), em cima, apenas do codigo.
+
+58. Essa parte ja esta bem tranquilinha para voce, nao eh?
+
+59. Vou fazer esse mapeamento, nao vou mapear nada mais, aqui, eh so uma tabela simples. Okay, entao, voltando para CadastroClienteBean, cliente ja esta aqui,
+
+    private Cliente cliente;
+
+, para a gente chegar com ele aqui, em Home.xhtml,
+
+    <h:inputText value="#{cadastroClienteBean. >>> cliente.nome}" />
+
+, ele tem que ser inicializado. Entao, nos vamos criar, aqui, em CadastroClienteBean, um @PostConstuct, um metodo para inicializar,
+
+@PostConstruct
+public void inicializar() {
+
+    this.cliente = new Cliente();
+}
+
+, e, ai, eu consigo inicializar o Cliente.
+
+60. Bom, se eu tenho cliente, aqui, eu tambem, preciso do Getter e do Setter para ele,
+
+	private Cliente cliente;
+	
+	@PostConstruct
+	public void inicializar() {
+		this.cliente = new Cliente();
+	}
+
+	public Cliente getCliente() {
+		return cliente;
+	}
+
+	public void setCliente(Cliente cliente) {
+		this.cliente = cliente;
+    }
+    
+, para eu poder acessar la, na minha pagina.
+
+61. Okay, tem o metodo salvar, tambem.
+
+62. Vamos criar esse metodo salvar(), 
+
+public void salvar() {
+
+}
+
+, que vai salvar um cliente.
+
+63. Bom, se ele vai salvar um cliente, a gente precisa de um DAO para salvar isso. No caso, aqui, eu criei um EJB, que eh o CadastroClienteEJB, dentro do modulo EJB. 
+
+64. O que que tem esse cara?
+
+65. So tem os metodos, aqui, mas sem implementacao nenhuma,
+
+@Stateless
+public class CadastroClienteEJB {
+
+    public void salvar(Cliente cliente) {
+
+    }
+
+    public List<Cliente> buscarTodos() {
+        return null;    
+    }
+}
+
+, e, aqui que ja entra uma parte bem legal, que eh o que? Eu preciso do EntityManager aqui. Como, agora, eu nao tenho mais um criador de EntityManager, como a gente tinha la, usando o CDI, o que que nos vamos fazer? 
+
+66. Eu vou declarar, aqui, o EntityManager, 
+
+@Stateless
+public class CadastroClienteEJB {
+
+    private EntityManager em;
+
+    ...
+}
+
+, e, para a gente injetar ele aqui, nos vamos usar a anotacao @PersistenceContext, e vamos passar, aqui, como unit-name, esse aqui, oh, do persistence.xml,
+
+    <persistence-unit name="projetoJbossPU" transaction-type="JTA">
+        ...
+    </persistence-unit>
+
+, o tipo de Transacao eh o JTA,
+
+@Stateless
+public class CadastroClienteEJB {
+
+    @PersistenceContext(unitName = "projetoJbossPU")
+    private EntityManager em;
+
+    ...
+}
+
+67. Entao, ele ja vai conseguir injetar o EntityManager, abrir Transacao para a gente, e etc.
+
+68. Entao, para a gente salvar um cliente, EntitManager.persist(cliente);
+
+    @PersistenceContext(unitName = "projetoJbossPU")
+    private EntityManager em;
+
+    public void salvar(Cliente cliente) {
+        this.em.persist(cliente);
+    }
+
+69. O que que tem esse metodo buscarTodos, aqui?
+
+    public List<Cliente> buscarTodos() {
+        return null;    
+    }
+
+70. Em Home.xhtml, descendo, aqui, um pouquinho mais para baixo, a gente vai ver que eu coloquei, aqui, tambem, oh, uma tabelinha bem simples, bem feia, com a borda 1, ai, um negocio bem feio, mesmo, que mostra, apenas, todos os clientes que estao cadastrados no banco,
+
+    <h:dataTable value="#{cadastroClienteBean.clientes}" var="cliente" border="1"   cellpadding="5">
+        ...
+    </h:dataTable>
+
+71. Entao, eu tenho que ter, la, no meu ManagedBean, uma propriedade clientes. Entao, vamos la, vamos criar clientes em CadastroClienteBean,
+
+@Named
+@SessionScoped
+public class CadastroClienteBean implements Serializable {
+
+    private Cliente cliente;
+    private List<Cliente> clientes;
+
+    ...
+}
+
+72. Vou criar o Getter e o Setter de clientes. Na verdade, nem precisa do setter, nao eh?, porque nos nao estamos setando nada com ele, aqui.
+
+73. E, no metodo inicializar(), em CadastroClienteBean, aqui, eu vou inicializar os clientes. Com quem? Com o CadastroClienteEJB. Cade ele aqui, em CadastroClienteBean? Vamos injetar ele aqui,
+
+@Named
+@SessionScoped
+public class CadastroClienteBean implements Serializable {
+
+    ...
+    private CadastroClienteEJB cadastroClienteEJB;
+}
+
+74. Bom, como eh que eu injeto esse cara, aqui?
+
+@Named
+@SessionScoped
+public class CadastroClienteBean implements Serializable {
+
+    ...
+    >>> private CadastroClienteEJB cadastroClienteEJB;
+}
+
+75. @Inject?
+
+76. Nao, eu vou colocar, aqui, oh, ele nao eh um EJB? Entao, eu vou colocar como @EJB,
+
+@Named
+@SessionScoped
+public class CadastroClienteBean implements Serializable {
+
+    ...
+    @EJB
+    private CadastroClienteEJB cadastroClienteEJB;
+}
+
+77. E, ai, agora, eu vou conseguir buscarTodos(),
+
+    @PostConstruct
+    public void inicializar() {
+        this.cliente = new Cliente();
+        this.clientes = this.cadastroClienteEJB.buscarTodos();
+    }
+
+78. Para a gente implementar esse buscarTodos(), voce ja sabe fazer isso ai, tambem, nao eh? Em CadastroClienteEJB,
+
+    public List<Cliente> buscarTodos() {
+        return this.em.createQuery("from Cliente").getResultList();    
+    }
+
+, simples assim, so estamos buscando ele la.
+
+80. Mas a ideia, aqui,
+
+@Stateless
+public class CadastroClienteEJB {
+
+    @PersistenceContext(unitName="projetoJbossPU")
+    private EntityManager em;
+
+    public void salvar(Cliente cliente) {
+        em.persist(cliente);
+    }
+
+    public List<Cliente> buscarTodos() {
+        return this.em.createQuery("from Cliente c").getResultList();    
+    }
+}
+
+, Ah, Normandes, mas que coisa mais simples do JPA... 
+
+81. Sim, o que eu quero te mostrar eh a injecao usando @PersistenceContext, okay? e utilizando JTA, okay? Configurando um data-source, sao situacoes muito, muito comuns, ai, na vida do profissional: 1) Configurar o data-source, utilizar JTA,
+
+    <persistence-unit name="projetoJbossPU" transaction-type="JTA">
+        <provider>org.hibernate.ejb.HibernatePersistence</provider>
+        <jta-data-source>java:jboss/jdbc/MySQLDS</jta-data-source>
+    </persistence-unit>
+
+, se voce estiver trabalhando em um projeto usando EJB, tem que anotar ele aqui, oh, com @Stateless,
+
+@Stateless
+public class CadastroClienteEJB {
+
+    ...
+}
+
+, falar que eh um EJB sem estado, ou seja, simplesmente executa os metodos, aqui, e nao guarda nada, okay?
+
+82. Bom, eu acho que eh isso daqui, nessa parte. O nosso Cadastro de Cliente esta inicializado, em CadastroClienteBean. Ah, sim, claro, falta a gente implementar o metodo salvar(), que eh o CadastroClienteEJB.salvar(), passando o cliente,
+
+    public void salvar() {
+        this.cadastroClienteEJB.salvar(this.cliente);
+    }
+
+83. Depois que ele fez isso dai, vamos mandar inicializar(), 
+
+    public void salvar() {
+        this.cadastroClienteEJB.salvar(this.cliente);
+        this.inicializar();
+    }
+
+para a gente ver o que a gente acabou de salvar na tabela clientes,
+
+    @PostConstruct
+    public void inicializar() {
+        this.cliente = new Cliente;
+        >>> this.clientes = this.cadastroClienteBean.buscarTodos();
+    }
+
+, e limpar o nosso formulario, aqui,
+
+    @PostConstruct
+    public void inicializar() {
+        >>> this.cliente = new Cliente;
+        this.clientes = this.cadastroClienteBean.buscarTodos();
+    }
+
+84. Bom, se eu nao esqueci de nada, o CadastroClienteBean esta aqui, o Cliente a gente ja mapeou, o CadastroClienteEJB a gente ja inseriu o PersistenceContext, ja configuramos o persistence.xml, okay.
+
+85. Um detalhezinho, aqui, deixa eu te mostrar um plugin, aqui, do Maven no EAR, /projeto-jboss/ear/pom.xml, que eu coloquei, eh o plugin, aqui, do Maven com Ant, 
+
+    <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+            <execution>
+                <id>deploy-war</id>
+                <phase>install</phase>
+                <goals>
+                    <goal>run</goal>
+                </goals>
+                <configuration>
+                    <tasks>
+                        <copy overwrite="true" file="target/${project.build.finalName}.ear"
+                                todir="${jboss.home}/standalone/deployments" />
+                    </tasks>
+                </configuration>
+
+, ele vai copiar o nosso ear direto la para standalone/deployments, no nosso JBoss. Okay? Entao, quando eu for executar, eu tenho que passar a propriedade jboss.home, para ele. Entao, quando voce for executar o projeto, aqui, a gente vai clicar com o botao direito na raiz do projeto, Run As, Maven build... E, aqui, aqui, voce vai colocar quais sao os goals, ou seja, clean install, -D, jboss.home, =, e, ai, voce vai passar o caminho que voce instalou o JBoss,
+
+                clean install -Djboss.home=C:\Users\SEMPR\Downloads\wildfly-15.0.1.Final
+
+86. Okay? Em Maven Runtime, eh o Maven que a gente esta usando, da um Apply, aqui, e vou mandar dar um Run, aqui.
+
+87. E a gente pode ir acompanhando, aqui, no Console do Eclipse, okay? No seu, pode ser que ele demore um pouco mais, garanta que voce esteja conectado na Internet, porque ele vai baixar bastante coisa, ai. Se voce deixar, aqui, oh, a telinha do seu JBoss aparecendo, o Console, voce vai ver que, quando ele fizer o deploy, ele fez o deploy, vai copiar para la, vai comecar a fazer o deploy das informacoes la.
+
+88. Okay, deployou o nosso projeto-jboss.ear. E, ai, vamos la executar, ver se vai dar certo. Se a gente nao esqueceu de nada, http://localhost:8080/projeto-jboss, ele vai inicializar, la, o JPA, e deu um erro,
+
+89. Qual foi o erro que ele deu, aqui? Vamos analisar esse erro, 
+
+Caused by: javax.ejb.EJBException: java.lang.IllegalArgumentException: org.hibernate.hql.internal.ast.QuerySyntaxException: Cliente is not mapped [from Cliente c]
+
+, Cliente nao esta mapeado. Por que que Cliente nao esta mapeado?
+
+90. Aqui, nesse caso, a gente tambem vai precisar mexer mais uma coisinha, aqui, no nosso persistence.xml. Aqui, eu preciso informar as classes que estao mapeadas, que sao os nossos @Entity's. Entao, eu tenho que vir aqui e colocar o nome completo da minha classe,
+
+                <persistence-unit name="projetoJbossPU" transaction-type="JTA">
+
+                    <provider>org.hibernate.ejb.HibernateProvider</provider>
+                    <jta-data-source>java:jboss/jdbc/MySQLDS</jta-data-source>
+
+                    <class>com.algaworks.jboss.modelo.Cliente</class>
+
+91. Okay? Agora, eu vou mandar de novo, aqui, oh, posso reaproveitar a instancia que eu fiz, a configuracao que eu fiz de execucao do Maven, so clicar, aqui, mais uma vez, no Eclipse, que ele ja vai fazer o deploy de novo, vamos deixar a telinha do jboss, aqui, para a gente ver o HotDeploy funcionando, assim que ele jogar para la, a gente ja vai ver: oh, apagou, agora, ja esta fazendo o deploy novamente.
+
+92. Okay. Ja fez o deploy, 
+
+08:48:53,203 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-3) WFLYSRV0027: Starting deployment of "projeto-jboss.ear" (runtime-name: "projeto-jboss.ear")                                           08:48:53,248 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-3) WFLYSRV0207: Starting subdeployment (runtime-name: "projeto-jboss-war.war")                                                           08:48:53,248 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-1) WFLYSRV0207: Starting subdeployment (runtime-name: "projeto-jboss-ejb.jar")                                                           08:48:53,285 INFO  [org.jboss.as.jpa] (MSC service thread 1-8) WFLYJPA0002: Read persistence.xml for projetoJbossPU                                                                                                08:48:53,327 INFO  [org.jboss.as.jpa] (MSC service thread 1-5) WFLYJPA0002: Read persistence.xml for projetoJbossPU                                                                                                08:48:53,349 INFO  [org.jboss.as.jpa] (ServerService Thread Pool -- 99) WFLYJPA0010: Starting Persistence Unit (phase 1 of 2) Service 'projeto-jboss.ear/projeto-jboss-ejb.jar#projetoJbossPU'                     08:48:53,349 INFO  [org.hibernate.jpa.internal.util.LogHelper] (ServerService Thread Pool -- 99) HHH000204: Processing PersistenceUnitInfo [                                                                               name: projetoJbossPU                                                                                                                                                                                               ...]                                                                                                                                                                                                       08:48:53,367 INFO  [org.jboss.as.jpa] (ServerService Thread Pool -- 99) WFLYJPA0010: Starting Persistence Unit (phase 1 of 2) Service 'projeto-jboss.ear/projeto-jboss-war.war#projetoJbossPU'                     08:48:53,367 INFO  [org.jboss.weld.deployer] (MSC service thread 1-3) WFLYWELD0003: Processing weld deployment projeto-jboss.ear                                                                                   08:48:53,367 INFO  [org.hibernate.jpa.internal.util.LogHelper] (ServerService Thread Pool -- 99) HHH000204: Processing PersistenceUnitInfo [                                                                               name: projetoJbossPU                                                                                                                                                                                               ...]                                                                                                                                                                                                       08:48:53,456 INFO  [org.jboss.weld.deployer] (MSC service thread 1-1) WFLYWELD0003: Processing weld deployment projeto-jboss-ejb.jar                                                                               08:48:53,456 INFO  [org.jboss.weld.deployer] (MSC service thread 1-5) WFLYWELD0003: Processing weld deployment projeto-jboss-war.war                                                                               08:48:53,466 INFO  [org.jboss.as.ejb3.deployment] (MSC service thread 1-1) WFLYEJB0473: JNDI bindings for session bean named 'CadastroClienteEJB' in deployment unit 'subdeployment "projeto-jboss-ejb.jar" of deployment "projeto-jboss.ear"' are as follows:                                                                                                                                                                                                                                                                                                                                                                                                   java:global/projeto-jboss/projeto-jboss-ejb/CadastroClienteEJB!com.algaworks.jboss.ejb.CadastroClienteEJB                                                                                                          java:app/projeto-jboss-ejb/CadastroClienteEJB!com.algaworks.jboss.ejb.CadastroClienteEJB                                                                                                                           java:module/CadastroClienteEJB!com.algaworks.jboss.ejb.CadastroClienteEJB                                                                                                                                          ejb:projeto-jboss/projeto-jboss-ejb/CadastroClienteEJB!com.algaworks.jboss.ejb.CadastroClienteEJB                                                                                                                  java:global/projeto-jboss/projeto-jboss-ejb/CadastroClienteEJB                                                                                                                                                     java:app/projeto-jboss-ejb/CadastroClienteEJB                                                                                                                                                                      java:module/CadastroClienteEJB                                                                                                                                                                                                                                                                                                                                                                                                08:48:53,478 INFO  [org.jboss.as.ejb3.deployment] (MSC service thread 1-5) WFLYEJB0473: JNDI bindings for session bean named 'CadastroClienteEJB' in deployment unit 'subdeployment "projeto-jboss-war.war" of deployment "projeto-jboss.ear"' are as follows:                                                                                                                                                                                                                                                                                                                                                                                                   java:global/projeto-jboss/projeto-jboss-war/CadastroClienteEJB!com.algaworks.jboss.ejb.CadastroClienteEJB                                                                                                          java:app/projeto-jboss-war/CadastroClienteEJB!com.algaworks.jboss.ejb.CadastroClienteEJB                                                                                                                           java:module/CadastroClienteEJB!com.algaworks.jboss.ejb.CadastroClienteEJB                                                                                                                                          ejb:projeto-jboss/projeto-jboss-war/CadastroClienteEJB!com.algaworks.jboss.ejb.CadastroClienteEJB                                                                                                                  java:global/projeto-jboss/projeto-jboss-war/CadastroClienteEJB                                                                                                                                                     java:app/projeto-jboss-war/CadastroClienteEJB                                                                                                                                                                      java:module/CadastroClienteEJB                                                                                                                                                                                                                                                                                                                                                                                                08:48:53,593 INFO  [org.jboss.as.jpa] (ServerService Thread Pool -- 99) WFLYJPA0010: Starting Persistence Unit (phase 2 of 2) Service 'projeto-jboss.ear/projeto-jboss-ejb.jar#projetoJbossPU'                     08:48:53,596 INFO  [org.jboss.as.jpa] (ServerService Thread Pool -- 100) WFLYJPA0010: Starting Persistence Unit (phase 2 of 2) Service 'projeto-jboss.ear/projeto-jboss-war.war#projetoJbossPU'                    08:48:53,598 INFO  [org.hibernate.dialect.Dialect] (ServerService Thread Pool -- 99) HHH000400: Using dialect: org.hibernate.dialect.MySQLDialect                                                                  08:48:53,601 INFO  [org.hibernate.dialect.Dialect] (ServerService Thread Pool -- 100) HHH000400: Using dialect: org.hibernate.dialect.MySQLDialect                                                                 08:48:53,610 INFO  [org.hibernate.envers.boot.internal.EnversServiceImpl] (ServerService Thread Pool -- 99) Envers integration enabled? : true                                                                     08:48:53,620 INFO  [org.hibernate.envers.boot.internal.EnversServiceImpl] (ServerService Thread Pool -- 100) Envers integration enabled? : true                                                                    08:48:53,767 INFO  [io.smallrye.metrics] (MSC service thread 1-6) MicroProfile: Metrics activated                                                                                                                  08:48:53,772 WARN  [org.jboss.weld.Bootstrap] (MSC service thread 1-6) WELD-000146: BeforeBeanDiscovery.addAnnotatedType(AnnotatedType<?>) used for class com.sun.faces.flow.FlowDiscoveryCDIHelper is deprecated from CDI 1.1!                                                                                                                                                                                                       08:48:53,896 SEVERE [javax.enterprise.resource.webcontainer.jsf.application.view] (MSC service thread 1-6) Unable to obtain CDI 1.1 utilities for Mojarra                                                          08:48:53,899 SEVERE [javax.enterprise.resource.webcontainer.jsf.flow] (MSC service thread 1-6) Unable to obtain CDI 1.1 utilities for Mojarra                                                                      08:48:54,008 INFO  [javax.enterprise.resource.webcontainer.jsf.config] (ServerService Thread Pool -- 101) Inicializando Mojarra 2.3.5.SP2 para o contexto '/projeto-jboss'                                         08:48:54,289 INFO  [org.wildfly.extension.undertow] (ServerService Thread Pool -- 101) WFLYUT0021: Registered web context: '/projeto-jboss' for server 'default-server'                                            08:48:54,329 INFO  [org.jboss.as.server] (DeploymentScanner-threads - 1) WFLYSRV0010: Deployed "projeto-jboss.ear" (runtime-name : "projeto-jboss.ear")
+
+93. Vamos la analisar, vamos ver se, agora, a gente vai ter algum outro erro, http://localhost:8080/projeto-jboss.
+
+94. Okay, agora, ja trouxe a telinha.
+
+95. Olha la, e trouxe o que ja esta no meu banco de dados, e eu vou cadastrar um outro aqui, Ricardo Pereira, Idade 28, Sexo M, Profissao Engenheiro. Vou salvar, ele trouxe aqui, oh, na listagem, mais uma linha com o registro de Ricardo Pereira.
+
+96. Retornou, no Console do JBoss,
+
+08:52:13,541 INFO  [org.hibernate.hql.internal.QueryTranslatorFactoryInitiator] (default task-1) HHH000397: Using ASTQueryTranslatorFactory                                                                        08:52:13,569 INFO  [stdout] (default task-1) Hibernate:                                                                                                                                                            08:52:13,569 INFO  [stdout] (default task-1)     select                                                                                                                                                            08:52:13,569 INFO  [stdout] (default task-1)         cliente0_.codigo as codigo1_0_,                                                                                                                               08:52:13,569 INFO  [stdout] (default task-1)         cliente0_.idade as idade2_0_,                                                                                                                                 08:52:13,569 INFO  [stdout] (default task-1)         cliente0_.nome as nome3_0_,                                                                                                                                   08:52:13,569 INFO  [stdout] (default task-1)         cliente0_.profissao as profissa4_0_,                                                                                                                          08:52:13,569 INFO  [stdout] (default task-1)         cliente0_.sexo as sexo5_0_                                                                                                                                    08:52:13,570 INFO  [stdout] (default task-1)     from                                                                                                                                                              08:52:13,570 INFO  [stdout] (default task-1)         Cliente cliente0_                                                                                                                                             08:54:28,770 INFO  [stdout] (default task-1) Hibernate:                                                                                                                                                            08:54:28,770 INFO  [stdout] (default task-1)     insert                                                                                                                                                            08:54:28,770 INFO  [stdout] (default task-1)     into                                                                                                                                                              08:54:28,771 INFO  [stdout] (default task-1)         Cliente                                                                                                                                                       08:54:28,771 INFO  [stdout] (default task-1)         (idade, nome, profissao, sexo)                                                                                                                                08:54:28,771 INFO  [stdout] (default task-1)     values                                                                                                                                                            08:54:28,771 INFO  [stdout] (default task-1)         (?, ?, ?, ?)                                                                                                                                                  08:54:28,907 INFO  [stdout] (default task-1) Hibernate:                                                                                                                                                            08:54:28,908 INFO  [stdout] (default task-1)     select                                                                                                                                                            08:54:28,908 INFO  [stdout] (default task-1)         cliente0_.codigo as codigo1_0_,                                                                                                                               08:54:28,909 INFO  [stdout] (default task-1)         cliente0_.idade as idade2_0_,                                                                                                                                 08:54:28,909 INFO  [stdout] (default task-1)         cliente0_.nome as nome3_0_,                                                                                                                                   08:54:28,910 INFO  [stdout] (default task-1)         cliente0_.profissao as profissa4_0_,                                                                                                                          08:54:28,910 INFO  [stdout] (default task-1)         cliente0_.sexo as sexo5_0_                                                                                                                                    08:54:28,910 INFO  [stdout] (default task-1)     from                                                                                                                                                              08:54:28,912 INFO  [stdout] (default task-1)         Cliente cliente0_ 
+
+
+97. Entao, se a gente olhar aqui, oh, no Console do Jboss, no log, ele faz o insert, aqui, tambem, faz o select, e a gente nao precisou, a gente utilizou, nao eh?, na verdade, o @PersistenceContext, 
+
+@Stateless
+public class CadastroClienteEJB {
+
+    >>> @PersistenceConext(unitName = "projetoJbossPU")
+    private EntityManager em;
+
+    ...
+}
+
+, e, no persistence.xml, a gente usou o JTA como nosso provedor, aqui,
+
+    <persistence-unit name="projetoJbossUnit" transaction-type=">>> JTA <<<">
+        ...
+    </persistence-unit>
+
+, como o nosso gerenciador de Transacao. Entao, a gente nao precisou criar, neste caso, nenhuma classe utilitaria para abrir Transacao para a gente, a gente utilizou recursos do Java EE.
+
+98. Okay? Entao, foi isso daqui. So foi esse projeto, mesmo, simples, de exemplo, para voce ver como funciona, como que a gente configura um DataSource, como que a gente configura o JTA, como a gente cria um EJB. Tranquilo?
+
+99. Fim da     Aula 07.002. Usando JTA em um ambiente Java EE.
+
+
+
+
+
+
+-->
+

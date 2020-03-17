@@ -1,0 +1,232 @@
+<!-- 
+
+    Aula 09.004. Exclusao em Cascata.
+
+1. E se eu tiver a seguinte situacao, e, ai, isso, aqui, eu vou fazer so para, a titulo de exemplo, mas eu nao vou deixar no sistema, porque, neste caso, eu nao vou querer apagar, que eh o seguinte, apagar Um Carro que tenha Um Aluguel relacionado.
+
+2. Entao, vamos vir, aqui, na Classe Carro. A gente tem o Relacionamento @OneToMany(), Um Para Muitos, entao, Um Carro pode ter varios Alugueis, e Um Aluguel eh apenas de Um Carro.
+
+3. Entao, se eu estiver tentando apagar Um Carro, vamos ver o que que vai acontecer.
+
+4. Eu olhei, la, no meu Banco de dados, aqui, deixa eu te mostrar, aqui, oh, Um Aluguel com Carro de Codigo 2, eu tenho. Entao, eu vou tentar pegar Um Carro de Codigo 2 e apagar ele, oh, eu vou pegar Um Carro de Codigo 3 e vou tentar apagar,
+
+    @Test
+    public void exclusaoEmCascata() {
+        Carro carro = this.manager.find(Carro.class, 2L);
+
+        this.manager.getTransaction().begin();
+        this.manager.remove(carro);
+        this.manager.getTransaction().commit();
+    }
+
+, significa que vai ter Um Aluguel, no Banco, relacionado a esse Carro, de codigo 2.
+
+5. Entao, oh, o codigo, aqui, eh bem simples, eu faco o find(), inicio a Transacao, tento remover o Carro, e dou Um Commit.
+
+6. Vamos ver o que que vai acontecer aqui.
+
+7. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_0_,
+        carro0_.chassi as chassi2_3_0_,
+        carro0_.cor as cor3_3_0_,
+        carro0_.data_criacao as data_cri4_3_0_,
+        carro0_.data_modificacao as data_mod5_3_0_,
+        carro0_.codigo_modelo as codigo_m8_3_0_,
+        carro0_.placa as placa6_3_0_,
+        carro0_.valor_diaria as valor_di7_3_0_ 
+    from
+        Carro carro0_ 
+    where
+        carro0_.codigo=?
+Hibernate: 
+    delete 
+    from
+        carro_acessorio 
+    where
+        codigo_carro=?
+Hibernate: 
+    delete 
+    from
+        Carro 
+    where
+        codigo=?
+fev 20, 2019 8:42:08 AM org.hibernate.engine.jdbc.spi.SqlExceptionHelper logExceptions
+WARN: SQL Error: 1451, SQLState: 23000
+fev 20, 2019 8:42:08 AM org.hibernate.engine.jdbc.spi.SqlExceptionHelper logExceptions
+ERROR: Cannot delete or update a parent row: a foreign key constraint fails (`locadora`.`aluguel`, CONSTRAINT `FK1thg8uyfajl9rrlvw37sny2ty` FOREIGN KEY (`codigo_carro`) REFERENCES `carro` (`codigo`))
+fev 20, 2019 8:42:08 AM org.hibernate.engine.jdbc.batch.internal.AbstractBatchImpl release
+INFO: HHH000010: On release of batch it still contained JDBC statements
+fev 20, 2019 8:42:08 AM org.hibernate.internal.ExceptionMapperStandardImpl mapManagedFlushFailure
+ERROR: HHH000346: Error during managed flush [org.hibernate.exception.ConstraintViolationException: could not execute statement]
+
+8. Quando ele tentar apagar, 'Opa', vai dar Um Erro.
+
+9. A excecao que ele vai dar aqui, nao eh?, o erro que ele vai falar eh que 'Nao consegue apagar, por que? Porque existe, oh, uma CONSTRAINT em relacao a Aluguel, em codigo_carro, referencia o Carro na tabela Aluguel, que eh, justamente, o que a gente imaginou, nao vai deixar apagar, porque tem essa Constraint, o banco esta fazendo essa validacao pra gente, entao, vai dar erro.
+
+10. Okay? Isso esta dando erro porque o banco esta fazendo a validacao aqui, nao eh?, tem a validacao de Chave Estrangeira. Voce ve que o Hibernate tentou mandar o Delete para la, oh,
+
+Hibernate: 
+    delete 
+    from
+        Carro 
+    where
+        codigo=?
+
+, tentou mandar o DELETE do Carro, tentou Deletar os Acessorios,
+
+Hibernate: 
+    delete 
+    from
+        carro_acessorio 
+    where
+        codigo_carro=?
+
+, depois, tentou deletar o Carro,
+Hibernate: 
+    delete 
+    from
+        Carro 
+    where
+        codigo=?
+
+, ai, nao teve jeito, o Banco recusou. Bom, ai, a gente pode falar para o Hibernate, falar, oh, "Entao, eh o seguinte, se tiver essa situacao, ai, sim, agora, a gente vai fazer, com a especificacao, CascadeType.REMOVE",
+
+public class Carro {
+
+    ...
+
+    private List<Aluguel> alugueis;
+
+    @OneToMany(mappedBy = "carro", cascade = CascadeType.REMOVE)
+    public List<Aluguel> getAlugueis() {
+        return alugueis;    
+    }
+
+    public void setAlugueis(List<Aluguel> val) {
+        this.alugueis = val;    
+    }
+
+    ...
+}
+
+, e eh isso aqui que eu te falei que eu vou tirar, eu vou deixar, aqui, so para te mostrar, voce faz, ai, depois, remove, porque a gente nao quer apagar Um Carro que tenha Um Aluguel. Talvez, se o nosso Sistema tivesse uma autorizacao, alguma coisa assim, sim, a gente poderia fazer isso uma regra, oh, se o cara for um gerente, ai, a gente poderia ter esse tipo de regra. Okay? Mas, para uma situacao normal, nao. E, ai, se tivesse essa situacao, por exemplo, o cara eh o Gerente, eh o Chefe, la, entao, a gente faria por logica de negocio, 'Ah, ele eh gerente, tem um Relacionamento @OneToMany, aqui, que ele poderia apagar? Tem. Entao, apareceria o botao, la, para ele, de Apagar Um Carro, por exemplo, nao eh?'. Entao, tudo depende de como ficaria o sistema.
+
+11. Mas, ai, entao, beleza, agora, eu estou buscando o Carro, e vou tentar apagar ele. Vamos ver o que que vai acontecer.
+
+12. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_0_,
+        carro0_.chassi as chassi2_3_0_,
+        carro0_.cor as cor3_3_0_,
+        carro0_.data_criacao as data_cri4_3_0_,
+        carro0_.data_modificacao as data_mod5_3_0_,
+        carro0_.codigo_modelo as codigo_m8_3_0_,
+        carro0_.placa as placa6_3_0_,
+        carro0_.valor_diaria as valor_di7_3_0_ 
+    from
+        Carro carro0_ 
+    where
+        carro0_.codigo=?
+Hibernate: 
+    select
+        alugueis0_.codigo_carro as codigo_c7_1_0_,
+        alugueis0_.codigo as codigo1_1_0_,
+        alugueis0_.codigo as codigo1_1_1_,
+        alugueis0_.codigo_apolice_seguro as codigo_a6_1_1_,
+        alugueis0_.codigo_carro as codigo_c7_1_1_,
+        alugueis0_.data_devolucao as data_dev2_1_1_,
+        alugueis0_.data_entrega as data_ent3_1_1_,
+        alugueis0_.data_pedido as data_ped4_1_1_,
+        alugueis0_.codigo_motorista as codigo_m8_1_1_,
+        alugueis0_.valor_total as valor_to5_1_1_,
+        apoliceseg1_.codigo as codigo1_2_2_,
+        apoliceseg1_.protecao_causas_naturais as protecao2_2_2_,
+        apoliceseg1_.protecao_roubo as protecao3_2_2_,
+        apoliceseg1_.protecao_terceiro as protecao4_2_2_,
+        apoliceseg1_.valor_franquia as valor_fr5_2_2_,
+        motorista2_.codigo as codigo2_9_3_,
+        motorista2_1_.cpf as cpf3_9_3_,
+        motorista2_1_.data_nascimento as data_nas4_9_3_,
+        motorista2_1_.nome as nome5_9_3_,
+        motorista2_1_.sexo as sexo6_9_3_,
+        motorista2_.numero_cnh as numero_c1_8_3_ 
+    from
+        Aluguel alugueis0_ 
+    left outer join
+        apolice_seguro apoliceseg1_ 
+            on alugueis0_.codigo_apolice_seguro=apoliceseg1_.codigo 
+    left outer join
+        Motorista motorista2_ 
+            on alugueis0_.codigo_motorista=motorista2_.codigo 
+    left outer join
+        Pessoa motorista2_1_ 
+            on motorista2_.codigo=motorista2_1_.codigo 
+    where
+        alugueis0_.codigo_carro=?
+Hibernate: 
+    delete 
+    from
+        carro_acessorio 
+    where
+        codigo_carro=?
+Hibernate: 
+    delete 
+    from
+        Aluguel 
+    where
+        codigo=?
+Hibernate: 
+    delete 
+    from
+        apolice_seguro 
+    where
+        codigo=?
+Hibernate: 
+    delete 
+    from
+        Carro 
+    where
+        codigo=?
+
+
+13. Agora, ele apagaou. E, agora, observe, ele ja colocou na ordem, apagou o Aluguel,
+
+Hibernate: 
+    delete 
+    from
+        Aluguel 
+    where
+        codigo=?
+
+, depois, ele saiu apagando. Se a gente a Consulta, aqui, de novo, select * from aluguel where codigo_carro = 2, nao tem mais o Aluguel, ou seja, ele apagou, conseguiu apagar o Aluguel tambem, okay?
+
+14. Mas, como eu disse, nao vou deixar isso, aqui, nao,
+
+public class Carro {
+
+    ...
+
+    private List<Aluguel> alugueis;
+
+    @OneToMany(mappedBy = "carro", >>> cascade = CascadeType.REMOVE <<<)
+    public List<Aluguel> getAlugueis() {
+        return alugueis;    
+    }
+
+    public void setAlugueis(List<Aluguel> val) {
+        this.alugueis = val;    
+    }
+
+    ...
+}
+
+15. Okay? Depois, a gente so vai ver mais um exemplo, aqui, em cima disso, mas eu vou deixar dessa forma, para a gente nao apagar Um Carro que tenha algum Aluguel.
+
+16. Fim da     Aula 09.004. Exclusao em Cascata.
+
+-->

@@ -1,0 +1,393 @@
+<!-- 
+
+Aula 02.001. Salvando o Primeiro objeto no Banco de Dados
+
+1. Bom, nesta aula, de fato, a gente vai ja vai fazer uma interacao com o banco de dados, utilizando JPA com Hibernate. 
+
+2. Okay? Bom, para isso, eu vou criar um Projeto simples, de teste, nos vamos utilizar mesmo o metodo main(), por isso que a gente configurou as Bibliotecas do Hibernate, e do Driver do MySQL, aqui, no Eclipse, daquela forma.
+
+3. Okay? Agora, nos vamos criar um Projeto para trabalhar com aquela tabela de cliente, que a gente tinha utilizado, que a gente tinha usado para instalar o MySQL, para eu te mostrar alguns detalhes, aqui, do MySQL, tem ate 2 dados, la, no Banco, oh, o 'Jose da Silva' e a 'Maria Rita'. E nos vamos usar isso daqui, por enquanto.
+
+4. La, mais para frente, no proximo modulo, eu vou te mostrar um sistema mais completo, mais proximo da realidade, a gente nao vai fica fazendo teste so em metodo main(), nao, classe simples, nao. Nos vamos criar um sistema completo, web, usando JSF, nao eh?, para a gente ver os detalhes que voce precisa saber para trabalhar no dia-a-dia, real, com o JPA, okay?
+
+5. Bom, esses exemplos, aqui, que a gente vai comecar a ver agora, sao simples, so para voce que nunca configurou nada no JPA, voce poder ver como eh que isso eh configurado, a gente comecar a falar um pouquinho a mesma lingua.
+
+6. Se voce ja viu essa parte, pode ser que seja meio obvio para voce, meio simples, mas aguenta a mao, ai, rapidinho, ja vai ficar mais avancado, okay?
+
+7. Bom, primeira coisa que eu vou fazer, no Eclipse, aqui, eu vou trocar a Perspectiva, botar na Java.
+
+8. Bom, e ai, para a gente gravar, entao, esse primeiro objeto no Banco de Dados, eu vou criar um Projetinho Java, mesmo, File / New / Java Project, e eu vou chamar esse Projeto de crud-jpa-hibernate, um nome qualquer, aqui, porque imagina fazer exatamente o CRUD, nao eh?, primeiro a gente vai criar, agora, nesta aula, eh o 'C', do Create. Depois, a gente vai ter, tambem, uma aula, ai, para o Retrieve, que eh buscar, nao eh?, recuperar, fazer o Select, o 'U' de Update, para atualizar alguma instancia, e o 'D', de DELETE, para apagar alguma coisa do banco de dados.
+
+9. Okay?
+
+10. Entao, eh so dar um Next, aqui.
+
+11. Agora, vamos clica na Guia Libraries, para a gente adicionar aquelas Bibliotecas que a gente ja criou.
+
+12. Quais Bibliotecas?
+
+13. A gente nao criou la, 'Use Library', clica em Next, o Hibernate_5.4.0.Final.
+
+14. Por que? Isso aqui, ja vem todas as Bibliotecas que a gente adicionou la para tras, naquela outra video-aula.
+
+15. Clicar em Finish.
+
+16. Importamos o Hibernate. Agora, a gente precisa importar o Driver do MySQL. Add Library / Connectivity Driver Definition, eh um Driver de Conectividade, entao, a gente procura ele aqui, oh, MySQL JDBC Driver, Finish.
+
+17. E, agora, eh so dar um outro Finish.
+
+18. Olha la. Agora, a gente tem, aqui, todas aquelas Bibliotecas que a gente colocou para o Hibernate, e a Biblioteca para o MySQL.
+
+19. Legal, nao eh? Alem das Bibliotecas, aqui, aparecem do Java 8.
+
+20. Okay? Bom, entao, vamos la.
+
+21. Para a gente fazer esse primeiro exemplo, eu vou criar uma classe, aqui, e vou colocar essa classe 'com.algaworks.curso.main'. E eu vou chamar essa classe, aqui, de SalvandoPrimeiroObjeto, marcar, aqui, para ele gerar o metodo main para mim,
+
+package com.algaworks.curso.main;
+
+public class SalvandoPrimeiroObjeto {
+
+    public static void main(String[] args) {
+
+    }
+}
+
+22. Ai, vamos la. A gente ja tem, agora, uma classe com o metodo main.
+
+23. Bom, a partir desse momento, aqui, que a gente vai acessar, vai inicializar a Entidade, a forma para a gente gravar esse objeto no Banco de Dados.
+
+24. Para a gente comecar, a primeira coisa que a gente precisa fazer eh configurar o EntityManager.
+
+25. A gente precisa configurar o EntityManager, que eh o cara que vai Gerenciar, para a gente, as Entidades,
+
+import javax.persistence.EntityManager;
+
+    public static void main(String[] args) {
+        EntityManager em = null;
+    }
+
+26. A gente precisa configurar esse EntityManager. Tudo a gente precisa comecar por ele. Ele eh que vai conseguir salvar uma Entidade no Banco de Dados, para a gente.
+
+27. Bom, Normandes, como eh que eu crio esse cara, entao? Eh so dar um new EntityManager, e pronto?
+
+28. Nao, nao eh tao simples assim, nao, mas nao eh complicado, nao.
+
+29. O que que nos vamos fazer?
+
+30. Precisamos criar, aqui dentro da pasta 'src', um outra outra pastinha, chamada de META-INF.
+
+31. Bom, criamos, entao, a pasta META-INF, e, aqui, dentro, eu vou criar um arquivo. Eu vou chamar esse arquivo de persistence.xml.
+
+32. Okay? Bom, qual eh o conteudo desse arquivo persistence.xml? Para o que que serve esse arquivo?
+
+33. Bom, primeiro eu vou colar, aqui, esse cabecalho e fechar a tag persistence, aqui,
+
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.0"
+    xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd">
+
+
+</persistence>
+
+34. Voce nao precisa decorar isso daqui de jeito nenhum, isso daqui, voce vai pegar, em um primeiro projeto seu. Esse codigo, aqui, eu vou colocar la no GitHub. No final desta aula, aqui, eu ja te ensino como eh que voce importa esse projeto, ai, dentro do seu Eclipse, okay?, como eh que voce baixa isso la no GitHub, como eh que voce importa ele la, e, ai, voce vai, e, toda vez que voce precisar criar um novo projeto, so CTRL+C e CTRL+V. Okay?
+
+35. Bom, uma outra coisa que nos precisamos fazer nesse arquivo, eh declarar um persistence-unit.
+
+36. Como eh que a gente faz isso? A gente vai colocar aqui, oh, 
+
+    <persistence-unit name="">
+    </persistence-unit>
+
+, nao precisa decorar todos os detalhes, nao. Entao, nos vamos colocar, aqui, exemploPU, ou seja, exemplo Persistence Unit, o tipo da transacao, transaction-type, nos vamos ver os detalhes disso aqui tudo mais para frente, inclusive, mais detalhes desse arquivo,
+
+    <persistence-unit name="exemploPU" transaction-type="RESOURCE_LOCAL">
+
+    </persistence-unit>
+
+37. RESOURCE_LOCAL, ou seja, eu que vou controlar a Transacao, e, aqui, eh o nome dessa Unidade de Persistencia,
+
+    <persistence-unit >>> name="exemploPU" <<< transaction-type="RESOURCE_LOCAL">
+
+    </persistence-unit>
+
+38. Bom, o que que eh uma Unidade de Persistencia?
+
+39. Basicamente, como eu disse, nos vamos ver mais detalhes, mas, basicamente, eh aqui que a gente vai configurar uma conexao com o Banco de Dados.
+
+40. Pensa nisso, um Persistence-Unit eh uma Conexao com um Banco de Dados.
+
+41. E, aqui, a gente coloca varias propriedades para fazer essa conexao com o Banco de Dados, e configuracoes, diversas configuracoes,
+
+    <persistence-unit name="exemploPU" transaction-type="RESOURCE_LOCAL">
+        <properties>
+
+        </properties>
+    </persistence-unit>
+
+42. Aqui, a primeira delas, as propriedades de conexao com o Banco de Dados,
+
+    <property name="javax.persistence.jdbc.url" value="jdbc:hsqldb:file:target/cadastro_cliente;shutdown=true" />
+    <property name="javax.persistence.jdbc.user" value="sa" />
+    <property name="javax.persistence.jdbc.password" value="" />
+    <property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbcDriver" />
+
+43. Voce tem que consultar a documentacao de cada um desses Bancos de Dados, ou no Google, la, digita 'url jdbc oracle', e voce ja vai ver, la, como eh feita essa URL.
+
+44. Usuario e senha, e o Driver, para a gente conseguir conectar nesse Banco de Dados.
+
+45. A gente nao fez o Download, la, do Driver do MySQL? Faz o Download do Driver, coloca aqui, porque, ai, o fornecedor, nao eh?, que, no caso, eh o MySQL, sabe como eh que transforma os comandos, nao eh?, do Java para mandar la para dentro do Banco de Dados.
+
+46. Okay? Uma outra coisa que a gente vai colocar, aqui, tambem, sao algumas propriedades do Hibernate,
+
+    <!-- validate | update | create | create-drop --
+    <property name="hibernate.hbm2ddl.auto" value="create" />
+    <property name="hibernate.dialect" value="org.hibernate.dialect.HSQLDialect" />
+
+47. A primeira propriedade, aqui, que a gente esta colocando, eh essa 'hibernate.hbm2ddl.auto', 'create'. O que que significa isso daqui?
+
+48. Na hora em que a gente estiver inicializando o Hibernate, ele vai criar as tabelas no Banco de Dados, se a gente deixar create.
+
+49. Se a gente deixar 'create-drop', toda vez que ele parar, ele vai apagar, entao, ele vai inicializar, na hora em que ele estiver parando, ele apaga as tabelas. O 'update', ele vai verificar se tem alguma diferenca, e aplicar aquela diferenca.
+
+50. Entao, eu vou deixar, aqui, ate o 'update', para a gente pegar esse update, aqui, eha forma que ele vai fazer o seguinte, estou subindo, tem alguma diferenca? Tem. Entao, vamos aplicar essa diferenca no Banco de dados. Se nao tem, ele deixa do jeito que esta,
+
+    <property name="hibernate.hbm2ddl.auto" value="update" />
+
+51. Okay? O dialeto do Hibernate. O que que eh o Dialeto? A gente esta escrevendo, voce vai ver, aqui, que a gente esta escrevendo que a gente vai escrever so classes Java, a gente nao vai escrever nenhum SQL, aqui, por enquanto.
+
+52. Eh o SQL padrao do MySQL. Por exemplo, se a gente quiser concatenar duas Strings no MySQL, utiliza a funcao 'concat', no Oracle, sao dois pipes, '||', entao, esse Dialeto, eh o cara que consegue fazer essa conversao, quando ele estiver fazendo esse tipo de operacao, no MySQL, funciona dessa forma, no Oracle, funciona de outra forma, entao, o Dialeto consegue fazer essa traducao ai, para a gente.
+
+53. Okay? Entao, essa eh a configuracao que a gente precisa, para iniciar com o JPA.
+
+54. Beleza?
+
+55. Vamos voltar, aqui, para a classe SalvandoPrimeiroObjeto.
+
+56. E entao, Normandes, como eh que eu faco, entao, ja que eu configurei esse persistence-unit, para chegar no EntityManager?
+
+57. Ai, a gente precisa de um carinha, chamado de EntityManagerFactory,
+
+import javax.persistence.EntityManagerFactory;
+
+    public static void main(String[] args) {
+        EntityManagerFactory 
+        EntityManager em = null;
+    }
+
+58. Um detalhe muito importante, aqui, oh, sempre que voce estiver importando, voce vai importar a Interface, oh, EntityManagerFactory, do javax.persistence. Repara que tem um EntityManagerFactoryImpl, oh, a implementacao, que eh do pacote org.hibernate.ejb. Esse eh a implementacao, a gente sempre vai trabalhar com javax.persistence, que faz parte da API, do JPA, okay?
+
+59. Entao, a gente coloca o EntityManagerFactory,
+
+    EntityManagerFactory emf
+
+, como eh que eu crio esse EntityManagerFactory? Tem uma classe, aqui, oh, javax.persistence.Persistence, que a gente vai invocar o metodo createEntityManagerFactory(),
+
+import javax.persistence.Persistence;
+
+    public static void main(String[] args) {
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory()
+        ...
+    }
+
+60. E esse createEntityManagerFactory recebe, como parametro, uma String. E essa String eh, justamente, o nome do persistence-unit,
+
+    <persistence-unit name="exemploPU" transaction-type="RESOURCE_LOCAL">
+        ...
+    </persistence-unit>
+
+    public static void main(String[] args) {
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("exemploPU")
+        ...
+    }    
+
+61. Entao, esse persistence.xml tem que estar dentro do ClassPath da sua aplicacao. Por isso que eu coloquei dentro de META-INF, e joguei, aqui, esse arquivinho, para ficar dentro do ClassPath da nossa aplicacao.
+
+62. Okay? Agora que eu tenho o EntityManagerFactory, eu consigo criar um EntityManager,
+
+    EntityManagerFactory emf = Persistence.createEntityManagerFactory("exemploPU");
+    EntityManager em = emf.createEntityManager();
+
+63. Legal, nao eh? Entao, olha la. Atraves do EntityManagerFactory, que eh uma fabrica de EntityManager's, eu consigo criar o EntityManager.
+
+64. Bom, uma coisa importante, aqui. Toda vez que voce utilizar o EntityManager, a gente precisa fecha-lo,
+
+    EntityManagerFactory emf = Persistence.createEntityManagerFactory("exemploPU");
+    EntityManager em = emf.createEntityManager();
+
+    em.close();
+
+65. Okay? Mas eu nao vou fechar, nao, eu vou deixar esse fechar, do EntityManager, para a gente falar em uma outra oportunidade. Lembre-se que, eu vou deixar comentado aqui, oh, 
+
+    // em.close();
+
+, para voce ficar com essa pulga atras da orelha, ai, mais para a frente, a gente vai ver o que que envolve fechar, o que que envolve nao fechar, o EntityManager. Okay?
+
+66. Bom, agora que eu tenho o EntityManager, eu consigo ir no Banco de Dados, para salvar.
+
+67. Para salvar alguma coisa no Banco de dados, eu preciso chamar o metodo persist(),
+
+    EntityManagerFactory emf = Persistence.createEntityManagerFactory("exemploPU");
+    EntityManager em = emf.createEntityManager();
+
+    em.persist();
+
+68. E ele recebe, como parametro, aqui, um objeto. E eu vou passar, aqui, o objeto que a gente estava criando, la, cliente,
+
+    ...
+
+    em.persist(cliente);
+
+69. Ueh, Normandes, que objeto eh esse ai que voce esta querendo salvar? Exatamente, ele nao existe, mesmo, nao. So para a gente ver o que que a gente esta criando, aqui, qual que eh a infra-estrutura que a gente precisa para salvar alguma coisa no Banco de Dados.
+
+70. Entao, a primeira coisa. Nos precisamos criar o persistence.xml.
+
+71. Depois, a gente precisou do EntityManagerFactory, criado a partir daquele arquivo, certo?,
+
+    EntityManagerFactory emf = Persistence.createEntityManagerFactory("exemploPU");
+
+72. E, ai, a gente criou o EntityManager,
+
+    EntityManager em = emf.createEntityManager();
+
+73. Agora, a gente vai chamar o metodo persist(), para um objeto Cliente. Que objeto que eh esse, Normandes?
+
+74. Nao sei, a gente ainda nao criou ele. Certo? Entao, eu vou ter que criar esse objeto aqui, oh, Cliente, e, ai, sim, eu vou conseguir salvar um objeto no Banco de Dados,
+
+    Cliente cliente = new Cliente();
+    em.persist(cliente);
+
+75. Eu nao vou fazer, aqui, um insert,
+
+    em.persist("insert into cliente ...")
+
+, nao. A gente vai salvar o objeto Cliente.
+
+76. Certo? E o Hibernate vai fazer essa traducao para a gente.
+
+77. Vamos criar a classe Cliente no pacote modelo,
+
+package com.algaworks.curso.modelo;
+
+public class Cliente {
+
+}
+
+78. O que que eu preciso anotar, aqui?
+
+79. @Entity
+
+@Entity
+public class Cliente {
+
+
+}
+
+, do javax.persistence, nao vai, ai, importar do Hibernate, nao.
+
+80. Olha la. Importei a anotacao @Entity, para falar para o EntityManager que essa classe eh uma Entidade.
+
+81. Ou seja, eu estou falando, esse cara aqui eh um carinha que vai ter, teoricamente, um tabela para ele no Banco de Dados.
+
+82. Okay? E ai, a gente vai mapear, aqui, lembra da aula que eu mostrei para voce a diferenca entre uma tabela do banco de dados e no Java, qual que eh o mapeamento?
+
+83. Entao, cada coluna vai virar o que? Um atributo.
+
+84. Entao, nos temos codigo, nome, idade, sexo, profissao. Entao, nos vamos maper aqui, oh,
+
+    private Long codigo;
+    private String nome;
+    private Integer idade;
+    private String sexo;
+    private String profissao;
+
+85. Okay? Entao, a gente mapeou as colunas em atributos. Eu preciso gerar, aqui, tambem, os Getters and Setters, para cada um desses atributos.
+
+86. O que mais que a gente precisa fazer, aqui, oh?
+
+87. Eu preciso falar quem que eh a chave primaria dessa tabela, la. Quem que eh a chave primaria, aqui? A gente ja viu que eh o codigo. Como eh que eu falo isso daqui? Eu coloco, aqui, em cima, @Id,
+
+import javax.persistence.Id;
+
+    @Id
+    private Long codigo;
+
+88. Eu preciso falar tambem como que esse codigo eh gerado. Como eh que esse codigo eh feito? Lembra que, quando a gente criou essa tabela, a gente utilizou o AUTO_INCREMENT?
+
+89. Entao, para eu falar que esse codigo eh gerado atraves do AUTO_INCREMENT do Banco de Dados, eu vou colocar, aqui, oh, @GeneratedValue, e a estrategia de Geracao vai ser GenerationType, do javax.persistence, IDENTITY,
+
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+
+    @Id
+    @GeneratedValue(strategy=GenerationType.IDENTITY)
+    private Long id;
+
+90. Agora, sim, falei quem que eh a chave primaria, e falei que quem vai gerar esse valor eh o proprio banco de dados.
+
+91. Beleza?
+
+92. Bom, agora, sim, esta pronto, aqui. Vou voltar, aqui, em SalvandoPrimeiroObjeto.java, sera que vai funcionar?
+
+93. Ainda nao. Eu vou te mostrar que nao vai funcionar, vou executar esse codigo, aqui, mas ainda nao vai dar certo, quer ver?
+
+94. Vamos ver por que.
+
+95. Ele vai comecar a inicializar o EntityManagerFactory, para inicializar o EntityManager, e, ai, ele executou e terminou, aqui.
+
+96. Nem mostrou nada, aqui, para a gente. Porque eu nao coloquei nada, nao eh? Podia colocar, aqui, um println, aqui, 'Finalizando de salvar o cliente',
+
+    ...
+    		System.out.println("Cliente salvo com sucesso!");
+
+97. Quando chegar nessa linha, mostra essa mensagem no Console.
+
+98. Bom, se a gente fizer um SELECT aqui, no Cliente MySQL, nos vamos ver que ele nao inseriu nada mais. So tem as duas linhas, aqui, 
+
+    select * from cliente;
+
+99. Primeiro, por que que ele nao inseriu nada? Porque a gente nao inicializou a Transacao.
+
+100. Toda vez que a gente precisa alterar o Banco de dados, a gente precisa Inicializar uma Transacao.
+
+101. Nos vamos ver mais detalhes sobre essa Transacao.
+
+102. Mas, para voce fazer como eh que faz isso, eh,
+
+    ...
+    em.getTransaction().begin();
+    em.persist(cliente);
+
+, eu preciso dar um Begin nessa Transacao, falar, 'Esta comecando uma hora em que eu vou Atualizar o Banco de Dados'. Depois que eu terminei de atualizar o Banco de dados, eu tenho que fazer em.getTransaction().commit();,
+
+    ...
+    em.getTransaction().begin();
+    em.persist(cliente);
+    em.getTransaction().commit();
+
+, e, ai, ele vai comitar essa transacao para mim. Okay? A gente precisa fazer isso daqui para ele conseguir salvar isso no banco de dados.
+
+103. Bom, mas ele vai salvar o que? Voce nao setou nada do Cliente, qual que eh o nome do Cliente?
+
+104. Eh verdade, vamos la,
+
+    Cliente cliente = new Cliente();
+    cliente.setNome("Pedro Bial");
+    cliente.setIdade(40);
+    cliente.setProfissao("Jornalista");
+    cliente.setSexo("M");
+
+105. E o codigo, Normandes, voce nao vai setar o codigo, nao? 
+
+106. Nao. Lembra quando a gente estava fazendo os INSERT's? Nao eh o MySQL que faz o Auto Increment? Entao, o codigo eu nao preciso configurar. 
+
+107. Vamos mandar executar mais uma vez.
+
+108. E, ai, agora, ele mostrou aqui, oh, 'Cliente salvo com sucesso!'. Ele chegou ali. Vamos ver, nao deu erro nenhum, se eu mandar executar de novo esse select aqui, olha aqui, oh, codigo 3, Pedro Bial, Idade 40, masculino, Jornalista. Legal, nao eh?
+
+109. Bem facil comecar com o JPA, nao eh? Nao temos grandes problemas, nao. Certo? Beleza?
+
+110. Fim da Aula 02.001. Salvando o Primeiro objeto no Banco de Dados.
+
+-->

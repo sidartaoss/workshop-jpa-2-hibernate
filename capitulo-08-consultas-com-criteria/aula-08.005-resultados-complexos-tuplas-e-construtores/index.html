@@ -1,0 +1,360 @@
+<!--
+
+    Aula 08.005. Resultados Complexos, Tuplas e Construtores
+
+1. 
+import org.junit.Test;
+
+...
+
+    @Test
+    public void resultadoComplexo() {
+        CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+    }
+
+    @Test
+    public void resultadoTupla() {
+        CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+    }
+
+    @Test
+    public void resultadoConstrutores() {
+        CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+    }
+
+2. E se voce precisar de mais de um atributo? Aqui, no metodo projecoes(), trouxe apenas 1 atributo, por exemplo, a placa do carro.
+
+3. E se a gente quiser mais de 1?
+
+4. Entao, vamos la. Vamos mostrar tres formas de a gente fazer isso daqui.
+
+5. A primeira delas, eu chamei, aqui, de resultadoComplexo(), eh mais complicado, ate, de fazer isso daqui. Entao, vamos la. Primeiro, a gente precisa do CriteriaBuilder. E a gente vai fazer a nossa consulta em cima de Carro. Entao, nos vamos criar o CriteriaQuery, so que, ai, esse camarada vai retornar mais de uma coluna,
+
+        @Test
+        public void resultadoComplexo() {
+            CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+
+            CriteriaQuery<>
+        }
+
+6. O que que eu quero retornar em cima de Carro, aqui?
+
+7. Eu quero retornar, por exemplo, a Placa e o Valor da diaria.
+
+8. Eu quero retornar esses dois atributos, okay? Entao, vamos la. Para eu retornar isso, eu vou retornar isso numa lista de Object,
+
+        @Test
+        public void resultadoComplexo() {
+            CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+
+            CriteriaQuery<Object[]>
+        }
+
+9. Okay? Porque eu nao sei quais sao os tipos. Entao, eu vou colocar uma lista de Object, e a gente cria um CriteriaQuery, usando o nosso builder, createQuery, em cima de Object[], okay?
+
+        @Test
+        public void resultadoComplexo() {
+            CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+
+            CriteriaQuery<Object[]> criteriaQuery = builder.createQuery(Object[].class);
+
+
+        }   
+        
+10. Bom, a nossa Consulta vai continua sendo em cima de Carro, entao, a gente passa, aqui, o Carro, no from(),
+
+        CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+        CriteriaQuery<Object[]> criteriaQuery = builder.createQuery(Object[].class);
+        Root<Carro> c = criteriaQuery.from(Carro.class);
+
+11. E, agora, eh que muda um pouquinho,
+
+            ...
+            Root<Carro> c = criteriaQuery.from(Carro.class);
+
+            criteriaQuery.
+
+, eu quero fazer, nao eh, simplesmente, um select(). Eu quero fazer um multiselect(),
+
+
+            ...
+            Root<Carro> c = criteriaQuery.from(Carro.class);
+            
+            criteriaQuery.multiselect();
+
+12. E, aqui, que esta a diferenca.
+
+13. Aqui, eu consigo, agora, passar os varios atributos que eu quero. Entao, eu quero carro.get("placa"), por exemplo, , carro.get("valorDiaria"). Okay?,
+
+            ...
+            // from Carro c
+            Root<Carro> c = criteriaQuery.from(Carro.class);
+
+            // select c.placa, c.valorDiaria from Carro c
+            criteriaQuery.multiselect(carro.get("placa"), carro.get("valorDiaria"));
+
+14. Bom, selecionamos isso dai. Pronto, agora, eh so a gente continuar para criar a nossa TypedQuery em cima de um array de Object. Criamos a Query, passando, aqui, a CriteriaQuery, e mandamos executar. Agora, sim, vai retornar uma Lista de array de Object, com os resultados,
+
+            TypedQuery<Object[]> query = this.manager.createQuery(criteriaQuery);
+
+            List<Object[]> resultado = query.getResultList();
+
+15. Vai retornar, vai fazer o select, entao, vai fazer, quando a gente montar, vai fazer 'select c.placa, c.valorDiaria from Carro c'
+
+16. Placa vai vir na posicao 0 desse array,
+
+            List< >>> Object[] <<< > resultado = query.getResultList();
+
+, e valorDiaria vai vir na posicao 1 desse Array.
+
+17. E, agora, quando a gente fizer o for(), aqui, 
+
+
+            for (Object[] valores : resultado) {
+                System.out.println(valores[0] + " - " + valores[1]);
+            }
+
+, valores, na posicao 0, vai estar a Placa, e valores, na posicao 1, vai estar o Valor da diaria.
+
+18. Vamos ver?
+
+19. Seleciona o metodo resultadoComplexo(), SHIFT+ALT+X, Run JUnit Test, e vai executar apenas esse metodo.
+
+20. Retornou,
+
+Hibernate: 
+    select
+        carro0_.placa as col_0_0_,
+        carro0_.valor_diaria as col_1_0_ 
+    from
+        Carro carro0_
+AAA-1234 - 205.00
+BBB-2222 - 100.00
+AAA-9999 - 120.00
+BBB-8888 - 250.00
+AAA-7788 - 230.00
+DDD-1234 - 130.00
+FFF-1212 - 200.00
+XXX-1111 - 200.00
+ADD-8989 - 200.00
+YNP-5588 - 230.00
+
+
+21. Olha la o select que ele fez, trouxe a Placa e o Valor da diaria.
+
+22. Ele jogou isso daqui na posicao 0 e na posicao 1 do array.
+
+23. Okay? Bom, mas, trabalhar desse jeito aqui nao eh tao legal, nao, porque voce pode digitar errado, aqui, nessa posicao do array, nao eh?, nao fica tao legalzinho, nao.
+
+24. Vamos melhorar isso daqui e usar uma Lista, e a gente vai fazer uma Tupla, agora, vai resultar em uma Lista de Tupla.
+
+25. Como eh que isso funciona, Normandes?
+
+26. Entao, eu vou criar a minha CriteriaQuery,
+
+            @Test
+            public void resultadoTupla() {
+                CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+                CriteriaQuery<>
+            }
+
+, em cima de um carinha novo, que eu vou chamar, que eh de Tuple, do javax.persistence. Esse carinha, Tuple, eh o javax.persistence.Tuple, okay? 
+
+27. Uma tupla eh como se fosse uma especie de um mapazinho, onde a gente tem uma chave e vai pegar o valor, uma especie disso dai.
+
+28. Entao, vamos la, oh, a gente cria, aqui, um CriteriaQuery, e, ai, na hora de criar, eh um createTupleQuery(), okay?
+
+        @Test
+        public void resultadoTupla() {
+            CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+            CriteriaQuery<Tuple> criteriaQuery = builder.createTupleQuery();
+
+            
+
+        }
+
+29. Root<X>. Vai continuar sendo em cima de Carro,
+
+    @Test
+    public void resultadoTupla() {
+        CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+        CriteriaQuery<Tuple> criteriaQuery = builder.createTupleQuery();
+
+        // from Carro c
+        Root<Carro> c = criteriaQuery.from(Carro.class);
+
+        
+
+    }
+
+30. E, ai, criteriaQuery, a gente tambem vai fazer multiselect(), okay?, porque a gente quer pegar mais de uma propriedade, entao, eh c.get("placa"), e vou dar um alias, ou seja, um apelido para esse camarada, que vai ser a chave la dentro da minha Tupla, c.get("placa").alias(""), okay?, vou chamar esse alias, aqui, de "placaCarro", mas, voce pode colocar qualquer nome, nao precisa ser o mesmo nome aqui, nao. Vamos chamar de "placaCarro", colocar uma virgula aqui, e c.get("valorDiaria").alias("valorCarro"), vamos colocar so assim, para voce ver como eh que a gente vai pegar isso, agora,
+
+    public void resultadoTuple() {
+        CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+        CriteriaQuery<Tuple> criteriaQuery = builer.createTupleQuery();
+        // from Carro c
+        Root<Carro> c = criteriaQuery.from(Carro.class);
+        criteriaQuery.multiselect(c.get("placa").alias("placaCarro")
+                , c.get("valorDiaria").alias("valorCarro"));
+
+        
+    }
+
+31. Beleza. Agora, a gente pode criar a nossa Query, o TypedQuery vai ser do tipo Tuple, query, manager.createQuery(criteriaQuery),
+
+    TypedQuery<Tuple> query = this.manager.createQuery(criteriaQuery);
+
+32. Okay?
+
+33. Vamos criar, aqui, a nossa Lista, 
+
+    List<Tuple> resultado = query.getResultList();
+
+, e a gente ja pode fazer, agora, o nosso for(), na Tupla,
+
+        for (Tuple tupla : resultado) {
+
+        }
+    
+34. Olha, agora, como vai ser mais facil pegar. Ao inves de a gente pegar pelo indice, a gente vai pegar por get(), e vamos passar, aqui, "placaCarro". Nao foi esse nome que a gente deu aqui?
+
+        criteriaQuery.multiselect(c.get("placa").alias( >>> "placaCarro")
+                    , c.get("valorDiaria").alias("valorCarro"));
+
+35. 
+
+        for (Tuple tupla : resultado) {
+            System.out.println(tupla.get("placaCarro") + " - " + tupla.get("valorCarro"));
+        }
+
+36. Retornou,
+
+Hibernate: 
+    select
+        carro0_.placa as col_0_0_,
+        carro0_.valor_diaria as col_1_0_ 
+    from
+        Carro carro0_
+AAA-1234 - 205.00
+BBB-2222 - 100.00
+AAA-9999 - 120.00
+BBB-8888 - 250.00
+AAA-7788 - 230.00
+DDD-1234 - 130.00
+FFF-1212 - 200.00
+XXX-1111 - 200.00
+ADD-8989 - 200.00
+YNP-5588 - 230.00
+
+37. Tambem deu certo, ele trouxe so a Placa e o Valor da diaria, e mostrou, aqui, para a gente.
+
+38. Bom, melhorou isso aqui em relacao a colocar 0 e 1, no array de Object. Melhorou um pouquinho, porque a gente esta pegando pelo indice. 
+
+39. Mas, e se eu quiser jogar isso dentro de um Objeto?
+
+40. Ate criei esse objeto, aqui, que eu chamei de PrecoCarro, um objeto simples, que tem um Construtor, que recebe a Placa, e o Valor. Eh um objeto bem simples, mesmo, que eu criei, aqui, ate, dentro do pacote de teste,
+
+public class PrecoCarro {
+
+    private String placa;
+    private BigDecimal valor;
+
+    public PrecoCarro(String placa, BigDecimal valor) {
+        this.placa = placa;
+        this.valor = valor;
+    }
+
+    ...
+}
+
+, a gente faz o seguinte: "Eu quero que, na hora que retornar, retorne criando uma Lista de PrecoCarro, onde vai ter a Placa e o Valor apenas.".
+
+41. Okay? Vamos fazer esse camarada aqui?
+
+42. 
+
+        @Test
+        public void resultadoConstrutores() {
+            CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+
+
+        }
+
+43. Agora, a gente vai criar CriteriaQuery<T>, so que, agora, o Resultado nosso nao vai ser esse objeto PrecoCarro? Entao, eu vou colocar ele aqui. Porem, a nossa Entidade ainda vai ser Carro, 
+
+    @Test
+    public void resultadoConstrutoes() {
+        CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+        CriteriaQuery<PrecoCarro> criteriaQuery = builder.createQuery(PrecoCarro.class);
+
+        // from Carro c
+        Root<Carro> c = criteriaQuery.from(Carro.class);
+    }
+
+44. criteriaQuery.select(), agora, ja eh um 'select' normal. So que, na hora de a gente passar, aqui, a restricao, a gente vai colocar usando builder, falando que eh com Construtor. E, ai, eu to falando o seguinte, que eu quero construir um PrecoCarro, eu quero construir um objeto desse tipo, PrecoCarro, mas com quais atributos que voce quer fazer isso? Quais atributos de Carro? Entao, vamos la, vamos pegar um a um, e tem que ser na ordem, eu quero pegar com a placa, c.get("placa"), vamos dar uma olhada aqui, oh, no Construtor na classe PrecoCarro, eh a placa e, depois, o valor, que eu vou pegar de Carro. Entao, eu vou pegar, de Carro, primeiro a placa e, depois, o atributo valorDiaria,
+
+    @Test
+    public void resultadoConstrutores() {
+        CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+
+        CriteriaQuery<PrecoCarro> criteriaQuery = builder.createQuery(PrecoCarro.class);
+
+        // from Carro c
+        Root<Carro> c = criteriaQuery.from(Carro.class);
+
+        criteriaQuery.select(builder.constructor(PrecoCarro.class,
+                    c.get("placa"), c.get("valorDiaria")));
+
+
+    }
+
+45. Beleza. Ja vai conseguir construir esse Objeto. Ja podemos criar a nossa TypedQuery<>, em cima de PrecoCarro, que eh o resultado, okay?,
+
+    CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+
+    CriteriaQuery<PrecoCarro> criteriaQuery = builder.createQuery(PrecoCarro.class);
+
+    // from Carro c
+    Root<Carro> c = criteriaQuery.from(Carro.class);
+
+    criteriaQuery.select(builder.constructor(PrecoCarro.class,
+                c.get("placa"),
+                c.get("valorDiaria"))
+                )
+    
+    TypedQuery<PrecoCarro> query = this.manager.createQuery(criteriaQuery);
+
+    List<PrecoCarro> resultado = query.getResultList();
+
+    for (PrecoCarro precoCarro : reultado) {
+        System.out.println(precoCarro.getPlaca() + " - " + precoCarro.getValor());
+    }
+
+46. Agora, na hora de mostrar, eh mais facil, nao eh? Eh so colocar precoCarro.getPlaca(), e precoCarro.getValor(). A gente manda executar, aqui, retornou,
+
+Hibernate: 
+    select
+        carro0_.placa as col_0_0_,
+        carro0_.valor_diaria as col_1_0_ 
+    from
+        Carro carro0_
+AAA-1234 - 205.00
+BBB-2222 - 100.00
+AAA-9999 - 120.00
+BBB-8888 - 250.00
+AAA-7788 - 230.00
+DDD-1234 - 130.00
+FFF-1212 - 200.00
+XXX-1111 - 200.00
+ADD-8989 - 200.00
+YNP-5588 - 230.00
+
+47. Beleza. Tambem deu certo a consulta. Repare que a consulta sempre foi a mesma, aqui, ta certo? Porem, a gente fez de varias formas diferentes. Primeiro, a gente trouxe da forma mais simples possivel, retornar uma Lista de array de Object, depois, a gente retornou uma Tupla, em que a gente consegue dar um alias, para cada valor e, na hora de a gente buscar, ao inves de a gente acessar pelo indice de um array, a gente acessa pelo alias, ou a gente manda construir, ja, um objeto mais alto nivel, mais orientacao a objeto mesmo, nao eh?, e ele cria um objeto para a gente e, ja nos retorna uma lista desse objeto, com os atributos configurados.
+
+48. Okay? Essa ultima forma, aqui, eh a forma mais bonita, mais elegante de se fazer.
+
+49. Beleza?
+
+50. Fim da     Aula 08.005. Resultados Complexos, Tuplas e Construtores.
+
+-->

@@ -1,0 +1,473 @@
+<!--
+
+    Aula 10.001. Mapeando Chaves Compostas
+
+1. Para eu te ensinar Chave Composta, e nao ficar inventando, no nosso Sistema Locadora de Veiculos, eu criei um outro Projetinho, aqui, que vou jogar alguns exemplos soltos, para poder ir te explicando. E voce ja entendeu a ideia de um Projeto inteiro, de um Projeto mais proximo do real possivel, que foi o Locadora de Veiculo Web, entao, jogar alguns exemplos soltos, agora, nao vai fazer diferenca para voce, Na hora em que voce estiver trabalhando, ai, no mundo real e precisar fazer algum exemplo, como esse do Chave Composta, voce vai saber fazer ele em um Projeto proximo do Real, que eh o Projeto Locadora Veiculo Web.
+
+2. Esse, daqui, eh so um exemplo mais solto, okay?
+
+3. Para isso, eu criei um outro Projeto, aqui, mais-exemplos, uma configuracao bem simples, um arquivo persistence.xml, eu criei um novo schema no banco de dados, onde a gente, a medida que eu for precisando, eu vou criando as tabelas, essas coisas dentro desse schema.
+
+4. Okay? Tem o JPAUtil, que eh o que cria, para a gente, e eu mudei o nome do persistence-unit,
+
+    <persistence-unit name="maisExemplosPU" transaction-type="RESOURCE_LOCAL">
+        ...
+    </persistence-unit>
+
+5. Entao, aqui, deve ficar, tambem, como 'maisExemplosPU', em JPAUtil,
+
+    private static EntityManagerFactory emf = Persistence.createEntityManagerFactory("maisExemplosPU");
+
+6. Bom, o JPAUtil esta legal. E, aqui, para o exemplo de chave composta, eu ja deixei, aqui, as coisas pre-criadas, vamos criar, aqui, o Modelo.
+
+7. Vamos imaginar que a gente estivesse, ai, cadastrando Um Veiculo, e o ID desse Veiculo nao fosse, simplesmente, Um Codigo.
+
+8. O ID do Veiculo, vamos supor que a gente gostaria que fosse a Placa e a Cidade, ou seja, uma Chave Composta, um exemplo de Chave Composta.
+
+9. Vamos comecar a criar, aqui, para ficar mais claro para voce.
+
+10. Vou criar uma nova classe, dentro do pacote modelo, que eu vou chamar de VeiculoID,
+
+package com.algarworks.curso.jpa2.modelo;
+
+public class VeiculoID {
+
+    
+}
+
+11. Esse VeiculoID vai ser a classe que vai representar o ID de um Veiculo, porque eu quero que seja a Placa e a Cidade,
+
+public class VeiculoID implements Serializable {
+
+    private String placa;
+    private String cidade;
+
+
+}
+
+12. Okay? Para eu fazer esse cara, aqui, ser o ID do Veiculo, deixa eu implementar, aqui, algumas coisas, deixa eu implementar o Serializable, aqui, para o placa / cidade. A gente pode mandar ele gerar os Getters e os Setters, aqui, para mim, 
+
+public class VeiculoID implements Serializable {
+
+    private String placa;
+    private String cidade;
+
+    public String getPlaca() {
+        return placa;
+    }
+
+    public void setPlaca(String val) {
+        this.placa = val;
+    }
+
+    public String getCidade() {
+        return cidade;
+    }
+
+    public void setCidade(String cidade) {
+        thi.cidade = cidade;
+    }
+
+}
+
+13. Okay. Vou fazer o seguinte, tambem. Como a criacao de um VeiculoID vai ser usada varias vezes sao, os dois juntos, a chave que eu quero utilizar, as duas colunas que eu quero utilizar como Chave, a placa e cidade, entao, eu vou mandar gerar, aqui, tambem, os Construtores, Generate Constructor Using Fields,
+
+public class VeiculoID implements Serializable {
+
+    private String placa;
+    private String cidade;
+
+    public VeiculoID(String placa, String cidade) {
+        this.placa = placa;
+        this.cidade = cidade;
+    }
+
+    public String getPlaca() {
+        return placa;
+    }
+
+    public void setPlaca(String val) {
+        this.placa = val;
+    }
+
+    public String getCidade() {
+        return cidade;
+    }
+
+    public void setCidade(String cidade) {
+        thi.cidade = cidade;
+    }
+
+}
+
+14. Mas, eu preciso de um Construtor sem argumentos, tambem, para o proprio framework funcionar.
+
+15. Entao, olha so. Se voce utilizar Um Construtor, aqui, para passar as informacoes da sua Chave, 
+
+    public VeiculoID(>>> String placa, String cidade) {
+        this.placa = placa;
+        this.cidade = cidade;
+    }
+
+, nao esquece de criar Um Construtor, aqui, sem argumentos, nao eh?, porque, se voce nao definir Um, o Java, Compilador, nao vai criar mais, nao eh?, a partir do momento que a gente definir Um, o Compilador nao vai criar mais o Construtor Sem Argumentos. Entao, a gente declara ele, aqui, para o Hibernate saber criar, conseguir criar esses Objetos.
+
+16. Okay? Aqui, so esta faltando o equals() e o hashcode(). Entao, vamos la, pode ser por aqui, oh, Generate hashCode() and equals()..., nos 2 atributos.
+
+17. Certo? Eu vou deixar ele fazer a geracao tanto na cidade quanto na placa,
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(cidade, placa);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (!(obj instanceof VeiculoID)) {
+			return false;
+		}
+		VeiculoID other = (VeiculoID) obj;
+		return Objects.equals(cidade, other.cidade) && Objects.equals(placa, other.placa);
+    }
+    
+, ou seja, um VeiculoID, so vai ser igual a outro, se tanto placa quanto cidade forem iguais. Faz todo o sentido, nao eh verdade?
+
+18. Bom, esta quase, quase pronta essa minha classe.
+
+19. Para eu falar que essa classe pode ser um ID Composto, ou seja, pode ser uma Chave Composta, eu preciso anotar ela, aqui, com @Embeddable, do javax.persistence, ou seja, essa minha classe pode ser, ela pode ser Embutida em outra Classe,
+
+@Embeddable
+public class VeiculoID implements Serializable {
+
+    private String placa;
+    private String cidade;
+}
+
+20. Okay? Entao, ela eh uma classe que pode ser Embutida.
+
+21. Bom, VeiculoID okay.
+
+22. Vamos, la, criar a nossa Classe Veiculo, no pacote modelo,
+
+package com.algaworks.curso.jpa2.modelo;
+
+import java.io.Serializable;
+
+public class Veiculo {
+
+}
+
+23. Bom, na minha classe Veiculo, que vai ser a Entidade, vou, ate, anotar ela, aqui, com @Entity, okay?, aqui, se quiser trocar o nome da tabela, vamos trocar o nome da tabela, so para a gente ir treinando, ai. Coloca, ai, tab_veiculo,
+
+@Entity
+@Table(name = "tab_veiculo")
+public class Veiculo {
+
+}
+
+, ta legal, se a gente criar outro exemplo solto, ai, que precisar de outra tabela veiculo, a gente inventa um outro nome.
+
+24. Bom, mas ai que ta. A gente vai comecar a criar, aqui, entao, os atributos. Bom, antes, a gente estava fazendo como?
+
+@Entity
+@Table(name = "tab_veiculo")
+public class Veiculo {
+
+    // private Long id;
+    // private Long codigo;
+
+    ...
+}
+
+25. Era assim que a gente estava fazendo ate agora, nao eh?
+
+26. E, aqui, no Getters e nos Setters, eu vou mandar gerar, aqui, os Getters e os Setters, por enquanto, de codigo, a gente fazia isso daqui,
+
+import javax.persistence.Id;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+
+@Entity
+@Table(name = "tab_veiculo")
+public class Veiculo {
+
+    private Long codigo;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    public Long getCodigo() {
+        return codigo;
+    }
+
+    public void setCodigo(Long codigo) {
+        this.codigo = codigo;
+    }
+
+    ...
+}
+
+27. Bom, nao eh mais.
+
+28. Eu estou falando, para voces, que esse meu modelo, agora, o ID nao eh um Codigo, o ID eh tanto uma Placa quanto Uma Cidade.
+
+29. E eu ja fiz esse Mapeamento em cima de VeiculoID, @Embeddable.
+
+30. Entao, o que que eu vou fazer aqui?
+
+@Entity
+@Table(name = "tab_veiculo")
+public class Veiculo {
+
+    private Long codigo;
+
+}
+
+31. Entao, o que que eu vou fazer aqui? Ao inves de colocar isso, aqui, como Long, eu vou usar como VeiculoID,
+
+public class Veiculo {
+
+    private VeiculoID codigo;
+}
+
+32. Okay?
+
+33. E esse VeiculoID eh que vai ser o codigo, agora, da minha classe Veiculo, da minha Entidade Veiculo, okay? E qual a anotacao que eu faco em cima dele? Vamos la, vamos mandar gerar, aqui, os Getters e os Setters, a gente vai colocar EmbeddedId,
+
+import javax.persistence.EmbeddedId;
+
+@Entity
+@Table(name = "tab_veiculo")
+public class Veiculo {
+
+    private VeiculoID codigo;
+
+    @EmbeddedId
+    public VeiculoID getCodigo() {
+        return codigo;
+    }
+    
+    public void setCodigo(VeiculoID codigo) {
+        this.codigo = codigo;
+    }
+}
+
+34. Anotando, aqui, oh, como @EmbeddedId, o que que significa? Que esse, aqui, eh um ID, nao eh?, eh o identificador desta nossa classe, so que eh um ID diferente,
+
+    private VeiculoID codigo;
+
+    @Embedded >>> Id <<<
+    public VeiculoID getCodigo() {
+        return codigo;
+    }
+    
+    public void setCodigo(VeiculoID codigo) {
+        this.codigo = codigo;
+    }
+
+, ao inves de ser, simplesmente, @Id, eh um ID Embutido,
+
+    >>> @Embedded <<< Id
+    public VeiculoID getCodigo() {
+        return codigo;
+    }
+
+, ou seja, ele veio daqui,
+
+@Embeddable
+public class VeiculoID implements Serializable {
+
+    ...
+}
+
+, eh um ID embutido.
+
+35. Tranquilinho? Bom, ah, e o equals() e o hashCode()?
+
+36. O equals() e o hashCode(), tambem vai ser em cima do codigo. Eles so vao ser iguais, 2 Veiculo's, se o ID for igual, nao eh verdade? E ele so vai ser igual quando esse codigo for igual a outro codigo, que nada mais eh do que quando a placa e a cidade forem iguais.
+
+37. Okay? Entao, vamos la, so para a gente colocar so mais alguns atributos, aqui, na classe Veiculo.
+
+38. Para nao ficar so com isso, eu vou colocar, aqui, String fabricante, String modelo,
+
+@Entity
+@Table(name = "tab_veiculo")
+public class Veiculo {
+
+    private VeiculoID codigo;
+    private String fabricante;
+    private String modelo;
+
+    @EmbeddedId
+    public VeiculoID getCodigo() {
+        return codigo;
+    }
+    
+    public void setCodigo(VeiculoID codigo) {
+        this.codigo = codigo;
+    }
+}
+
+39. Ta bom. So para a gente brincar.
+
+40. Okay, entao, ja tem la o fabricante e o modelo, o Getter e o Setter, okay.
+
+41. O meu persistence.xml esta como update, entao, ele vai criar as tabelas para a gente. Beleza, vamos testar, vamos ver como eh que a gente faz para inserir Um Veiculo no Banco de Dados.
+
+42. Entao, aqui, na classe ExemploChaveComposta, o que que eu vou fazer aqui, oh?
+
+43. Eu vou criar Um novo Veiculo,
+
+    EntityManager manager = JPAUtil.createEntityManager();
+
+    Veiculo veiculo = new Veiculo();
+    veiculo.setCodigo()
+    
+, olha so o que que ele esta esperando? Um VeiculoID, ai, eu posso colocar, aqui, o VeiculoID, e vou passar a Placa e a Cidade,
+
+    EntityManager manager = JPAUtil.createEntityManager();
+
+    Veiculo veiculo = new Veiculo();
+    veiculo.setCodigo(new VeiculoID("ABC-1234", "Rio Claro"));
+    veiculo.setFabricante("Chevrolet");
+    veiculo.setModelo("Corsa");
+
+    manager.close();
+
+44. Bom, para a gente salvar ele, a gente precisa Comecar Uma Transacao, Persistir o Objeto, ou seja, o Veiculo, para, depois, fazer o Commit dessa Transacao,
+
+    EntityManager manager = JPAUtil.createEntityManager();
+
+    Veiculo veiculo = new Veiculo();
+    veiculo.setCodigo(new VeiculoID("ABC-1234", "Rio Claro"));
+    veiculo.setFabricante("Chevrolet");
+    veiculo.setModelo("Corsa");
+
+    manager.getTransaction().begin();
+    manager.persist(veiculo);
+    manager.getTransaction().commit();
+
+    manager.close();
+
+45. Bom, acredito que eh so isso daqui, a gente ja vai conseguir fazer a insercao desse Camarada, vamos testar?
+
+46. Para a gente Rodar, Run As / Java Application.
+
+47. Retornou,
+
+Hibernate: 
+    insert 
+    into
+        tab_veiculo
+        (fabricante, modelo, cidade, placa) 
+    values
+        (?, ?, ?, ?)
+
+48. 
+
+select * from tab_veiculo
+
+# cidade, placa, fabricante, modelo
+Rio Claro, ABC-1234, Chevrolet, Corsa
+
+
+49. Fez o insert pra gente.
+
+50. Okay? Entao, ele conseguiu inserir, ai, para a gente. Se a gente clicar, aqui, no tab_veiculo, no MySQL Workbench, voce vai ver que ele define, oh, duas Primary Key's, que eh tanto 'cidade' quanto 'placa', entao, ele definiu, ele conseguiu criar, para a gente, como uma Chave Composta, no banco de dados.
+
+51. E como eh que a gente faria para fazer Uma Consulta nesse ID?
+
+52. Muito, muito simples. 
+
+53. Se a gente quisesse pegar, aqui, Veiculo v, por exemplo, EntityManager.find(), Veiculo.class, e, aqui, eu passaria o ID, o codigo, no caso, ali, eu vou criar outro, aqui, nao vou reaproveitar, poderia ser momentos diferentes, 
+
+Veiculo v = manager.find(Veiculo.class, new VeiculoID("ABC-1234", "Rio Claro"));
+
+54. Okay. Eh isso mesmo.
+
+55. Entao, olha so. A classe que eu quero buscar, nao eh?, Veiculo.class, e, como segundo parametro, eu tenho que passar o codigo. Vamos fazer assim, para ficar mais facil de ver,
+
+    VeiculoID codigo = new VeiculoID("ABC-1234", "Rio Claro");
+    Veiculo v = manager.find(Veiculo.class, codigo);
+
+, o codigo que eu quero buscar, eu coloco aqui,
+
+    Veiculo v = manager.find(Veiculo.class, >>> codigo);
+
+56. Beleza, ele vai conseguir buscar, vai fazer o SELECT, para esse Veiculo.
+
+57. Entao, eu poderia mostrar, aqui, 
+
+    System.out.println("Veiculo " + v.getCodigo().getPlaca() + " - " + v.getCodigo().getCidade() + 
+            " - Fabricante: " + v.getFabricante());
+
+, so para ter um pouquinho mais de informacao.
+
+58. Okay, vou executar novamente, aqui. So que, aqui, ao inves de eu inserir, eu vou colocar um ID diferente, senao, vai dar errado, eu vou colocar 'ABC-1235', porque, agora, eh uma chave, eu nao posso ter duplicacao, mas eu vou buscar o carro antigo, 'ABC-1234', okay? Eu vou, ate, mudar, aqui, oh, para a gente nao ter problemas, fabricante 'Volks', e modelo 'Gol',
+
+    EntityManager em = JPAUtil.createEntityManager();
+
+    Veiculo veiculo = new Veiculo();
+    veiculo.setCodigo(new VeiculoID("ABC-1235", "Ouro Preto"));
+    veiculo.setFabricante("Volks");
+    veiculo.setModelo("Gol");
+
+    em.getTransaction().begin();
+    em.persist(veiculo);
+    em.getTransaction().commit();
+
+    VeiculoID codigo = new VeiculoID("ABC-1234", "Rio Claro");
+    Veiculo v = manager.find(Veiculo.class, codigo);
+
+    System.out.println("Veiculo " + v.getCodigo().getPlaca() + " - " + v.getCodigo().getCidade() 
+            + " - Fabricante: " + v.getFabricante());
+
+
+
+59. Ou seja, eu estou inserindo um outro Carro, para voce ver que eu vou buscar aquele carro antigo que eu acabei de inserir.
+
+60. Passei, aqui, criei, aqui, o ID do carro antigo que eu tinha, fiz a busca, vamos ver o que que isso, aqui, vai acontecer?
+
+61. Vamos executar novamente. Olha la, ele inseriu, no banco de dados, aquele outro Modelo, mas ele buscou, tambem, buscando pela 'cidade' e pela 'placa', foi o ID que a gente passou.
+
+62. Retornou,
+
+Hibernate: 
+    insert 
+    into
+        tab_veiculo
+        (fabricante, modelo, cidade, placa) 
+    values
+        (?, ?, ?, ?)
+Hibernate: 
+    select
+        veiculo0_.cidade as cidade1_0_0_,
+        veiculo0_.placa as placa2_0_0_,
+        veiculo0_.fabricante as fabrican3_0_0_,
+        veiculo0_.modelo as modelo4_0_0_ 
+    from
+        tab_veiculo veiculo0_ 
+    where
+        veiculo0_.cidade=? 
+        and veiculo0_.placa=?
+Veiculo ABC-1234 - Rio Claro - Fabricante: Chevrolet
+
+63. Se a gente consultar no banco de dados, novamente, a gente vai ver que tem 2 Carros, agora,
+
+select * from tab_veiculo
+
+# cidade, placa, fabricante, modelo
+Ouro Preto, ABC-1235, Volks, Gol
+Rio Claro, ABC-1234, Chevrolet, Corsa
+
+64. O outro Registro com cidade 'Ouro Preto' e placa 'ABC-1235', 'Volks', 'Gol'.
+
+65. Okay? Entao, perceba que eh muito, muito simples, tambem, trabalhar com Chave Composta, usando JPA.
+
+66. Fim da     Aula 10.001. Mapeando Chaves Compostas.
+
+-->

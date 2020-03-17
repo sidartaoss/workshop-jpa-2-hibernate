@@ -1,0 +1,598 @@
+<!--
+    Aula 14.006. Cache com Ehcache
+
+1. Bom, agora que a gente ja entendeu como eh que funciona o Cache, nao eh?, o Cache de Query, o Cache de Segundo Nivel, vamos deixar ele usando a Biblioteca que voce vai poder usar em Producao. 
+
+2. Porque, por enquanto, eu te ensinei a respeito de Cache, mas sem falar como colocar isso em Producao.
+
+3. Okay? Entao, vamos la, vamos dar uma olhada em mais alguns detalhes. Eh claro que, se voce for usar em Producao, voce vai precisar analisar. Cada caso eh um caso, nao existe uma bala de prata que resolva todos os problemas, mas, ja eh o comeco, ai, para voce continuar aprofundando no Cache, no caso, aqui, agora, com Ehcache.
+
+4. Entao, vamos la.
+
+5. A primeira coisa que eu vou fazer eh alterar o pom.xml, aqui, tirando o Hibernate Testing, 
+
+    <-- Hibernate Testing --
+    <dependency>
+        <groupId>org.hibernate</groupId>
+        <artifactId>hibernate-testing</artifactId>
+        <version>4.3.5.Final</version>
+        <scope>compile</scope>
+    </dependency>
+
+, o Hibernate Testing eh so para teste, como o proprio nome diz, okay?, e colocar a dependencia do Ehcache,
+
+    <-- Ehcache --
+    <dependency>
+        <groupId>net.sf.ehcache</groupId>
+        <artifactId>ehcache-core</artifactId>
+        <version>2.6.9</version>
+        <scope>compile</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.hibernate</groupId>
+        <artifactId>hibernate-ehcache</artifactId>
+        <version>4.3.6.Final</version>
+        <scope>compile</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>1.7.7</version>
+        <scope>compile</scope>
+    </dependency>    
+
+6. Deixa eu alterar um negocio, aqui, que a gente estava trabalhando com a versao 4.3.5.Final, do Hibernate. So que a versao 4.3.5.Final, do Hibernate, vai vir com um Bug, que a 4.3.6.Final resolvou. Mas eu vou te mostrar o Bug acontecendo, e, depois, eu troco, aqui, para o 4.3.6.Final, para voce ver resolvendo.
+
+7. Beleza? Entao, na versao 4.3.5.Final, do Hibernate, existe um Bug, que eu vou te mostrar, agora mesmo, quando a gente for trabalhar, eu ja vou transformar este Projeto, aqui, colocar DataSource, nele, tambem, eu vou te mostrar um outro probleminha que acontece, e a gente vai colocar ele em DataSource, e, ai, vamos ver como eh que vai ficar.
+
+8. Beleza?
+
+9. Okay. 
+
+10. Coloquei a dependencia, aqui, do Ehcache, no pom.xml.
+
+11. A proxima configuracao que eu vou fazer vai ser no persistence.xml, ao inves de falar que o factory_class, aqui, eh o do Hibernate Testing,
+
+<property name="hibernate.cache.region.factory_class" value="org.hibernate.testing.cache.CachingRegionFactory" />
+
+, nos vamos pegar, ..., deixa eu pegar da minha cola, aqui, okay, entao, a classe, que eh essa EhCacheRegionFactory, eh so colocar ela, aqui, no persistence.xml,
+
+<property name="hibernate.cache.region.factory_class" value="org.hibernate.cache.ehcache.EhCacheRegionFactory" />
+
+12. Beleza? Eh so colocar ela, aqui, no persistence.xml.
+
+13. Ultima configuracao que esta faltando eh a gente criar um arquivo, em src/main/resources, vamos chamar de ehcache.xml, e colocar esse conteudo, aqui,
+
+<ehcache>
+    <diskStore path="" />
+    <defaultCache
+        maxElementsInMemory="1000"
+        eternal="false"
+        timeToIdleSeconds="120"
+        timeToLiveSeconds="120"
+        overflowToDisk="true"
+        maxElementsOnDisk="100000"
+        diskExpiryThreadIntervalSeconds="120"
+        memoryStoreEvictionPolicy="LRU" />
+</ehcache>
+
+14. O que que esse conteudo esta dizendo?
+
+15. Vamos la.
+
+16. Quantos elementos eu vou ter na memoria, no maximo? 1000. Eu vou ter, no maximo, 1000 objetos na memoria, entao, eu estou deixando configurado isso daqui.
+
+17. Eles vao ficar na memoria para sempre? Sim ou nao? false. Nao. Colocando false/Nao, essas duas propriedades, timeToIdleSeconds e timeToLiveSeconds, entram em funcionamento. timeToIdleSeconds, ou seja, quanto tempo que uma Entidade pode ficar em idle, em stand-by, ela esta sem usar.
+
+18. Entao, se eu tiver uma Entidade sem Utilizar por, ate, 120 segundos, que sao dois minutos, ela vai sair do Cache.
+
+19. Okay? Sem ninguem consultar ela, ela vai sair do Cache.
+
+20. Ja o timeToLiveSeconds, o que que ele significa?
+
+21. Significa que a sua Entidade pode ficar, no maximo, por 120 segundos no Cache. 
+
+22. Ah, qual que eh a diferenca, Normandes, da Live e da Idle?
+
+23. A timeToLiveSeconds eh, independente se eu estou consultando ou nao, ela vai ficar 120 segundos.
+
+24. A timeToIdleSeconds eh, eu nao estou consultando ela, entao, ela vai ficar 120 segundos.
+
+25. A gente pode modificar, aqui, timeToIdleSeconds, para 60, para, na hora que eu for fazer o teste, ali, te mostrar a diferenca.
+
+26. Por exemplo, eu nao vou consultar o Usuario de Codigo 1, 
+
+<ehcache>
+    <diskStore path="" />
+    <defaultCache
+        maxElementsInMemory="1000"
+        eternal="false"
+        >>> timeToIdleSeconds="60"
+        timeToLiveSeconds="120"
+        overflowToDisk="true"
+        maxElementsOnDisk="100000"
+        diskExpiryThreadIntervalSeconds="120"
+        memoryStoreEvictionPolicy="LRU" />
+</ehcache>
+
+, e vou ficar consultando o Usuario de Codigo de Codigo 2,
+
+<ehcache>
+    <diskStore path="" />
+    <defaultCache
+        maxElementsInMemory="1000"
+        eternal="false"
+        timeToIdleSeconds="60"
+        >>> timeToLiveSeconds="120"
+        overflowToDisk="true"
+        maxElementsOnDisk="100000"
+        diskExpiryThreadIntervalSeconds="120"
+        memoryStoreEvictionPolicy="LRU" />
+</ehcache>
+
+18. O Usuario de Codigo 1, em 60 segundos, ele tem que sair do Cache, e tem que ser feito a Consulta novamente.
+
+19. Enquanto eu estiver consultando o Usuario de Codigo 2, nao eh?, vou estar trabalhando, consultando com ele, ele vai viver por 120 segundos. Apesar de eu estar sempre consultando, deu 120 segundos, ele sai do Cache.
+
+20. overflowToDisk, o que que significa colocar true?
+
+21. Significa que, quando atingirmos o maximo, ou seja, maxElementsInMemory="1000", na verdade, ele sempre vai vai fazer o overflowToDisk, ou seja, vai fazer o overflow para o disk, ou seja, considerando-se maxElementsOnDisk="100000" para o atingimento do maximo, ao setar overflowToDisk="true".
+
+22. Mas, atingindo o maximo, ele vai conseguir salvar no disco aquelas Entidades. E onde que eu vou colocar ele? Aqui, oh, nesse caminho,
+
+<diskStore path="C://temp/cache" />
+
+, eu criei esse diretorio, aqui, dei permissao, beleza? Se voce estiver no Windows, cria um diretorio, ai. Se voce estiver no Linux, ou no Mac, crie, tambem, algum outro diretorio, onde voce quiser, e nao esqueca de dar permissao de escrita, okay?
+
+23. maxElementsOnDisk="100000", entao, no maximo, eu vou poder ter, aqui, oh, 100000 elementos no disco, 100000 Entidades no Disco.
+
+24. diskExpiryThreadIntervalSeconds="120", Em quanto tempo essas Entidades vao ficar no disco, tambem? 
+
+25. Ou seja, ele vai expirar aquilo la, no disco, em 120 segundos.
+
+26. Ou seja, em 2 minutos, ele, tambem, vai la e passa e faz um limpa no arquivo.
+
+27. Okay?
+
+28. memoryStoreEvictionPolicy="LRU", e qual que eh a forma de tirar, nao eh?, essas Entidades, na hora que der o overflow, essas coisa? 
+
+29. Ele vai tirar, sempre, usando o algoritmo LRU, que eh o Menos Recentemente Usado (Less Recently Used).
+
+30. Okay?
+
+31. Entao, esta la, esta cheio, preciso tirar alguem de la. Quem que eu vou tirar?
+
+32. O que esta sendo menos utilizado, no momento.
+
+33. Beleza?
+
+34. Eh essa uma possivel configuracao do Ehcache, que eh o que nos vamos usar, aqui, para te mostrar mais algumas coisinhas interessantes, aqui.
+
+35. Okay.
+
+36. Deixa eu subir o Tomcat e a gente comecar a fazer, voce vai ver que vai estar funcionando, e a gente faz alguns testezinhos relacionados ao timeToIdle, timeToLive, ..., te mostrar um probleminha que vai acontecer, e, depois, colocar o DataSource, ver outro problema acontecer, e, ai, sim, resolver todos.
+
+37. Okay?
+
+38. Deixa eu colocar o Browser, aqui, o Servidor ja subiu.
+
+39. Vamos, aqui, na Pesquisa de Usuario. A Aplicacao eh a mesma que a gente tinha feito na Ultima Aula. Olha, ele subiu o Hibernate, porque ele esta fazendo a Query, aqui,
+
+Hibernate: 
+    select
+        count(usuario0_.codigo) as col_0_0_ 
+    from
+        usuario usuario0_
+Hibernate: 
+    select
+        count(this_.codigo) as y0_ 
+    from
+        usuario this_ 
+    where
+        this_.status=?
+
+40. Esta com o .use_query_cache habilitado, em persistence.xml, entao, por isso que ele ja subiu o Hibernate, e, inclusive, ja pos no Cache aquilo ali, oh, se eu der um Refresh, aqui, na tela, http://localhost:8080/gerenciador-acesso/PesquisaUsuario.xhtml, nao consultou nada.
+
+41. Vou consultar o Usuario de Codigo 1, consultou, teve que ir no banco, obviamente, nao eh?, nao estava no Cache. Agora, eu posso pesquisar mais uma vez, ja nao vai mais no banco. Se eu pesquisar o Usuario de Codigo 2, nao esta no Cache, ele vai la no banco, buscou. Se eu pesquisar a proxima vez, nao esta mais indo no banco, porque esta no Cache.
+
+42. Entao, vamos la, o que que eu vou ficar fazendo aqui, oh, para te mostrar a respeito expirar? 
+
+<ehcache>
+    <diskStore path="" />
+    <defaultCache
+        maxElementsInMemory="1000"
+        eternal="false"
+        >>> timeToIdleSeconds="60"
+        timeToLiveSeconds="120"
+        overflowToDisk="true"
+        maxElementsOnDisk="100000"
+        diskExpiryThreadIntervalSeconds="120"
+        memoryStoreEvictionPolicy="LRU" />
+</ehcache>
+
+, ou seja, se uma Entidade ficar 60 segundos sem ser consultada, ela vai sair do Cache. Se eu ficar consultando uma Entidade, 
+
+<ehcache>
+    <diskStore path="" />
+    <defaultCache
+        maxElementsInMemory="1000"
+        eternal="false"
+        timeToIdleSeconds="60"
+        >>> timeToLiveSeconds="120"
+        overflowToDisk="true"
+        maxElementsOnDisk="100000"
+        diskExpiryThreadIntervalSeconds="120"
+        memoryStoreEvictionPolicy="LRU" />
+</ehcache>
+
+, ela vai sair do Cache somente com 120 segundos. 
+
+43. Entao, vamos la, eu vou pesquisar, aqui, o Usuario de Codigo 2, voce pode ver que ele nao esta indo no Banco. Oh, esta sempre no Cache.
+
+44. Certo, oh? Esta no Cache, sem problema nenhum, vou dar uma Pesquisada, aqui, ainda pelo Usuario de Codigo 2. Agora, sei la, daqui uns 10 segundinhos, 20 segundos, a Entidade 1 ja vai ter passado os 60 segundos.
+
+45. Ai, passado os 60 Segundos em Idle, ou seja, sem utilizar, entao, ele vai tirar a Entidade do Cache e, ai, na hora em que a gente fizer a Consulta, ele vai buscar no Banco.
+
+46. Oh, repara que o Usuario de Codigo 2, que eu estou buscando toda hora, nao esta indo no Banco. Bom, imagino que ja passou 1 minuto, ai, nao fiz a conta, nao, Vamos ver, vamos pesquisar pelo Usuario de Codigo 1.
+
+47. Busquei. Olha la, foi no Banco. Okay?
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        usuario0_.status as status3_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+Hibernate: 
+    select
+        grupos0_.codigo_usuario as codigo_u1_1_0_,
+        grupos0_.codigo_grupo as codigo_g2_2_0_,
+        grupo1_.codigo as codigo1_0_1_,
+        grupo1_.nome as nome2_0_1_ 
+    from
+        usuario_grupo grupos0_ 
+    inner join
+        grupo grupo1_ 
+            on grupos0_.codigo_grupo=grupo1_.codigo 
+    where
+        grupos0_.codigo_usuario=?
+
+48. Mas o Usuario de Codigo 2, ainda nao, porque ainda nao passaram os 2 minutos.
+
+49. Daqui, sei la, alguns segundinhos, vai passar os 2 minutos, e, ai, a Entidade vai sair do Cache.
+
+50. Beleza? Entao, oh, timeToIdleSeconds, ou seja, nao ficou consultando, em 60 segundos, sai do Cache.
+
+51. timeToLiveSeconds, ou seja, esta consultando toda hora, em 120 segundos, vai sair do Cache,
+
+	Hibernate: 
+    select
+        grupo0_.codigo as codigo1_0_0_,
+        grupo0_.nome as nome2_0_0_ 
+    from
+        grupo grupo0_ 
+    where
+        grupo0_.codigo=?
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        usuario0_.status as status3_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+Hibernate: 
+    select
+        grupos0_.codigo_usuario as codigo_u1_1_0_,
+        grupos0_.codigo_grupo as codigo_g2_2_0_,
+        grupo1_.codigo as codigo1_0_1_,
+        grupo1_.nome as nome2_0_1_ 
+    from
+        usuario_grupo grupos0_ 
+    inner join
+        grupo grupo1_ 
+            on grupos0_.codigo_grupo=grupo1_.codigo 
+    where
+        grupos0_.codigo_usuario=?
+
+52. Ele tirou aquele Grupo, la, depois, um Grupo saiu, depois, ele voltou. Agora, sim, oh, passaram os 2 minutos, agora, ele nao vai mais no Banco, buscar aquela Entidade.
+
+53. Beleza? Entao, essas propriedades,
+
+<ehcache>
+    <diskStore path="" />
+    <defaultCache
+        maxElementsInMemory="1000"
+        eternal="false"
+        timeToIdleSeconds="60"
+        >>> timeToLiveSeconds="120"
+        overflowToDisk="true"
+        maxElementsOnDisk="100000"
+        diskExpiryThreadIntervalSeconds="120"
+        memoryStoreEvictionPolicy="LRU" />
+</ehcache>
+
+, sao muito importantes, ai, na questao do Cache. Por que que elas sao muito importantes?
+
+54. Porque, as vezes, voce pode ter outro lugar atualizando o Banco.
+
+55. E, dependendo do que esta ali, do que esta no Cache, voce precisa que ele vai no Banco de novo, voce nao pode deixar para sempre no Cache. Normalmente, coisas que podem mudar de vez em quando, ali, voce nao deixa no Cache para sempre, nao eh?
+
+56. Entao, o que que eu vou fazer?
+
+57. Eu vou no Banco alterar, na mao, a Entidade. Vamos pegar, aqui, o Usuario de Codigo 1, por exemplo, e vou remover, por exemplo, o VENDEDOR, aqui em Grupo, deixar ele so como Administrador.
+
+58. Okay? Entao, vamos la. Vamos apagar aqui, do Usuario_Grupo, codigo_usuario igual a 1, e vou apagar o codigo_grupo 2,
+
+delete from usuario_grupo
+    where codigo_usuario = 1
+      and codigo_grupo = 2
+
+59. Okay? Vamos mandar executar essa Query. Ele executou, se a gente fizer o select, aqui, 
+
+select * from usuario_grupo
+    where codigo_usuario = 1
+
+, o Usuario 1 so tem o Grupo 1, ou seja, eh so Administrador.
+
+60. Beleza?
+
+61. Vamos vir, aqui, deixa eu limpar esse Log no Console, deixa eu voltar, aqui, na tela de Pesquisa de Usuario, e eu vou pesquisar o Usuario de Codigo 1, de novo. A gente vai ver que o Select de Grupos vai aparecer, aqui, no Log do Console e vamos ver o que que vai acontecer, aqui, na Tela.
+
+62. Oh, na Tela de Pesquisa de Usuario, continua aparecendo os 2 Grupos, e fez o select,
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        usuario0_.status as status3_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+Hibernate: 
+    select
+        grupos0_.codigo_usuario as codigo_u1_1_0_,
+        grupos0_.codigo_grupo as codigo_g2_2_0_,
+        grupo1_.codigo as codigo1_0_1_,
+        grupo1_.nome as nome2_0_1_ 
+    from
+        usuario_grupo grupos0_ 
+    inner join
+        grupo grupo1_ 
+            on grupos0_.codigo_grupo=grupo1_.codigo 
+    where
+        grupos0_.codigo_usuario=?
+
+63. Ta vendo? Continua os 2 Grupos e fez o SELECT.
+
+64. Por que?
+
+65. Bom, ai, eu tambem imagino que eh um problema, imagino que eh um Bug que existe, ai, nao sei se eh no Tomcat, onde eh, se eh no Hibernate, mas, quando eu deixo a configuracao de conexao no persistence.xml, aqui, ele nao funciona, ele nao atualiza. Se eu for la e atualizar o Banco direto, nao da certo, nao funciona.
+
+66. Entao, o que que a gente vai fazer, aqui?
+
+67. Eu ja vou colocar esse cara, num DataSource,
+
+		<-- property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/gerenciador_acesso" />
+			<property name="javax.persistence.jdbc.user" value="root" />
+			<property name="javax.persistence.jdbc.password" value="admin" />
+			<property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver" /--
+
+, que eh a forma correta, mesmo, de se utilizar, nao eh?
+
+68. Se for colocar em Producao, provavelmente, voce vai criar um DataSource, nao eh?
+
+69. Entao, vamos la. 
+
+70. O que que a gente precisa fazer para criar um DataSource?
+
+71. Bom, primeiro, eu comentei essa partezinha, aqui,
+
+		<-- property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/gerenciador_acesso" />
+			<property name="javax.persistence.jdbc.user" value="root" />
+			<property name="javax.persistence.jdbc.password" value="admin" />
+			<property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver" /--
+
+, ta okay?, no persistence.xml, eu vou colocar algumas coisas aqui. Mas, antes, vamos abrir, aqui, em src/main/webapp/META-INF/context.xml, e nos vamos colocar, aqui, as informacoes de conexao com o Banco, da seguinte forma,
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Context>
+
+    <Resource name="jdbc/GerenciadorAcessoDB" auth="Container" type="javax.sql.DataSource"
+                maxTotal="100" maxIdle="30" maxWaitMillis="10000"
+                username="root" password="admin" driverClassName="com.mysql.jdbc.Driver"
+                url="jdbc:mysql://localhost:3306/gerenciador_acesso" />
+
+</Context>
+
+72. A gente coloca, aqui, o Resource, o nome JNDI desse Resource, que a gente vai acessar,
+
+    <Resource >>> name="jdbc/GerenciadorAcessoDB" auth="Container" type="javax.sql.DataSource"
+                maxTotal="100" maxIdle="30" maxWaitMillis="10000"
+                username="root" password="admin" driverClassName="com.mysql.jdbc.Driver"
+                url="jdbc:mysql://localhost:3306/gerenciador_acesso" />
+
+, auth=Container, type="javax.sql.DataSource", numero total de conexoes, maxTotal=100, pode ficar, no maximo, Idle, por 30 segundos, ele vai esperar, ai, 10000 milissegundos para uma nova conexao, maxWaitMillis="10000", username, password, qual que eh a classe do driver, e a URL de conexao.
+
+73. Okay?
+
+74. Bom, como ele precisa desse Driver, aqui, driverClassName="com.mysql.jdbc.Driver", nao eh?, eu estou colocando essa informacao para o Tomcat, nao eh?, o Tomcat que vai gerenciar, agora, a conexao, nao eh mais a minha aplicacao, eu preciso de informar para ela a lib do Tomcat, eu preciso de copiar a lib do MySQL la para dentro do Tomcat.
+
+75. Entao, deixa eu ver, aqui, onde ela esta, esta aqui, oh, \.m2\repository\mysql\mysql-connector-java\5.1.25\mysql-connector-java-5.1.25.jar, eu vou copiar esse cara para a pasta \apache-tomcat-9.0.14\lib, aqui, dentro da pasta tomcat-x.x\lib
+
+76. Eh so pegar e copiar ele diretao na pasta lib.
+
+77. Okay. O que mais que eu preciso fazer?
+
+78. Eu vou precisar, agora, colocar, no meu web.xml, eu vou colocar logo, aqui, abaixo de <display-name />, o seguinte. Eu preciso colocar, aqui, um Resource Ref, uma referencia a esse Recurso, para que eu consiga, em persistence.xml, enxergar esse nome, aqui, jdbc/GerenciadorAcessoDB, 
+
+        <resource-ref>
+            <res-ref-name>jdbc/GerenciadorAcessoDB</res-ref-name>
+            <res-type>javax.sql.DataSource</res-type>
+            <res-auto>Container</res-auto>
+        </resource-ref>
+
+, que eh o nome que eu coloquei, aqui, em src/main/webapp/META-INF/context.xml, do meu nome do DataSource,
+
+	<Resource name=" >>> jdbc/GerenciadorAcessoDB" auth="Container" type="javax.sql.DataSource"
+			maxTotal="100" maxIdle="30" maxWaitMillis="10000"
+			username="root" password="admin" driverClassName="com.mysql.jdbc.Driver"
+            url="jdbc:mysql://localhost:3306/gerenciador_acesso" />
+            
+79. Okay? Entao, no persistence.xml, aqui, agora, eu vou colocar da seguinte forma,
+
+        <persistence-unit name="gerenciadorAcessoPU" transaction-type="RESOURCE_LOCAL">
+            <non-jta-data-source>java:comp/env/jdbc/GerenciadorAcessoDB</non-jta-data-source>
+            ...
+            <properties>
+                ...
+            </properties>
+        </persistence-unit>
+
+, oh, fora do <properties />, ta vendo?, aqui em cima.
+
+80. <non-jta-data-source />, porque nao eh JTA, a gente vai ver JTA quando a gente for ver Infinitspan, eu vou configurar ele como JTA, okay?
+
+81. java:comp/env/jdbc/GerenciadorAcessoDB, eh o nome, aqui, la, entao, do meu DataSource, eh esse cara, aqui,
+
+    <Resource >>> name="jdbc/GerenciadorAcessoDB" auth="Container" type="javax.sql.DataSource"
+                maxTotal="100" maxIdle="30" maxWaitMillis="10000"
+                username="root" password="admin" driverClassName="com.mysql.jdbc.Driver"
+                url="jdbc:mysql://localhost:3306/gerenciador_acesso" />
+
+
+82. Beleza? Mas eu preciso colocar esse java:comp/env, antes.
+
+83. Okay.
+
+84. Ah, tah, como eu ja coloquei, la, do MySQL, la, eu posso tirar ela daqui, do pom.xml,
+
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>5.1.25</version>
+            <scope>compile</scope>
+        </dependency>
+
+, nao vou precisar dela, aqui, mais, porque ela ja esta no Tomcat.
+
+85. Eh isso daqui.
+
+86. Vamos iniciar o Tomcat e acessar a Pagina de Pesquisa, http://localhost:8080/gerenciador-acesso/PesquisaUsuario.xhtml. Nos vamos ver que a gente vai ter um pequeno probleminha, aqui.
+
+87. Oh, ja deu um erro, aqui,
+
+javax.naming.NameNotFoundException: Name [java:comp/env/jdbc/GerenciadorAcessoDB] is not bound in this Context. Unable to find [java:comp].
+
+, ele esta falando que ele nao consegue dar Bound nesse contexto, ou seja, nesse nome, java:comp. Mas por que?
+
+88. Sera que eh porque eu configurei errado, ali, o DataSource?
+
+89. Nao. Isso eh um Bug dessa versao do Hibernate. Deixa eu te mostrar, aqui, oh. Entao, veja bem, em https://hibernate.atlassian.net/browse/HHH-8818, aqui, na versao ele fala, aqui, oh, existe um Bug, que ele nao consegue mais encontrar o DataSource, oh, via JNDI, okay?
+
+90. Entao, existe esse Bug, aqui, ja, registrado no Hibernate. E eles corrigiram, oh, na versao 4.3.6, e a partir da 5.0.0.
+
+91. Entao, a versao < 4.3.6, nao consegue encontrar mais, mas, >= 4.3.6 consegue, eles corrigiram nessa aqui.
+
+92. Entao, por isso que eu voltei, la, para o 4.3.5.Final, 
+
+		<-- Núcleo do Hibernate --
+		<dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-core</artifactId>
+                <version>4.3.5.Final</version>
+                <scope>compile</scope>
+            </dependency>
+    
+            <-- Implementação de EntityManager da JPA --
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-entitymanager</artifactId>
+                <version>4.3.5.Final</version>
+                <scope>compile</scope>
+            </dependency>
+
+            <-- Ehcache ->
+            <dependency>
+                <groupId>org.hibernate</groupId>
+                <artifactId>hibernate-ehcache</artifactId>
+                <version>4.3.5.Final</version>
+                <scope>compile</scope>
+            </dependency>            
+
+93. Entao, eh por isso que eu voltei, la, para o 4.3.5.Final, que eu descobri, isso daqui, fazendo teste deste projeto, okay? Vou colocar, aqui, tudo, 4.3.6.Final, que a gente ja resolve esse problema. Voce vai ver que, agora, oh, so troquei a versao, repara que eu nao mexi em nada de configuracao diferente do DataSource.
+
+94. Vamos so recarregar a Pagina de Pesquisa, ele vai recarregar, de novo, o Hibernate. Agora, ele funcionou.
+
+95. Ta vendo? Entao, a versao 4.3.5 tem um problema, a 4.3.6 resolveu.
+
+96. Okay. Ah, eu estava fazendo isso, daqui, para te mostrar, justamente, um probleminha que acontece quando a gente atualiza direto no Banco.
+
+97. Entao, oh, ja esta no Cache, ou seja, eu pesquisei o Usuario pelo Codigo 1 e ja esta no Cache.
+
+98. Se eu for la apagar, no Workbench,
+
+delete from usuario_grupo
+    where codigo_usuario = 1
+      and codigo_grupo = 2
+
+, o Usuario de Codigo 1, agora, so participa de Um Grupo, mas a minha Entidade esta no Cache.
+
+99. Entao, vai continuar retornando 2 Grupos, na Tela de Pesquisa.
+
+100. Mas, se eu esperar, aqui, 1 minuto, para ela sair do Cache, ele vai fazer a pesquisa, de novo, no Banco, e vai atualizar.
+
+101. Beleza?
+
+102. Entao, enquanto a gente espera esse 1 minuto, ai, nao eh?, vamos so falar para voce. Entao, trocar uma ideia, ai.
+
+103. O que colocar no Cache, essas politicas de expirar o Cache, isso depende muito de cada Projeto. Nao existe uma Regra assim, coloque isso no Cache, que vai ficar bom. Nao, voce tem que analisar o seu Projeto, cuidadosamente, pensar nesses tempos de expirar, quanto tempo que vai ficar um objeto no Cache, o tamanho que esse cache vai ocupar, nao eh?, da memoria, porque, agora, ela esta na memoria RAM do seu Sistema, nao eh?
+
+104. Entao, voce tem que pensar tudo, nisso dai, nao eh so mandando o Cache em tudo, que nao eh bem por ai, nao eh? A gente ja viu tambem que, quando a gente atualiza uma Entidade que esta envolvida com Cache, nao eh?, aquele Cache eh expirado, nao eh?, e, ai, ele vai buscar novamente no Banco.
+
+105. Mas, mesmo assim, eh muito importante voce pensar nos detalhes, ai, do seu Projeto.
+
+106. Beleza? 
+
+107. Bom, eu acho que ja passou 1 Minuto, eu vou fazer a Pesquisa. Se nao passou, eu dou uma pausa, aqui, e volto agorinha.
+
+108. Vamos ver. Oh, passou 1 Minuto, ele fez, de novo, a Consulta,
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_1_0_,
+        usuario0_.nome as nome2_1_0_,
+        usuario0_.status as status3_1_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+Hibernate: 
+    select
+        grupos0_.codigo_usuario as codigo_u1_1_0_,
+        grupos0_.codigo_grupo as codigo_g2_2_0_,
+        grupo1_.codigo as codigo1_0_1_,
+        grupo1_.nome as nome2_0_1_ 
+    from
+        usuario_grupo grupos0_ 
+    inner join
+        grupo grupo1_ 
+            on grupos0_.codigo_grupo=grupo1_.codigo 
+    where
+        grupos0_.codigo_usuario=?
+
+, no Banco, e, agora, ele trouxe ai, o Grupo correto, nao eh? Eu fui la no Banco e alterei. Ele expirou do Cache e, agora, ele conseguiu ir no Banco, de novo, voltar e fazer a Consulta e atualizar, aqui, para a gente, na Tela de Pesquisa de Usuarios.
+
+109. Beleza? Entao, fique atento, ai, a esses probleminhas que eu mostrei.
+
+110. Fim da     Aula 14.006. Cache com Ehcache.
+
+
+
+-->

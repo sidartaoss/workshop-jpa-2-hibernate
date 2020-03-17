@@ -1,0 +1,405 @@
+<!--
+
+    Aula 10.004. Colecoes de Tipos Basicos
+
+1. 
+
+public class ExemploTiposBasicos {
+
+    public static void main(String[] args) {
+
+        EntityManager em = JPAUtil.createEntityManager();
+
+
+
+
+        em.close();
+    }
+}
+
+2. Bom, eu modifiquei aquele projeto, la, dos mais-exemplos, para explicar, agora, as colecoes dos tipos basicos.
+
+3. Bom, aqui, eu modifiquei as classes, aqui, entao, entao, eh so voce pegar la no GitHub, o que voce quiser, okay?
+
+@Entity
+@Table(name = "proprietario")
+public class Proprietario {
+
+    private Long codigo;
+    private String nome;
+    private List<String> telefones = new ArrayList<>();
+
+    @Id
+    @GeneratedValue
+    public Long getCodigo() {
+
+    }
+
+
+}
+
+4. Bom, e, ai, eu apaguei, ate, as tabelas do banco de dados, la, para a gente nao ter problema.
+
+5. Entao, veja bem. Agora, eu estou criando, aqui, oh, uma tabela Proprietario, okay? Tem, la, codigo, nome, e, olha so, o que que eu quero fazer, uma Lista de telefones, do tipo String,
+
+    private List<String> telefones = new ArrayList<>();
+
+6. Como assim?
+
+7. Vamos la. As vezes, tem situacoes que voce quer fazer, voce quer separar a tabela igual aqui, Proprietario, ele pode ter, la, varios telefones, okay?
+
+8. So que voce quer separar e so que voce nao quer fazer o Join completo, la, de uma Tabela, la, fazer o Join, relacionamento, nao.
+
+9. Voce quer so armazenar separado, para ficar uma Colecao em uma tabela separada, mas voce nao quer fazer todo aquele Join, nao eh? Voce nao quer nem criar uma Entidade para aquela tabela, la, que vai armazenar os telefones. Por que?
+
+10. Porque ela so vai existir por conta de Proprietario, voce quer separar. Ou, entao, eh um Sistema que ja esta separado, eh um sistema legado, la, que ja esta separado dessa forma, e voce nao precisa criar, la, uma Entidade, mapear, la, uma Entidade @Table para Telefone.
+
+11. Entao, vamos la, como eh que a gente faria isso?
+
+12. Entao, colocamos, aqui, uma Lista de Strings, que vao ser os Telefones desse Proprietario,
+
+@Entity
+@Table(name = "proprietario")
+public class Proprietario {
+
+    ...
+    private List<String> telefones = new ArrayList<>();
+
+    ...
+}
+
+13. E, ai, vamos la, a gente vai comecar a fazer esse mapeamento, aqui, agora, e a gente vai ver como eh que vai ser essa tabela no banco de dados.
+
+14. Bom, como essa eh uma colecao de alguns elementos,
+
+@Entity
+@Table(name = "proprietario")
+public class Proprietario {
+
+    ...
+    private List<String> telefones = new ArrayList<>();
+
+    ...
+
+    public List<String> getTelefones() {
+        return telefones;
+    }
+
+    public void setTelefones(List<String> telefones) {
+        this.telefones = telefones;    
+    }
+
+
+}
+
+, a gente vai anotar ela como @ElementCollection, do pacote javax.persistence.
+
+15. Okay? E qual que eh a tabela que armazena essa colecao? proprietario_telefone,
+
+16. @CollectionTable(name = "proprietario_telefone"),
+
+@Entity
+@Table(name = "proprietario") 
+public class ProprietarioColecoesTiposBasicos {
+
+    private List<String> telefones = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "proprietario_telefones")
+    public List<String> getTelefones() {
+        return telefones;
+    }
+
+    public void setTelefones(List<String> telefones) {
+        this.telefones = telefones;    
+    }
+}
+
+, entao, estao todos la os telefones desse Proprietario, algo desse tipo.
+
+17. Okay? Bom, vamos colocar qual eh a coluna que vai fazer o Join aqui, com essa tabela proprietario, ou seja, onde que vai ser, qual eh a coluna, na tabela proprietario_telefones, que vai referenciar, aqui, a tabela proprietario? Entao, nos vamos colocar, aqui, o @JoinColumn(), e vou dar o nome para ela para Codigo do Proprietario, 
+
+    ...
+
+    @ElementCollection
+    @CollectionTable(name = "proprietario_telefones",
+        joinColumns = @JoinColumn(name = "cod_proprietario")
+    )
+
+18. E qual que eh a coluna, la, que vai armazenar o telefone?
+
+19. Vamos colocar como Numero de Telefone,
+
+    ...
+
+    @ElementCollection
+    @CollectionTable(name = "proprietario_telefones",
+        joinColumns = @JoinColumn(name = "cod_proprietario")    
+    )
+    @Column(name = "numero_telefone")
+    public List<String> getTelefones() {
+        return telefones;
+    }
+
+    ...
+
+20. Entao, repara, oh, presta atencao nisso, daqui, oh, a tabela Proprietario nao vai adicionar nenhuma coluna nela, aqui, nao.
+
+21. Isso, aqui,
+
+    @ElementCollection
+    @CollectionTable(name = "proprietario_telefones",
+        joinColumns = @JoinColumn(name = "cod_proprietario")    
+    )
+    @Column(name = "numero_telefone")
+    public List<String> getTelefones() {
+        return telefones;
+    }
+
+    ...
+
+, eu estou fazendo o mapeamento, la na tabela Proprietario_Telefones, que eu quero que faca o relacionamento, atraves de cod_proprietario, para Proprietario, e armazene o telefone, nao eh?, os valores dessa Lista, aqui, de String,
+
+    public >>> List<String> <<< getTelefones() {
+        return telefones;
+    }
+
+, nessa coluna numero_telefone.
+
+22. E, ai, o JPA, o Hibernate ja vai saber fazer esse relacionamento, na hora da consulta, na hora da insercao.
+
+23. Bom, chega de conversa, aqui, vamos la, executar, para te mostrar as tabelas que vao ser criadas no banco de dados.
+
+24. Entao, aqui, oh, nesse ExemploTiposBasicos.java, eu vou cadastrar. Entao, vamos cadastrar, aqui.
+
+public class ExemploTiposBasicos {
+
+    public static void main(String[] args) {
+        EntityManager em = JPAUtil.createEntityManager();
+
+        em.getTransaction().begin();
+
+        ProprietarioColecoesTiposBasicos proprietario = new ProprietarioColecoesTiposBasicos();
+
+        proprietario.setNome("Joao");
+        proprietario.getTelefones().add("(34) 1234-5678");
+        proprietario.getTelefones().add("(11) 9876-5432");
+        
+        
+        em.persist(proprietario);
+        em.getTransaction().commit();
+
+        em.close();
+    }
+
+}
+
+25. Bom, como eu estava te dizendo, aqui, oh, nao tem nenhuma tabela, aqui, no banco de dados mais_exemplos.
+
+26. Entao, vamos la. Eu vou executar esse cara, aqui. Oh, ele nao encontrou a tabela, oh, proprietario_telefones, criou, 
+
+Hibernate: 
+    select
+        next_val as id_val 
+    from
+        hibernate_sequence for update
+            
+Hibernate: 
+    update
+        hibernate_sequence 
+    set
+        next_val= ? 
+    where
+        next_val=?
+Hibernate: 
+    insert 
+    into
+        proprietario
+        (nome, codigo) 
+    values
+        (?, ?)
+Hibernate: 
+    insert 
+    into
+        proprietario_telefones
+        (cod_proprietario, telefones) 
+    values
+        (?, ?)
+Hibernate: 
+    insert 
+    into
+        proprietario_telefones
+        (cod_proprietario, telefones) 
+    values
+        (?, ?)
+
+, e, ai, olha so, ele inseriu em proprietario,
+
+Hibernate: 
+    insert 
+    into
+        proprietario
+        (nome, codigo) 
+    values
+        (?, ?)
+
+, ele inseriu em proprietario_telefones, oh, duas vezes,
+
+Hibernate: 
+    insert 
+    into
+        proprietario_telefones
+        (cod_proprietario, telefones) 
+    values
+        (?, ?)
+Hibernate: 
+    insert 
+    into
+        proprietario_telefones
+        (cod_proprietario, telefones) 
+    values
+        (?, ?)
+
+27. Entao, vamos, la, fazer essa Consulta, em proprietario,
+
+select * from proprietario
+
+# codigo, nome
+1, Joao
+
+
+28. Olha la, codigo 1, nome Joao.
+
+29. E vamos fazer o select em proprietario_telefones,
+
+select * from proprietario_telefones
+
+# cod_proprietario, telefones
+1, (34) 1234-5678
+1, (11) 9876-5432
+
+30. Olha la, cod_proprietario 1 e numero_telefone, os numeros que eu cadastrei la.
+
+31. Entao, oh, repara, mais uma vez, aqui, deixa eu te mostrar, novamente, que eu anoto como @ElementCollection,
+
+    >>> @ElementCollection <<<
+    @CollectionTable(name = "proprietario_telefones",
+        joinColumns = @JoinColumn(name = "cod_proprietario")
+    )
+    @Column(name = "numero_telefone")
+    public List<String> getTelefones() {
+        return telefones;    
+    }
+
+, falo o nome da tabela, que vai ter la, 
+
+    @ElementCollection
+    >>> @CollectionTable(name = "proprietario_telefones", <<<
+        joinColumns = @JoinColumn(name = "cod_proprietario")
+    )
+    @Column(name = "numero_telefone")
+    public List<String> getTelefones() {
+        return telefones;    
+    }
+
+, e falo qual que eh a coluna que relaciona para essa tabela proprietario,
+
+    @ElementCollection
+    @CollectionTable(name = "proprietario_telefones",
+        >>> joinColumns = @JoinColumn(name = "cod_proprietario") <<<
+    )
+    @Column(name = "numero_telefone")
+    public List<String> getTelefones() {
+        return telefones;    
+    }
+
+32. E qual eh o nome da coluna que eu quero armazenar os telefones, 
+
+    @ElementCollection
+    @CollectionTable(name = "proprietario_telefones",
+        joinColumns = @JoinColumn(name = "cod_proprietario")
+    )
+    >>> @Column(name = "numero_telefone") <<<
+    public List<String> getTelefones() {
+        return telefones;    
+    }
+
+, ou seja, cada posicao nessa Lista de String's, aqui,
+
+    @ElementCollection
+    @CollectionTable(name = "proprietario_telefones",
+        joinColumns = @JoinColumn(name = "cod_proprietario")
+    )
+    @Column(name = "numero_telefone")
+    public >>> List<String> <<< getTelefones() {
+        return telefones;    
+    }
+
+33. Okay?
+
+34. Bom, e numa Consulta? Como eh que funciona uma Consulta?
+
+35. Da mesma forma. 
+
+36. Deixa eu duplicar essa classe, aqui, ConsultaTiposBasicos. 
+
+37. Entao, vai ser,
+
+    EntityManager em = JPAUtil.createEntityManager();
+
+    ProprietarioColecoesTiposBasicos proprietario = em.find(ProprietarioColecoesTiposBasicos.class, 1L);
+    
+    System.out.println("Nome: " + proprietario.getNome());
+
+    for (String telefone: proprietario.getTelefones()) {
+        System.out.println("Telefone: " + telefone);
+    }
+
+
+    em.close();
+
+38. Vamos ver como eh que ele vai fazer esse carinha?
+
+39. Retornou,
+
+Hibernate: 
+    select
+        proprietar0_.codigo as codigo1_0_0_,
+        proprietar0_.nome as nome2_0_0_ 
+    from
+        proprietario proprietar0_ 
+    where
+        proprietar0_.codigo=?
+Nome: Joao
+Hibernate: 
+    select
+        telefones0_.cod_proprietario as cod_prop1_1_0_,
+        telefones0_.numero_telefone as numero_t2_1_0_ 
+    from
+        proprietario_telefones telefones0_ 
+    where
+        telefones0_.cod_proprietario=?
+Telefone: (34) 1234-5678
+Telefone: (11) 9876-5432
+
+40. Olha la, fez o SELECT do proprietario, 
+
+Hibernate: 
+    select
+        proprietar0_.codigo as codigo1_0_0_,
+        proprietar0_.nome as nome2_0_0_ 
+    from
+        proprietario proprietar0_ 
+    where
+        proprietar0_.codigo=?
+Nome: Joao
+
+, mostrou, la, o nome 'Joao', e, depois, ele fez o SELECT, la, em proprietario_telefones, usando o Codigo do Proprietario, e trouxe todos os telefones.
+
+41. Beleza? Entao, essa eh uma forma, entao, de voce separar em duas tabelas. Mas, voce nao quer, como eu disse, criar um mapeamento, aqui, para proprietario_telefones.
+
+42. Okay?
+
+43. Fim da     Aula 10.004. Colecoes de Tipos Basicos.
+
+-->

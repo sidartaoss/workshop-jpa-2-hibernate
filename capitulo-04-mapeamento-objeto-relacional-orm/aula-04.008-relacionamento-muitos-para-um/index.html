@@ -1,0 +1,415 @@
+<!-- 
+
+Aula 04.008. Relacionamento Muitos-Para-Um
+
+1. O relacionamento Muitos Para Um, nos vamos trabalhar nessas Entidades, aqui, entao, ModeloCarro e Fabricante. Bom, se a gente olhar aqui, ModeloCarro tem 1 Fabricante, okay?
+
+2. Por exemplo, eu estou cadastrando, aqui, um Civic, um Honda Civic. Entao, o Fabricante eh o Honda, e o Modelo daquele carro eh o Civic.
+
+3. Da Chevrolet, tem o Onix, entao, o Corsa, sei la, entao, a gente cadastrou o Modelo do Carro, aqui, entao, o Corsa tem 1 Fabricante so, que eh a Chevrolet.
+
+4. Mas, 1 Fabricante tem varios Modelos de Carro.
+
+5. A Chevrolet, entao, tem varios Modelos de Carro. A Honda tem outros varios Modelos de Carros, aqui, okay?
+
+6. Entao, quando a gente fala no relacionamento Muitos Para Um, olha so, muitos Modelos de Carros tem Um Fabricante. Mas, Um Fabricante tem Muitos Modelos de Carro.
+
+7. A gente vai ver, depois, o sentido contrario, que eh um relacionamento Um Para Muitos.
+
+8. Mas, nesse sentido que nos vamos ver, agora, eh de Muitos, de Muitos Modelos de Carro Para Um Fabricante.
+
+9. Bom, so de voce ler assim, Muitos Modelos de Carro para Um Fabricante, entao, em cada Modelo de Carro, eu vou ter Um Fabricante.
+
+10. Entao, quando a gente for representar isso daqui no nosso codigo, olha la, dentro do pacote modelo, eu criei, aqui, a Entidade ModeloCarro,
+
+package com.algaworks.curso.jpa2.modelo;
+
+@Entity
+public class ModeloCarro {
+
+}
+
+11. Defini, la, que ele tem um codigo, uma descricao, ou seja, a descricao do modelo do carro, e o fabricante,
+
+@Entity
+public class ModeloCarro {
+
+	private Long codigo;
+	private String descricao;
+    private Fabricante fabricante;
+    
+}
+
+12. O que que eh isso aqui, Normandes? Eh um objeto, o que que eh isso?
+
+@Entity
+public class ModeloCarro {
+
+	private Long codigo;
+	private String descricao;
+    >>> private Fabricante fabricante; <<<
+    
+13. Como a gente esta trabalhando no Java, eu quero ter o objeto aqui. Entao, eu falo, 'O Modelo de Carro tem um Fabricante', entao, eu coloco, aqui, o fabricante, mesmo, a Entidade Fabricante, que a gente ja mapeou la atras, que a gente ja fez o primeiro cadastro.
+
+14. E, ai, deixa o JPA se virar para la e identificar, porque, isso daqui,
+
+@Entity
+public class ModeloCarro {
+
+	private Long codigo;
+	private String descricao;
+    >>> private Fabricante fabricante; <<<
+
+, no banco de dados, nao vai ter um objeto Fabricante. Voce sabe que, no Banco de Dados, eu vou ter uma Chave Estrangeira apontando para Um Fabricante.
+
+15. Certo? Entao, se eu vou ter uma chave estrangeira apontando para Um Fabricante, eu, simplesmente, mapeio e coloco, aqui, oh, o Fabricante, a Entidade Fabricante,
+
+@Entity
+public class ModeloCarro {
+
+	private Long codigo;
+	private String descricao;
+    >>> private Fabricante fabricante; <<<
+
+, e deixo ele se virar.
+
+16. Mapeei o ID, a descricao, e como eh que eu faco com o fabricante?
+
+17. Coloco, oh, o Getter e o Setter do fabricante, do mesmo jeito, e, ai, eu coloco, aqui, uma anotacao @ManyToOne.
+
+18. Entao, voce sempre parte, entao da classe em que eu estou, eu tenho Muitos Modelos de Carro para apenas Um Fabricante.
+
+19. Entao, voce coloca a anotacao @ManyToOne.
+
+20. Essa anotacao tem um monte de argumentos que a gente consegue colocar. Nos vamos ver esses argumentos a medida que a gente for trabalhando.
+
+21. Okay? Inclusive, a gente consegue trocar o nome da chave que ele vai colocar, da chave estrangeira, mas, fique tranquilo que, a medida que o tempo for passando, a gente for trabalhando, avancando o curso, eu vou adicionando, ai, para voce. Okay?
+
+22. Bom, entao, aqui, vai ser o relacionamento @ManyToOne,
+
+	@ManyToOne
+	public Fabricante getFabricante() {
+		return fabricante;
+	}
+
+	public void setFabricante(Fabricante fabricante) {
+		this.fabricante = fabricante;
+	}	
+
+}
+
+23. So isso, Normandes?
+
+24. Eh, ai, tem que terminar de fazer as outras coisas, nao eh?, que eu ja deixei aqui, voce pode pegar la do GitHub.
+
+25. Entao, por exemplo, deixei, aqui, a classe ModeloCarro, aqui, a Entidade, nao tem nenhum segredo, nao eh?, a coisa nova que a gente esta vendo eh para essa Entidade, para esse Relacionamento,
+
+	@ManyToOne
+	public Fabricante getFabricante() {
+		return fabricante;
+	}
+
+	public void setFabricante(Fabricante fabricante) {
+		this.fabricante = fabricante;
+    }
+
+, a gente anotou com @ManyToOne, simples assim. Criei o DAO,
+
+package com.algaworks.curso.jpa2.dao;
+
+import javax.persistence.EntityManager;
+
+public class ModeloCarroDAO implements Serializable {
+    
+    @Inject
+    private EntityManager em;
+
+    public ModeloCarro buscarPeloCodigo(Long codigo) {
+        return this.em.find(ModeloCarro.class, codigo);
+    }
+
+    public void salvar(ModeloCarro modeloCarro) {
+        this.em.merge(modeloCarro);
+    }
+
+}
+
+, consumindo a camada, nao eh?, primeiro, a gente cria o Modelo, depois, vai para o DAO. O DAO ModeloCarro, injetei o EntityManager, tem, aqui, um buscarPeloCodigo(), que eu copiei e colei, e fui alterando, do DAO do Fabricante. Entao, ja tinha, la, o metodo buscarPeloCodigo(), eu deixei, aqui, tambem, buscarPeloCodgio(). Tem o salvar(ModeloCarro), eu ja deixei com o EntityManager.merge(), por que mesmo que eu deixei com esse merge()? Eu esqueci, voce me ajuda a lembrar? Se voce, ai, lembrou, e falou que eh por conta da atualizacao, voce esta certo. Entao, eh por conta da atualizacao. Se eu desconectei o objeto, e, ai, eu quero,..., Ah, eu fiz alguma alteracao nesse objeto, e quero que essa alteracao passe a valer, eu faco um merge(), entao, o merge() serve tanto para a gente salvar novos objetos quanto atualizar, entao, com o merge(), quando eu estiver editando algum Modelo de Carro.
+
+26. buscarTodos(), para pesquisa,
+
+    public List<Fabricante> buscarTodos() {
+		return this.em.createQuery("from Fabricante", Fabricante.class).getResultList();
+    }
+    
+, eu ja deixo pronto, ai. Para excluir o Mode de Carro, primeiro, eu vou buscar ele pelo codigo, que a gente precisa reconectar o objeto,
+
+	@Transactional
+	public void excluir(ModeloCarro modeloCarro) throws NegocioException {
+        modeloCarro = this.buscarPeloCodigo(modeloCarro.getCodigo());
+        ...
+        
+27. Depois, chamar o metodo remove() e flush() para, realmente, descarregar,
+
+@Transactional
+	public void excluir(ModeloCarro modeloCarro) throws NegocioException {
+		modeloCarro = this.buscarPeloCodigo(modeloCarro.getCodigo());
+		try {
+			this.em.remove(modeloCarro);
+            this.em.flush();
+            ...
+
+28. Coloca o @Transaction aqui para excluir, aqui, direto do DAO.
+
+29. Okay?
+
+30. O que mais que eu criei, aqui, Normandes?
+
+31. Criei, aqui, tambem, oh, no servico, o CadastroModeloCarroService.java, eu injetei o DAO, o metodo salvar() esta anotado com @Transactional, porque eu vou ter uma alteracao no banco de dados. Aqui, eu fiz a validacao da descricao do modelo do carro, e o fabricante, tem que selecionar um fabricante,
+
+		if (modeloCarro.getDescricao() == null || "".equals(modeloCarro.getDescricao().trim())) {
+			throw new NegocioException("O nome do modelo eh obrigatorio");
+		}
+		
+		if (modeloCarro.getFabricante() == null) {
+			throw new NegocioException("");
+        }
+        
+32. E, ai, eu chamo o metodo salvar(). Alem disso, tem o Bean, ai, aqui, ja entra na parte do JSF, nao eh? Entao, eu tenho o ManagedBean CadastroModeloCarroBean.java, onde eu tenho, la, o ModeloCarro, injeto o Servico, no metodo salvar(), que eh o que a gente vai ver agora, eu vou chamar o metodo salvar() do Servico, se chegou nessa linha, eu vou falar, 'Modelo de Carro salvo com sucesso!'.
+
+33. Bom, mas, aqui, a gente vai ter um probleminha na hora de executar. Voce vai ver qual vai ser o probleminha.
+
+34. Ah, so mais um detalhe, criei, aqui, a pagina, tambem, CadastroModeloCarro.xhtml, que eh uma Pagina JSF, nao eh?, nao vamos entrar em detalhes da Pagina, aqui, mas eh muito simples, eh um formulario, as mensagens de erro ou sucesso, a Toolbar, la, com o botao Salvar e o botao de Pesquisa, que nao esta linkado para lugar nenhum, ainda, porque a gente ainda nao criou, a Pesquisa, e o <panelGrid />, para a gente adicionar, la, o Codigo, que eh readOnly, o Fabricante, que eu estou buscando, la, eu ja tinha, ate, o buscarTodos(), deixa eu voltar aqui, oh, para CadastroModeloCarroBean.java, fabricantes, no metodo inicializar(), no @PostConstruct do metodo inicializar(), eu ja chamo FabricanteDAO, com o metodo buscarTodos(). Significa que ele vai mostrar um Combo para a gente, la, bonito, com todos os fabricantes cadastrados.
+
+35. E o Modelo que a Pessoa vai digitar, o modelo do carro.
+
+36. Okay?
+
+37. Bom, vamos iniciar, aqui, para eu te mostrar, e voce ja vai ver um pequeno problema acontecendo.
+
+38. O Converter do Fabricante, a gente ja falou, nao eh?, o que esse Converter faz, mas, so para lembrar, perai, deixa eu iniciar o Tomcat, que eu acho que vai ser mais facil de voce entender.
+
+39. Vamos inicializar o Tomcat, aqui, e eu ja vou abrir, aqui, a Pagina Html.
+
+40. Inicializando.
+
+41. Vamos entrar em http://localhost:8080/locadora-veiculo-web/modeloCarro/CadastroModeloCarro.xhtml.
+
+42. Oh, nao encontrou a Tabela ModeloCarro, entao, ele vai criar essa tabela ModeloCarro, vamos dar uma olhadinha la no Workbench?
+
+43. select * from modelocarro;
+
+# codigo, descricao, fabricante_codigo
+
+
+44. Se a gente der uma olhadinha, ele criou, la, um codigo, com a descricao, e, olha so, fabricante_codigo, ja criou a chave estrangeira la para Fabricante.
+
+45. Okay?
+
+46. Como eh que funciona, entao, a pagininha? Apareceu o Campo Codigo, e, aqui, vai aparecer todos os Fabricantes cadastrados, no Campo Fabricante.
+
+47. Agora, vou inspecionar o elemento Fabricante, para te mostrar que objeto que vem para ca, nao eh?, como eh que isso funciona?
+
+48. Se a gente for abrir, aqui, oh, o select que ele montou, no HTML, ele colocou, oh, 'Selecione o fabricante', e, ai, vem todas as opcoes, oh. Esse valor 1, 2, 3,... 16, aqui, nao eh porque esta sequencial, nao, nao foi uma coincidencia, nao, essa sequencia, isso aqui eh exatamente o ID, o codigo de cada um desses Fabricantes, no banco de dados,
+
+<select id="frmCadastro:fabricante_input" name="frmCadastro:fabricante_input">
+    <option value="" selected="selected">Selecione o fabricante</option>
+    <option value="1">Chevrollet</option>
+    <option value="2">Honda</option>
+    <option value="3">Fiat</option>
+    <option value="4">Mitsubishi</option>
+    <option value="5">Renault</option>
+    <option value="6">Audi</option>
+    <option value="7">BMW</option>
+    <option value="8">Citroen</option>
+    <option value="9">Ford</option>
+    <option value="10">Ferrari</option>
+    <option value="11">Jac Motors</option>
+    <option value="12">Jaguar</option>
+    <option value="13">Jeep</option>
+    <option value="14">Kia</option>
+    <option value="15">Land Rover</option>
+    <option value="16">Peugeot</option>
+</select>
+
+
+49. Entao, por que que ele mandou isso daqui?
+
+50. Por causa do Converter, nao eh?, 
+
+	@Override
+	public String getAsString(FacesContext context, UIComponent component, Object value) {
+		if (value != null) {
+			Long codigo = ((Fabricante) value).getCodigo();
+			String retorno = (codigo == null ? null : codigo.toString());
+			
+			return retorno;
+		}
+		
+		return "";
+	}
+
+, a gente esta falando de HTML, aqui, mas eh importante para voce entender a importancia do equals() aqui, porque, sem o equals la na classe Fabricante, nao vai dar certo. La, esta sem o equals(), eu tinha adicionado na aula que a gente falou sobre equals() / hashcode(), olha la, a classe Fabricante esta sem o equals() e o hashcode() implementado. Mas vamos la, quando eu vou renderizar, quando eu mando o JSF, falar 'Desenha essa caixinha, aqui, esse select, aqui, pra mim', ele chama, em FabricanteConverter, o metodo getAsString(),
+
+	@Override
+	public String getAsString(FacesContext context, UIComponent component, Object value) {
+		if (value != null) {
+			Long codigo = ((Fabricante) value).getCodigo();
+			String retorno = (codigo == null ? null : codigo.toString());
+			
+			return retorno;
+		}
+		
+		return "";
+    }
+
+51. Dai, no getAsString(), ele vai passando o objeto,
+
+	@Override
+	public String getAsString(FacesContext context, UIComponent component, >>> Object value <<<) {
+		if (value != null) {
+			Long codigo = ((Fabricante) value).getCodigo();
+			String retorno = (codigo == null ? null : codigo.toString());
+			
+			return retorno;
+		}
+		
+		return "";
+	}
+
+, nao eh?, no caso, Fabricante, faco o cast para Fabricante, pego o codigo e retorno o codigo,
+
+	@Override
+	public String getAsString(FacesContext context, UIComponent component, Object value) {
+		if (value != null) {
+			>>> Long codigo = ((Fabricante) value).getCodigo();
+			>>> String retorno = (codigo == null ? null : codigo.toString());
+			
+			>>> return retorno;
+		}
+		
+		return "";
+	}
+
+52. Entao, o codigo vai ficar armazenado la na tela.
+
+53. Quando eu submeto esse formulario, quando eu clicar, aqui, em Salvar, para submeter esse formulario, ele vai chamar o metodo getAsObject(),
+
+	@Override
+	public Object getAsObject(FacesContext context, UIComponent component, String value) {
+		Fabricante retorno = null;
+
+		if (value != null) {
+			retorno = this.fabricanteDAO.buscarPeloCodigo(new Long(value));
+		}
+
+		return retorno;
+    }
+  
+, e, nesse metodo getAsObject(), entao, ele vai passar exatamente, aquele codigo la, o valor que esta la no select.
+
+54. E eu vou verificar, se ele for diferente de null, eu vou la no DAO buscar pelo codigo, e vou dar o retorno daquele objeto, okay?
+
+55. Bom, eh isso ai. 
+
+56. Vamos, agora, isso, ele vai buscar o codigo e vai retornar o objeto para possivel comparacao, falar, 'Quem que ele retornou, qual que eh o objeto que ele esta retornando?' Ele vai comparar com aquele codigo la,
+
+	@Override
+	public Object getAsObject(FacesContext context, UIComponent component, String value) {
+		Fabricante retorno = null;
+
+		if (value != null) {
+			retorno = this.fabricanteDAO.buscarPeloCodigo(new Long(value));
+		}
+
+		return retorno;
+    }
+
+57. Olha a dica que eu estou te dando, oh, entao, vamos mais uma vez.
+
+58. Quando eu criar esse objeto,
+
+	@Override
+	public Object getAsObject(FacesContext context, UIComponent component, String value) {
+		Fabricante retorno = null;
+
+		if (value != null) {
+			retorno = this.fabricanteDAO.buscarPeloCodigo(new Long(value));
+		}
+
+		>>> return retorno; <<<
+    }
+
+, ele vai, entao, retornar o objeto e vai comparar com o codigo, na tela, 'Ah, ele submeteu o 1, o 2 ou 3?' Entao, eu pego o selecionado, por exemplo, o 2, e devolvo. E, ai, ele vai fazer essa comparacao, em cima do codigo. Entao, ele vai verificar essa Entidade, ai, eh igual a Entidade que eu acabei de buscar no Banco,
+
+	@Override
+	public String getAsString(FacesContext context, UIComponent component, Object value) {
+		if (value != null) {
+			Long codigo = ((Fabricante) value).getCodigo();
+			String retorno = (codigo == null ? null : codigo.toString());
+			
+			return retorno;
+		}
+		
+		return "";
+	}
+
+59. E, ai, se eu nao implementar o equals() e o hashCode(), no caso, o principal, aqui, eh o equals(). Se eu tentar cadastrar o Onix, olha la, vai falar, 'Erro de validacao, o valor nao eh valido', e esta destacado em vermelho o campo Fabricante.
+
+59.1. Retornou, no Console do Servidor,
+
+Hibernate: select fabricante0_.codigo as codigo1_0_0_, fabricante0_.nome as nome2_0_0_ from Fabricante fabricante0_ where fabricante0_.codigo=?
+
+	@Override
+	public Object getAsObject(FacesContext context, UIComponent component, String value) {
+		Fabricante retorno = null;
+
+		if (value != null) {
+			>>> retorno = this.fabricanteDAO.buscarPeloCodigo(new Long(value));
+		}
+
+		return retorno;
+    }
+
+60. Isso porque ele nao conseguiu comparar, simplesmente, ele nao conseguiu comparar. Esse aqui eh um erro que da para a gente descobrir no JSF, mas, dependendo do Framework, vai ficar mais complicado de voce descobrir. Entao, o que que a gente vai fazer aqui?
+
+61. A gente vai la no Fabricante e, ai, agora, sim, e, a partir das proximas Entidades que voce criar, voce ja vai aprender que voce precisa do equals() e do hashCode() implementados.
+
+62. Entao, vamos em Source / Generate hashCode() and equas()..., so pelo codigo que a gente vai validar, que eh a primary key.
+
+63. Beleza. Agora, eu sobrescrevi o equals() e o hashCode() para poder fazer comparacoes em cima da chave primaria, nao eh?, do ID da nossa Entidade.
+
+64. Bom, agora que isso funcionou, eu preciso Publicar, eu vou Reiniciar o Servidor, aqui, para essas alteracoes que eu fiz surtirem efeito, e, agora, eu vou conseguir Salvar, ja, um Modelo de Carro. Deixa eu preparar, ja, aqui, oh, no Workbench, os selects, aqui, 'select * from modelocarro', 
+
+65. Vamos carregar a pagina, aqui, novamente,
+
+http://localhost:8080/locadora-veiculo-web/modeloCarro/CadastroModeloCarro.xhtml,
+
+, ele vai iniciar o JPA, 
+
+Hibernate: select fabricante0_.codigo as codigo1_0_, fabricante0_.nome as nome2_0_ from Fabricante fabricante0_
+
+, e eu vou limpar, aqui, o Log, so para voce ver o que que ele vai tentar fazer, oh, o log esta limpinho, para voce ver a importancia do equals() e do hashCode(), e aproveitando, ensinando, ai, o relacionamento Muitos Para Um. O fabricante Honda, sei la, o Modelo Civic, okay?, cliquei em Salvar, agora, parece magica, nao eh?, 'Modelo carro salvo com sucesso!'. Voce ve o que que eu fiz? Eu, simplesmente, implementei o equals() e o hashCode(), na Classe Fabricante, nao mexi mais nada. Entao, oh, so para voce ver, ele, realmente, faz o select inicial, la, para Fabricante, para tentar buscar aquele Fabricante,.
+
+Hibernate: select fabricante0_.codigo as codigo1_0_0_, fabricante0_.nome as nome2_0_0_ from Fabricante fabricante0_ where fabricante0_.codigo=?
+
+, com aquele codigo no banco de dados.
+
+66. Depois, ele vai salvar, ele vai fazer um outro Select, 
+
+Hibernate: select fabricante0_.codigo as codigo1_0_0_, fabricante0_.nome as nome2_0_0_ from Fabricante fabricante0_ where fabricante0_.codigo=?
+
+, de Fabricante, e inserir no Banco de dados,
+
+Hibernate: insert into ModeloCarro (descricao, fabricante_codigo) values (?, ?)
+
+67. Ta okay? Bom, entao, equals() e hashCode() eh importante. O que que eu vou fazer, entao? Ja vou deixar o equals() e o hashCode() na classe ModeloCarro, porque voce sabe que voce vai precisar disso mais para frente, entao, a partir de agora, ja vou deixar sempre em cima do codigo, o equals() e o hashCode() implementados.
+
+68. Pronto. Tranquilinho? Pega o codigo-fonte, ai, da aula, no GitHub, da umas brincadas.
+
+69. Fim da Aula 04.008. Relacionamento Muitos-Para-Um.
+
+-->
+
+
+

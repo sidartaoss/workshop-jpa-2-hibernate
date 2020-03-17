@@ -1,0 +1,216 @@
+<!--
+
+    Aula 06.002. Selecionando Uma Entidade de Uma Entidade
+
+1. Olha que legal que eh essa parte, aqui, agora. 
+
+2. Vamos la, eu vim aqui na Pagina de Pesquisa de Modelo de Carro, cadastrei 2 Modelos de Carro.
+
+3. O Cruze, que eh da Fabricante Chevrolet. E o Civic, que eh da Fabricante Honda.
+
+4. Okay? A gente vai la e cadastra o Modelo de Carro, la na Telinha de CadastroModeloCarro.xhtml, so para lembrar la, a gente seleciona o Fabricante, seleciona o Modelo, digita o Modelo, seleciona a Categoria, e Salva.
+
+5. E, ai, ao clicar em Pesquisa, a gente ve que salvou o Cruze, e o Civic, da Chevrolet e da Honda, na Pagina de Pesquisa de Modelo de Carro.
+
+6. Agora, o que que eu quero te mostrar aqui, oh?
+
+7. Vamos la, eu criei, aqui, uma classe, aqui, ConsultaFabricantesPeloModeloCarro. Como assim, Normandes, como eh que a gente vai chegar no Modelo de Carro pelo Fabricante?
+
+8. So para lembrar, aqui, se voce entrar na Entidade, la, ModeloCarro, voce vai ver que a gente tem um Relacionamento, aqui, oh, @ManyToOne, com Fabricante, certo? Entao, atraves de ModeloCarro, eu consigo chegar no Fabricante, perfeito?
+
+9. Entao, vamos voltar aqui,
+
+package com.algaworks.curso.jpa2.consultas;
+
+public class ConsultaFabricantesPeloModeloCarro {
+    
+    public static void main(String[] args) {
+        EntityManager em = JPAUtil.createEntityManager();
+
+
+
+        em.close();
+    }
+}
+
+10. Criei, aqui, o EntityManager, e eu quero fazer a Listagem do nome dos Fabricantes, como a gente tinha feito em ConsultaFabricantes.java, so que, ao inves de eu ir pelo Fabricante, eu vou vir pelo Modelo de Carro, ou seja, ModeloCarro.java.
+
+11. Okay? Da para a gente chegar la tambem.
+
+12. E a gente vai ver uns detalhezinhos disso dai. Entao, vamos la, vamos comecar com em.createQuery("", ), nos vamos usar a versao que ja faz o teste paa a gente, o primeiro vai ser uma consulta, que vai nos devolver uma String, como uma Lista,
+
+        em.createQuery("", String.class).getResultList();
+
+13. O que que a gente vai buscar aqui?
+
+14. Nos vamos buscar de ModeloCarro, por exemplo, mc, Modelo de Carro, buscar o que la dentro de Modelo de Carro?
+
+15. select mc from ModeloCarro mc
+
+16. So que, em Modelo de Carro, eu tenho fabricante, nao tem?
+
+17. Entao, eu posso escrever isso daqui, oh, 
+
+select mc.fabricante from ModeloCarro mc
+
+18. Mesmo apos, vai trazer a Entidade, nao vai?
+
+19. Oh, ModeloCarro.fabricante eh Um Fabricante.
+
+20. E dentro de Fabricante, o que que eu tenho?
+
+21. Eu tenho nome.
+
+22. Entao, eu posso colocar mc.fabricante.nome,
+
+    em.createQuery("select mc.fabricante.nome from ModeloCarro mc", String.class)
+                .getResultList();
+
+23. Nao eh possivel, Normandes, isso vai funcionar?
+
+24. Vamos ver, vamos ver o que que vai acontecer aqui.
+
+25. Isso daqui vai me devolver uma Lista de String, que sao os nomes dos Fabricantes,
+
+    List<String> nomeDosFabricantes = em.createQuery("select mc.fabricante.nome from ModeloCarro mc", String.class).getResultList();
+
+26. E o que que a gente pode fazer com isso?,
+
+        for (String nomeFabricante : nomeDosFabricantes) {
+            System.out.println("Nome: " + nomeFabricante);
+        }
+
+27. Mostrei aqui, imprimi o nome do fabricante.
+
+28. Bom, vamos executar isso daqui, ver o que que vai mostrar, aqui, no Console.
+
+29. Entao, se eu mandar executar, ConsultaFabricantesPeloModeloCarro.java, vai inicializar o Hibernate, e ele trouxe, o Chevrolet e o Honda,
+
+Hibernate: 
+    select
+        fabricante1_.nome as col_0_0_ 
+    from
+        ModeloCarro modelocarr0_ cross 
+    join
+        Fabricante fabricante1_ 
+    where
+        modelocarr0_.codigo_fabricante=fabricante1_.codigo
+Nome: Chevrolet
+Nome: Honda
+
+30. E olha so o Select que ele fez para mim,
+
+Hibernate: 
+    select
+        fabricante1_.nome as col_0_0_ 
+    from
+        ModeloCarro modelocarr0_ cross 
+    join
+        Fabricante fabricante1_ 
+    where
+        modelocarr0_.codigo_fabricante=fabricante1_.codigo
+
+31. Ou seja, eu nao coloquei where nada aqui,
+
+    em.createQuery("select mc.fabricante.nome from ModeloCarro mc >>> <<<", String.class)
+                .getResultList();
+
+32. e o from refere-se somente a ModeloCarro, eu nao coloquei no from Fabricante, nao coloquei where, aqui, para fazer o relacionamento entre ModeloCarro e Fabricante, a gente precisaria, se a gente estivesse trabalhando com SQL puro.
+
+33. Mas, olha so o select que ele gerou,
+
+    select
+        fabricante1_.nome as col_0_0_ 
+    from
+        ModeloCarro modelocarr0_ cross 
+    join
+        Fabricante fabricante1_ 
+    where
+        modelocarr0_.codigo_fabricante=fabricante1_.codigo
+
+34. Ele esta buscando o nome do fabricante, incluindo as tabelas ModeloCarro e Fabricante no from, e ja fez o where, aqui, oh, falando que o codigo_fabricante, no Modelo do Carro, eh igual ao codigo la na tabela fabricante.
+
+35. Entao, ele ja sabe fazer e traz aqui para a gente o nome dos Fabricantes.
+
+36. Ah, Normandes, entao, eu posso escolher qualquer um dos 2?
+
+37. Nao, isso daqui seria uma situacao, eu estou te mostrando uma situacao onde pode acontecer algo assim. Mas isso daqui, nao eh que tem um problema, pela caracteristica do select,
+
+    select
+        fabricante1_.nome as col_0_0_ 
+    from
+        ModeloCarro modelocarr0_ cross 
+    join
+        Fabricante fabricante1_ 
+    where
+        modelocarr0_.codigo_fabricante=fabricante1_.codigo
+
+, qual que eh? Consegue adivinhar ai?
+
+38. Aqui, trouxe os 2 mesmos nomes, 
+
+Nome: Chevrolet
+Nome: Honda
+
+, mas, se eu vier aqui, por exemplo, no CadastroModeloCarro.xhtml, e vamos cadastrar, aqui, na Honda, aqui, um Fit, por exemplo, deve ser um HATCH_COMPACTO, e Salvar.
+
+39. Vamos la na Pesquisa de Modelo de Carro, tenho 3, aqui, agora, Modelos de Carros, 2 Hondas e 1 Chevrolet.
+
+40. Se eu mandar executar novamente, aqui, o ConsultaFabricantesPeloModeloCarro.java, o que que ele vai trazer?
+
+41. 
+
+Nome: Chevrolet
+Nome: Honda
+Nome: Honda
+
+42. Por que que ele trouxe 2 Hondas?
+
+43. Justamente por conta desse Select,
+
+    select
+        fabricante1_.nome as col_0_0_ 
+    from
+        ModeloCarro modelocarr0_ cross 
+    join
+        Fabricante fabricante1_ 
+    where
+        modelocarr0_.codigo_fabricante=fabricante1_.codigo
+
+44. O nosso select esta fazendo o Select em cima de ModeloCarro e Fabricante, e ele esta fazendo relacionamento aqui,
+
+        modelocarr0_.codigo_fabricante=fabricante1_.codigo
+
+45. Entao, ele esta trazendo todos os Modelos de Carro, com seus respectivos Fabricantes.
+
+46. Se a gente tem 3 Modelos de Carro, ele vai trazer 3 linhas, naquele Select.
+
+47. Okay?
+
+48. Entao, eh uma situacao onde isso pode acontecer, nao eh?, as vezes, voce esta em uma Entidade, 'Po, mas eu estou fazendo, eu queria chegar la', beleza, as vezes a gente tem uma clausula where, aqui, 
+
+    em.createQuery("select mc.fabricante.nome from ModeloCarro mc >>> <<<", String.class)
+                .getResultList();
+
+, que a gente ainda vai ver mais detalhes, nao eh?, e, ai, a gente quer saber so o nome do Fabricante onde o Modelo do Carro eh tal.
+
+49. Ai, a gente pode chegar dessa forma,
+
+    em.createQuery(" >>> select mc.fabricante.nome from ModeloCarro mc <<< ", String.class)
+                .getResultList();
+
+, que vai resolver tambem.
+
+50. Legal isso daqui, nao eh?
+
+    em.createQuery("select >>> mc.fabricante.nome <<< from ModeloCarro mc", String.class)
+                .getResultList();
+
+, fica bem simples o seu codigo, bem facil de ler.
+
+51. JPQL ajuda bastante, nao eh nao?
+
+52. Fim da     Aula 06.002. Selecionando Uma Entidade de Uma Entidade.
+
+
+-->

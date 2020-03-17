@@ -1,0 +1,66 @@
+<!-- 
+
+    Aula 04.013. Mapeamento Um Para Um
+
+1. Voce viu o poder da propriedade "cascade" na anotacao @OneToOne. Agora, vamos ver outra alternativa, criando o DAO da Apolice de Seguro. Assim, nos iremos salvar, primeiro, a Apolice antes de salvar o Aluguel.
+
+2. Primeiro, vamos remover a propriedade "cascade" do @OneToOne, deixando como abaixo:
+
+@OneToOne
+@JoinColumn(name = "codigo_apolice_seguro")
+public ApoliceSeguro getApoliceSeguro() {
+    return apoliceSeguro;
+}
+
+3. Agora, crie o DAO ApoliceSeguroDAO.
+
+package com.algaworks.curso.jpa2.dao;
+
+import java.io.Serializable;
+
+import javax.inject.Inject;
+
+import javax.persistence.EntityManager;
+
+import com.algaworks.curso.jpa2.modelo.ApoliceSeguro;
+
+public class ApoliceSeguroDAO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    @Inject
+    private EntityManager em;
+
+    public void salvar(ApoliceSeguro apoliceSeguro) {
+        this.em.persist(apoliceSeguro);
+    }
+}
+
+4. Onde voce acharia melhor salvar a Apolice? No metodo salvar(), de CadastroAluguelService ou em AluguelDAO? Eu sei que isso pode ser complicado de decidir, mas qualquer uma das respostas estara certa, ira funcionar!
+
+5. Eu preferiria deixar no DAO, pois faz parte de como decidimos implementar o nosso mapeamento e essa eh uma operacao de banco de dados e nao faz parte das regras de negocio. Portanto, vamos editar a classe AluguelDAO.
+
+6. Primeiro, precisamos injetar a ApoliceSeguroDAO,
+
+@Inject
+private ApoliceSeguroDAO apoliceSeguroDAO;
+
+7. Depois, editar o metodo salvar(), para, antes de salvar o aluguel, persistirmos a Apolice,
+
+@Inject
+private ApoliceSeguroDAO apoliceSeguroDAO;
+
+public void salvar(Aluguel aluguel) {
+    this.apoliceSeguroDAO.persist(aluguel.apoliceSeguro);
+    this.em.merge(aluguel);
+}
+
+8. E ai, qual abordagem voce prefere? Na verdade, nao eh questao de escolha, mas, sim, de sabedoria. Vao existir situacoes em que utilizar o DAO vai ser a melhor opcao, pois voce pode querer ter mais controle de como salvar o seu objeto!
+
+9. Faca os testes e, se precisar, pegue o codigo no GitHub. Um detalhe importante, esse codigo so estara disponivel nesta aula. Para continuar com o projeto, utilizarei a propriedade cascade.
+
+10. Fim da Aula 04.013. Mapeamento Um Para Um.
+
+
+
+-->

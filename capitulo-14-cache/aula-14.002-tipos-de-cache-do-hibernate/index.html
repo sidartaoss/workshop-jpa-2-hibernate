@@ -1,0 +1,80 @@
+<!--
+    Aula 14.002. Tipos de Cache do Hibernate
+
+1. Bom, agora que a gente ja viu uma Introducao a Cache, vamos falar dos 3 tipos de sabores, ai, que a gente tem para o Cache, que o Hibernate suporta.
+
+2. Beleza? Sao 3 tipos. 
+
+3. O primeiro deles eh o Cache de Sessao ou de Primeiro Nivel, que a gente ja viu uma aula sobre isso, ai para traz, mas nao custa lembrar, nao eh? Entao, vamos lembrar o que que eh o Cache de Sessao ou o Cache de Primeiro Nivel.
+
+4. Se voce nao lembra direitinho, la, volta, la, que tem uma aula la, falando so sobre o Cache de Primeiro Nivel.
+
+5. E a ideia dele eh bem simples, mesmo, nao eh? Enquanto o EntityManager esta aberto, ou seja, a gente criou o EntityManager a partir do EntityManagerFactory, aquele objeto EntityManager esta criado, esta aberto, ali, a gente nao chamou o metodo close() nele, ainda, os objetos vao estar, ali, na Memoria,
+
+        Cache de Sessao ou Primeiro Nivel           
+                                                            oContexto de Persistencia
+                                        Memoria             |
+                                            |---------|>    |   Usuario#2
+                                                            |       
+                                                            |       Usuario#3
+                                    Entity Manager -------|>|
+                                                            |           Endereco#1
+                                                            |
+
+6. Claro, na hora em que eu fiz a Consulta do Banco de Dados, eles entraram, aqui. Quando eu fiz o persist(), quando eu fiz o merge(), nao eh?, esses objetos entraram, ali, na Memoria, e continuam ali, enquanto o EntityManager esta aberto.
+
+7. Entao, se voce, igual aqui, nesse exemplo, ai, simulei, aqui, a Memoria nesse Espaco Vermelho, vamos imaginar que a gente fez a Consulta, ai, desses Usuarios, desse Endereco, ou salvou um novo Usuario, um novo Endereco, o EntityManager, enquanto ele esta aberto, essas Entidades estao ali.
+
+8. Entao, eu precisei do Usuario, ai, de ID #2, por exemplo. Ele esta, ali, na Memoria, o EntityManager nao precisa ir no Banco buscar ele, novamente, se ele ja foi uma vez, lembrando que enquanto o EntityManager esta aberto.
+
+9. Beleza? Se ele fechou, ja era, ele vai precisar ir no Banco de dados de novo.
+
+10. Beleza? E ai que entra o Cache de Segundo Nivel.
+
+11. O Cache de Segundo Nivel, ele esta dizendo o que?
+
+12. Que as Entidades vao estar em Cache, ou Memoria, mesmo se o EntityManager for fechado.
+
+13. As vezes, eu fui la, busquei alguma Entidade, fechei o EntityManager.
+
+14. Depois, eu preciso dela de novo, como eh um novo EntityManager, ele vai precisar buscar essa Entidade de novo em algum lugar. Se a gente estiver trabalhando com Cache de Segundo Nivel, ele vai conseguir buscar isso desse Cache, que eh na Memoria.
+
+15. E, ai, eu vou te mostrar como eh que a gente faz isso nas proximas aulas.
+
+16. Beleza?
+
+17. Aqui, eh uma introducao.
+
+18. Entao, o Cache de Segundo Nivel eh isso, eh voce colocar as Entidades na Memoria, e conseguir recuperar essas Entidades, mesmo entre fechar um EntityManager, abrir um novo EntityManager, okay? Varias Requisicoes diferentes, eu conseguir recuperar essas Entidades, la, desse Cache de Segundo Nivel.
+
+19. Beleza?
+
+20. Esse eh o Segundo tipo de Cache.
+
+21. Entao, ja temos o Cache de Sessao ou de Primeiro Nivel. O Cache de Segundo Nivel. 
+
+22. E temos, tambem, o Cache de Query, de Consultas.
+
+                                    Cache de Sessao ou de Primeiro Nivel
+
+        Entidades ----------|>      Cache de Segundo Nivel
+
+        Consultas ----------|>      Cache de Query
+
+23. Okay? O que que ele faz, aqui?
+
+24. Ele faz o Cache da Consulta, do resultado daquela Consulta.
+
+25. Eh isso mesmo. Eh diferente de um Cache de Segundo Nivel. As vezes, as pessoas confundem, eu ja vi algumas pessoas confundindo, mas qual que eh a diferenca?
+
+26. Bom, olha ai, eu coloquei essas setinhas em azul para ja te mostrar a diferenca, oh. Nas Entidades, eu estou salvando a Entidade mesmo, aquele ID x esta sendo salvo no Cache.
+
+27. No caso de uma Consulta, nao. Eu posso estar fazendo um filtro por Status, eu posso estar fazendo uma Consulta de Agregacao, por exemplo, quantidade de Usuarios que tem no meu Sistema, nao eh?, eh uma Consulta diferente, nao eh uma Consulta de uma Entidade apenas, okay?
+
+28. E eu vou te mostrar isso ai, no exemplo pratico, vai ser mais facil de voce terminar de entender esses conceitos. 
+
+29. O que eu quero que voce entenda, aqui, nesta aula, eh ter esse primeiro contato, saber que existem esses 3 tipos de Cache, que a gente consegue fazer com o Hibernate, beleza? E a gente precisa aprender, agora, como usar eles, como colocar eles na pratica.
+
+30. Fim da     Aula 14.002. Tipos de Cache do Hibernate.
+
+-->

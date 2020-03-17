@@ -1,0 +1,114 @@
+<!--
+
+    Aula 08.007. Ordenacao de Resultado
+
+1. 
+
+    public void exemploOrdenacao() {
+        CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+
+
+    }
+
+2. E quando a gente quer ordenar resultados, como eh que eh?
+
+3. Muito simples, tambem.
+
+4. Tem solucao para tudo.
+
+5. A gente vai criar, la, a nossa CriteriaQuery, ja criamos o builder,
+
+    CriteriaBuilder builder = this.manager.getCriteriaQuery();
+    CriteriaQuery<Carro> criteriaQuery = builder.createQuery(Carro.class);
+
+, vamos criar o Root, aqui, em cima de Carro, usando CriteriaQuery, para a gente criar, entao, o from(), aqui, em cima de Carro.class, 
+
+        CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+        CriteriaQuery<Carro> criteriaQuery = builder.createQuery(Carro.class);
+        Root<Carro> c = criteriaQuery.from(Carro.class);
+
+6. Okay.
+
+7. Agora, a gente precisa criar a ordem, para a gente poder passar para a nossa Query.
+
+8. Como eh que a gente cria a ordem?
+
+9. A gente vai criar em cima do Objeto Order, aqui, do javax.persistence.criteria, vamos chamar, aqui, de order, e a gente vai usar, adivinha quem para criar?
+
+8. O CriteriaBuilder,
+
+            Order order = builder.
+
+9. Entao, o builder tem o desc(), para ordem decrescente, e o asc(), para ordem crescente.
+
+10. Entao, desc(), e, aqui, a gente vai fazer a ordem em cima de qual atributo?
+
+            Order order = builder.desc(c.get(""));
+
+11. Vamos fazer a ordem decrescente em cima do Valor da diaria, por exemplo,
+
+            Order order = builder.desc(c.get("valorDiaria"));
+
+12. Okay?
+
+13. Bom, criamos a ordem. Agora, a gente passa, para a nossa Query, a gente vai fazer o select() em cima de Carro,
+
+            // select c from Carro c
+            criteriaQuery.select(c);
+
+, e nos vamos, tambem, passar, no orderBy(), a nossa ordem,
+
+            Order order = builder.desc(c.get("valorDiaria"));
+
+            criteriaQuery.select(c);
+
+            criteriaQuery.orderBy(order);
+
+14. Simples assim.
+
+15. Beleza? 
+
+16. Agora, aqui, ja entra o que a gente ja esta acostumado, TypedQuery<>, em cima de Carro, eh a nossa Query, a gente usa o manager para criar a Query. Vamos mostrar, aqui, a Placa, e o Valor da diaria,
+
+            TypedQuery<Carro> query = this.manager.createQuery(criteriaQuery);
+            List<Carro> resultado = query.getResultList();
+
+            for (Carro carro : resultado) {
+                System.out.println(carro.getPlaca() + " - " + carro.getValorDiaria());
+            }
+
+18. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_,
+        carro0_.chassi as chassi2_3_,
+        carro0_.cor as cor3_3_,
+        carro0_.data_criacao as data_cri4_3_,
+        carro0_.data_modificacao as data_mod5_3_,
+        carro0_.codigo_modelo as codigo_m8_3_,
+        carro0_.placa as placa6_3_,
+        carro0_.valor_diaria as valor_di7_3_ 
+    from
+        Carro carro0_ 
+    order by
+        carro0_.valor_diaria desc
+
+BBB-8888 - 250.00
+AAA-7788 - 230.00
+YNP-5588 - 230.00
+AAA-1234 - 205.00
+FFF-1212 - 200.00
+XXX-1111 - 200.00
+ADD-8989 - 200.00
+DDD-1234 - 130.00
+AAA-9999 - 120.00
+BBB-2222 - 100.00
+
+19. A gente vai ver que o Valor da diaria vai ficar em ordem decrescente.
+
+20. Saiu em ordem decrescente pelo valor.
+
+21. Fim da     Aula 08.007. Ordenacao de Resultado. 
+
+-->

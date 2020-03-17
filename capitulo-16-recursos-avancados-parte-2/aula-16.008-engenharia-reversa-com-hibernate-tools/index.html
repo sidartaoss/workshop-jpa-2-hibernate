@@ -1,0 +1,197 @@
+<!--
+    Aula 16.008. Engenharia Reversa com Hibernate Tools
+
+1. Bom, deixa eu te falar, agora, sobre o Hibernate Tools, que sao ferramentas para a gente trabalhar com o Hibernate, okay?, que vao facilitar um pouquinho a vida para trabalhar com o Hibernate.
+
+2. Entre as opcoes que a gente tem la, uma delas eh a Engenharia Reversa, que eh gerar as Classes a partir da Tabela. Ou seja, o que a gente fez durante todo o curso, a maioria das vezes, foi criar as classes, e, depois, gerar as tabelas.
+
+3. Mas, pode ter situacoes, que, se voce tem um Sistema ja pronto, feito, sei la, em uma Linguagem qualquer, e, ai, voce vai migrar ele para Java, e, ai, voce precisa pegar aquelas tabelas que estao no banco e criar as classes, os mapeamentos.
+
+4. Nao eh? E o Hibernate Tools te auxilia nisso.
+
+5. Okay?
+
+6. Entao, vamos la. Deixa eu te mostrar como eh que a gente instala o plugin, aqui.
+
+7. Um detalhe. Eu tive que ir para o Eclipse Kepler, porque, no Luna, na ultima versao, o plugin ainda esta em Beta, e, ai, no teste que eu fiz, aqui, nao funcionou.
+
+8. Entao, eu estou no Kepler, eu vou te mostrar a gente instalando o plugin do Kepler, fazendo funcionar aqui.
+
+9. Entao, vamos la. A gente vai em Help / Eclipse Marketplace... / voce precisa estar conectado na Internet, ele vai buscar algumas coisas, oh, demora um pouquinho, dependendo da Velocidade da Internet, ai, Okay?
+
+10. Ai, trouxe as coisas.
+
+11. A gente vai pesquisar, aqui, oh, jboss tools, porque o Hibernate Tools esta dentro do JBoss Tools.
+
+12. Ai, oh, pesquisamos, tem algumas versoes, oh, para o Eclipse Helios, para o Eclipse Luna, esta a versao Beta, eu cheguei a testar isso, aqui, no Luna, mas nao funcionou, okay? Entao, voce procura, ai. Aqui, oh, JBoss Tools para o Kepler. Foi onde eu vou fazer, aqui, agora, para te mostrar.
+
+13. Dar um install. Ele vai abrir as opcoes, aqui, oh. Sao varias ferramentas que a gente tem, ai, para trabalhar.
+
+14. Eu vou mandar instalar todas. Eu nao testei so colocando o Hibernate Tools, aqui, mas, se voce quiser instalar so o Hibernate Tools, ai, ver se vai dar certo. Eu vou mandar todo mundo, aqui, mesmo.
+
+15. A gente precisa aceitar o termo de licenca. E, ai, eh so esperar ele baixar todo mundo, para copiar dentro do Eclipse e instalar.
+
+16. Ele vai te dar um Warning, ai, falando, um Warning de Seguranca. Ai, voce fala que quer continuar com a instalacao.
+
+17. Quando ele terminar de baixar e configurar tudo, ele vai falar que quer reiniciar o seu Eclipse. Voce da um Yes, ai, seleciona o Workspace, novamente, para entrar de volta no Eclipse.
+
+18. Okay, ele vai recarregar, voce reinicia o Eclipse.
+
+19. Vai aparecer uma telinha inicial, aqui. Pode fechar aquela telinha, aqui. Tem uma opcao, aqui, que voce desmarca para ela nao aparecer mais, por isso que, no meu, nao apareceu aqui.
+
+20. Okay?
+
+21. Entao, okay, esta instalado, aqui, o JBoss Tools, neste meu Eclipse.
+
+22. O que que nos vamos fazer?
+
+23. Nos vamos, primeiro, adicionar uma configuracao com o banco de dados. Entao, nos vamos vir, aqui, oh, em Window / Open Perspective / Other... / Database Development. Ai, ele veio para ca, para essa Perspectiva.
+
+24. Vamos adicionar a Conexao com o Banco de Dados, agora.
+
+25. Entao, a gente clica com o botao direito em Database Connections / New... / MySQL / em Name, vamos colocar so MySQL. O Driver nao tem, a gente vai adicionar, aqui, oh, o MySQL JDBC Driver 5.1, em Jar List, esse Jar, aqui, a gente remove ele, e adiciona um Driver do MySQL que a gente ja viu como baixar. Okay, da um Okay.
+
+26. Okay. Agora, aqui, eu vou dar um nome para esse banco. Eu vou chamar de desenvolvimento-locadora, de veiculos, so para eu saber que eh o desenvolvimento dela, porque eu vou mandar gerar as classes do Sistema de Locadora aqui.
+
+27. Vou mandar salvar a senha e vou fazer um Teste.
+
+28. Oh, deu certo.
+
+29. Okay?
+
+30. Posso dar um Finish, aqui, eu tenho a Conexao desenvolvimento-locadora, criado, aqui, na minha Maquina.
+
+31. Agora, temos que criar, primeiro, um Projetinho.
+
+32. Vou clicar, aqui, na Perspectiva Java, Bota Direito / New / Java Project, eu vou criar, aqui, um Projeto Java, que vai ser o Projeto que eu vou mandar as classes.
+
+33. Eu vou criar um Projeto Java, porque eu preciso copiar as LIB's, aqui, para uma pastinha lib e adicionar elas.
+
+34. Okay? Entao, por isso que eu estou criando um Projeto Java.
+
+35. Ai, eu vou chamar ele de model-locadora.
+
+36. Okay? Porque, ali, so vai ter o model do Locadora.
+
+37. O que que, as vezes, eu faco?
+
+38. As vezes, quando eu preciso fazer isso, nao eh?, porque nao eh sempre, so quando voce tem algum sistema que ja esta pronto, ali, que voce precisa gerar as tabelas, mas eu nao costumo ficar usando isso, ai, nao.
+
+39. Mas, as vezes, eu tenho um outro Eclipse, que eu configuro isso, e mando gerar, ali, nesse model, ai, eu copio dali, para o meu outro Eclipse, de verdade, la, o Eclipse que eu estou acostumado a trabalhar no projeto oficial.
+
+40. As vezes, eu faco isso. Mas, eh questao de gosto.
+
+41. As vezes, tem gente que gosta, "Nao, eu ja gosto de trabalhar com o JBoss Tools, eu uso mais um monte de coisa dele, me ajuda bastante".
+
+42. Bom, seleciona, ai, a versao do Java que voce vai usar, e da um Finish. O que que eu vou criar, aqui, oh?
+
+43. Eu vou criar, aqui, uma pastinha lib, que eh onde eu vou colocar as bibliotecas do Hibernate, ja vou pegar, aqui, oh, peguei o Hibernate 5.4.1, ali, existem algumas que sao obrigatorias, eu vou copiar elas para ca, na pastinha lib.
+
+44. Beleza. 
+
+45. O que que eu vou fazer agora?
+
+46. Seleciona todas essas bibliotecas, botao direito / Build Path / Add to Build Path, adiciona elas ai.
+
+47. Vou criar, aqui, tambem, em src/, um pacotezinho, eu vou chamar de com.algaworks.locadora.model.
+
+48. Vai ser, aqui, que eu vou mandar gerar as Classes.
+
+49. Eu vou criar, aqui, em src/ uma outra pastazinha, aqui, META-INF, eu vou mandar gerar alguns arquivos, aqui, dentro.
+
+50. Entao, eu estou com o Projeto pronto para jogar as classes geradas, aqui.
+
+51. Ja fiz as LIB's, ja adicionei as Referencias, aqui, (Referenced Libraries).
+
+52. Okay, vamos la em Window / Open Perspective / Other...
+
+53. Hibernate.
+
+54. Clica com o botao direito na Janela Hibernate Configurations / Add Configuration...
+
+55. Vamos la. Hibernate Version: 5.3
+
+56. Qual que eh o Projeto? model-locadora
+
+57. Qual que eh a configuracao do banco? Database connection: New MySQL
+
+58. Aquela do MySQL que a gente tinha feito.
+
+59. Qual que eh o arquivo de configuracao? Vamos criar um novo, aqui, a gente vai ensinar para ele onde que eu vou colocar. Eu vou colocar la dentro, hibernate.cfg.xml, de META-INF, oh.
+
+60. Next. O nome da Factory, eu vou chamar de sessionFactory, mesmo,
+
+    Session factory name: sessionFactory
+
+61. O Database dialeto, vamos colocar o dialeto do MySQL,
+
+    Database dialect: org.hibernate.dialect.MySQLDialect
+
+62. O Driver: com.mysql.jdbc.Driver.
+
+63. A URL de conexao,
+
+    Connecton URL: jdbc:mysql://localhost:3306/locadora
+
+64. Username: root
+
+65. Password: admin
+
+66. Dou um Finish, aqui.
+
+67. Okay. Eu acho que eh so isso, aqui, mesmo. Vou dar um Apply, aqui, e dar um Okay.
+
+68. Agora, a gente vem, aqui, oh, ta vendo que tem um botaozinho novo, aqui, do Hibernate, nos vamos vir, aqui, oh, Hibernate Code Generation Configurations... / A gente clica, aqui, em Hibernate Code Generation, vai em New launch configuration, vou nomear como model-locadora.
+
+69. Selecionamos o hibernate, em Console configuration. Qual vai ser o diretorio de saida? Vai ser em model-locadora/src/
+
+70. Marcar Reverse engineer from JDBC Connection.
+
+71. Qual eh o pacote? com.algaworks.locadora.model
+
+72. Qual eh o arquivo que ele vai criar para fazer essa Engenharia Reversa?
+
+73. A gente tem que criar um novo, tambem, em reveng.xml / Setup... / Create new...
+
+74. Tem que falar aonde que ele vai ficar. Eu vou colocar la dentro do META-INF / hibernate.reveng.xml. Da um Next.
+
+75. E, aqui, oh, com o hibernate, ali, selecionado em Console configuration, da um Refresh, aqui, oh.
+
+76. Olha so o que que vai aparecer, todas as tabelas, la, do sistema de locadora.
+
+77. Seleciona todas, da um Include..., Finish.
+
+78. Temos que vir, aqui, agora, na Guia Exporters, vamos selecionar para Usar a sintaxe do Java 5, com anotacoes EJB, e eh um codigo de Dominio,
+
+- Use Java 5 syntax
+- Generate EJB3 annotations
+- Domain code (.java)
+
+79. Da um Apply. E a gente pode mandar Rodar.
+
+80. Se tudo der certo, vai funcionar.
+
+81. Vamos ver. Rodou.
+
+82. Vamos voltar la na Perspectiva Java, abre, aqui, o pacote com.algaworks.locadora.model, olha so, ele gerou as classes, pra gente, do modelo.
+
+83. Vamos abrir, aqui, o Acessorio, por exemplo, para a gente dar uma olhada. Olha la.
+
+84. Isso, aqui, foi tudo gerado, oh, Gerado pelo Hibernate Tools.
+
+85. Okay?
+
+86. E, ai, como eu disse, voce vai usar isso em algumas situacoes, e, as vezes, eh interessante, voce fazer aquele ajuste, as vezes, voce nao gostou do nome que ele gerou alguma coisa, voce vai ajustando, da uma passada de olho, as vezes, o nome da tabela, ficou um nome, eh um nome ruim, voce vai alterando essas coisas, vai refatorando, aqui, para deixar o seu sistema com uma cara mais agradavel.
+
+87. E, ai, se fosse eu, copiaria esses arquivos para um outro Eclipse, para trabalhar no projeto, la, separado, deixaria esse cara, aqui, sozinho, na hora que eu quisesse regerar, poderia vir aqui e executar novamente.
+
+88. https://tools.jboss.org/features/hibernate.html
+
+89. Fim da     Aula 16.008. Engenharia Reversa com Hibernate Tools.
+
+
+
+
+
+
+-->

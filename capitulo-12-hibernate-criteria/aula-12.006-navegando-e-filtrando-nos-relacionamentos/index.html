@@ -1,0 +1,433 @@
+<!--
+    Aula 12.006. Navegando e Filtrando nos Relacionamentos
+
+1. Para finalizar, eu vou te mostrar mais um pouquinho dos alias(), que a gente pode criar e o ilike(), para a gente poder fazer a Consulta por Strings.
+
+2. 
+
+@Test
+public void buscarCarrosDoFabricante() {
+
+}
+
+3. E vou te mostrar, tambem, a documentacao, a API JavaDoc, para voce continuar pesquisando e criando as suas proprias consultas. Eu acho que eu ja consegui te passar a ideia, as principais coisas como eh que funcionam, do Criteria e do Hibernate. Se voce tiver alguma duvida, claro, obvio, voce pode perguntar, deixa ai.
+
+4. Para esse caso, aqui, eu vou criar em uma classe de teste, mesmo, tambem, aqui, ConsultaCarroPorFabricante, o que que eu vou fazer?
+
+5. Eu quero saber quais sao os Carros de um determinado Fabricante.
+
+6. So que eu vou pesquisar por Fabricante, passando uma String.
+
+7. Okay? Seria algo desse tipo, aqui, o Usuario passaria, por exemplo, se voce quiser criar uma telinha, treinar um pouquinho, ai, voce pode criar, o Usuario passaria o valor da String, aqui, que ele quer pesquisar, via parametro, por exemplo, 
+
+@Test
+private void buscarCarrosDoFabricante() {
+    String fabricante = "Chevrolet";
+
+}
+
+8. Entao, esse fabricante, aqui, eu vou simular que o Usuario que informou.
+
+9. Okay? Bom, depois disso daqui, a gente precisa do Session, pegar a partir do EntityManager, e, depois, pegar o Criteria, para o Carro, que eh a nossa classe base para essa Pesquisa,
+
+@Test
+private void buscarCarrosDoFabricante() {
+    String fabricante = "Chevrolet";
+    Session session = this.em.unwrap(Session.class);
+    Criteria criteria = session.createCriteria(Carro.class);
+
+
+
+    List<Carro> carros = criteria.list();
+    for (Carro c : carros) {
+        System.out.printf("Placa: %s", c.getPlaca());
+    }
+
+}
+
+10. Okay? Depois disso daqui, a gente vai fazer um for(), em Carro, dos Carros que a gente vai retornar, e a gente vai mostrar, aqui, sei, la, Placa.
+
+11. Beleza?
+
+12. Entao, vamos adicionar o filtro, aqui, agora, como eh que a gente vai fazer isso.
+
+13. Eu estou em Carro, entao, a minha ideia eh comecar em Carro, e eu vou ter que chegar, passar pelo modelo (ModeloCarro). Do modelo, passear pelo fabricante (Fabricante), ate chegar no nome do fabricante, eh aqui, que eu quero fazer o filtro.
+
+14. Entao, se eu preciso navegar de Carro para ModeloCarro e, de ModeloCarro para Fabricante, vamos criando os alias. De Carro, para chegar em ModeloCarro, chama modelo, nao eh? Entao, o atributo modelo eu vou chamar, agora, de 'm', eu vou encavalando, aqui, oh, 'm.fabricante', eu vou chamar de 'f',
+
+    Session session = this.em.unwrap(Session.class);
+    Criteria criteria = session.createCriteria(Carro);
+
+    criteria.createAlias("modelo", "m")
+            .createAlias("m.fabricante", "f");
+
+
+    List<Carro> carros = criteria.list();
+
+15. E, agora, eu estou em Fabricante. Eu posso fazer o filtro em cima do nome.
+
+16. Entao, add(Restrictions., e, aqui, a gente tem o ilike(). O que que eh esses ilike()? Ele nao vai levar em consideracao se eh Maiusculo ou Minusculo. E voce vai ver como eh que ele vai gerar isso, agora mesmo. Em qual campo? No 'f.nome'. Nao eh no nome do Fabricante? Sim. E qual que eh o valor? O valor eh o valor que o usuario passou, essa variavel, aqui, fabricante, que a gente esta pegando, okay?,
+
+        criteria.createAlias("modelo", "m")
+                .createAlias("m.fabricante", "f")
+                .add(Restrictions.ilike("f.nome", fabricante));
+
+17. So que essa versao, aqui, ele vai fazer o LIKE puramente,
+
+        Restrictions.ilike("f.nome", fabricante)
+
+18. Eu quero falar para ele, oh, 'Eu quero que voce faca o LIKE, ai, eu posso passar, aqui, oh, o MatchMode, em qualquer lugar, por exemplo',
+
+        Restrictions.ilike("f.nome", fabricante, MatchMode.ANYWHERE)
+
+19. Vamos ver o que que esse Em Qualquer Lugar significa.
+
+20. Ja esta pronto. Acredita que eh so isso?
+
+        @Test
+        public void buscarCarrosDoFabricante() {
+            String fabricante = "Chevrolet";
+            Session session = this.em.unwrap(Session.class);
+
+            Criteria criteria = session.createCriteria(Carro.class);
+
+            criteria.createAlias("modelo", "m")
+                    .createAlias("m.fabricante", "f")
+                    .add(Projections.ilike("f.nome", fabricante, MatchMode.ANYWHERE));
+
+            List<Carro> carros = criteria.list();
+
+            for (Carro c : carros) {
+                System.out.printf("Placa: %s\n", c.getPlaca());
+            }
+        }
+
+21. Vamos executar, aqui, para a gente ver?
+
+22. Retornou,
+
+Hibernate: 
+    select
+        this_.codigo as codigo1_3_2_,
+        this_.chassi as chassi2_3_2_,
+        this_.cor as cor3_3_2_,
+        this_.data_criacao as data_cri4_3_2_,
+        this_.data_modificacao as data_mod5_3_2_,
+        this_.foto as foto6_3_2_,
+        this_.codigo_modelo as codigo_m9_3_2_,
+        this_.placa as placa7_3_2_,
+        this_.valor_diaria as valor_di8_3_2_,
+        m1_.codigo as codigo1_7_0_,
+        m1_.categoria as categori2_7_0_,
+        m1_.descricao as descrica3_7_0_,
+        m1_.codigo_fabricante as codigo_f4_7_0_,
+        f2_.codigo as codigo1_5_1_,
+        f2_.nome as nome2_5_1_ 
+    from
+        Carro this_ 
+    inner join
+        ModeloCarro m1_ 
+            on this_.codigo_modelo=m1_.codigo 
+    inner join
+        Fabricante f2_ 
+            on m1_.codigo_fabricante=f2_.codigo 
+    where
+        lower(f2_.nome) like ?
+Placa: AAA-1234
+
+23. Mas, beleza, mas, trouxe, la, as Carros, nao eh?, que tem o modelo escrito Chevrolet, aqui,
+
+@Test
+public void buscarCarrosDoFabricante() {
+    String fabricante = "Chevrolet";
+
+    ...
+}
+
+24. E, ai, olha so, ele ja fez todos os Joins para a gente, e, olha so o where que ele fez, aqui, no final, lower(), colocou, aqui, a propriedade, like, e o parametro que a gente passou,
+
+    lower(f2_.nome) like ?
+
+25. Esse lower, aqui, eh para passar para minusculo, a string que ele esta buscando, aqui, o nome que ele esta buscando,
+
+    lower(f2_. >>> nome <<< ) like ?
+
+26. Okay? E, esse, aqui, 
+
+    lower(f2_.nome) like  >>> ? <<<
+
+, ele tambem vai mandar em Minusculo.
+
+27. Ele ja faz, antes, um toString().toLowerCase, la, para passar para Minusculo.
+
+28. Entao, vamos ver. La, esta como Chevrolet, hoje. Ai, se eu colocar tudo Maiusculo, por exemplo, CHEVROLET, 
+
+@Test
+public void buscarCarrosDoFabricante() {
+    String fabricante = "CHEVROLET";
+
+    ...
+}
+
+, voce vai ver que vai continuar as Placas.
+
+29. Vamos executa e retornou,
+
+Hibernate: 
+    select
+        this_.codigo as codigo1_3_2_,
+        this_.chassi as chassi2_3_2_,
+        this_.cor as cor3_3_2_,
+        this_.data_criacao as data_cri4_3_2_,
+        this_.data_modificacao as data_mod5_3_2_,
+        this_.foto as foto6_3_2_,
+        this_.codigo_modelo as codigo_m9_3_2_,
+        this_.placa as placa7_3_2_,
+        this_.valor_diaria as valor_di8_3_2_,
+        m1_.codigo as codigo1_7_0_,
+        m1_.categoria as categori2_7_0_,
+        m1_.descricao as descrica3_7_0_,
+        m1_.codigo_fabricante as codigo_f4_7_0_,
+        f2_.codigo as codigo1_5_1_,
+        f2_.nome as nome2_5_1_ 
+    from
+        Carro this_ 
+    inner join
+        ModeloCarro m1_ 
+            on this_.codigo_modelo=m1_.codigo 
+    inner join
+        Fabricante f2_ 
+            on m1_.codigo_fabricante=f2_.codigo 
+    where
+        lower(f2_.nome) like ?
+Placa: AAA-1234
+
+30. Olha la, continua trazendo as Placas, ta vendo, nao mudou, aqui, a Consulta.
+
+31. Se eu colocar um Maiusculo e outro Minusculo,
+
+@Test
+public void buscarCarrosDoFabricante() {
+    String fabricante = "CHEVRolet";
+
+    ...
+}
+
+32. Retornou,
+
+Hibernate: 
+    select
+        this_.codigo as codigo1_3_2_,
+        this_.chassi as chassi2_3_2_,
+        this_.cor as cor3_3_2_,
+        this_.data_criacao as data_cri4_3_2_,
+        this_.data_modificacao as data_mod5_3_2_,
+        this_.foto as foto6_3_2_,
+        this_.codigo_modelo as codigo_m9_3_2_,
+        this_.placa as placa7_3_2_,
+        this_.valor_diaria as valor_di8_3_2_,
+        m1_.codigo as codigo1_7_0_,
+        m1_.categoria as categori2_7_0_,
+        m1_.descricao as descrica3_7_0_,
+        m1_.codigo_fabricante as codigo_f4_7_0_,
+        f2_.codigo as codigo1_5_1_,
+        f2_.nome as nome2_5_1_ 
+    from
+        Carro this_ 
+    inner join
+        ModeloCarro m1_ 
+            on this_.codigo_modelo=m1_.codigo 
+    inner join
+        Fabricante f2_ 
+            on m1_.codigo_fabricante=f2_.codigo 
+    where
+        lower(f2_.nome) like ?
+Placa: AAA-1234
+
+33. Voce vai ver, tambem, que continua funcionando. 
+
+34. Beleza?
+
+35. E, como eu dei um Match, aqui, em ANYWHERE
+
+    criteria.createAlias("modelo", "m")
+            .createAlias("m.fabricante", "f")
+            .add(Restrictions.ilike("f.nome", fabricante, MatchMode.ANYWHERE));
+
+, eu posso, inclusive, oh, passar so parte do nome, por exemplo, oh,
+
+@Test
+public void buscarCarrosDoFabricante() {
+    String fabricante = "CHEVR";
+
+    ...
+}
+
+36. Retornou,
+
+Hibernate: 
+    select
+        this_.codigo as codigo1_3_2_,
+        this_.chassi as chassi2_3_2_,
+        this_.cor as cor3_3_2_,
+        this_.data_criacao as data_cri4_3_2_,
+        this_.data_modificacao as data_mod5_3_2_,
+        this_.foto as foto6_3_2_,
+        this_.codigo_modelo as codigo_m9_3_2_,
+        this_.placa as placa7_3_2_,
+        this_.valor_diaria as valor_di8_3_2_,
+        m1_.codigo as codigo1_7_0_,
+        m1_.categoria as categori2_7_0_,
+        m1_.descricao as descrica3_7_0_,
+        m1_.codigo_fabricante as codigo_f4_7_0_,
+        f2_.codigo as codigo1_5_1_,
+        f2_.nome as nome2_5_1_ 
+    from
+        Carro this_ 
+    inner join
+        ModeloCarro m1_ 
+            on this_.codigo_modelo=m1_.codigo 
+    inner join
+        Fabricante f2_ 
+            on m1_.codigo_fabricante=f2_.codigo 
+    where
+        lower(f2_.nome) like ?
+Placa: AAA-1234
+
+37. Eu quero digitar so o inicio e saber se ele vai conseguir trazer.
+
+38. Olha la, conseguiu trazer.
+
+39. Se eu deixar so o final,
+
+@Test
+public void buscarCarrosDoFabricante() {
+    String fabricante = "Olet";
+
+    ...
+}
+
+40. Retornou,
+
+Hibernate: 
+    select
+        this_.codigo as codigo1_3_2_,
+        this_.chassi as chassi2_3_2_,
+        this_.cor as cor3_3_2_,
+        this_.data_criacao as data_cri4_3_2_,
+        this_.data_modificacao as data_mod5_3_2_,
+        this_.foto as foto6_3_2_,
+        this_.codigo_modelo as codigo_m9_3_2_,
+        this_.placa as placa7_3_2_,
+        this_.valor_diaria as valor_di8_3_2_,
+        m1_.codigo as codigo1_7_0_,
+        m1_.categoria as categori2_7_0_,
+        m1_.descricao as descrica3_7_0_,
+        m1_.codigo_fabricante as codigo_f4_7_0_,
+        f2_.codigo as codigo1_5_1_,
+        f2_.nome as nome2_5_1_ 
+    from
+        Carro this_ 
+    inner join
+        ModeloCarro m1_ 
+            on this_.codigo_modelo=m1_.codigo 
+    inner join
+        Fabricante f2_ 
+            on m1_.codigo_fabricante=f2_.codigo 
+    where
+        lower(f2_.nome) like ?
+Placa: AAA-1234
+
+41. Tambem conseguiu.
+
+42. Porque ele coloca o percentual antes e depois,
+
+    where
+        lower(f2_.nome) like >>> ? <<<
+
+43. Se a gente fizer o SQL normal, ele esta colocando um percentual antes e depois.
+
+44. Como se estivesse fazendo isso, daqui,
+
+@Test
+public void buscarCarrosDoFabricante() {
+    String fabricante = "%Olet%";
+
+    ...
+}
+
+45. So que ele ja faz para nos automatico, a gente nao precisa colocar.
+
+46. Se eu colocar apenas 'T', vai ver que, ate assim, ele consegue buscar todos os Carros desse Fabricante,
+
+Hibernate: 
+    select
+        this_.codigo as codigo1_3_2_,
+        this_.chassi as chassi2_3_2_,
+        this_.cor as cor3_3_2_,
+        this_.data_criacao as data_cri4_3_2_,
+        this_.data_modificacao as data_mod5_3_2_,
+        this_.foto as foto6_3_2_,
+        this_.codigo_modelo as codigo_m9_3_2_,
+        this_.placa as placa7_3_2_,
+        this_.valor_diaria as valor_di8_3_2_,
+        m1_.codigo as codigo1_7_0_,
+        m1_.categoria as categori2_7_0_,
+        m1_.descricao as descrica3_7_0_,
+        m1_.codigo_fabricante as codigo_f4_7_0_,
+        f2_.codigo as codigo1_5_1_,
+        f2_.nome as nome2_5_1_ 
+    from
+        Carro this_ 
+    inner join
+        ModeloCarro m1_ 
+            on this_.codigo_modelo=m1_.codigo 
+    inner join
+        Fabricante f2_ 
+            on m1_.codigo_fabricante=f2_.codigo 
+    where
+        lower(f2_.nome) like ?
+Placa: AAA-1234
+
+47. Beleza? E, aqui, tem outras opcoes, em MatchMode. Tem o ANYWHERE, tem o END, ou seja, ele vai dar o Match da String que termina, nao eh?, com esse padrao, no Match na String que comeca com esse padrao, ou seja, START, ou exatamente com aquele padrao, ou seja, EXACT.
+
+48. Entao, depenendendo de cada caso, voce tem caso que voce quer que seja ANYWHERE, tem caso que voce quer que seja so o comeco, so o fim, ou exatamente, voce pode, fica a gosto do fregues, certo?
+
+49. Beleza. Eu acho que eu consegui te passar a ideia, nao eh?, de como a gente trabalha. Voce viu que, nesse Restrictions, tem varios metodos que voce pode, quando voce pensar no SQL, voce pensar, nao eh?, 'Po, eu quero fazer isso daqui, da uma olhadinha, nao eh?, ve se tem, aqui, Restrictions, se eh um Projections, que voce precisa usar'.
+
+50. Todas essas coisas. E, ai, voce vai conseguir, nao eh?, cada dia, conhecendo mais metodos, para a sua necessidade. Beleza?
+
+51. Na documentacao, que eh, aqui, no JavaDoc, em http://docs.jboss.org/hibernate/orm/4.3/javadocs/, as vezes, vale a pena, oh, eh bem grande a API do Hibernate, olha o quanto de classes que ele tem. Entao, de repente, as vezes, voce olhou, la, alguma coisa, do criterion. Entao, se voce vier, aqui, no pacote criterion, a gente ve que tem os Restrictins, aqui. Entao, voce pode vir, aqui, em Restrictions, http://docs.jboss.org/hibernate/orm/4.3/javadocs/org/hibernate/criterion/Restrictions.html, as vezes, a documentacao nao tem muita coisa escrita, mas so uma dica que ele te da, as vezes, da para voce ver. Por exemplo, 'ge()', o que que significa o ge()?
+
+52. Maior que ou igual. Maior ou igual que alguma coisa, nao eh? Entao, ele esta fazendo Maior ou igual.
+
+53. Oh, o between(), que a gente testou, o in(), que a gente testou, o le(), Menor ou Igual que, tem todos esses caras que a gente consegue brincar, ai.
+
+54. E fica, ai, a seu criterio, brincar, querer fazer mais algumas consultas. E ler, ai, um pouquinho, da documentacao, a medida que voce for trabalhando, nao eh?, vem, aqui, da uma olhadinha, para voce ficar familiarizado, ai, por exemplo, voce ve o le(), la, voce fala, 'Eu quero usar o le()', o que que significa o le()? Ah, Menor ou igual que, ai, ja vai ficando mais simples para voce,
+
+	@Test
+	public void buscarCarrosDoFabricante() {
+//		String fabricante = "Chevrolet";
+//		String fabricante = "CHEVROLET";
+//		String fabricante = "CHEVRolet";
+//		String fabricante = "CHEVR";
+//		String fabricante = "Olet";
+		String fabricante = "T";
+		Session session = this.manager.unwrap(Session.class);
+		Criteria criteria = session.createCriteria(Carro.class);
+		
+		criteria.createAlias("modelo", "m")
+				.createAlias("m.fabricante", "f")
+				.add(Restrictions.ilike("f.nome", fabricante, MatchMode.ANYWHERE));
+		
+		List<Carro> carros = criteria.list();
+		
+		for (Carro carro : carros) {
+			System.out.printf("Placa: %s\n", carro.getPlaca());
+		}
+	}
+
+55. Fim da     Aula 12.006. Navegando e Filtrando nos Relacionamentos.
+
+
+-->

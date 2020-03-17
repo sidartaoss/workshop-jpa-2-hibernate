@@ -1,0 +1,139 @@
+<!--
+
+    Aula 09.002. Exercicio: Gravacao em cascata
+
+1. Faca a gravacao em cascata entre Carro e Acessorio.
+
+2. A ideia eh voce criar um metodo de teste que ira criar um Carro, varios Acessorios NOVOS, adiciona-los na lista e salvar o carro. Neste momento, todos os acessorios deverao ser salvos tambem.
+
+3. 
+
+@Test
+	public void exemploCarroAcessorios() {
+		Carro carro = new Carro();
+		carro.setCor("Prata");
+		carro.setPlaca("ABC-1234");
+		
+		Acessorio acessorio = new Acessorio();
+		acessorio.setDescricao("Protetor de Porta de Carro");
+		List<Acessorio> acessorios = new ArrayList<>();
+		acessorios.add(acessorio);
+		
+		acessorio = new Acessorio();
+		acessorio.setDescricao("Organizador para Assento Traseiro");
+		acessorios.add(acessorio);
+		
+		acessorio = new Acessorio();
+		acessorio.setDescricao("Hud Display Universal");
+		acessorios.add(acessorio);	
+		
+		acessorio = new Acessorio();
+		acessorio.setDescricao("Banco Esportivo Concha");
+		acessorios.add(acessorio);	
+		
+		acessorio = new Acessorio();
+		acessorio.setDescricao("Porta Moedas Automotivo");
+		acessorios.add(acessorio);
+		
+		carro.setAcessorios(acessorios);
+		
+		this.manager.getTransaction().begin();
+		this.manager.persist(carro);
+		this.manager.getTransaction().commit();
+				
+	}
+    
+4. Retornou,
+
+Hibernate: 
+    insert 
+    into
+        Carro
+        (chassi, cor, data_criacao, data_modificacao, codigo_modelo, placa, valor_diaria) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+Hibernate: 
+    insert 
+    into
+        Acessorio
+        (descricao) 
+    values
+        (?)
+Hibernate: 
+    insert 
+    into
+        Acessorio
+        (descricao) 
+    values
+        (?)
+Hibernate: 
+    insert 
+    into
+        Acessorio
+        (descricao) 
+    values
+        (?)
+Hibernate: 
+    insert 
+    into
+        Acessorio
+        (descricao) 
+    values
+        (?)
+Hibernate: 
+    insert 
+    into
+        Acessorio
+        (descricao) 
+    values
+        (?)
+Hibernate: 
+    insert 
+    into
+        carro_acessorio
+        (codigo_carro, codigo_acessorio) 
+    values
+        (?, ?)
+Hibernate: 
+    insert 
+    into
+        carro_acessorio
+        (codigo_carro, codigo_acessorio) 
+    values
+        (?, ?)
+Hibernate: 
+    insert 
+    into
+        carro_acessorio
+        (codigo_carro, codigo_acessorio) 
+    values
+        (?, ?)
+Hibernate: 
+    insert 
+    into
+        carro_acessorio
+        (codigo_carro, codigo_acessorio) 
+    values
+        (?, ?)
+Hibernate: 
+    insert 
+    into
+        carro_acessorio
+        (codigo_carro, codigo_acessorio) 
+    values
+        (?, ?)
+
+
+5. Em Carro.getAcessorios(),
+
+    @ManyToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+	@JoinTable(name = "carro_acessorio", 
+			joinColumns = @JoinColumn(name = "codigo_carro"),
+			inverseJoinColumns = @JoinColumn(name = "codigo_acessorio")
+    )
+    public List<Acessorio> getAcessorios() {
+        return acessorios;
+    }    
+
+
+-->

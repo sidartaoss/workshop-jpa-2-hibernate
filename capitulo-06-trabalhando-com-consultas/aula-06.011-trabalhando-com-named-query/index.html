@@ -1,0 +1,400 @@
+<!-- 
+
+    Aula 06.011. Trabalhando com Named Query
+
+1. Named Queries sao bem legais. Para a gente colocar elas, aqui, no nosso sistema, nos vamos trabalhar, aqui, na Entidade Carro.
+
+2. Okay? Bom, o que que sao Named Queries?
+
+3. Named Queries sao queries pre-definidas. A gente pode definir elas dessa forma.
+
+4. E essa pre-definicao, normalmente, a gente coloca ela em cima da Entidade.
+
+5. Named vem de nome, entao, eh uma Query nomeada. Eh uma Query que a gente ja vai ter ela pronta e, quando a gente quiser usar, a gente so passa o nome dela, okay?
+
+6. Entao, por exemplo, a gente vai colocar, aqui, na classe Carro, em cima da Entidade Carro, aqui, oh, @NamedQuery, do pacote javax.persistence, nao vai importar do Hibernate, ai, nao,
+
+package com.algaworks.curso.jpa2.modelo;
+
+import javax.persistence.NamedQuery;
+
+@Entity
+@NamedQuery
+public class Carro {
+
+    ...
+}
+
+7. Bom, aqui dentro, existe, oh, a propriedade 'name', que a gente vai dar o nome para a Query, e a propriedade 'query', que eh onde a gente vai definir a Query,
+
+@Entity
+@NamedQuery(name = "", query = "")
+public class Carro {
+
+    ...
+}
+
+8. Entao, aqui, a gente pode colocar assim, oh, buscarTotos,
+
+@Entity
+@NamedQuery(name = "buscarTodos", query = "")
+public class Carro {
+
+    ...
+}
+
+, e, ai, aqui,
+
+@Entity
+@NamedQuery(name = "buscarTodos", query = ">>> <<<")
+public class Carro {
+    ...
+}
+
+, a gente vai escrever a query, 'from Carro',
+
+@Entity
+@NamedQuery(name = "buscarTodos", query = "from Carro")
+publi class Carro {
+
+    ...
+}
+
+9. Assim, como a gente fez, aqui, no CarroDAO, 
+
+public List<Carro> buscarTodos() {
+    return em.createQuery("from Carro").getResultList();
+}
+
+10. Okay? A gente poderia deixar assim, oh,
+
+@Entity
+@NamedQuery(name = "buscarTodos", query = "select c from Carro c")
+public class Carro {
+
+    ...
+}
+
+11. E, ai, aqui, no CarroDAO, no nosso metodo buscarTodos(), ao inves de a gente escrever a query, aqui,
+
+public List<Carro> buscarTodos() {
+    return em.createQuery(>>> "from Carro" <<<).getResultList();
+}
+
+, nos vamos fazer diferente, nos vamos usar a NamedQuery. Entao, aqui, nos vamos criar, invocar o metodo crateNamedQuery(),
+
+public List<Carro> buscarTodos() {
+    return em.createNamedQuery().getResultList();    
+}
+
+, e, aqui, a gente vai passar o nome que a gente definiu, aqui,
+
+@Entity
+@NamedQuery(name = ">>> buscarTodos <<<", query = "select c from Carro c")
+public class Carro{
+
+    ...
+}
+
+12. Entao, a gente vem aqui, e coloca buscarTodos,
+
+public List<Carro> buscarTodos() {
+    return em.createNamedQuery("buscarTodos").getResultList();   
+}
+
+13. Bom, ai, voce pode se perguntar, 'Isso ai vai funcionar?'.
+
+14. Vai, vai funcionar.
+
+15. Mas so que, olha so, quando voce olha, aqui, no EntityManager, createNamedQuery(), "buscarTodos", buscar todos quem?
+
+16. Ah, todos os carros, beleza, porque voce esta vendo, aqui,
+
+public >>> List<Carro> <<< buscarTodos() {
+    return em.createNamedQuery("buscarTodos").getResultList();    
+}
+
+, que a gente acabou de fazer isso. Mas, e se voce criar uma outra Query, em uma outra Entidade, a gente poderia vir, aqui, por exemplo, na classe Acessorio, e fazer a mesma coisa, colocar um buscar todos, aqui,
+
+@Entity
+@NamedQuery(name = "buscarTodos", query = "select a from Acessorio a")
+public class Acessorio {
+
+    ...
+}
+
+17. Ixe... entao, como eh que ele vai fazer?
+
+18. Entao, uma coisa importante que voce tem que pensar: os nomes das Named Queries, eles tem que ser unicos no seu sistema. Toma cuidado para voce nao colocar eles repetidos. 
+
+19. Entao, uma boa pratica que o pessoal costuma fazer eh o seguinte, "buscarTodos", entao, vamos escreve, aqui, na frente, o nome da Entidade, por exemplo,
+
+@Entity
+@NamedQuery(name = "Carro.buscarTodos", query = "select c from Carro c")
+public class Carro {
+
+    ...
+}
+
+20. Entao, Carro.buscarTodos, a gente vai buscar todos os carros. Ai, eh so a gente mudar, no metodo, no DAO, 
+
+public List<Carro> buscarTodos() {
+    return this.em.createNamedQuery("Carro.buscarTodos").getResultList();    
+}
+
+21. Agora, a gente nao vai ter problema mais, toda a NamedQuery que a gente criar, a gente colocar o nome da Entidade, beleza, a gente diminui o risco, nao eh?, de criar queries com o mesmo nome.
+
+22. Okay? Isso daqui, "Carro.buscarTodos", belezinha, vai funcionar, sem problema.
+
+23. Agora, voce pode falar assim, 'Ih, Normandes, mas, e passar parametro? Eh possivel?, igual a gente tinha feito aqui?',
+
+public Carro buscarCarroComAcessorios(Long codigo) {
+    return (Carro) this.em.createQuery("select c from Carro c JOIN c.acessorios a where c.codigo = >>> ? <<<")
+    .setParameter(1, codigo)
+    .getSingleResult();
+}
+
+24. Eh possivel tambem.
+
+25. Eh possivel, ate, a gente arrancar esse casting,
+
+public Carro buscarCarroComAcessorios(Long codigo) {
+    return >>> (Carro) <<< this.em.createQuery("select c from Carro c JOIN c.acessorios a where c.codigo = ?")
+    .setParameter(1, codigo)
+    .getSingleResult();
+}
+
+, a gente ja aprendeu mais coisas sobre isso daqui. Vamos passar essa query, aqui,
+
+public Carro buscarCarroComAcessorios(Long codigo) {
+    return (Carro) this.em.createQuery(" >>> select c from Carro c JOIN c.acessorios a where c.codigo = ? <<<")
+    .setParameter(1, codigo)
+    .getSingleResult();
+}
+
+, para a Entidade Carro, para transformar em um Named Query? Okay? Vamos la.
+
+26. Para a gente fazer isso, eh so a gente colocar outra anotacao @NamedQuery?
+
+@Entity
+@NamedQuery(name = "Carro.buscarTodos", query = "select c from Carro c")
+>>> @NamedQuery() <<<
+public class Carro {
+
+    ...
+}
+
+27. Nao. Nao eh isso.
+
+28. Mas, eh bem simples, tambem.
+
+29. A gente vai adicionar uma anotacao, aqui, oh, @NamedQueries, no plural, do pacote javax.persistence, e, aqui,
+
+@Entity
+@NamedQueries( >>> <<<)
+@NamedQuery(name = "Carro.buscarTodos", query = "select c from Carro c")
+public class Carro {
+
+    ...
+}
+
+, nos vamos colocar a nossa lista de Queries, ou seja, a gente abre um par de chaves, ali e, dentro, ai, sim, agora, eu consigo colocar as NamedQueries, separadas por virgula,
+
+@Entity
+@NamedQueries( {
+    @NamedQuery(name = "Carro.buscarTodos", query = "select c from Carro c"),
+    @NamedQuery(name = "Carro.", query = "")
+} )
+public class Carro {
+
+    ...
+}
+
+30. E, ai, a gente continua adicionando as outras Queries nossas. E, aqui, entao, nos vamos colocar, aqui, oh, o metodo, no DAO, buscarCarroComAcessorios(), nos vamos nomear, entao, a Named Query, na Entidade Carro, como "Carro.buscarCarroComAcessorios",
+
+@Entity
+@NamedQueries( {
+    @NamedQuery(name = "Carro.buscarTodos", query = "select c from Carro c"),
+    @NamedQuery(name = ">>> Carro.buscarCarroComAcessorios <<<", query = "")
+} )
+public class Carro {
+
+    ...
+}
+
+31. E, aqui, a gente vai escrever a Query,
+
+@Entity
+@NamedQueries( {
+    @NamedQuery(name = "Carro.buscarTodos", query = "select c from Carro c"),
+    @NamedQuery(name = "Carro.buscarCarroComAcessorios", query = ">>> select c from Carro c JOIN c.acessorios a where c.codigo = ? <<<")
+} )
+public class Carro {
+
+    ...
+}
+
+32. A gente pode dar um <ENTER>, aqui, para dar uma organizada, para ficar mais legivel,
+
+@Entity
+@NamedQueries( {
+    @NamedQuery(name = "Carro.buscarTodos", query = "select c from Carro c"),
+    @NamedQuery(name = "Carro.buscarCarroComAcessorios", query = "select c "
+                                                            >>> + " from Carro c JOIN c.acessorios a "
+                                                            >>> + " where c.codigo = ?")
+} )
+public class Carro {
+
+    ...
+}
+
+33. E, aqui, eu nao vou trabalhar dessa forma nao, eu vou colocar :codigo, para ficar mais bonitinho, a gente ja aprendeu a fazer isso, nao eh nao?,
+
+    @NamedQuery(
+        name = "Carro.buscarCarroComAcessorios", 
+        query = "select c "
+               + " from Carro c JOIN c.acessorios a "
+               + " where c.codigo = :codigo")
+
+34. Entao, isso aqui,
+
+    @NamedQuery(
+        name = "Carro.buscarCarroComAcessorios", 
+        >>>query = "select c "
+        >>>       + " from Carro c JOIN c.acessorios a "
+        >>>       + " where c.codigo = :codigo")
+
+, nao tem prblema, por que? Como a anotacao eh avaliada na hora em que esta subindo, essa concatenacao de strings, aqui, nao tem problema, porque ele vai fazer isso so uma vez, e, ai, o Garbage Collector nao fica criando, nao eh?, o Java nao fica criando essas Strings, e o Garbage Collector toda hora limpando elas: isso eh feito so Uma vez.
+
+35. Beleza? Entao, nao tem nenhum problema de deixar esses <ENTER>'s aqui, essas strings concatenando, nao.
+
+36. Entao, oh, a gente esta buscando o Carro, fazendo o JOIN no Acessorio, e fazendo o filtro, aqui,
+
+    @NamedQuery(
+        name = "Carro.buscarCarroComAcessorios", 
+        >>>query = "select c "
+        >>>       + " from Carro c JOIN c.acessorios a "
+        >>>       + " where c.codigo = :codigo")
+
+, e esse, aqui,
+
+    @NamedQuery(
+        >>> name = "Carro.buscarCarroComAcessorios", 
+        query = "select c "
+               + " from Carro c JOIN c.acessorios a "
+               + " where c.codigo = :codigo")
+
+, eh o nome da nossa Named Query.
+
+37. Entao, vamos la. 
+
+38. Eh so a gente vir, aqui, agora, oh, no DAO, createNamedQuery(), a gente passa o nome dela, "Carro.buscarCarroComAcessorios". Nos podemos passar, aqui, tambem, Carro.class, ai, eu nao preciso nem fazer mais o casting, aqui,
+
+public Carro buscarCarroComAcessorios(Long codigo) {
+    return this.em.createNamedQuery("Carro.buscarCarroComAcessoris", >>> Carro.class <<<)
+        .setParameter("codigo", codigo)
+        .getSingleResult();
+}
+
+39. Olha como o nosso codigo vai melhorando, nao eh?, vai ficando mais arrumadinho.
+
+40. A medida que a gente vai aprendendo, a gente consegue ir melhorando, nao eh?
+
+41. Entao, olha so, "Carro.buscarCarroComAcessorios", ele vai vir aqui, ah, cade essa Named Query? Ja esta registrada la no EntityManager, definida dentro da classe Carro.
+
+42. Ai, ela vai executar a respectiva query e vai trazer o Carro para a gente.
+
+43. Okay? Vamos executar aqui? Oh, quando a gente entrar na Tela de Pesquisa de Carros, e quando a gente mandar mostrar os acessorios, eh que tem que funcionar.
+
+44. Certo? Entao, deixa eu iniciar o Tomcat, aqui, vamos la no Cadastro de Carro, que eh onde a gente mexeu. Entao, agora, ele vai iniciar toda a parte do JPA e do Hibernate, okay, fez o select, trouxe para a gente, 
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_2_,
+        carro0_.chassi as chassi2_2_,
+        carro0_.cor as cor3_2_,
+        carro0_.codigo_modelo as codigo6_2_,
+        carro0_.placa as placa4_2_,
+        carro0_.valor_diaria as valor5_2_ 
+    from
+        Carro carro0_
+
+45. Quando a gente mandar mostrar os Acessorios, trouxe la, os Acessorios, e, se a gente olhar aqui, ele conseguiu fazer o filtro, oh, passando o codigo_carro, ou seja, tudo que a gente queria funcionou,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_2_,
+        carro0_.chassi as chassi2_2_,
+        carro0_.cor as cor3_2_,
+        carro0_.codigo_modelo as codigo6_2_,
+        carro0_.placa as placa4_2_,
+        carro0_.valor_diaria as valor5_2_ 
+    from
+        Carro carro0_ 
+    inner join
+        carro_acessorio acessorios1_ 
+            on carro0_.codigo=acessorios1_.codigo_carro 
+    inner join
+        Acessorio acessorio2_ 
+            on acessorios1_.codigo_acessorio=acessorio2_.codigo 
+    where
+        carro0_.codigo=?
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_5_1_,
+        modelocarr0_.categoria as categori2_5_1_,
+        modelocarr0_.descricao as descrica3_5_1_,
+        modelocarr0_.codigo_fabricante as codigo4_5_1_,
+        fabricante1_.codigo as codigo1_3_0_,
+        fabricante1_.nome as nome2_3_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    left outer join
+        Fabricante fabricante1_ 
+            on modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+    where
+        modelocarr0_.codigo=?
+Hibernate: 
+    select
+        acessorios0_.codigo_carro as codigo1_2_1_,
+        acessorios0_.codigo_acessorio as codigo2_9_1_,
+        acessorio1_.codigo as codigo1_0_0_,
+        acessorio1_.descricao as descrica2_0_0_ 
+    from
+        carro_acessorio acessorios0_ 
+    inner join
+        Acessorio acessorio1_ 
+            on acessorios0_.codigo_acessorio=acessorio1_.codigo 
+    where
+        acessorios0_.codigo_carro=?
+
+
+46. Certo? Entao, agora, a gente esta passando o codigo,
+
+		return this.em.createNamedQuery("Carro.buscarCarroComAcessorios", Carro.class)
+				>>> .setParameter("codigo", codigo)
+				.getSingleResult();
+
+, que eh o codigo definido, aqui, na Query,
+
+	@NamedQuery(
+			name = "Carro.buscarCarroComAcessorios", 
+			query = "select c "
+					 + "  from Carro c JOIN c.acessorios a "
+					 >>> + "  where c.codigo = :codigo")
+
+47. Okay? Entao, Named Queries sao bem legais, recomendado usar bastante, ai, para as Queries mais fixas, sao Queries que nao sao tao mudadas, nao eh?, quando voce tem essas Queries que nao mudam, nao tem adicao ou remocao, aqui, das clausulas, 
+
+	@NamedQuery(
+			name = "Carro.buscarCarroComAcessorios", 
+			query = >>>"select c "
+					>>> + "  from Carro c JOIN c.acessorios a "
+					>>> + "  where c.codigo = :codigo")
+
+, entao, eh uma Query candidata a se tornar uma Named Query, ai.
+
+48. Fim da     Aula 06.011. Trabalhando com Named Query.
+
+
+
+-->

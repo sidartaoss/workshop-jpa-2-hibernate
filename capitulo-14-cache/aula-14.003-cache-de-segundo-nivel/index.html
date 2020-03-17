@@ -1,0 +1,813 @@
+<!--
+
+    Aula 14.003. Cache de Segundo Nivel
+
+1. Nesta aula, eu vou te falar a respeito do Cache. Especificamente, do Cache de Segundo Nivel, que a gente vai trabalhar com ele aqui.
+
+2. Okay? Eu vou te mostrar como eh que a gente aplica esse Cache, a gente usa, configura esse Cache com Hibernate, aqui, numa aplicacao Web.
+
+3. Beleza?
+
+4. Antes, de eu entrar, aqui, na Aplicacao, deixa so eu te mostrar o que que eu estou usando. Eu estou usando, aqui, o Eclipse Luna, versao 4.4, ultima versao lancada, ai, foi lancada recentemente. Ele ja tem suporte ao Java 8. Apesa de, nesta aula, eu nao estar usando nada de Java 8, se a gente precisar usar, ele ja vai dar o suporte, e eu estou usando essa versao, aqui, oh, Eclipse IDE for Java EE Developers, porque, como eh uma Aplicacao Web, eu estou usando o Tomcat la dentro dele e estou usando o Tomcat 8, essa versao ja da suporte ao Tomcat 8.
+
+5. Entao, se voce entrar, aqui, no site da Apache, tomcat.apache.org, Tomcat 8.0, eh essa a versao que eu estou usando.
+
+6. Beleza? E a aplicacao que eu criei para demonstrar eh uma aplicacao bem simples, que vai emitir nota fiscal, a ideia seria essa. Mas, ai, se emitir nota fiscal, eh gravar no banco de dados a nota fiscal, okay? E, para a gente emitir uma nota fiscal, eu preciso selecionar o Estado e a cidade em que eu estou emitindo aquela Nota Fiscal.
+
+7. Beleza? Coisa bem simples, mesmo, mas, que ja vai te dar uma ideia de como eh que funciona o Cache de Segundo Nivel, nao eh?, o que que ele consegue trazer de beneficio para voce.
+
+8. O que que eu fiz, aqui?
+
+9. Eu criei, la, um banco de dados, notafiscal, la dentro do MySQL, estou usando JPA-2.1, aqui, entao, essas propriedades, javax.persistence.schema-generation.database.action, javax.peristence.schema-generation.create-source, sao do JPA-2.1, beleza? Eu estou falando para ele, 'Na hora em que ele subir, para ele apagar e criar o banco de dados, baseado no metadata, ou seja, baseado nas anotacoes, aqui, do meu model.',
+
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.1"
+  xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
+	
+	<persistence-unit name="notaFiscalPU" transaction-type="RESOURCE_LOCAL">
+		<properties>
+			<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/notafiscal"/>
+			<property name="javax.persistence.jdbc.user" value="root"/>
+			<property name="javax.persistence.jdbc.password" value="root"/>
+			<property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
+			<property name="javax.persistence.schema-generation.database.action" value="drop-and-create" />
+			<property name="javax.persistence.schema-generation.create-source" value="metadata" />
+			
+			<property name="hibernate.show_sql" value="true"/>
+			<property name="hibernate.format_sql" value="true"/>
+			
+			<property name="hibernate.cache.region.factory_class" value="org.hibernate.testing.cache.CachingRegionFactory"/>
+		</properties>
+	</persistence-unit>
+	
+</persistence>
+
+10. E como eh que eh o meu model?
+
+11. Olha so como que eh o meu model.
+
+12. Eu tenho uma Entidade Estado, ja vou falar, aqui, a respeito do Cache, primeiro vou mostrar com Cache, depois, eu vou tirar, para voce ver a diferenca de quantidade de Consultas que ele faz, beleza?
+
+13. Entao, olha so, entao, aqui, eh Estado e, aqui, tem o codigo, o nome e tem uma Lista de Cidades, ou seja, cada Estado tem uma Lista de Cidades.
+
+14. Vamos la na Entidade Cidade.
+
+15. A Cidade, aqui, tambem, eu vou fazer Cache dela, ja falo sobre esse detalhe, aqui. Tambem tem, la, o codigo, o nome e ela pertence, nao eh?, a um Estado, essa Cidade.
+
+16. E eu tenho uma Nota Fiscal Eletronica, que essa Nota Fiscal Eletronica tem, la, um codigo, um valor, uma descricao, e ela esta sendo emitida em determinada Cidade.
+
+17. Como eu disse, o Sistema eh bem simplezinho, aqui.
+
+18. Okay?
+
+19. O que mais que eu fiz, aqui?
+
+20. O projeto, eu estou usando o Maven, e, aqui, na configuracao dele, eu estou usando o JSF 2, com o Primefaces, okay? Estou usando CDI, o Hibernate 5.4.1.Final, que eh a ultima versao, no momento da gravacao desta aula, aqui. O Hibernate Testing, que eu falei para voces, eu vou usar como o cara que vai fazer o Cache para a gente, e, aqui, questoes de DBUnit, JIntegrity. Nao estou fazendo nenhum Teste de Integracao, aqui, mas ja deixei pronto, aqui, se voce quiser brincar, ai, com Teste de Integracao, tambem, fazer alguns testes mais rapidos, ao inves de fazer o Teste, aqui, na Aplicacao Web.
+
+21. Beleza?
+
+22. Okay. Bom, como eu disse, entao, a aplicacao ja esta configurada, nao vou gastar tempo, ficar mostrando como eh que configura essa aplicacao, com Primefaces, com CDI, nos ja vamos, direto, aqui, trabalhar na aplicacao, eu te mostrar a respeito do Cache.
+
+23. Bom, entao, vamos la. O que que eu fiz, aqui?
+
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.1"
+  xmlns="http://xmlns.jcp.org/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
+	
+	<persistence-unit name="notaFiscalPU" transaction-type="RESOURCE_LOCAL">
+		<properties>
+			<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/notafiscal"/>
+			<property name="javax.persistence.jdbc.user" value="root"/>
+			<property name="javax.persistence.jdbc.password" value="root"/>
+			<property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver"/>
+			<property name="javax.persistence.schema-generation.database.action" value="drop-and-create" />
+			<property name="javax.persistence.schema-generation.create-source" value="metadata" />
+			
+			<property name="hibernate.show_sql" value="true"/>
+			<property name="hibernate.format_sql" value="true"/>
+			
+			<property name="hibernate.cache.region.factory_class" value="org.hibernate.testing.cache.CachingRegionFactory"/>
+		</properties>
+	</persistence-unit>
+	
+</persistence>
+
+24. Para a gente habilitar o Cache de Segundo Nivel, eu tenho que falar quem eh a fabrica que vai prover as Regioes desse Cache,
+
+<property name="hibernate.cache.region.factory_class" value="org.hibernate.testing.cache.CachingRegionFactory" />
+
+25. As Regioes sao os lugares onde ele vai guardar esse Cache.
+
+26. Como eu disse, eu estou usando, aqui, o Testing, CachingRegionFactory, do proprio Hibernate, esse cara, aqui, eh para Teste, 
+
+    "org.hibernate.testing.cache.CachingRegionFactory"
+
+, esse, aqui, nao eh recomendado voce usar em Producao, beleza?
+
+27. So para a gente demonstrar e aprender um pouquinho a respeito do Cache.
+
+28. Beleza.
+
+29. Coloquei essa propriedade, aqui, no persistence.xml.
+
+30. Eu vou, nas minhas Entidades, no caso, aqui, Estado, e Cidade, e anoto elas com @Cache(). E, aqui, eu tenho que falar uma Estrategia de Concorrencia para esse Cache.
+
+31. Eu tenho algumas opcoes, aqui,
+
+@Entity
+@Table(name = "estado")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+public class Estado implements Serializable {
+
+    ...
+}
+
+32. A Estrategia NONSTRICT_READ_WRITE, o que que significa esse cara?
+
+33. Significa que, eventualmente, eu vou atualizar esses dados.
+
+34. Eu coloquei o NONSTRICT, aqui, apesar de a aplicacao nem permitir, ali, a gente atualizar, para a aplicacao ficar mais simples, significa que eu nao vou ter muita gente, eu nao vou ter concorrencia forte, aqui, para atualizar esses dados, no caso, aqui, o Estado, eu nao vou ter isso.
+
+35. A mesma coisa com Cidade,
+
+@Entity
+@Table(name = "cidade")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+public class Cidade implements Serializable {
+
+    ...
+}
+
+36. Nao eh uma coisa que se atualiza demais, concorda comigo?
+
+37. Depois que eu gravei isso, eu nao vou estar atualizando toda hora ali. Entao, por isso, eu coloquei essa opcao.
+
+38. Se eu nao for atualizar de jeito nenhum, eu posso colocar READ_ONLY
+
+@Entity
+@Table(name = "cidade")
+@Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
+public class Cidade implements Serializable {
+
+    ...
+}
+
+39. READ_ONLY eh a estrategia que fica mais simples, ainda, para ele conseguir controlar isso, dai.
+
+40. E, ai existem varias implicacoes. Se voce falar, 'Nao, eu vou Ler e Atualizar constantemente',
+
+@Entity
+@Table(name = "cidae")
+@Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
+public class Cidade implements Serializable {
+
+    ...
+}
+
+, isso, ai, envolve outras questoes de Estrategia de Concorrencia que voce vai precisa tomar cuidado.
+
+41. Beleza?
+
+42. Entao, como, no meu caso, aqui, no meu caso, eu poderia deixar, ate, no READ_ONLY, mas, eu vou deixar NONSTRICT_READ_WRITE, porque, se voce quiser terminar essa aplicacao, ai, colocando Atualizacao, vai ser possivel, tambem, de voce atualizar.
+
+43. Beleza?
+
+44. Bom, eh so isso, daqui.
+
+45. Acredita?
+
+46. Nao eh muito complicado, mesmo, nao.
+
+47. Como eu disse, nao eh complicado colocar, nao eh?, para funcionar, essa parte simples, do Teste, nao eh?, colocar essa funcionalidade, aqui. 
+
+48. Quando voce for trabalhar com outras, com um Provedor Externo, como, por exemplo, o EhCache, InfiniSpan, para controlar Transacoes, ai, ja comeca a ficar um pouquinho mais complicado, mas, ai, a gente deixa para falar disso em um outro momento.
+
+49. Vamos focar, mais uma vez, no Cache de Segundo Nivel.
+
+50. Okay.
+
+51. Eu nao coloquei o Cache na minha Nota Fiscal, ou seja, na Entidade NFe, porque, eu nao quis.
+
+52. Na verdade, eu nao tenho Consulta, aqui, da Nota Fiscal Eletronica. E, talvez, assim, se a gente for pensar friamente, valeria a pena a gente gastar Memoria do nosso Servidor para fazer Cache na Nota Fiscal?
+
+53. Normalmente, a gente emite a Nota Fiscal e nao fico consultando ela toda hora.
+
+54. Entao, valeria a pena a gente colocar?
+
+55. Eu acredito que nao, nesse caso, nao.
+
+56. Nao eh uma Entidade que eu vou gastar Memoria a toa, se eu nao vou ficar consultando esse cara. Entao, a decisao do Cache nao eh simplesmente tecnica. Ela tambem eh uma decisao em que voce tem que avaliar o que vale a pena ou nao voce colocar no Cache.
+
+57. Okay? Se for alguma coisa que voce consulta muito, e voce nao altera tanto, eu acho que eh uma boa opcao de voce colocar no Cache.
+
+58. Beleza?
+
+59. Tem, tambem, que tomar cuidado com o tamanho desse Cache. Nao eh?, voce nao vai poder, vamos supor que, Estado, sao poucos Estados. Cidades, vamos supor que voce nao trabalha, ate, todas as Cidades do Brasil, nao ficaria muito grande, nao eh? Mas, voce nao poderia colocar, sei la, 100GB no Cache, se voce tem uma maquina com memoria RAM, la, de 8GB, de 4GB, nao eh?, nao faz sentido. 
+
+60. Entao, voce precisa avaliar isso tambem.
+
+61. E, ai, como eu disse, se voce tem a limitacao de Memoria, voce tambem vai precisar trabalhar com questoes de remover isso do Cache, de expirar isso do Cache, que, tambem, nao vou focar nesta aula, vamos deixa isso para uma outra oportunidade.
+
+62. Okay. Entao, vamos la. Deixa eu te mostrar quais sao os beneficios, aqui, que a gente vai ter colocando essa Estrategia de Cache, ou seja, @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE), nessas Entidades, ou seja, em Estado e em Cidade.
+
+63. Beleza? A minha aplicacao, aqui, ja esta iniciada. Beleza? Eu nao alterei nada ali, so alterado e voltado. Vamos la, eu tenho, aqui, entao, a aplicacao nota-fiscal, http://localhost:8080/nota-fiscal/, aqui, eu tenho Cadastro de Estado, e Cidade, coloque a Pesquisa apenas de Cidade, e emitir uma Nota Fiscal Eletronica.
+
+64. Vamos la, entao, quando eu clicar, aqui, em Cadastrar Estado, ele vai para a telinha de Cadastrar Estado, e eu vou colocar, aqui, Sao Paulo. Quando eu clicar em Salvar, ele vai demorar um pouquinho mais, vamos voltar, aqui, no Console do Servidor, no Eclipse, porque ele vai iniciar, se nao acessou a aplicacao nenhuma vez, ele vai iniciar toda o Hibernate pra gente, apagar e criar as tabelas no Banco de dados.
+
+65. Retornou,
+
+Hibernate: 
+    
+    alter table cidade 
+       drop 
+       foreign key FK3p3ii5fk4vpyyp0bju26kggbb
+Hibernate: 
+    
+    alter table nfe 
+       drop 
+       foreign key FKpcqov53hfo4v7b5o8s2c1mj13
+Hibernate: 
+    
+    drop table if exists cidade
+Hibernate: 
+    
+    drop table if exists estado
+
+Hibernate: 
+    
+    drop table if exists nfe
+Hibernate: 
+    
+    create table cidade (
+       codigo bigint not null,
+        nome varchar(255),
+        codigo_estado bigint,
+        primary key (codigo)
+    ) engine=InnoDB
+Hibernate: 
+    
+    create table estado (
+       codigo bigint not null,
+        nome varchar(255),
+        primary key (codigo)
+    ) engine=InnoDB
+
+Hibernate: 
+    
+    create table nfe (
+       codigo bigint not null,
+        descricao varchar(255),
+        valor decimal(19,2),
+        codigo_cidade bigint,
+        primary key (codigo)
+    ) engine=InnoDB
+Hibernate: 
+    
+    alter table cidade 
+       add constraint FK3p3ii5fk4vpyyp0bju26kggbb 
+       foreign key (codigo_estado) 
+       references estado (codigo)
+Hibernate: 
+    
+    alter table nfe 
+       add constraint FKpcqov53hfo4v7b5o8s2c1mj13 
+       foreign key (codigo_cidade) 
+       references cidade (codigo)
+
+Hibernate: 
+    insert 
+    into
+        estado
+        (nome, codigo) 
+    values
+        (?, ?)
+
+66. Entao, por isso que vai demorar, essa primeira vez.
+
+67. Apagou as tabelas, etc, etc., da proxima vez, ele nao faz isso, mais. Deixa eu voltar, aqui, oh, http://localhost:8080/nota-fiscal/estado/CadastroEstado.xhtml, ele salvou com sucesso. Se eu vier, aqui, no Cadastro de Estado, novamente, e Salvar, aqui, por exemplo, Minas Gerais, Estado Salvo com sucesso, ai, ja vai ser bem mais rapido. Retornou,
+
+Hibernate: 
+    insert 
+    into
+        estado
+        (nome, codigo) 
+    values
+        (?, ?)
+
+
+68. Beleza? Ele fez, apenas o insert, agora.
+
+69. Eu vou, depois que eu criei, aqui, as tabelas, eu vou deixar esse cara, assim, comentado,
+
+    <-- 
+    <property name="javax.persistence.schema-generation.database.action" value="drop-and-create" />
+    <property name="javax.persistence.schema-generation.create-source" value="metadata" />
+    --
+, para a gente nao ter que apagar e criar, de novo, as tabelas do banco de dados, apagar os dados que eu acabei de salvar.
+
+70. Beleza? Entao, na hora em que eu remover, aqui, o Cache, para te demonstrar,
+
+@Entity
+@Table(name = "estado")
+>>> @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+public class Estado implements Serializable {
+
+
+}
+
+, ele iria apagar, de novo, o Banco de Dados. Entao, eu estou tirando, para ele nao fazer isso.
+
+71. Entao, olha la. Fez o insert do Estado. Vamos salvar a Cidade. Olha so, no Combo, Sao Paulo, Minas Gerais, foi o que eu salvei, nao eh?
+
+72. Entao, vamos selecionar Sao Paulo, Campinas, clicar em Salvar, cidade esta Salva com sucesso.
+
+73. Se eu selecionar Sao Paulo, aqui, de novo, e colocar Ribeirao Preto, Salvar, Minas Gerais, vamos colocar, agora, Belo Horizonte.
+
+74. Beleza. Se eu vier, aqui, em Pesquisa de Cidade, oh, esta aparecendo, la, Campinas, Ribeirao Preto, Belo Horizonte, beleza? Poderia ter colocado o Estado, aqui. Entao, vamos la. Vamos emitir Nota Fiscal, http://localhost:8080/nota-fiscal/nfe/NovaNFe.xhtml.
+
+75. Como eh que emite essa Nota Fiscal?
+
+76. Eu vou colocar a Descricao do que eu estou vendendo, o Valor, vou selecionar o Estado, na hora em que ele Selecionar o Estado, vai aparecer a Cidade correspondente, e, ai, na hora em que a gente Salvar, ele vai Salvar a Nota Fiscal.
+
+77. Mas, ai, antes de eu mandar Salvar, eu vou abrir, aqui, o Console, no Eclipse, para a gente ver quantas vezes ele esta indo no Banco de Dados, no momento em que eu Salvar a Nota Fiscal Eletronica.
+
+78. Depois, eu vou tirar o Cache, e a gente vai comparar.
+
+79. Entao, olha so. Eu apaguei o Console, aqui, esta limpinho, nao eh?
+
+80. Vou colocar, aqui, vamos supor que a gente esta emitindo uma nota fiscal para um Fogao 6 bocas, custou 1000,00, Minas Gerais, Belo Horizonte.
+
+81. Essa Nota Fiscal esta indo la, e, ai, poderia ter calculo de imposto, baseado em Estado / Cidade, e etc.
+
+82. Beleza? Mas, eu quero focar, com voce, a respeito da quantidade de Consultas que ele vai fazer.
+
+83. Vou mandar Salvar, salvou.
+
+84. A primeira Nota Fiscal que ele Salvou.
+
+85. Retornou, no Console,
+
+Hibernate: 
+    insert 
+    into
+        nfe
+        (codigo_cidade, descricao, valor) 
+    values
+        (?, ?, ?)
+Hibernate: 
+    select
+        estado0_.codigo as codigo1_1_,
+        estado0_.nome as nome2_1_ 
+    from
+        estado estado0_
+
+
+86. E, ai, olha so, ele fez, entao, o INSERT, eu vou fazer o seguinte, eu vou colocar, aqui, do lado, eu vou colocar, aqui, oh, a Quantidade de Consultas que ele fez. Entao, isso, aqui, foi quando ele fez Com cache, foi isso, aqui, que ele fez,
+
+1. Com cache
+Hibernate: 
+    insert 
+    into
+        nfe
+        (codigo_cidade, descricao, valor) 
+    values
+        (?, ?, ?)
+Hibernate: 
+    select
+        estado0_.codigo as codigo1_1_,
+        estado0_.nome as nome2_1_ 
+    from
+        estado estado0_
+
+--------------------------------------------------------------------------------
+
+87. Okay? Acompanhou, aqui, comigo, o Cache esta setado, ele fez isso daqui. Deixa eu ja explicar o que que significa esse segundo Select, ai.
+
+88. Oh, esse primeiro script, aqui, eh o INSERT, esta na cara, nao eh? Se eu salvei uma Nota Fiscal, ele vai inserir Nota Fiscal na Tabela NFE (Nota Fiscal Eletronica).
+
+89. Ele fez esse Select, aqui, oh,
+
+Hibernate: 
+    select
+        estado0_.codigo as codigo1_1_,
+        estado0_.nome as nome2_1_ 
+    from
+        estado estado0_
+
+, ta vendo que eh um Select de todos os Estados?
+
+90. Que Select que eh esse?
+
+91. Quando eu acabei de Salvar, ele foi Carregar essa Tela de novo, http://localhost:8080/nota-fiscal/nfe/NovaNFe.xhtml, ai, ele tem que Carregar, de novo, essa Lista de Estados, no Combo Estado.
+
+92. Entao, ele faz, de novo, esse Select, aqui, para carregar todos os Estados.
+
+93. Beleza?
+
+94. Bom, o que que eu vou fazer agora?
+
+95. Eu vou desabilitar o Cache, aqui, nas Entidades Cidade e Estado. Eu vou, simplesmente, comentar essa Anotacao, aqui, em Cidade e em Estado,
+
+@Entity
+@Table(name = "cidade")
+// @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+public class Cidade implements Serializable {
+
+    ...
+}
+
+96. Beleza? Eh so isso que eu fiz.
+
+97. Vou reiniciar, aqui, o Tomcat, para a gente ver a diferenca, agora.
+
+98. Okay. Tomca no ar, vamos entrar, aqui, novamente na Aplicacao, em http://localhost:8080/nota-fiscal/nfe/NovaNFe.xhtml, vai carregar, ali, o Hibernate, nao eh?, novamente, ele nao, dessa vez, ele nao apagau e criou todas as tabelas novamente, eu comentei aquela parte, no persistence.xml.
+
+99. Buscou, aqui, os Estados, continua, aqui, buscando as Cidades para a gente, okay?
+
+100. Entao, o que que eu vou fazer, agora?
+
+101. Deixa eu limpar, aqui, o Console, de novo, e nos vamos salvar uma nova Nota Fiscal Eletronica.
+
+102. Eu vou colocar, aqui, Geladeira, custou 2200,00, Estado Sao Paulo, Cidade Campinas, eu nao coloquei nenhuma validacao, entao, se voce for, simplesmente, reproduzir, ai, tem que informar tudo, okay? Nao esta validando nada.
+
+103. Esta limpinho o Console do Servidor.
+
+104. Vou mandar salvar. Agora, Sem Cache.
+
+105. Retornou,
+
+Hibernate: 
+    select
+        estado0_.codigo as codigo1_1_0_,
+        estado0_.nome as nome2_1_0_ 
+    from
+        estado estado0_ 
+    where
+        estado0_.codigo=?
+Hibernate: 
+    select
+        cidade0_.codigo as codigo1_0_0_,
+        cidade0_.codigo_estado as codigo_e3_0_0_,
+        cidade0_.nome as nome2_0_0_ 
+    from
+        cidade cidade0_ 
+    where
+        cidade0_.codigo=?
+Hibernate: 
+    select
+        cidade0_.codigo as codigo1_0_0_,
+        cidade0_.codigo_estado as codigo_e3_0_0_,
+        cidade0_.nome as nome2_0_0_ 
+    from
+        cidade cidade0_ 
+    where
+        cidade0_.codigo=?
+Hibernate: 
+    insert 
+    into
+        nfe
+        (codigo_cidade, descricao, valor) 
+    values
+        (?, ?, ?)
+Hibernate: 
+    select
+        estado0_.codigo as codigo1_1_,
+        estado0_.nome as nome2_1_ 
+    from
+        estado estado0_
+
+106. Salvou. Continua salvando.
+
+107. Mas, vamos voltar, aqui, no Console do Servidor, e vamos ver o que que ele fez, agora.
+
+108. Ja deve ter percebido que foi um pouquinho a mais, nao eh?
+
+--------------------------------------------------------------------------------
+
+2. Sem Cache
+Hibernate: 
+    select
+        estado0_.codigo as codigo1_1_0_,
+        estado0_.nome as nome2_1_0_ 
+    from
+        estado estado0_ 
+    where
+        estado0_.codigo=?
+Hibernate: 
+    select
+        cidade0_.codigo as codigo1_0_0_,
+        cidade0_.codigo_estado as codigo_e3_0_0_,
+        cidade0_.nome as nome2_0_0_ 
+    from
+        cidade cidade0_ 
+    where
+        cidade0_.codigo=?
+Hibernate: 
+    select
+        cidade0_.codigo as codigo1_0_0_,
+        cidade0_.codigo_estado as codigo_e3_0_0_,
+        cidade0_.nome as nome2_0_0_ 
+    from
+        cidade cidade0_ 
+    where
+        cidade0_.codigo=?
+Hibernate: 
+    insert 
+    into
+        nfe
+        (codigo_cidade, descricao, valor) 
+    values
+        (?, ?, ?)
+Hibernate: 
+    select
+        estado0_.codigo as codigo1_1_,
+        estado0_.nome as nome2_1_ 
+    from
+        estado estado0_
+
+109. Ele fez 1 Select para buscar o Estado,
+
+Hibernate: 
+    select
+        estado0_.codigo as codigo1_1_0_,
+        estado0_.nome as nome2_1_0_ 
+    from
+        estado estado0_ 
+    where
+        estado0_.codigo=?
+
+110. Fez 1 Select para buscar a Cidade. Em seguida, fez de novo, aqui, 1 Select para buscar a Cidade,
+
+Hibernate: 
+    select
+        cidade0_.codigo as codigo1_0_0_,
+        cidade0_.codigo_estado as codigo_e3_0_0_,
+        cidade0_.nome as nome2_0_0_ 
+    from
+        cidade cidade0_ 
+    where
+        cidade0_.codigo=?
+Hibernate: 
+    select
+        cidade0_.codigo as codigo1_0_0_,
+        cidade0_.codigo_estado as codigo_e3_0_0_,
+        cidade0_.nome as nome2_0_0_ 
+    from
+        cidade cidade0_ 
+    where
+        cidade0_.codigo=?
+
+111. Ai, sim, ele fez o Insert,
+
+Hibernate: 
+    insert 
+    into
+        nfe
+        (codigo_cidade, descricao, valor) 
+    values
+        (?, ?, ?)
+
+112. E, esse ultimo Select, aqui, eh o que ele fez para Recarregar a Tela, nao eh? Recarregar os Estados,
+
+Hibernate: 
+    select
+        estado0_.codigo as codigo1_1_,
+        estado0_.nome as nome2_1_ 
+    from
+        estado estado0_
+
+113. Entao, eu vou tirar esse cara, daqui,
+
+Hibernate: 
+    select
+        estado0_.codigo as codigo1_1_,
+        estado0_.nome as nome2_1_ 
+    from
+        estado estado0_
+
+, para a gente poder comparar, simplesmente, o que ele faz antes de fazer o Insert,
+
+1. Com Cache
+Hibernate: 
+    insert 
+    into
+        nfe
+        (codigo_cidade, descricao, valor) 
+    values
+        (?, ?, ?)
+
+--------------------------------------------------------------------------------
+
+2. Sem Cache
+Hibernate: 
+    select
+        estado0_.codigo as codigo1_1_0_,
+        estado0_.nome as nome2_1_0_ 
+    from
+        estado estado0_ 
+    where
+        estado0_.codigo=?
+Hibernate: 
+    select
+        cidade0_.codigo as codigo1_0_0_,
+        cidade0_.codigo_estado as codigo_e3_0_0_,
+        cidade0_.nome as nome2_0_0_ 
+    from
+        cidade cidade0_ 
+    where
+        cidade0_.codigo=?
+Hibernate: 
+    select
+        cidade0_.codigo as codigo1_0_0_,
+        cidade0_.codigo_estado as codigo_e3_0_0_,
+        cidade0_.nome as nome2_0_0_ 
+    from
+        cidade cidade0_ 
+    where
+        cidade0_.codigo=?
+Hibernate: 
+    insert 
+    into
+        nfe
+        (codigo_cidade, descricao, valor) 
+    values
+        (?, ?, ?)
+
+
+, o que, realmente, a gente queria fazer, era o Insert, certo? No caso, quando eu estava Com cache, ele fez, diretamente, o Insert,
+
+Hibernate: 
+    insert 
+    into
+        nfe
+        (codigo_cidade, descricao, valor) 
+    values
+        (?, ?, ?)
+
+114. No caso, aqui, Sem Cache, olha so a quantidade de Select's que ele fez A Mais, aqui,
+
+Hibernate: 
+    select
+        estado0_.codigo as codigo1_1_0_,
+        estado0_.nome as nome2_1_0_ 
+    from
+        estado estado0_ 
+    where
+        estado0_.codigo=?
+Hibernate: 
+    select
+        cidade0_.codigo as codigo1_0_0_,
+        cidade0_.codigo_estado as codigo_e3_0_0_,
+        cidade0_.nome as nome2_0_0_ 
+    from
+        cidade cidade0_ 
+    where
+        cidade0_.codigo=?
+Hibernate: 
+    select
+        cidade0_.codigo as codigo1_0_0_,
+        cidade0_.codigo_estado as codigo_e3_0_0_,
+        cidade0_.nome as nome2_0_0_ 
+    from
+        cidade cidade0_ 
+    where
+        cidade0_.codigo=?
+
+115. 3 SELECT's a mais do que se eu usar Cache.
+
+116. O que que significam esses SELECT's a mais, aqui?
+
+117. Alguns deles estao aqui por conta de a Aplicacao ser JSF. Um deles, esse cara, aqui,
+
+Hibernate: 
+    select
+        estado0_.codigo as codigo1_1_0_,
+        estado0_.nome as nome2_1_0_ 
+    from
+        estado estado0_ 
+    where
+        estado0_.codigo=?
+
+, especificamente, esta, aqui, porque a Aplicacao eh uma Aplicacao JSF. O que que isso significa? Quando eu tenho, aqui, um Estado, na verdade, 2 deles, 2 desses SELECT's, esses 2 primeiros, aqui,
+
+Hibernate: 
+    select
+        estado0_.codigo as codigo1_1_0_,
+        estado0_.nome as nome2_1_0_ 
+    from
+        estado estado0_ 
+    where
+        estado0_.codigo=?
+Hibernate: 
+    select
+        cidade0_.codigo as codigo1_0_0_,
+        cidade0_.codigo_estado as codigo_e3_0_0_,
+        cidade0_.nome as nome2_0_0_ 
+    from
+        cidade cidade0_ 
+    where
+        cidade0_.codigo=?
+
+, estao, aqui, por conta de ser uma Aplicacao JSF. Qual que eh a questao?
+
+118. Quando eu tenho, aqui, em http://localhost:8080/nota-fiscal/nfe/NovaNFe.xhtml, um Combozinho, e eu vou Selecionar um Estado e Trocar a Cidade, quando eu enviar esses dados, aqui, la para o Servidor de Aplicacao, o que que ele tem que fazer? Ele tem que Converter esse cara, entao, vamos entrar, aqui, na classe EstadoConverter, ele tem que Converter aquele cara, que esta vindo da tela, que eh uma String, para um Objeto Estado. E, para ele Converter para esse Objeto, que eh o Objeto do Banco de dados, ele tem que buscar ele no Banco de dados. Entao, ele faz essa busca, ai, pelo codigo, beleza? 
+
+@Override
+public Object getAsObject(FacesContext context, UIComponent component, String value) {
+    Estado estado = null;
+
+    if (value != null) {
+        estado = this.estados.peloCodigo(new Long(value));
+    }
+
+    return estado;
+}
+
+119. Entao, por isso, ele cai, aqui, no EstadoConverter.java, isso, aqui, ja seria parte do JSF, entao, ele faz essa busca para converter para um Objeto aquela String.
+
+120. Beleza? Entao, ele faz aquele tanto para Estado quanto para Cidade, nao eh?, que sao os 2 SELECT's que eu tenho, aqui, a tela NovaNFe.xhtml, okay? Seriam esses dois caras,
+
+Hibernate: 
+    select
+        estado0_.codigo as codigo1_1_0_,
+        estado0_.nome as nome2_1_0_ 
+    from
+        estado estado0_ 
+    where
+        estado0_.codigo=?
+Hibernate: 
+    select
+        cidade0_.codigo as codigo1_0_0_,
+        cidade0_.codigo_estado as codigo_e3_0_0_,
+        cidade0_.nome as nome2_0_0_ 
+    from
+        cidade cidade0_ 
+    where
+        cidade0_.codigo=?
+
+121. E esse cara, aqui, o terceiro SELECT, antes de inserir,
+
+Hibernate: 
+    select
+        cidade0_.codigo as codigo1_0_0_,
+        cidade0_.codigo_estado as codigo_e3_0_0_,
+        cidade0_.nome as nome2_0_0_ 
+    from
+        cidade cidade0_ 
+    where
+        cidade0_.codigo=?
+
+, ele vai fazer, eh o proprio Hibernate, nao eh?, ele ve, la, que tem o Objeto Cidade, que a minha Nota Fiscal tem, 
+
+Hibernate: 
+    insert 
+    into
+        nfe
+        (>>> codigo_cidade, descricao, valor) 
+    values
+        (?, ?, ?)
+
+, entao, ele fala, 'Opa, deixa eu buscar esse cara, aqui, para inserir essa Cidade, aqui, na Nota Fiscal'.
+
+122. Beleza?
+
+123. Entao, oh, Com Cache, a gente eliminou esses 3 SELECT's,
+
+Hibernate: 
+    select
+        estado0_.codigo as codigo1_1_0_,
+        estado0_.nome as nome2_1_0_ 
+    from
+        estado estado0_ 
+    where
+        estado0_.codigo=?
+Hibernate: 
+    select
+        cidade0_.codigo as codigo1_0_0_,
+        cidade0_.codigo_estado as codigo_e3_0_0_,
+        cidade0_.nome as nome2_0_0_ 
+    from
+        cidade cidade0_ 
+    where
+        cidade0_.codigo=?
+Hibernate: 
+    select
+        cidade0_.codigo as codigo1_0_0_,
+        cidade0_.codigo_estado as codigo_e3_0_0_,
+        cidade0_.nome as nome2_0_0_ 
+    from
+        cidade cidade0_ 
+    where
+        cidade0_.codigo=?
+
+124. Se essa fosse uma operacao onerosa, nao eh?, fosse alguma coisa que fosse demorar muito, voce que estaria ganhando, ai, muito tempo no seu tempo de resposta da sua Aplicacao. Concorda comigo?
+
+125. Fim da     Aula 14.003. Cache de Segundo Nivel
+
+
+
+
+
+-->

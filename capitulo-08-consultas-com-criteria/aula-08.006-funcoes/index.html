@@ -1,0 +1,126 @@
+<!--
+
+    Aula 08.006. Funcoes
+
+1. 
+
+    @Test
+    public void funcoes() {
+        CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+
+
+    }
+
+2. Muitas vezes, a gente precisa fazer uma Consulta e utilizar alguma restricao sem levar em consideracao o Case, se eh, se esta em minuscula, se esta em maiuscula. Entao, vamos supor que eu quero fazer, aqui, uma Consulta nos Carros pela cor, mas nao quero saber a diferenca, la, se a cor esta em minusculo, se esta em maiusculo. Entao, a gente precisa colocar todas as cores na mesma Case.
+
+3. Vamos supor, vamos passar todo mundo para Upper Case e fazer a Consulta.
+
+4. Entao, vamos la, vamos buscar, aqui, vamos criar a Criteria, a gente cria a nossa CriteriaQuery, que eh para a Entidade Carro, 
+
+    CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+
+    CriteriaQuery<Carro> criteriaQuery = builder.createQuery(Carro.class);
+
+    // from Carro c
+    Root<Carro> c = criteriaQuery.from(c);
+
+    // select c.
+    criteriaQuery.select(c);
+
+5. Bom, a gente vai fazer, a nossa Entidade eh o Carro, ou seja, a gente vai estar fazendo o select no Carro,
+
+        // from Carro c
+        Root<Carro> c = criteriaQuery.from(c);
+
+6. Okay. Bom, a gente vai fazer a Restricao, agora.
+
+7. Para criar a Restricao, a gente ja viu que a gente precisa criar um Predicate.
+
+8. Okay? Entao, vamos criar um Predicate, com o builder, invocando equal(), onde, agora que vem la, oh, a gente vai fazer onde uma coisa eh igual a outra, 
+
+...
+import javax.persistence.criteria.Predicate;
+
+...
+
+            Predicate predicate = builder.equal(x, y);
+
+, onde o que esta o 'x', aqui, vai ser igual a 'y'.
+
+9. O 'x' vai ser o 'select' do lado do banco de dados, sem ser o parametro. O 'y' vai ser o parametro que a gente esta passando, do lado da tabela, eh o x.
+
+10. Entao, aqui,
+
+        Predicate predicate = builder.equal( >>> x <<< , y);
+
+, a gente vai usar um builder.upper(), vai falar, 'Eu quero usar a funcao upper(), do banco de dados'. Em cima de qual coluna? De c.get("cor"), vamos buscar todos os Carros de uma cor so.
+
+11. So que, aqui, a expressao, ele espera uma String, entao, a gente passa como String, usando Generics,
+
+            Predicate predicate = builder.equal(builder.upper(c.<String>get("cor")), y));
+
+12. E o y, aqui, a gente vai passar o valor que a gente esta querendo fazer a consulta. Entao, eu vou passar, aqui, por exemplo, "prata".toUpperCase(), 
+
+        Predicate predicate = builder.equal(builder.upper(c.<String>get("cor")), 
+                        "prata".toUpperCase());
+
+13. Se o parametro 'prata' estivesse vindo, a gente estivesse fazendo uma telinha, e esse parametro chegasse aqui,
+
+        Predicate predicate = builder.equal(builder.upper(c.<String>get("cor")),
+                    >>> "prata".toUpperCase());
+
+, a gente, simplesmente, dava um UpperCase nele.
+
+14. Okay. 
+
+15. Agora, a gente ja pode, na nossa CriteriaQuery, fazer quem que eh o 'select' que a gente esta fazendo, que eh em cima de Carro,
+
+            // select c from Carro c
+            criteriaQuery.select(c);
+
+16. A gente pode adicionar o predicado na clausula where(), 
+
+            // select c from Carro c where upper(c.cor) = "PRATA";
+            criteriaQuery.where(predicate);
+
+17. Okay? E, agora, a gente ja tem tudo para criar a nossa Query, finalmente, e mandar executar,
+
+            TypedQuery<Carro> query = this.manager.createQuery(criteriaQuery);
+            List<Carro> resultado = query.getResultList();
+
+18. Vamos mostrar, aqui, entao, por exemplo, a Placa do Carro, e vamos mostrar a Cor, aqui, tambem, para a gente ter certeza de que a gente so trouxe os carros de cor Prata,
+
+            for (Carro carro : resultado) {
+                System.out.println(carro.getPlaca() + " - " + carro.getCor());
+            }
+
+19. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_,
+        carro0_.chassi as chassi2_3_,
+        carro0_.cor as cor3_3_,
+        carro0_.data_criacao as data_cri4_3_,
+        carro0_.data_modificacao as data_mod5_3_,
+        carro0_.codigo_modelo as codigo_m8_3_,
+        carro0_.placa as placa6_3_,
+        carro0_.valor_diaria as valor_di7_3_ 
+    from
+        Carro carro0_ 
+    where
+        upper(carro0_.cor)=?
+
+
+BBB-2222 - Prata
+AAA-9999 - Prata
+DDD-1234 - Prata
+XXX-1111 - Prata
+ADD-8989 - Prata
+
+
+20. Agora, sim. Entao, ele fez, la, a nossa Consulta, fazendo um upper() em cima da cor do Carro, e, aqui, foi o parametro que a gente passou. Bem interessante, nao eh?
+
+21. Fim da     Aula 08.006. Funcoes.
+
+-->

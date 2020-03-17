@@ -1,0 +1,51 @@
+<!--
+
+Aula 04.009. Mais do Mapeamento Muitos-Para-Um
+
+1. Ja vimos como eh simples criar um mapeamento Muitos-Para-Um com a anotacao @ManyToOne.
+
+2. Agora, vamos fazer alguns exercicios para aprender um pouco mais desse mapeamento?
+
+3. Voce deve ter percebido que, quando colocamos apenas @ManyToOne sobre o Fabricante, a coluna gerada na Tabela modelocarro tem o nome de fabricante_codigo. Mas, e se voce quiser trocar esse nome?
+
+4. Ou, talvez, um DBA ja tenha criado o banco de dados e o nome da coluna ja eh diferente. Como trocamos esse nome?
+
+5. Eh bem simples, sera?
+
+6. Nos iremos adicionar outra anotacao @JoinColumn. A propriedade "name" ira definir o nome da coluna gerada.
+
+7. Vamos definir o nome da coluna em portugues, deixando "codigo_fabricante". Deixe o seu mapeamento como abaixo. Se o Tomcat estiver iniciado, pare e inicie novamente,
+
+@ManyToOne
+@JoinColumn(name = "codigo_fabricante")
+public Fabricante getFabricante() {
+    return fabricante;
+}
+
+8. Veja o que aconteceu com sua Tabela no Banco de Dados. Estranho, nao?
+
+9. select * from modelocarro;
+
+# codigo, descricao, fabricante_codigo, >>> codigo_fabricante <<<
+1, Onix, 1, NULL
+2, Civic, 2, NULL
+
+10. O problema eh que o Hibernate nao ira simplesmente alterar o nome da coluna "fabricante_codigo". Ele ira criar outra coluna, no caso, "codigo_fabricante", e deixara de usar a primeira coluna,
+
+select * from modelocarro;
+
+# codigo, descricao, fabricante_codigo, codigo_fabricante
+    1,          Onix,       1,                  NULL
+    2,          Civic,      2,                  NULL
+    3,          i3,         NULL,               7
+
+11. Fica uma dica importante: cuidado ao fazer alteracoes em mapeamentos do banco de dados quande seu sistema ja esta funcionando! No nosso caso, ja haviamso feito testes com o Modelo de Carro usando a interface, entao, alterar o modelo pode atrapalhar todo o funcionamento do sistema.
+
+12. Como ainda estamos em fase de testes, e nao em Producao, podemos, simplesmente, apagar a tabela modelocarro, ou apagar as linhas que o codigo_fabricante esta nulo, ou ate fazer a migracao dos valores da coluna fabricante_codigo para codigo_fabricante.
+
+13. Fique a vontade para tentar fazer qualquer uma dessas alteracoes e, ficando com alguma duvida.
+
+14. Fim da Aula 04.009. Mais do Mapeamento Muitos-Para-Um.
+
+
+-->

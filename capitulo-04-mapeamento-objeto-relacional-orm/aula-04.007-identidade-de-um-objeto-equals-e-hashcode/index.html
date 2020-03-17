@@ -1,0 +1,332 @@
+<!-- 
+
+    Aula 04.007. Identidade de um Objeto - equals() e hashcode()
+
+1. Este eh um assunto ate um pouco polemico sobre escrever o equals() e o hashcode() nas entidades. 
+
+2. Tem gente que gosta de fazer, tem gente que nao gosta. Tem gente que gosta de mapear de formas diferentes, enfim, existem algumas alternativas para se colocar o equals() e o hashcode(), que vai depender muito do Projeto que voce estiver criando.
+
+3. Bem, eu vou te explicar, agora, uma forma que funciona, na maioria das vezes, e, se voce tiver alguma situacao que nao de certo isso que a gente estiver fazendo, voce vai entender o porque e vai conseguir adequar a forma correta, porque eu vou te explicar por que que isso acontece.
+
+4. Quando eu te explicar por que que isso acontece, para voce, simplesmente, nao ficar como um robozinho, nao eh?, colocando, 'Ah, tem que colocar equals() e hashcode()', mas por que? 'Ah, nao sei, por que tem que colocar'.
+
+5. Nao, eu vou te explicar por que e, ai, quando voce se deparar, ai, com alguma situacao, 'Hm, essa forma, aqui, esse equals() e hashcode() nao da certo, vamos tentar buscar uma outra solucao.'. E, ai, voce vai conseguir ter essa visao critica de como eh implementar o equals() e o hashcode().
+
+6. Okay?
+
+7. Bom, vamos la.
+
+8. Quando a gente tem uma tabela e, no caso, ai, Fabricante, mostrando, aqui, na tela,
+
+codigo          nome
+1               Chevrollet
+2               Fiat
+
+, eu tenho la, a gente tem, la, o Codigo e o Nome.
+
+9. Certo? Chevrolet 1, Fiat 2. Certo? A nossa Primary Key eh o Codigo.
+
+10. Quando eu te perguntar, 'Quando um Fabricante, se uma linha eh igual a outra linha, no caso, aqui, sao linhas, se voce olhar a Tabela, voce bate o olha, pergunta meio burra, nao eh?
+
+11. Nao, e se eu te perguntar, 'E quando que dois fabricantes sao iguais'?
+
+12. Nesse caso, aqui, se a Primary Key eh o cara que nao deixa a gente repetir, entao, quando dois fabricantes sao iguais, eh quando o codigo eh igual, okay?
+
+13. Se o codigo eh diferente, significa que eles sao dois fabricantes diferentes, porque o codigo ficou diferente, o codigo eh a Primary Key, a chave primaria, ela nao repete.
+
+14. Okay? Bom, ai, so uma observacao, que eu estava falando, tem gente que pode falar assim, oh, 'Nao, mas eu posso colocar o UNIQUE la na coluna nome e fazer o equals() e o hashcode em cima do nome'.
+
+15. Poderia, tambem, nesse caso.
+
+16. Okay? Entao, eh isso que eu quis dizer, essa polemica no inicio. Tem gente que vai preferir fazer no codigo, tem gente que vai preferir fazer na coluna nome, nao eh?, mas, ai, fazer o equals e o hashcode em cima do nome pode depender de outras coisas, dependendo da tabela, uma tabela simples como essa aqui, 'Ah, beleza, isso eh tranquilo', mas, tabelas mais complexas, isso pode dar uma baguncada na cabeca.
+
+17. Okay? Mas, entenda, vamos entender pelo codigo, que voce vai conseguir estender isso dai para outras colunas, se chegar nessa necessidade.
+
+18. Beleza?
+
+19. Entao, vamos la. Entao, duas linhas sao iguais quando as Primaries Keys delas sao iguais. E elas vao ser diferentes, os Fabricantes vao ser diferentes, se a Primary Key for diferente.
+
+20. E, no caso do Java, se for um objeto, se eu tiver la, como eh que eu represento isso, nao eh?
+
+    Fabricante f1 = new Fabricante();
+    f1.seCodigo(1L);
+    f1.setNome("Chevrollet");
+
+    Fabricante f2 = new Fabricante();
+    f2.setCodigo(2L);
+    f2.setNome("Fiat");
+
+21. Bom, isso daqui sao objetos, representados, aqui, por f1 e f2, sao instancias. Quando que a instancia f1 vai ser igual a instancia f2?
+
+22. Se eu nao fizer nada, no equals e no hashcode, quando eu estiver apontando para o mesmo lugar.
+
+23. Ou seja, quando essas variaveis, f1 e f2, forem a mesma referencia.
+
+24. Vamos la. Vamos criar esse exemplo, aqui, no Projeto.
+
+25. Eu criei, aqui, no Eclipse, para a classe Fabricante, eu vou te explicar isso, uma classe, aqui, ObjetosIguais, so para nos mostrar rapidamente, fazer alguns testes, e, ai, eu vou criar alguns Fabricantes, aqui, e a gente vai entender o que que eu estou querendo dizer, oh,
+
+package com.algaworks.curso.jpa2.temp;
+
+public class ObjetosIguais {
+    public static void main(String[] args) {
+        
+    }
+}
+
+26. Entao, se eu for la e escrever,
+
+    public static void main(String[] args) {
+        Fabricante f1 = new Fabricante();
+        f1.setCodigo(1);
+    }
+
+, eu nao vou nem setar o nome, porque a gente nao esta usando o nome,
+
+    public static void main(String[] args) {
+        Fabricante f1 = new Fabricante();
+        f1.setCodigo(1L);
+
+        Fabricante f2 = new Fabricante();
+        f2.setCodigo(2L);
+
+    }
+
+27. Esses fabricantes sao iguais?
+
+    public static void main(String[] args) {
+        Fabricante f1 = new Fabricante();
+        f1.setCodigo(1L);
+
+        Fabricante f2 = new Fabricante();
+        f2.setCodigo(2L);
+
+        System.out.println("f1.equals(f2)? " + f1.equals(f2));
+    }
+
+, no caso de igual que eu estou querendo dizer sao no sentido do negocio, eles sao iguais?
+
+28. Quando voce estiver fazendo alguma comparacao desse tipo no seu projeto, ou framework que voce tiver, vai fazer isso daqui, nao eh?, voce vai ver, eu vou te explicar como eh que eh do Fabricante, mas vou deixar sem a implementacao do equals() e do hashcode(). 
+
+29. Na aula que a gente for ver do Muitos para Um, que a gente tiver que colocar um Combo na Telinha, voce vai ver que vai dar o probleminha, ai, e a gente vai ser obrigado a implementar esse equals() e hashcode(), okay?
+
+30. Entao, vamos entender primeiro.
+
+31. Entao, la. O Fabricante f1 eh igual ao Fabricante f2?
+
+32. Olah o codigo. Codigo 1 e Codigo 2.
+
+33. Eles sao iguais?
+
+34. Nao, nao sao iguais.
+
+35. Certo?
+
+36. Eu tenho que comparar pelo codigo. Ah, entao, vamos la, vamos executar isso daqui, e, ai, a resposta, aqui, vai ser false.
+
+37. Ah, beleza, entao, esta funcionando, nao preciso fazer nada, Normandes.
+
+38. Beleza. Para diferente, nao.
+
+39. Mas, e quando os dois forem iguais?
+
+40. Se eu falar, 'Nao, Normandes, quem que vai fazer isso aqui, seta o codigo 1 aqui em f1 e seta o codigo 1 aqui em f2? Mas, Normandes, voce nao vai ter uma situacao dessa aqui, acontecendo, voce implementando o mesmo codigo duas vezes',
+
+		Fabricante f1 = new Fabricante();
+		f1.setCodigo(1l);
+		
+		Fabricante f2 = new Fabricante();
+		f1.setCodigo(1l);    
+
+41. Mas isso pode acontecer em um framework.
+
+42. Entao, o JSF, por exemplo, ele pode colocar, a gente pode levar uma lista com varios fabricantes para a tela. Na hora que essa lista voltar, voce quer comparar quais que ele selecionou. E, ai, voce vai ter que comparar pelo codigo.
+
+43. Entao, pode ter uma situacao semelhante, assim, o framework estar fazendo por tras dos panos para voce.
+
+44. Okay? Entao, vamos la, vamos entender, se eu tenho codigo de fabricante de numero 1 em f1 e o codigo de fabricante de numero 1 em f2, esses fabricantes sao iguais.
+
+45. Nao sao? Apesar de que, aqui, eu estar criando um novo objeto para f1 e um novo objeto para f2, logicamente, no nosso sistema, se eu tenho o mesmo codigo, significa que eles sao iguais.
+
+46. Entao, f1.setCodigo(1l), e f2.setCodigo(1l), tambem, significa que eles sao iguais. Se eu executar metodo main() mais uma vez, qual que vai ser a resposta aqui? Da para voce imaginar? Vai ser igual?, ou nao?, vai ser true ou false?
+
+47. f1.equals(f2)? false
+
+48. Vai ser false.
+
+49. Ueh, Normandes, entao, nao esta funcionando, ai, realmente.
+
+50. Quando eu tenho codigos iguais e eu quero comparar usando o equals(), aqui, e eh a forma correta de a gente usar, nao eh?, usando o equals(), eles nao vao dar a mesma coisa. Eles so vao dar o mesmo valor aqui quando?
+
+51. Quando eles forem a mesma referencia. Se eu colocar isso daqui, agora, 
+
+        Fabricante f1 = new Fabricante();
+        f1.setCodigo(1l);
+
+        Fabricante f2 = f1;
+        f2.setCodigo(1l);
+
+        System.out.println('f1.equals(f2)? ' + f1.equals(f2));
+
+, se eu colocar o f2 apontando para o mesmo lugar que o f1, ai, sim, eles vao ser iguais, e, ai, eh independente, ate, do codigo,
+
+        Fabricante f1 = new Fabricante();
+        f1.setCodigo(1L);
+
+        Fabricante f2 = f1;
+        f2.setCodigo(10L);
+
+        System.out.println('f1.equals(f2)? ' + f1.equals(f2));
+
+, vou colocar, aqui, oh, codigo 10, codigo 20,
+
+        Fabricante f1 = new Fabricante();
+        f1.setCodigo(1L);
+
+        Fabricante f2 = f1;
+        f2.setCodigo(20L);
+
+        System.out.println('f1.equals(f2)? ' + f1.equals(f2));
+
+, independente do codigo que eu setar aqui, os objetos vao ser iguais,
+
+		Fabricante f1 = new Fabricante();
+		f1.setCodigo(1l);        
+
+		Fabricante f2 = f1;
+		f2.setCodigo(20L);
+		
+		System.out.println("f1.equals(f2)? " + f1.equals(f2));
+		System.out.println(f1.getCodigo());
+        System.out.println(f2.getCodigo());
+        
+f1.equals(f2)? true
+20
+20        
+
+52. Ta vendo? Entao, ta vendo que esse equals(), aqui, nao esta legal para o mapeamento de JPA, nao esta legal, porque a gente precisa comparar no codigo. Ah, entao, a gente tem que vir aqui, na Entidade Fabricante, e melhorar a implementacao do equals() e do hashcode() dele.
+
+53. So te lembrando que equals() e hashcode eh esse.
+
+54. Todo objeto Java, se eu nao coloco nada, aqui, oh, estendendo,
+
+public class Fabricante {
+
+    ...
+}
+
+, significa que esta invisivel, aqui, mas tem, tem um extends Object, aqui,
+
+public class Fabricante extends Object {
+
+}
+
+, nao eh? Quando voce nao coloca, esse cara aqui vem invisivel, vem para ca.
+
+55. Beleza? Entao, oh, eu vou deixar sem, aqui, nao precisa colocar, mas a gente tem la. Esse equals() esta mapeado, esta implementado la na classe Object, se a gente nao sobrescrever ele aqui, na classe Fabricante, ele vai chamar o equals() da classe Object, e o equals() de Object compara, justamente, a referencia aos objetos.
+
+56. Beleza?
+
+57. Entao, vamos la. Vamos implementar o equals() e o hashcode(). Para que que eh o hashcode?
+
+58. Normalmente, quando voce esta trocando o equals para algum atributo, voce vai substituir o hashcode, tambem, para ele ficar em cima do mesmo atributo.
+
+59. Para que?
+
+60. Para facilitar buscas hash, quando voce colocar, por exemplo, quando voce colocar Fabricante em um HashSet, por exemplo, o hashcode, se voce conseguir colocar hashcodes diferentes, vai ser mais rapido a busca.
+
+61. Entao, se a gente setar o hashcode para o codigo, tambem vai ficar mais rapido a busca, porque o codigo eh 1.
+
+62. Bom, entao, a gente tem que sair aqui implementando?
+
+63. Nao, nao precisa, nao. O Eclipse tem uma funcionalidade bem legal, em Source - Generate hashcode() and equals()...
+
+64. Ele vai te perguntar, 'Para quais campos, la, para quais atributos da classe voce quer que seja gerado o equals() e o hashcode()?'
+
+65. Voce pode selecionar mais que 1.
+
+66. As vezes, voce tem uma tabela, uma Entidade com Chave Composta, mas, no nosso caso, a chave eh simples, entao, vou selecionar apenas o codigo.
+
+67. Ai, ele vai fazer o que, oh?
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(codigo);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (!(obj instanceof Fabricante)) {
+			return false;
+		}
+		Fabricante other = (Fabricante) obj;
+		return Objects.equals(codigo, other.codigo);
+	}
+
+68. Veja bem, ele implementou, agora, o equals() e o hashcode() para a gente, ele sobrescreveu, usando o codigo, como efeito de comparacao.
+
+69. Entao, na implementacao, aqui, ele esta usando o codigo, e nao mais a referencia. 
+
+70. E, agora, se eu voltar, aqui, nesse exemplo, e executar novamente, entao, vamos ver oh, sao dois objetos diferentes, f1 e f2, como se a gente estivesse usando um framework, um JSF, ou um outro framework que voce estiver usando, trouxe para voce, la, oh, o Fabricante para voce com codigo 1 e voce esta criando um novo, quer comparar se esta dentro de alguma lista, e esta o mesmo codigo 1,
+
+    Fabricante f1 = new Fabricante();
+    f1.setCodigo(1L);
+
+    Fabricante f2 = new Fabricante();
+    f2.setCodigo(1L);
+
+    System.out.println("f1.equals(f2)? " + f1.equals(f2));
+
+71. Agora, eles sao iguais? Bom, apesar de eles serem objetos diferentes, o codigo eh igual. Com a implementacao que a gente fez, a resposta, agora, vai ser true,
+
+		Fabricante f1 = new Fabricante();
+		f1.setCodigo(1L);
+		
+		Fabricante f2 = new Fabricante();
+		f2.setCodigo(1l);
+		
+		System.out.println("f1.equals(f2)? " + f1.equals(f2));
+		System.out.println(f1.getCodigo());
+        System.out.println(f2.getCodigo());
+        
+, retornou,
+
+f1.equals(f2)? true
+1
+1
+
+72. Ta vendo? Se eu colocar um codigo diferente, os objetos, automaticamente, ja vao ser diferentes,
+
+		Fabricante f1 = new Fabricante();
+		f1.setCodigo(1L);
+		
+		Fabricante f2 = new Fabricante();
+		f2.setCodigo(2l);
+		
+		System.out.println("f1.equals(f2)? " + f1.equals(f2));
+		System.out.println(f1.getCodigo());
+        System.out.println(f2.getCodigo());
+
+, retornou,
+
+f1.equals(f2)? false
+1
+2
+
+, os objetos ja sao diferentes, nao sao iguais mais.
+
+73. Bom, eh isso daqui para o equals() e o hashcode(). Eu nem vou colocar esse codigo, la, ainda, no GitHub, vou apagar, aqui, o equals e o hashcode(). Essa classe, ObjetosIguais, eu vou apagar tambem.
+
+74. Ah, Normandes, por que?
+
+75. Eu vou deixar apagado porque, quando a gente for ver o relacionamento Muitos para Um, voce vai sentir falta disso, vai dar um erro la, e eu vou ter que implementar o equals() e o hashcode() so para provar, vai que voce nao esta acreditando em mim, nao eh?, entao, eu vou deixar sem para, nessa aula, adicionar. O importante que eu quero, agora, eh que voce tenha entendido, ai, a importancia do equals e o do hashcode() na Entidade, beleza?
+
+76. Fim da Aula 04.007. Identidade de um Objeto - equals() e hashcode().
+
+-->

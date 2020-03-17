@@ -1,0 +1,199 @@
+<!--
+    Aula 09.001. Gravacao em Cascata
+
+1. Eu quero te mostrar, agora, mais alguns exemplos de Cascata, ou seja, situacoes reais que podem acontecer, no seu sistema, e, ai, voce, 'Opa, eu ja vi isso daqui, da para lembrar dessas operacoes em Cascata'.
+
+2. O que que eu criei aqui? Eu criei uma outra classe, aqui, chamada de ExemplosCascata, que eu vou criar com JUnit, aqui, mesmo, so para ficar dentro do Projeto.
+
+3. Bom, eh a mesma ideia da outra classe de ExemplosCriteria.java, no @BeforeClass, eu inicializo a Fabrica de EntityManager, no @Before, eu crio o EntityManager, e, no @After, eu fecho o EntityManager, okay?
+
+4. Entao, para esse primeiro exemplo, aqui, eu vou te mostrar,
+
+    @Test
+    public void exemploEntidadeTransiente() {
+
+    }
+
+, uma situacao que pode acontecer, e eh muito comum de acontecer, e, ai, voce nao pode ficar com duvida mais nao.
+
+5. Eh o seguinte. Imagina, la que a gente vai Salvar Um Carro. Entao, a gente tem, la, o Carro, vou criar Um Carro, coisa bem simples, aqui,
+
+    @Test
+    public void exemploEntidadeTransiente() {
+        Carro carro = new Carro();
+
+        carro.setCor("Preto");
+
+        carro.setPlaca("AAA-1111");
+    }
+
+, alguma coisa assim.
+
+6. Okay. Definimos algumas coisas ai, podemos continuar definindo, e, ai, uma das coisas que a gente vai setar, aqui, no Carro, eh o Modelo, porque eu quero passar o modelo, aqui, tambem,
+
+    Carro carro = new Carro();
+    carro.setCor("Preto");
+    carro.setPlaca("AAA-1111");
+
+    carro.setModelo();
+
+7. Por que que eu disse que eh uma situacao que pode acontecer?
+
+8. No nosso sistema, como o Modelo ja esta previamente cadastrado, a gente busca o Modelo, para depois configurar, setar ele dentro do Carro.
+
+9. Entao, Modelo ja vem como Uma Entidade cadastrada. Mas, vai ter situacoes em que voce esta cadastrando os dois na hora.
+
+10. Voce pode ter um Sistema em que voce, por exemplo Pedido de Compra, com o Pedido, entao, os Itens do Pedido e o Pedido, os dois estao sendo criados, ali, na hora. Entao, esse tipo de situacao pode acontecer.
+
+11. Entao, voce vai la, e vai criar o ModeloCarro tambem. E, ai, a gente define, aqui, tambem, algumas coisinhas simples, Categoria.ESPORTIVO, descricao, 
+
+    Carro carro = new Carro();
+    carro.setCor("Preto");
+    carro.setPlaca("AAA-1111");
+
+    ModeloCarro modelo = new ModeloCarro();
+    modelo.setCategoria(Categoria.ESPORTIVO);
+    modelo.setDescricao("Ferrari");
+    carro.setModelo();
+
+12. Pronto. Ai, voce fala assim, 'Nao, eh isso aqui mesmo, eu quero salvar esse carro, aqui.'
+
+13. Beleza. Ai, a gente vai falar, 'Vamos iniciar Uma Transacao, podemos iniciar tudo aqui embaixo',
+
+    Carro carro = new Carro();
+    carro.setCor("Preto");
+    carro.setPlaca("AAA-1111");
+
+    ModeloCarro modelo = new ModeloCarro();
+    modelo.setCategoria(Categoria.ESPORTIVO);
+    modelo.setDescricao("Ferrari");
+    carro.setModelo();
+
+    this.manager.getTransaction().begin();
+    this.manager.persist(carro);
+    this.manager.getTransaction().commit();
+
+, e comitamos a Transacao.
+
+14. Okay? Vamos ver o que que vai acontecer aqui.
+
+15. Vamos mandar executar esse cara, aqui, com JUnit, Run As / JUnit Test.
+
+16. Retornou,
+
+Hibernate: 
+    insert 
+    into
+        Carro
+        (chassi, cor, data_criacao, data_modificacao, codigo_modelo, placa, valor_diaria) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+
+ERROR: HHH000346: Error during managed flush [org.hibernate.TransientPropertyValueException: object references an unsaved transient instance - save the transient instance before flushing : com.algaworks.curso.jpa2.modelo.Carro.modelo -> com.algaworks.curso.jpa2.modelo.ModeloCarro]
+
+17. O objeto referencia uma instancia nao salva, oh, ou seja, eh uma instancia transiente.
+
+18. Entao, ele fala, "Salve a instancia transiente antes de voce descarregar, nao eh?, fazer o flush do EntityManager".
+
+19. Qual instancia que ele esta falando?
+
+20. Carro.modelo, oh.
+
+21. Dentro de Carro, modelo.
+
+22. Esse camarada, Modelo, ai, o EntityManager nao sabe quem que eh. Entao, como eh que ele funciona?
+
+24. O EntityManager, ele sai varrendo, ele vai salvar o Cara, aqui, ele vai salvar o Carro, ai, beleza, vamos salvando o Carro. Ai, beleza, vamos salvando todas as propriedades.
+
+25. Ai, vai chegar uma hora em que ele vai salvar o Modelo, que a gente setou aqui,
+
+    carro.setModelo(modelo);
+
+26. Vai falar, 'Mas, Modelo, beleza, vamos salvar essa instancia Modelo, aqui. Ueh, mas, quem que eh esse camarada? Eu nao sei o que que ele eh, ele nao eh uma Entidade Gerenciada, eu acabei de criar ela aqui,
+
+    Carro carro = new Carro();
+    carro.setCor("Preto");
+    carro.setPlaca("AAA-1111");
+
+    ModeloCarro modelo = >>> new ModeloCarro(); <<<
+    modelo.setCategoria(Categoria.ESPORTIVO);
+    modelo.setDescricao("Ferrari");
+    carro.setModelo();
+
+    this.manager.getTransaction().begin();
+    this.manager.persist(carro);
+    this.manager.getTransaction().commit();    
+
+27. Entao, se ela eh uma instancia nova, eu estou mandando persistir o Carro e ModeloCarro eh uma instancia nova, o que que eu precisaria fazer?
+
+28. Colocar o ModeloCarro sendo gerenciado primeiro.
+
+29. Entao, precisaria falar, 'Vamos persistir o ModeloCarro, para, depois, persistir o Carro'.
+
+30. Nao eh nao, Normandes? Tem que fazer essas duas operacoes?
+
+31. Seria uma opcao. 
+
+32. Mas, talvez, uma opcao nao tao legal.
+
+33. Qual seria a opcao melhor?
+
+34. A gente fazer isso em Cascata.
+
+35. O que que eh fazer em Cascata?
+
+36. Fala assim, oh, "EntityManager, eu estou querendo Salvar o ModeloCarro, toda vez que eu Salvar um Carro, se tiver o ModeloCarro ai, se ele nao estiver persistido, nao for uma Entidade Gerenciada por voce, for uma Entidade nova, voce Salva ele tambem.".
+
+37. Como eh que a gente fala isso?
+
+38. A gente vai la na Entidade Carro, vamos la no ModeloCarro, atributo modelo, tem um Relacionamento @ManyToOne, a gente vai falar o seguinte, 'Olha, eu quero, entao, que, toda vez que voce for, CascadeType, aqui, do javax.persistence, e, aqui, temos algumas opcoes. Por exemplo, ALL, DETACH, MERGE, PERSIST, REFRESH, REMOVE. Vamos colocar, aqui o PERSIST, que eh o que a gente esta fazendo.'
+
+39. O resto, o ALL, vale para todos, o MERGE, quando eu estiver fazendo um Merge, REMOVE, para quando eu estiver removendo, o do REMOVE tem alguns detalhes a mais que a gente vai ver, fica tranquilo,
+
+import javax.persisence.CascadeType;
+
+@Entity
+public class Carro {
+
+    private ModeloCarro modelo;
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @JoinColumn(name = "codigo_modelo")
+    public ModeloCarro getModelo() {
+        return modelo;
+    }
+
+    public void setModelo() {
+
+    }
+}
+
+40. Vou deixar aqui so o PERSIST, por enquanto, nao eh?, para a gente fazer isso, e, ai, dependendo da situacao, se voce estiver fazendo no seu sistema, pode ser que, em um momento la, voce esta fazendo mais com MERGE, entao, voce coloca MERGE, entao, voce coloca o ALL, sei la, tudo depende da situacao de cada sistema.
+
+41. Nesse exemplo, aqui, o PERSIST vai nos atender bem. Entao, mais uma vez, na hora em que ele for persistir o Carro, quando ele estiver persistindo o modelo do Carro, ele, 'Opa, @ManyToOne, CascadeType.PERSIST', ah, entao, quando estiver persistindo, se ModeloCarro estiver transiente, vamos persistir ele tambem.
+
+42. Ta bom? Vamos executar, aqui, mais uma vez.
+
+43. Retornou,
+
+Hibernate: 
+    insert 
+    into
+        ModeloCarro
+        (categoria, descricao, codigo_fabricante) 
+    values
+        (?, ?, ?)
+Hibernate: 
+    insert 
+    into
+        Carro
+        (chassi, cor, data_criacao, data_modificacao, codigo_modelo, placa, valor_diaria) 
+    values
+        (?, ?, ?, ?, ?, ?, ?)
+
+
+44. Olha so o que que ele fez. Ele fez o insert, primeiro, do ModeloCarro, ou seja, ele foi percorrer o Carro, encontrou, 'Opa, ModeloCarro, esta transiente, vamos inserir porque tem Cascade? Vamos. Insere o ModeloCarro. Agora, vamos inserir o Carro, ai, termina de inserir o Carro, e consegue fazer tudo para a gente, ai.'.
+
+45. Fim da     Aula 09.001. Gravacao em Cascata.
+
+-->

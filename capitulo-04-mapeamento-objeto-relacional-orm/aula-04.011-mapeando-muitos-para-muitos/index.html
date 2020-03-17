@@ -1,0 +1,54 @@
+<!--
+
+Aula 04.011. Mapeando Muitos-Para-Muitos
+
+1. Vamos aprender um pouco mais sobre o relacionamento Muitos-Para-Muitos?
+
+2. Voce viu que o Mapeamento eh feito utilizando a anotacao @ManyToMany do pacote javax.persitence.
+
+3. Vimos tambem que a Tabela gerada entre Carro e Acessorio foi carro_acessorio, com as chaves estrangeiras Carro_codigo e acessorios_codigo.
+
+4. Como ja eh normal e voce ja deve ter percebido, no JPA, conseguimos customizar esses nomes.
+
+5. Vamos, entao, adicionar a anotacao @JoinTable do pacote javax.persistence.
+
+6. As propriedades que vamos ver, agora, sao "name", "joinColumns" e "inverseJoinColumns".
+
+7. A propriedade "name" ira definir o nome da tabela que faz o Relacionamento. Se voce quiser trocar para fazer um teste, fique a vontade. Mas, lembre-se, alterar o modelo depois de testes iniciados significa comportamentos estranhos. Entao, fique atento para fazer a migracao dos dados, ou, ate, apagar todas as tabelas e comecar novamente.
+
+8. A propriedade "joinColumns" recebe um array de @JoinColumn.
+
+9. Eh isso mesmo, se tivermos um Relacionamento com chaves compostas, teriamos que usar mais de uma @JoinColumn. Mas, isso eh um assunto para vermos em outro momento, vamos com calma, agora.
+
+10. Voltando ao @JoinColumns, essa propriedade, entao, ira definir a coluna de mapeamento entre a Tabela de Relacionamento, no nosso caso, carro_acessorio, e a Tabela que esta implementando o Relacionamento, neste caso, Carro. Vamos colocar um nome, mas em Portugues, tambem, trocando para 'codigo_carro'. Veja, abaixo, como esta ate agora.
+
+@JoinTable(name = "carro_acessorio"
+        , joinColumns = @JoinColumn(name = "codigo_carro"))
+public List<Acessorio> getAcessorios() {
+    return acessorios;    
+}
+
+11. A ultima propriedade que iremos ver, aqui, eh a "inverseJoinColumns", que tambem recebe um array de @JoinColumn.
+
+12. Se "joinColumns" refere-se a coluna que faz o Mapeamento para Carro, a propriedade "inverseJoinColumns" ira configurar a propriedade no sentido inverso, ou seja, para Acessorio. Vamos, tambem, trocar o nome da coluna para "codigo_acessorio",
+
+@JoinTable(name = "carro_acessorio"
+        , joinColumns = @JoinColumn(name = "codigo_carro")
+        , inverseJoinColumns = @JoinColumn(name = "codigo_acessorio")        
+)
+
+13. Na tela de Cadastro de Carro, ao clicar em Salvar, retornou,
+
+Hibernate: select modelocarr0_.codigo as codigo1_3_1_, modelocarr0_.descricao as descrica2_3_1_, modelocarr0_.codigo_fabricante as codigo3_3_1_, fabricante1_.codigo as codigo1_2_0_, fabricante1_.nome as nome2_2_0_ from ModeloCarro modelocarr0_ left outer join Fabricante fabricante1_ on modelocarr0_.codigo_fabricante=fabricante1_.codigo where modelocarr0_.codigo=?
+Hibernate: select acessorio0_.codigo as codigo1_0_0_, acessorio0_.descricao as descrica2_0_0_ from Acessorio acessorio0_ where acessorio0_.codigo=?
+Hibernate: select acessorio0_.codigo as codigo1_0_0_, acessorio0_.descricao as descrica2_0_0_ from Acessorio acessorio0_ where acessorio0_.codigo=?
+Hibernate: select modelocarr0_.codigo as codigo1_3_1_, modelocarr0_.descricao as descrica2_3_1_, modelocarr0_.codigo_fabricante as codigo3_3_1_, fabricante1_.codigo as codigo1_2_0_, fabricante1_.nome as nome2_2_0_ from ModeloCarro modelocarr0_ left outer join Fabricante fabricante1_ on modelocarr0_.codigo_fabricante=fabricante1_.codigo where modelocarr0_.codigo=?
+Hibernate: insert into Carro (chassi, cor, codigo_modelo, placa, valor_diaria) values (?, ?, ?, ?, ?)
+Hibernate: select acessorio0_.codigo as codigo1_0_0_, acessorio0_.descricao as descrica2_0_0_ from Acessorio acessorio0_ where acessorio0_.codigo=?
+Hibernate: select acessorio0_.codigo as codigo1_0_0_, acessorio0_.descricao as descrica2_0_0_ from Acessorio acessorio0_ where acessorio0_.codigo=?
+Hibernate: insert into carro_acessorio (codigo_carro, codigo_acessorio) values (?, ?)
+Hibernate: insert into carro_acessorio (codigo_carro, codigo_acessorio) values (?, ?)
+
+14. Fim da Aula 04.011. Mapeando Muitos-Para-Muitos.
+
+-->

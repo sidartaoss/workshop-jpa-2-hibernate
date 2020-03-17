@@ -1,0 +1,74 @@
+<!--
+    Aula 14.001. O que eh Cache
+
+1. Neste modulo, a gente vai falar so sobre Cache, okay?
+
+2. E esta aula, eh para dar uma introducao para quem nao conhece nada de Cache, nao sabe para que que serve, nunca ouviu falar, beleza?
+
+3. Se voce ja sabe mais ou menos a ideia, o que que eh o cache, pode ser que esta aula seja um pouco repetitiva para voce.
+
+4. Mas, ela eh bem curtinha, eh so para dar, mesmo, uma introducao, fazer uma analogia rapida, aqui, do que seria o Cache, para voce continuar assistindo as aulas deste modulo.
+
+5. Okay? Entao, vamos la.
+
+6. Para eu te explicar o que que eh o Cache, se voce nunca ouviu falar nele, eu vou fazer uma pequena analogia.
+
+7. Vamos imaginar que voce esta chegando em uma loja para comprar alguma coisa. Sei la, uma loja que vende uma roupa, uma blusa, uma bermuda, beleza?
+
+8. E voce chegou la e quer comprar aquela blusa, so tem um detalhe: a loja so aceita dinheiro, ela nao aceita cartao, nem aceita cheque.
+
+9. Beleza? E, ai, voce pensa, la, assim, 'Bom, se eu tiver dinheiro, aqui, eu consigo comprar, se nao tiver dinheiro, eu vou ter que sacar. Okay?'
+
+10. E, ai, o que que eh mais rapido?
+
+11. Voce esta ali, as vezes, voce esta com pressa, o seu voo vai sair, ali, voce esta como turista em algum lugar, o que que seria mais rapido, entao: 1. Voce abrir a carteira e pegar um dinheiro de dentro; 2. Ou voce procurar um caixa eletronico, as vezes, pode ter uma fila, para voce tirar aquele dinheiro e voltar na loja?
+
+12. Entao, isso pode ser, ..., sao tempos diferentes que voce vai gastar. Se voce abrir a carteria e, simplesmente, pegar o dinheiro, ali, voce compra, ali, a blusa rapidamente. Senao, voce tem que ir la no Caixa Eletronico para sacar dinheiro, vai demorar, nao eh?
+
+13. Entao, a analogia que eu quero te dizer, eh o seguinte: a carteira, ali, eh o seu Cache.
+
+14. Ou seja, aquele acesso rapido que voce tem, ali, eh o Cache. E o Caixa Eletronico seria o acesso normal, o acesso que, a forma tradicional que voce tem de pegar o dinheiro.
+
+15. O Cache ja esta disponivel, ali, disponivel, na mao, rapido, voce poe a mao na carteira e ja tira o dinheiro, paga e vai embora.
+
+16. O acesso normal, como eh que eh? Voce tem que ir la no Caixa Eletronico, enfrentar uma fila, tirar o dinheiro, voltar na loja para comprar.
+
+17. Okay? Entao, quando voce pensa em Cache, voce tem que pensar que Cache eh rapido.
+
+18. Okay? Quando eu estou querendo implementar alguma solucao de Cache, eu estou querendo dizer que ele eh para ser rapido.
+
+19. A Consulta, nele, deve ser rapida.
+
+20. E voce sabe que a Memoria RAM eh mais rapida que um HD, nao eh verdade?
+
+21. Se voce tiver algum dado na memoria RAM, para ler ele, eh muito mais rapido do que ler la no HD.
+
+22. Entao, a Memoria RAM eh mais rapida. Mas, tambem, a Memoria RAM eh mais limitada. A Memoria RAM, voce ja viu Memoria RAM ai, infinita, nao eh?, assim, do tamanho de HD?
+
+23. Nao tem, nao eh?, assim, a tecnologia esta avancando muito, esta crescendo muito, mas, ainda assim, eh mais limitado do que um HD normal.
+
+24. E, tambem, por ser mais limitado, a tecnologia ser diferente, eh mais caro.
+
+25. Mas, o HD eh mais lento, mas ele tem maior capacidade, e ele eh mais barato.
+
+26. Entao, qual que vai ser a ideia, aqui, desse modulo sobre Cache?
+
+27. A gente tem o Banco de Dados, simulando, ai, representando o HD, nao eh?, esta la dentro do HD.
+
+28. Fazer Consultas de Dados la dentro do Banco de Dados, vamos chamar, que eh mais lento, que eh o Acesso Normal. Mas tem situacoes em que voce quer um pouco mais de velocidade. E, ai, voce vai colocar os dados na Memoria RAM. Entao, aquelas consultas que a gente fez durante todo o curso de entidades ja mapeadas do Hibernate, ali, buscando do Banco de Dados, vai ser mais lento do que eu buscar na Memoria RAM, beleza?
+
+29. Entao, quando a gente ver os detalhes, aqui, voce vai ver que, as vezes, quando uma Entidade esta no Cache, quando essa Entidade estiver no Cache, ele nem vai gerar aquele SQL para ir buscar no Banco de Dados. Vai ser diretao.
+
+30. A gente vai la e,... voce fala assim, oh, 'Eu quero a Entidade tal, ela esta no Cache? Esta. Entao, ja devolve.', eh rapido, eu nao preciso ir no banco de dados.
+
+31. Beleza? Se nao tiver, a gente vai carregar do Banco de Dados, e colocar na Memoria.
+
+32. Beleza? Mas, ai, as questoes, so mais um detalhe, que nao eh simplesmente pegar do banco de dados e colocar na memoria. Envolve um planejamento, concorda comigo? Como eh mais caro, eh mais limitado, voce nao pode colocar 100% dos seus dados na memoria RAM. A nao ser que o seu sistema tenha nada de dados, nao eh?, tenha pouquinha coisa.
+
+33. Mas, um sistema normal, normalmente, ele vai ter muitos dados, vai precisa de um Banco de dados, para armazenar ele, mas os dados mais acessados, a gente pode colocar em Memoria RAM, e aumentar a performance do nosso sistema. Ou seja, vai melhorar a experiencia do usuario. O usuario vai ficar mais feliz, usando o nosso sistema. Beleza? E eh isso que eu vou mostrar para voce neste modulo, a gente vai ter varias aulas, aqui, e alguns exercicios, ai, tambem, para voce fazer em relacao a isso.
+
+34. Okay?
+
+35. Fim da     Aula 14.001. O que eh Cache.
+
+-->

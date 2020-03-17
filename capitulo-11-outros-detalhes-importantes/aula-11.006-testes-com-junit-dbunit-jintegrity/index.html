@@ -1,0 +1,441 @@
+<!--
+    Aula 11.006. Testes com JUnit, DBUnit, e JIntegrity
+
+1. Essa parte, agora, eh bem importante para quem quer fazer um codigo de Qualidade. Se voce quiser que as suas consultas estejam funcionando sempre, voce vai fazer os testes de Integracao.
+
+2. O que eh Teste de Integracao?
+
+3. Toda vez que voce testa o seu Sistema, no nosso caso, aqui, o locadora-veiculo-web, com um outro Sistema, no nosso caso, o MySQL, nos estamos fazendo um Teste de Integracao.
+
+4. Okay?
+
+5. E existem alguns frameworks para nos auxiliar a fazer isso.
+
+6. O primeiro deles eh o JUnit, que a gente ja, nao fez Teste, mas a gente ja utilizou para fazer alguns exemplos, nao eh? Agora, a gente vai utilizar, realmente, para fazer um Teste.
+
+7. E utilizar ele com o auxilio do DBUnit com o JIntegrity, que vao nos auxiliar bastante a fazer Teste de Integracao.
+
+8. Mas para que fazer Teste de Integracao, Normandes? Nao entendi.
+
+9. Se eu quiser fazer os meus Testes Unitarios, nao eh a mesma coisa?
+
+10. Nao, porque, qual que eh a unica forma de voce testar se a sua Consulta esta funcionando?
+
+11. Se o seu JPQL, se a sua Criteria, esta funcionando?
+
+12. A unica forma de voce saber isso eh enviando ela para o banco de dados.
+
+13. Concorda comigo?
+
+14. Se voce so consegue testar enviando ela para o banco de dados, a gente vai ter que fazer isso, enviar ela para o banco de dados.
+
+15. E, ai, esse framework, o DBUnit e, depois, o JIntegrity, que veio para facilitar a criacao dos nossos testes, eles facilitam, justamente, essa interacao com o banco de dados, essa configuracao com o banco de dados, porque eu vou ter que preparar o que eu quero inserir no banco de dados, para, depois, eu fazer a minha consulta, etc.
+
+16. Ou seja, vamos fazendo, aqui, que vai ficar mais claro para voce.
+
+17. A primeira coisa que eu vou alterar, aqui, eh no pom.xml.
+
+18. Eu vou colocar, logo abaixo, aqui, as dependencias do DBUnit, algumas que sao necessarias para o DBUnit funcionar, e a dependencia do jIntegrity,
+
+    <-- DBUnit --
+    <dependency>
+        <groupId>org.dbunit</groupId>
+        <artifactId>dbunit</artifactId>
+        <version>2.4.9</version>
+        <scope>test</scope>
+    </dependency>
+
+    <-- Necessario para o DBUnit --
+    <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-api</artifactId>
+        <version>1.5.6</version>
+        <scope>test</scope>
+    </dependency>
+    <dependency>
+        <groupId>org.slf4j</groupId>
+        <artifactId>slf4j-simple</artifactId>
+        <version>1.5.6</version>
+        <scope>test</scope>
+    </dependency>
+
+    <-- jIntegrity --
+    <dependency>
+        <groupId>com.jintegrity</groupId>
+        <artifactId>jintegrity</artifactId>
+        <version>0.1.2</version>
+        <scope>test</scope>
+    </dependency>
+
+19. Bom, quando eu coloco essas dependencias, aqui, para configurar o DBUnit, eu ja criei, aqui, a pastinha src/test/resources, e criei o jintegrity.properties, dentro de src/test/resources,
+
+path=xml
+xml=Carro,CarroAcessorio
+
+20. Esse jintegrity.properties eh o arquivo de configuracao do jIntegrity.
+
+21. jIntegrity, entao, eh uma camada acima do DBUnit para nos auxiliar.
+
+22. E, aqui, em jintegrity.properties, eu defino duas propriedades. A primeira, path, eu defini como xml, eu estou falando qual que eh o diretorio, aqui dentro de src/test/resources, em que eu quero ter os meus XML's, que sao as tabelas do Banco de Dados.
+
+23. Agora, mesmo, eu ja chego aqui.
+
+24. E, quais sao os XML's que eu quero executar la dentro, 
+
+path=xml
+xml=Carro,CarroAcessorio
+
+, eu quero usar la dentro, eu quero pegar, la dentro do meu codigo, e fazer a insercao, apagar eles...
+
+25. Aqui, eu coloquei Carro e CarroAcessorio. Logicamente, eu nao vou fazer os Testes do Sistema Inteiro.
+
+26. Mas, pode ficar como exercicio para voce testar mais, se voce quiser, ou comecar a usar em algum outro sistema pessoal seu.
+
+27. E o legal, aqui, eh que a ordem que voce coloca, aqui, eh a ordem de insercao.
+
+28. Entao, eu tenho que inserir, primeiro, o Carro, depois, CarroAcessorio. Se, na hora dele apagar, ele ja sabe, 'Opa, tem que, primeiro, apagar CarroAcessorio para, depois, apagar Carro, por exemplo, okay?'.
+
+29. Bom, entao, como eu disse, dentro da pasta xml, vai ser onde a gente cofigura as tabelas do nosso banco de dados.
+
+30. Entao, vou acessando, aqui, em Carro.xml.
+
+31. Eh um <xml>, com <dataset>. <carro>, o nome da tabela, e, ai, eu comeco a definir as colunas, codigo, placa, valorDiaria, dataCriacao, e etc.,
+
+<xml version="1.0" encoding="UTF-8"?>
+
+<dataset>
+    <carro codigo="1" placa="AAA-1111" valorDiaria="200.0" dataCriacao="2019-02-25 19:38:00" />
+</dataset>
+
+32. Porque eu tenho que inserir alguma coisa coisa, eu tenho que deixar o meu banco de dados preparado, com algum dado, para eu poder consultar.
+
+33. Concorda? Eu quero testar a Consulta.
+
+34. Entao, eu insiro alguma coisa, no banco de dados, o jIntegrity, com o DBUnit, vai fazer isso para mim, vai inserir la no banco, vai preparar o banco, deixar o banco no estado ideal, eu vou la e faco a Consulta, okay?
+
+35. E, ai, voce vai ter varios, aqui, varios e varios arquivos, nao eh?, pode ter varios e varios desses arquivos para voce ir testando as suas consultas. Entao, cada hora, voce vai la, apaga o banco, e insere. Quem vai fazer isso eh o jIntegrity com o DBUnit, vai facilitar muito, muito, a nossa vida.
+
+36. Okay? Entao, o Carro.xml, aqui, eu inseri so esses dados, nao coloquei todos.
+
+37. CarroAcessorio.xml,
+
+<?xml version="1.0" encoding="UFT-8"?>
+
+<dataset>
+    <carro_acessorio />
+</dataset>
+
+, eu sou coloquei a tabela, para te mostrar que eu quero apagar. Entao, quando eu mandar dar o clean, ou seja, para apagar o banco de dados, limpar o banco de dados, ele vai la apagar o carro_acessorio, eu nao estou mandando inserir nenhum acessorio nos carros, nada disso. Como eu disse, se voce quiser fazer, voce pode brincar, ai, inserir os acessorios, nao eh?, fazer o relacionamento. Ou seja, nos XML's, voce trabalha com as tabelas do banco de dados.
+
+38. Para, daqui, a pouco, a gente trabalhar com JPQL, com Criteria, la no Java, okay?
+
+39. A outra coisa, aqui, o hibernate.properties.
+
+40. O hibernate.properties eh o arquivo de configuracao que o jIntegrity, com o DBUnit, vai usar, para conectar no banco de dados, para fazer o que? 
+
+41. Apagar e inserir esses dados, aqui, definidos nos arquivos XML's, ou seja, em Carro.xml e CarroAcessorio.xml.
+
+42. Beleza? E o que que eh o legal, aqui?
+
+43. As vezes, o seu persistence.xml, aqui, de repente, nao esta configurado com a senha de desenvolvimento, ou alguma outra coisa.
+
+44. Nao eh? Mas nao eh o seu banco de dados de teste.
+
+45. No seu hibernate.properties, voce pode apontar para um banco de teste.
+
+46. Okay? Para ficar bem facil, ou seja, voce consegue configurar bancos diferentes, ou seja, o banco de dados que vai configurar o seu codigo de verdade, vamos chamar ele assim, e o seu banco de dados de teste, voce pode conectar em outro banco de dados.
+
+47. Okay?
+
+48. Bom, de configuracao, eu acho que eh so isso, aqui, mesmo. O pom.xml, recapitulando, no pom.xml, nos adicionamos as dependencias. O jIntegrity.properties, que eh onde eu falo onde eh que estarao os meus XML's, e quais XML's eu quero utilizar la dentro, e a definicao dos meus XML's, que sao os reflexos do banco de dados, alem da configuracao de conexao com o banco de dados que a gente vai usar la.
+
+49. Beleza?
+
+50. Bom, acredito que seja isso, de configuracao, se eu lembrar de alguma coisa, a gente vai colocando.
+
+51. Bom, o que que eu vou criar, aqui?
+
+52. Eu vou criar uma nova classe, para a gente testar o DAO, eu vou, ate, colocar no pacote DAO, eu vou chamar assim, oh, CarroDAOTest,
+
+package com.algaworks.curso.jpa2.dao;
+
+public class CarroDAOTest {
+
+
+}
+
+53. Eh o Teste do nosso DAO de Carro.
+
+54. Okay?
+
+55. Bom, como eh que eu comeco a usar o jIntegrity?
+
+56. 
+
+public class CarroDAOTest {
+
+    private JIntegrity helper = new JIntegrity;
+}
+
+, bem simples, eu posso colocar, aqui, direto, assim.
+
+57. E eu vou testar o meu CarroDAO?
+
+58. Entao, CarroDAO,
+
+import com.jintegrity.core.JIntegrity;
+
+public class CarroDAOTest {
+
+    private JIntegrity helper = new JIntegrity();
+
+    private CarroDAO carroDAO;
+
+}
+
+59. Antes de comecar cada metodo de teste, ou seja, @Before, com JUnit, eu coloco @Before, para falar Antes de acontecer os metodos de Teste, eu quero fazer um clean(), ou seja, helper.cleanAndInsert();,
+
+import org.junit.Before;
+
+public class CarroDAOTest {
+
+    private JIntegrity helper = new JIntegrity();
+
+    private CarroDAO carroDAO;
+
+    @Before
+    public void init() {
+        this.helper.cleanAndInsert();
+    }
+}
+
+60. Ou seja, ele vai pegar, em jintegrity.properties, dentro da pasta xml, quais sao os XML's que ele quer? Carro.xml e CarroAcessorio.xml.
+
+61. Entao, ele vai apagar, entao, ele apaga CarroAcessorio, depois, Carro, para a gente nao ter problema de Constraint de Chave Estrangeira.
+
+62. Bom, aqui, Antes, @Before, tambem, eu quero criar o CarroDAO, para eu poder testa-lo, okay?,
+
+public class CarroDAOTest {
+
+    private JIntegrity helper = new JIntegrity();
+
+    private CarroDAO carroDAO = new CarroDAO();
+
+    @Before
+    public void init() {
+        this.helper.cleanAndInsert();
+
+        this.carroDAO = new CarroDAO();
+    }
+}
+
+63. So que, ai, vamos dar uma olhadadinha, aqui, na classe CarroDAO.
+
+64. O CarroDAO, ele recebe, via injecao de dependencias, nao eh?, que a gente esta usando o CDI,
+
+    >>> @Inject <<<
+    private EntityManager manager;
+
+, o EntityManager. Bom, e, nesse caso, aqui, na classe CarroDAOTest, quem que vai inserir para a gente?
+
+65. Quem que vai colocar o EntityManager ali?
+
+66. Bom, ai, nos vamos ter que fazer um macetinho, aqui. Eu vou criar o seguinte, na classe CarroDAO, eu vou criar o metodo setEntityManager(), 
+
+public void setEntityManager(EntityManager manager) {
+    this.manager = manager;
+}
+
+, e eu vou fazer o seguinte, oh. Criei esse set na classe CarroDAO, e, ai, agora, em CarroDAOTest,
+
+public class CarroDAOTest {
+
+    private JIntegrity helper = new JIntegrity();
+
+    private CarroDAO carroDAO = new CarroDAO();
+
+    @Before
+    public void init() {
+        this.helper.cleanAndInsert();
+
+        this.carroDAO = new CarroDAO();
+        this.carroDAO.setEntityManager();
+    }
+    
+}
+
+, o JIntegrity vem com uma classe, JPAHelper, que eu posso pegar o EntityManager,
+
+...
+
+import com.jintegrity.helper.JPAHelper;
+
+    @Before
+    public void init() {
+        this.helper.cleanAndInsert();
+
+        this.carroDAO = new CarroDAO();
+        this.carroDAO.setEntityManager(JPAHelper.currentEntityManager());
+    }
+
+67. Ou seja, esse DAO,
+
+    @Before
+    public void init() {
+        this.helper.useMySQL();
+        this.helper.cleanAndInsert();
+
+        >>> this.carroDAO = new CarroDAO();
+        this.carroDAO.setEntityManager(JPAHelper.currentEntityManager());
+    }
+
+, vai estar configurado as configuracoes de conexao para esse DAO, aqui, de teste, que a gente esta criando, aqui, certo?, nao eh o DAO de teste, nao eh? O DAO de verdade, nosso, aqui, o EntityManager, ou seja, onde eh que ele vai conectar, a conexao, ele vai ser a mesma conexao que a gente criou para o JIntegrity.
+
+68. Ou seja, se for em um banco de dados de teste, vai ser no banco de dados de teste.
+
+69. Okay? E, ai, eu vou criar um metodo de teste, aqui, entao, para a gente testar alguma coisa simples, ali, porque eu, ainda, nao fiz nenhuma consulta, a gente nao tem nenhum relatorio mais complicado. 
+
+70. Mas, sei la, vou fazer, aqui, vou testar o metodo CarroDAO.buscarPeloCodigo(), mesmo. Eu passo um codigo e se ele vai retornar. Se voce reparar, aqui, o Carro que vai ter inserido, no banco de dados, vai ser o de codigo 1.
+
+71. Okay? Entao, como eh que seria algum Teste?
+
+@Test
+public void buscarCarroPeloCodigo() {
+    Carro carro = this.carroDAO.buscarPeloCodigo(1L);
+}
+
+72. Se a minha consulta, aqui, estiver correta, ela tem que devolver o Carro de Codigo 1.
+
+73. Nao tem jeito de devolver outro Carro.
+
+74. Okay? Tem que ser aquele Carro.
+
+75. E, ai, eu poderia validar, posso validar, nao eh?, mais coisas, aqui, como a Placa, por exemplo.
+
+76. Vamos validar o Codigo e a Placa, so para a gente ver.
+
+77. Entao, aqui, a gente vai colocar um assertEquals(1L, carro.getCodigo()), ai, para a gente nao ter problemas, ali, do assertEquals(), por questoes de ambiguidade, vamos colocar o longValue(),
+
+import static org.junit.Assert.assertEquals;
+
+@Test
+public void buscarPeloCodigo() {
+    Carro carro = this.carroDAO.buscarPeloCodigo(1L);
+
+    assertEquals(1L, carro.getCodigo().longValue());
+}
+
+78. E, aqui, eu vou adicionar o static import para o assertEquals.
+
+79. Okay? Da um CTRL + 1 e ele consegue importar.
+
+80. assertEquals(""), para a placa. A placa que tem que estar la eh "AAA-1111", conforme definido em Carro.xml.
+
+81. assertEquals("AAA-1111", carro.getPlaca());
+
+82. Okay?
+
+@Test
+public void buscarPeloCodigo() {
+    Carro carro = this.carroDAO.buscarPeloCodigo(1L);
+
+    assertEquals(1L, carro.getCodigo().longValue());
+    assertEquals("AAA-1111", carro.getPlaca());
+}
+
+83. Entao, se essa minha Query esta funcionando, 
+
+@Test
+public void buscarPeloCodigo() {
+    Carro carro = >>> this.carroDAO.buscarPeloCodigo(1L);
+
+    assertEquals(1L, carro.getCodigo().longValue());
+    assertEquals("AAA-1111", carro.getPlaca());
+}
+
+, essas duas propriedades,
+
+@Test
+public void buscarPeloCodigo() {
+    Carro carro = this.carroDAO.buscarPeloCodigo(1L);
+
+    >>> assertEquals(1L, carro.getCodigo().longValue());
+    >>> assertEquals("AAA-1111", carro.getPlaca());
+}
+
+, tem que ser retornadas. Okay? Porque, mais uma vez, o jIntegrity foi la e inseriu isso, daqui, no banco, 
+
+<dataset>
+    <carro codigo="1" placa="AAA-1111" valorDiaria="200.0" dataCriacao="2019-02-26 10:10:10" />
+</dataset>
+
+, pra gente, e, atraves do DAO, 
+
+@Test
+public void buscarPeloCodigo() {
+    Carro carro = >>>this.carroDAO.buscarPeloCodigo(1L);
+
+    assertEquals(1L, carro.getCodigo().longValue());
+    assertEquals("AAA-1111", carro.getPlaca());
+}
+
+, eu estou indo la e buscando.
+
+84. Entao, se o meu DAO estiver certo, ele tem que buscar essas informacoes.
+
+85. Certo?
+
+86. Entao, eu vou mandar executar esse codigo, aqui, como um Teste do JUnit.
+
+87. Okay, executou, 
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_0_,
+        carro0_.chassi as chassi2_3_0_,
+        carro0_.cor as cor3_3_0_,
+        carro0_.data_criacao as data_cri4_3_0_,
+        carro0_.data_modificacao as data_mod5_3_0_,
+        carro0_.foto as foto6_3_0_,
+        carro0_.codigo_modelo as codigo_m9_3_0_,
+        carro0_.placa as placa7_3_0_,
+        carro0_.valor_diaria as valor_di8_3_0_ 
+    from
+        Carro carro0_ 
+    where
+        carro0_.codigo=?
+
+88. E ficou verdinha a nossa barrinha, aqui, do Teste do JUnit.
+
+89. Por que ficou verdinha?
+
+90. Porque ele passou nesses 2 testes, 
+
+    assertEquals(1L, carro.getCodigo().longValue());
+    assertEquals("AAA-1111", carro.getPlaca());
+
+91. Certo? Entao, o que que ele fez? Ele trouxe, entao, Um Carro de Codigo 1, e um Carro com a Placa que eh essa aqui, 'AAA-1111', que era, justamente, o que a gente estava esperando.
+
+92. Se a nossa Consulta estivesse errada, por exemplo, la na, as vezes, era buscarCodigoPelaPlaca 'I...', nao sei o que, alguma coisa assim, a gente, na hora de buscar, poderia ter esquecido de implementar alguma coisa la na Consulta, la no JPQL, ou la na Criteria, alguma coisa, a gente esqueceria de implementar la,
+
+@Test
+public void buscarPeloCodigo() {
+    Carro carro = >>> this.carroDAO.buscarPeloCodigo(1L); <<<
+
+    ...
+}
+
+93. E, ai, na hora que a gente fizesse o teste, ia falhar. Ah, tah, esqueci.
+
+94. Ou seja, voce descobre antes qualquer problema que possa ter. Por que voce descobre antes? Porque voce esta testando antes de colocar o seu codigo la no ambiente de teste, no ambiente ate de Producao, sei la, as vezes, voce manda direto para o ambiente de Producao. Entao, antes de chegar la, no Ambiente, para alguem fazer um teste de verdade, voce ja testa, nao eh? Aqui, voce so consulta se esta funcionando.
+
+95. Nao eh? Entao, essa eh uma pratica muito boa de voce fazer Teste de Integracao e o JIntegrity, junto com o DBUnit, ai, facilitam bastante a nossa vida nos Testes de Integracao.
+
+96. Te aconselho a treinar, ai, oh, a utilizar os Testes de Integracao no seu Projeto.
+
+97. Fim da     Aula 11.006. Testes com JUnit, DBUnit, e JIntegrity.
+
+
+
+
+-->

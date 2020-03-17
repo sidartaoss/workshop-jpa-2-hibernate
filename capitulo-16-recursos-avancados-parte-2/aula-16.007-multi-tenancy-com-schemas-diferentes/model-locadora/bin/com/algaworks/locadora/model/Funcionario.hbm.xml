@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated 17/03/2019 18:04:26 by Hibernate Tools 3.5.0.Final -->
+<hibernate-mapping>
+    <class name="com.algaworks.locadora.model.Funcionario" table="FUNCIONARIO">
+        <id name="codigo" type="long">
+            <column name="CODIGO" />
+            <generator class="assigned" />
+        </id>
+        <one-to-one name="pessoa" class="com.algaworks.locadora.model.Pessoa"></one-to-one>
+        <property name="matricula" type="java.lang.String">
+            <column name="MATRICULA" />
+        </property>
+    </class>
+</hibernate-mapping>

@@ -1,0 +1,559 @@
+<!--
+    Aula 16.003. Lock Otimista
+
+1. Vamos la, o que que eu vou fazer, aqui, oh?
+
+2. Eu criei a telinha, eu deixei, ate, aqui, separado, http://localhost:8080/exemplo-lock-otimista/, Lock Otimista no JPA.
+
+3. Eh, vamos la, olha so, eu tenho uma classe, aqui, Usuario, muito simples,
+
+package com.algaworks.exemplo.lock.otimista.model;
+
+import javax.persistence.Version;
+
+@Entity
+@Table(name = "usuario")
+public class Usuario implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private Long codigo;
+    private String nome;
+    private Integer version;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    public Long getCodigo() {
+        return codigo;
+    }
+
+    public void setCodigo(Long codigo) {
+        this.codigo = codigo;
+    }
+
+    public String getNome() {
+        return nome;
+    }
+
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    @Version
+    public Integer getVersion() {
+        return version;
+    }
+
+    public void setVersion(Integer version) {
+        this.version = version;
+    }
+}
+
+4. Para eu demonstrar o problema acontecendo, eu vou comentar essa questao da versao, aqui,
+
+    ...
+    // private Integer version;
+
+    ...
+
+    // @Version
+    // public Integer getVersion() {
+    //     return version;
+    // }
+
+    // public void setVersion(Integer version) {
+    //     this.version = version;
+    // }
+
+5. Entao, olha so, eu tenho, aqui, uma classe Usuario, aqui, no pacote, .model, que tem um codigo e um nome.
+
+6. O codigo eh auto_increment, aqui, mas, se eu passar, ele vai fazer um Update.
+
+7. Certo? Entao, se o codigo estiver setado, ele faz um Update, senao, ele vai gerar codigo para mim, usando o auto_increment, do MySQL.
+
+8. Eh o seguinte, deixa eu demonstrar o problema, aqui, primeiro, o problema acontecendo.
+
+9. Deixa eu reiniciar, aqui, o Servidor.
+
+10. Aqui, no MySQL, eu criei, aqui, o schema exemplo_lock_otimista, e vai ter a tabela usuario.
+
+11. Deixa eu mandar executar, aqui, para criar a tabela.
+
+12. La no persistence.xml, eu estou usando, la, o exemplo_lock_otimista,
+
+        <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/exemplo_lock_otimista" />
+
+13. Estou falando que eh para ele gerar as tabelas para mim,
+
+        <property name="hibernate.hbm2ddl.auto" value="update" />
+
+14. Entao, na primeira vez que eu acessar, aqui, o Sistema, e mandar, ah, tem que tirar o atributo de versao, tambem, da telinha,
+
+        <p:outputLabel for="versao" value="Versao" />
+        <p:inputText id="versao" value="#{cadastroUsuarioBean.usuario.versao}" readOnly="true" />
+
+15. Vamos mandar fazer o Publish no Servidor.
+
+16. Okay, ja vai funcionar, agora.
+
+17. Okay, qual que eh o problema que a gente pode ter aqui?
+
+18. Deixa eu abrir, tambem, o Firefox, para a gente ter duas Sessoes diferentes, http://localhost:8080/exemplo-lock-otimista/
+
+19. Imagina, aqui, que voce tenha Dois Usuarios.
+
+20. Aqui, eu estou com um Usuario no Chrome e, aqui, eu estou com Um Usuario no Firefox, para simular, exatamente, Dois Usuarios diferentes.
+
+21. Sei la, aqui, no Firefox, esta o Usuario Joao, e, aqui, no Chrome, esta usando o Usuario Maria, por exemplo.
+
+22. Sao usuarios diferentes, pessoas diferentes usando o seu sistema.
+
+23. E, ai, o que que ele ira fazer?
+
+24. Se eu clicar em Pesquisar, aqui, ele vai demorar, na primeira vez, um pouquinho mais, porque ele vai iniciar, criar as tabelas no banco de dados, nao vai encontrar nada, mas, pelo menos, a tabela foi gerada, aqui, oh, tabela usuario, se a gente fizer o select nela, aqui, nao tem nada la, so as colunas codigo e o nome,
+
+select * from usuario;  
+
+# codigo, nome
+
+
+25. Perfeito?
+
+26. Entao, tem as colunas codigo, nome e o Usuario nao encontrado.
+
+27. Entao, o que que eu vou fazer?
+
+28. Eu vou cadastrar, aqui, por exemplo, no Chrome, o "João". Vou clicar em Salvar. 
+
+29. Quando eu clicar em Salvar, ele vai fazer o insert no banco de dados, e vai buscar, nao eh?, ja vai fazer esse Insert, vai buscar e ja vai setar os valores, dele, aqui, para mim, na tela. Entao, Salvei.
+
+30. Usuario salvo com sucesso. Setou o codigo que ele gerou, la, para o Joao, foi 1, e, aqui, o Nome dele.
+
+31. Entao, quer ver, vamos dar uma olhada aqui, oh, 
+
+select * from usuario;
+
+# codigo, nome
+1, João
+
+32. Se eu tirar, aqui, o Codigo, de novo, colocar, aqui, em Nome, Maria, para cadastrar o Usuario Maria. Cliquei em Salvar. Nao tinha o Codigo, preencheu com o Codigo 2.
+
+33. Se a gente voltar, aqui, oh, no Workbench, 
+
+select * from usuario;
+
+# codigo, nome
+1, João
+2, Maria
+
+34. Beleza? E, ainda, aqui, para explicar um pouquinho do funcionamento do sistema, se eu colocar o Codigo e clicar em Pesquisar, ele vai trazer para mim e ja vai setar, aqui, para mim.
+
+35. Okay?
+
+36. Entao, o Sistema eh simplezinho.
+
+37. Eu quero te mostrar o problema que pode acontecer.
+
+38. Beleza? 
+
+39. Entao, vamos fazer o seguinte, vamos alterar, aqui, o Usuario de Codigo 1.
+
+40. Vamos voltar, aqui, para o Firefox.
+
+41. Okay?
+
+42. Entao, vou, tambem, pesquisar, aqui, o Usuario de Codigo 1.
+
+43. Entao, tem o Joao no Chrome e o Joao no Firefox.
+
+44. Imagina. O Lock Otimista foi feito para resolver um problema que pode acontecer de concorrencia.
+
+45. Entao, olha so.
+
+46. Imagina o seguinte.
+
+47. Entao, aqui, O Usuario do Firefox, la no Computador dele, buscou o Usuario de Codigo 1 para editar ele. A mesma coisa, aqui, O Usuario do Chrome, tambem buscou o Usuario 1 e eles estao editando ao mesmo tempo. Imagina que eles estao digitando, aqui, ao mesmo tempo.
+
+48. Ai, o Cara, aqui, no Firefox, resolve colocar, em Nome, 'Joao da Silva'.
+
+49. E, ai, esse Camarada, aqui, no Chrome, tambem vai colocar, aqui, sei la, o "Joao da Silva Junior".
+
+50. So para mostrar, para voce, que tem coisa diferente. Mas, na verdade, eles poderia, ate, colocar a mesma informacao, aqui, em Nome.
+
+51. A questao eh, Eles estao editando o mesmo Usuario ao mesmo tempo, oh, de codigo 1.
+
+52. Percebe?
+
+53. Eles esta fazendo isso ao mesmo tempo.
+
+54. E, ai, o Usuario, aqui, do Firefox, terminou primeiro. Clicou em Salvar. Oh, Usuario salvo com sucesso, se a gente vier, aqui, no Workbench,
+
+select * from usuario;
+
+# codigo, nome
+1, João da Silva
+2, Maria
+
+, olha la, Joao da Silva, foi feito o update dele, olha la,
+
+Hibernate: 
+    update
+        usuario 
+    set
+        nome=? 
+    where
+        codigo=?
+
+, okay?
+
+55. Beleza. E, ai, o Usuario, aqui, do Chrome, terminou, tambem, de fazer a alteracao dele, e clicou em Salvar.
+
+56. O que vai acontecer? Usuario salvo com sucesso. Se voce fizer o select, aqui,
+
+select * from usuario;
+
+# codigo, nome
+1, João da Silva Junior
+2, Maria
+
+, olha la, Joao da Silva Junior.
+
+57. Entao, qual que eh o problema?
+
+58. O problema eh que, o Usuario, aqui, do Firefox, quando ele editou, ele esta achando que o nome eh Joao da Silva, so que, na verdade, quando ele mandar Pesquisar, aqui, oh, vai aparecer o Joao da Silva Junior.
+
+59. Porque foi o Usuario do Chrome, aqui, que atualizou.
+
+60. Okay?
+
+61. Entao, esse, aqui, eh so um exemplo para demonstrar isso acontecendo.
+
+62. Agora, eu vou mostrar como eh que voce resolve.
+
+63. Esse poderia ser um Sistema bem maior, bem mais complexo, concorda comigo?, que estaria editando, la, a quantidade de Produto em estoque, poderia estar verificando um monte de coisas, vamos supor que Adiciona Produto em Estoque. Entao, ele, aqui, no Firefox, adicionou, o outro, no Chrome, adicionou ao mesmo tempo, ai, era para ter 10, de repente, foi para 20, na verdade, tinha 10 no estoque da empresa, nao eh?
+
+64. Entao, coisas desse tipo, para voce evitar coisas desse tipo, a gente vai utilizar o Lock Otimista.
+
+65. Beleza? Como eh que funciona o Lock Otimista?
+
+66. Olha como eh simples.
+
+67. Deixa eu voltar, aqui, em Home.xhtml,
+
+        <p:outputLabel for="versao" value="Versao" />
+        <p:inputText id="versao" value="#{cadastroUsuarioBean.usuario.versao}" readOnly="true" />
+
+68. Vamos ver, primeiro no nosso Model, o nosso Usuario, a nossa Entidade.
+
+69. Eu estou adicionando, aqui, uma versao, que eh um inteiro,
+
+@Entity
+@Table(name = "usuario")
+public class Usuario implements Serializable {
+
+    ...
+
+    private Long codigo;
+    private String nome;
+    >>> private Integer versao;
+
+
+    ...
+}
+
+70. Eu vou descomentar, aqui,
+
+    @Version
+    public Integer getVersao() {
+        return versao;
+    }
+
+    public void setVersao(Integer versao) {
+        this.versao = versao;
+    }
+
+71. Descomentei, aqui, @Version.
+
+72. Esse @Version, do javax.persistence.Version, ou seja, do JPA, eu so preciso fazer isso, daqui, anotei, e pronto.
+
+73. O que que ele vai fazer?
+
+74. Eu acho que melhor eu te mostrar la no codigo, que voce vai entender melhor.
+
+75. Mas, explicando, um pouquinho, tambem.
+
+76. O que que ele vai fazer?
+
+77. Quando voce coloca esse @Version, aqui, e eh um inteiro, 
+
+    @Version
+    public >>> Integer getVersao() {
+        return versao;
+    }
+
+, esse cara, aqui, 
+
+    @Version
+    public >>> Integer getVersao() {
+        return versao;
+    }    
+
+, vai ser Um Numero Sequencial.
+
+78. Entao, ele vai comecar com 0, 1, 2, 3, etc. Ele tem que ser sequencial.
+
+79. Para o Hibernate inserir, vamos supor que, atualizou, atualizou, atualizou,..., toda vez que atualiza, se insere, ele coloca 0, se atuliza, ele poe para 1, se atualiza de novo, vai para 2,...
+
+80. Para o Hibernate inserir, ou seja, para ele falar o seguinte, "Eu estou atualizando esta versao. Se estiver no numero 3, a versao que tem que colocar, aqui, 
+
+    @Version
+    public >>> Integer getVersao() {
+        return versao;
+    }  
+
+, ele tem que aceitar, eh o 4.". Se estiver chegando o 4, novamente, esta no 3, ele esta mandando para o 4, beleza, deu certo. Se chegar um 4 e estar 4 no Banco, ele nao vai aceitar.
+
+81. Bom, deixa eu te mostrar, que eu acho que vai ficar facil para voce entender.
+
+82. Aqui, na telinha, se voce olhar, aqui, na telinha, eu adicionei a versao, tambem, oh,
+
+        <p:outputLabel for="versao" value="Versao" />
+        <p:inputText id="versao" value="#{cadastroUsuarioBean.usuario.versao}" readOnly="true" />
+
+, entao, na hora de a gente salvar, a gente vai salvar e ja busca, nao eh?, entao, a gente ja ve a versao e, na hora em que eu buscar, eu ja vejo a versao que esta no banco de dados.
+
+83. Ele esta readOnly="true", entao, eu nunca estou enviando esse valor. So para voce ver, mesmo, a questao do Lock Otimista funcionando.
+
+84. Okay.
+
+85. Eu acho que eh so isso, mesmo. Se eu nao esqueci de nada, vamos reiniciar ele, aqui. Ai, deixa eu dar um drop, nessa tabela de usuario, a gente comecar do zero.
+
+86. Okay, reiniciamos o Servidor, e acessamos a aplicacacao, http://localhost:8080/exemplo-lock-otimista/, nos 2 browsers, Firefox e Chrome.
+
+87. Ja trouxe o campo Versao, aqui. Nao eh para conseguir editar.
+
+88. Bom, se eu tentar Pesquisar, no Chrome, com o Codigo 0, ele vai criar a tabela no banco de dados, como voce pode ver aqui, nos Logs do Console. Criou e ja buscou, e nao encontrou nada,
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_0_0_,
+        usuario0_.nome as nome2_0_0_,
+        usuario0_.versao as versao3_0_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=
+
+89. Vamos ver, aqui, no Workbench, vamos dar um Refresh, a tabela foi criada, so que, agora, tem a coluna versao.
+
+select * from usuario;
+
+# codigo, nome, versao
+
+
+90. Entao, vamos fazer a mesma coisa.
+
+91. Vamos abrir os 2 Browsers, aqui, entao. Entao, o Usuario Firefox e o Usuario Chrome.
+
+92. Okay? Entao, eu vou salvar um primeiro, aqui, no Firefox, posso salvar por aqui, de novo, o Joao. Salvar, inseriu. 
+
+93. E olha la a versao que esta, que foi para o banco,
+
+select * from usuario;
+
+# codigo, nome, versao
+1, João, 0
+
+94. Versao 0.
+
+95. Repara que nao sou eu que estou setando isso. 
+
+96. Okay?
+
+97. Quem colocou essa versao para 0 foi o Hibernate, porque eu coloquei, la, @Version.
+
+98. Okay? Se eu atualizar, aqui, no Firefox, Joao da Silva, por exemplo, Salvar, vai ver que a Versao foi para 1.
+
+99. Okay? Ele estava com o codigo setado, entao, ele falou, "Opa, entao, ele esta atualizando, entao, Joao da Silva, foi para a versao 1."
+
+100. Vamos confirmar, aqui, de novo, oh,
+
+select * from usuario;
+
+# codigo, nome, versao
+1, João da Silva, 1
+
+
+101. Oh, so fez um Update, e atualizou a versao para 1.
+
+102. Beleza, entao, vamos simular o problema, agora.
+
+103. Vamos fazer o seguinte, oh. No Firefox, eu pesquisei, aqui, pelo codigo 1. E eu vou pesquisar, aqui, no Chrome, tambem, pelo Codigo 1.
+
+104. OKay?
+
+105. Ou seja, o Firefox e o Chrome esta editando a mesma Entidade, ao mesmo tempo.
+
+106. E, aqui, no Firefox, ele veio, aqui, e editou para Joao da Silva Jr. E, aqui, no Chrome, ele veio e editou para Joao da Silva Junior, por exemplo.
+
+107. E, ai, mais uma vez, o do Firefox, por exemplo, foi o primeiro a Salvar.
+
+108. Ele clicou em Salvar.
+
+109. Usuario salvo com sucesso.
+
+110. Atualizou a Versao para 2.
+
+111. Certo? Se a gente for, la no Banco, a versao esta 2, nao eh?,
+
+select * from usuario;
+
+# codigo, nome, versao
+1, João da Silva Jr, 2
+
+
+112. Foi, exatamente, o que trouxe, aqui, na telinha, para mim.
+
+113. Okay?
+
+114. So que, ai, olha so.
+
+115. Aquilo que eu falei para voce, oh.
+
+116. No Chrome, a versao, aqui, qual que eh o valor que esta?
+
+117. 1.
+
+118. Bom, no banco de dados, ja esta 2, entao, qual que eh a versao que ele esta esperando?
+
+119. Esta esperando a versao 3.
+
+120. Se eu tentar mandar a versao 1, aqui, como esta no Chrome, ele vai falar, "Opa, nao pode."
+
+121. Isso vai dar errado.
+
+122. E, ai, se eu clicar em Salvar, aqui, no Chrome, voce vai ver la, "Erro de concorrencia. Esse usuario ja foi alterado anteriormente.", ou seja, foi a mensagem que eu coloquei.
+
+123. Ou seja, no Chrome, se eu mandar Pesquisar de novo, a gente vai trazer o Joao da Silva Jr. Ai, poderia, por exemplo, atualizar ele, aqui, por exemplo, para Joao da Silva Junior, e, aqui, iria para a Versao 3.
+
+124. Retornou, no Log do Console,
+
+Hibernate: 
+    update
+        usuario 
+    set
+        nome=?,
+        versao=? 
+    where
+        codigo=? 
+        and versao=?
+
+125. Okay?
+
+126. Vamos dar uma olhada, aqui, no codigo?, mais uma vez?
+
+127. Como eu disse, eu so precisei colocar esse @Version,
+
+    @Version
+    public Integer getVersao() {
+        return versao;
+    }
+
+
+, na Entidade, no caso, Usuario. E, no meu DAO, ou seja UsuarioDAO, que eh onde eu estou salvando, 
+
+
+...
+
+import javax.persistence.OptimisticLockException;
+
+...
+
+@Transactional
+public Usuario salvar(Usuario usuario) {
+    try {
+        usuario = this.manager.merge(usuario);
+        return usuario;
+    } catch (OptimisticLockException e) {
+        throw new NegocioException("Erro de concorrencia. Esse usuario ja foi alterado anteriormente");
+    }
+}
+
+, olha so que que eu fiz.
+
+128. Quando eu tento salvar o Usuario no banco de dados, a Transacao esta iniciada,
+
+>>> @Transactional
+public Usuario salvar(Usuario usuario) {
+    try {
+        usuario = this.manager.merge(usuario);
+        return usuario;
+    } catch (OptimisticLockException e) {
+        throw new NegocioException("Erro de concorrencia. Esse usuario ja foi alterado anteriormente");
+    }
+}
+
+, okay? Eu tento salvar o Usuario no Banco de dados, 
+
+@Transactional
+public Usuario salvar(Usuario usuario) {
+    try {
+        usuario = this.manager. >>> merge(usuario);
+        return usuario;
+    } catch (OptimisticLockException e) {
+        throw new NegocioException("Erro de concorrencia. Esse usuario ja foi alterado anteriormente");
+    }
+}
+
+, se lancar uma Excecao de Lock Otimista, ou seja OptimisticLockException, que eh, justamente, aquele erro que a gente viu na tela, que eu expliquei para voce, o version, la, o inteiro, o atributo, aqui, versao, anotado com @Version, tem que ir incrementando. De 0, vai para 1, de 1, vai para 2, e por ai vai.
+
+129. Se ele nao conseguir fazer isso, ele vai lancar essa excecao, voce pode capturar a excecao e mandar uma excecao de negocio, ai, por exemplo, que, no meu sistema, para ficar mais simples possivel, o que que eu fiz? No ManagedBean, ou seja, em CadastroUsuarioBean, no metodo salvar(),
+
+public void salvar() {
+    try {
+        this.usuario = this.usuarioDAO.salvar(this.usuario);
+    } catch(Exception e) {
+        FacesUtil.addErrorMessage(e.getMessage());
+    }
+}
+
+, tentei salvar,
+
+public void salvar() {
+    try {
+        >>> this.usuario = this.usuarioDAO.salvar(this.usuario);
+        FacesUtil.addSuccessMessage("Usuario salvo com sucesso.");
+    } catch(Exception e) {
+        FacesUtil.addErrorMessage(e.getMessage());
+    }
+}
+
+, se deu a excecao, eu, simplesmente, adiciono uma mensagem de erro. Foi, justamente, o que a gente viu quando eu fiz, aqui, nao eh?
+
+130. Vamos fazer mais uma vez?
+
+131. Oh, no Chrome, pesquisei pelo Usuario de codigo 1.
+
+132. Pesquisei, no Firefox, tambem, pelo Usuario de codigo 1.
+
+133. Ai, no Firefox, o Usuario alterou para Joao da Silva Jr. Salvou. A versao foi para 4.
+
+134. Aqui, no Chrome, ainda esta 3 o valor da Versao.
+
+135. Nao, mas eu quero que fique Junior. O Usuario, no Chrome, vai Salvar, vai dar errado.
+
+136. Exibiu a mensagem: 'Erro de concorrencia. Esse usuario ja foi alterado anteriormente'.
+
+137. Aqui, na Versao, deveria estar 4, para ele poder atualizar.
+
+138. Okay?
+
+139. So que, normalmente, voce nao vai mostrar, isso, aqui, ou seja, o campo Versao, na tela, para o Usuario, obviamente.
+
+140. Okay? Isso, aqui, eu so estou mostrando como uma forma, para voce ver, nao eh?, as coisas acontecendo.
+
+141. Mas, mais uma vez, nao coloca isso, aqui, para o usuario ver. Beleza?
+
+142. Fim da     Aula 16.003. Lock Otimista.
+
+-->

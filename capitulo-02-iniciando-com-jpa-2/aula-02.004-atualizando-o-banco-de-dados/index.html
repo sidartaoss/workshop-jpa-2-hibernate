@@ -1,0 +1,189 @@
+<!--
+
+Aula 02.004. Atualizando o Banco de Dados
+
+1. Bom, para finalizar essa parte de CRUD, a gente vai fazer uma atualizacao no Banco de Dados. Vamos la, vamos criar uma nova classe, AtualizandoPrimeiroObjeto, tem o metodo main,
+
+package com.algaworks.curson.main;
+
+public class AtualizandoPrimeiroObjeto {
+
+    public static void main(String[] args) {
+
+    }
+}
+
+2. Bom, voce ja sabe que nos precisamos dessa parte, aqui, 
+
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
+import javax.persistence.EntityManager;
+
+    public static void main(String[] args) {
+        EntityManagerFactory emf = Persistence.createEntityManagerFactory("exemploPU");
+        EntityManager em = emf.createEntityManager();
+
+    }
+
+, do EntityManagerFactory, do EntityManager, okay?
+
+3. Bom, para a gente atualizar um objeto no Banco de Dados, a gente tambem precisa ter esse objeto, por exemplo, Pessoa, Gerenciado pelo Entity Manager,
+
+                        |-----------------------------------|
+ Objeto simples         |                                   |
+                        |      Entity Manager               |
+                        |                                   |
+                        |                                   |
+                        |                                   |
+                        |       |-------------------|       |
+                        |       |                   |       |
+                        |       |  >>> Pessoa <<<   |       |
+                        |       |                   |       |
+                        |       |-------------------|       |
+                        |                                   |
+                        |-----------------------------------|
+                                        |
+                                        |
+                                        |
+                                        |
+                                        |
+                                        |
+                                        |
+                                        |
+                                        |
+                                        V
+                            |-----------------------|
+                            |                       |
+                            |         BD MySQL      |
+                            |                       |
+                            |                       |
+                            |-----------------------|    
+
+, entao, para a gente atualizar, eu preciso que ele ja esteja sendo gerenciado pelo Entity Manager.
+
+4. Okay? Bom, ou, tem uma outra forma, la na frente, eu vou te mostrar como eh que a gente faz.
+
+5. Por enquanto, lembre-se que eu preciso ter esse objeto gerenciado.
+
+6. Eu ja te mostrei que, para a gente ter o objeto gerenciado, que ja esta no banco de dados, eu so quero so atualizar, eu nao quero criar um novo, entao, eu preciso utilizar o Entity Manager para buscar ele.
+
+7. Entao, 
+
+    Cliente cliente = em.find(Cliente.class, 1L), 
+
+, vamos atualizar, ali, o Cliente 1.
+
+8. Vamos voltar, aqui, na tabela Cliente, no Workbench, 'select * from cliente', Cliente 1, que eh esse 'Jose da Silva', aqui, okay? Vamos supor que ele fez aniversario, e passou o nome dele maior para a gente, nao eh so 'Jose da Silva', eh 'Jose da Silva Pereira', e ele fez 28 anos.
+
+9. Beleza? Ele veio atualizar o cadasto dele.
+
+10. Entao, eu quero atualizar, justamente, isso.
+
+11. Bom, para eu fazer isso, eu tenho que buscar o cliente, certo?, estar com esse cliente gerenciado,
+
+    Cliente cliente = >>> em.find(Cliente.class, 1L); <<<
+
+, e, ai, agora, olha so, 
+
+    cliente.setNome("")
+
+, eu vou colocar, aqui, nao, ele falou, eh 'Jose da Silva Pereira',
+
+    cliente.setNome("Jose da Silva Pereira");
+
+, okay, e a sua idade, agora, a idade dele eh de 28 anos,
+
+    cliente.setIdade(28);
+
+12. Beleza?
+
+13. Pronto. Voce acredita que eh so fazer isso daqui?
+
+14. Quer dizer, esta faltando uma coisinha, aqui, muito importante. Qual que eh essa coisinha que esta faltando?
+
+15. Se a gente quer alterar alguma coisa no Banco de Dados, o que que eu preciso?
+
+    Cliente cliente = em.find(Cliente.class, 1L);
+
+    >>> <<<
+
+    cliente.setNome("Jose da Silva Pereira");
+    cliente.setIdade(28);
+
+16. Mais uma vez, getTransaction().begin(), getTransaction().commit();
+
+    Cliente cliente = em.find(Cliente.class, 1L);
+
+    em.getTransaction().begin();
+
+    cliente.setNome("Jose da Silva Pereira");
+    cliente.setIdade(28);
+
+    em.getTransaction().commit();
+
+17. Veja bem, quando eu pegar esse objeto, que ja esta gerenciado pelo Entity Manager,
+
+    Cliente >>> cliente <<< = em.find(Cliente.class, 1L);
+
+, e alterar algumas propriedades dele,
+
+    cliente.setNome("Jose da Silva Pereira");
+    cliente.setIdade(28);
+
+, e fizer o commit,
+
+    em.getTransaction().commit();
+
+, o Entity Manager ja fala, "Opa, esse cara, aqui, ja esta alterado, ele esta fazendo um commit? Vamos pega todo mundo, aqui, que eu estou gerenciando, que esta alterado, e mandar para o Banco de Dados?". Beleza, ele fala, 'Entao, manda ver'.
+
+18. Vamos executar esse cara, aqui, para a gente ver o que vai acontecer?
+
+18.1. Retornou,
+
+Hibernate: select cliente0_.codigo as codigo1_0_0_, cliente0_.idade as idade2_0_0_, cliente0_.nome as nome3_0_0_, cliente0_.profissao as profissa4_0_0_, cliente0_.sexo as sexo5_0_0_ from Cliente cliente0_ where cliente0_.codigo=?
+Hibernate: update Cliente set idade=?, nome=?, profissao=?, sexo=? where codigo=?
+Objeto alterado com sucesso!
+
+19. Vamos ver se, realmente, foi alterado? Fazer, de novo, o select, aqui, em Cliente, e olhe la, oh, o 'Jose da Silva' foi alterado para 'Jose da Silva Pereira', com 28 anos.
+
+20. Entao, resumo, aqui, da historia. Se eu tenho um objeto gerenciado pelo Entity Manager, 
+
+    Cliente >>> cliente <<< = em.find(Cliente.class, 1L);
+
+, se ele ja esta sendo gerenciado, nao eh?, eu busquei ele aqui, pelo Entity Manager,
+
+    Cliente cliente = >>> em.find(Cliente.class, 1L); <<<
+
+, o Entity Manager esta esta vivo, aqui, ainda, oh, setei o nome, setei a idade, e dei o commit(),
+
+    em.getTransaction().begin();
+    cliente.setNome("Jose da Silva Pereira");
+    cliente.setIdade(28);
+    em.getTransaction().commit();
+
+, beleza, o Entity Manager vai la e, simplesmente, faz essas alteracoes serem refletidas no banco de dados.
+
+21. Bom, veja que eu falei para voces, "Se o Entity Manager estiver vivo."
+
+22. Lembra, la na primeira aula, la, nessa parte, que eu falei EntityManager.close()?
+
+    ...
+    em.getTransaction().begin();
+    em.persist(cliente);
+    em.getTransaction().commit();
+
+    >>> // em.close(); <<<
+
+, que a gente precisa fechar o Entity Manager?
+
+23. E eh, justamente, aqui, que vao comecar a aparecer alguns probleminhas. Quando a gente estiver trabalhando em Requisicao Web, voce nao vai deixar o Entity Manager aberto, la, direto. Entao, as vezes, a gente vai fechar esse EntityManager. Mesmo em uma aplicacao Desktop, pode ser que voce queira fechar o Entity Manager, voce nao quer deixar ele aberto 100% do tempo.
+
+24. E, quando voce comecar a fechar o EntityManager, significa que voce nao tem mais aquela Entidade sendo gerenciada por um Entity Manager. E, ai, comecam aquelas questoes que a gente tem que ter bastante atencao, para nao errar.
+
+25. Beleza? E a gente vai passar por todos esse problemas, la na frente. Por enquanto, va brincando com esses pequenos codigos, ai, para voce ir se acostumando. Beleza?
+
+26. Fim da Aula 02.004. Atualizando o Banco de Dados.
+
+
+
+-->

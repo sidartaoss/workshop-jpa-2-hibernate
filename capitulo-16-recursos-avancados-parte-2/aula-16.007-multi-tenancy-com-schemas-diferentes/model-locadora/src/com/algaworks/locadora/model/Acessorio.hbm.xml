@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated 17/03/2019 18:04:26 by Hibernate Tools 3.5.0.Final -->
+<hibernate-mapping>
+    <class name="com.algaworks.locadora.model.Acessorio" table="ACESSORIO">
+        <id name="codigo" type="java.lang.Long">
+            <column name="CODIGO" />
+            <generator class="assigned" />
+        </id>
+        <property name="descricao" type="java.lang.String">
+            <column name="DESCRICAO" />
+        </property>
+        <!-- set name="carroAcessorios" table="CARROACESSORIO" inverse="false" lazy="true">
+            <key>
+                <column name="CODIGO" />
+            </key>
+            <one-to-many class="com.algaworks.locadora.model.CarroAcessorio" />
+        </set>
+        <set name="carroAcessorios_1" table="CARROACESSORIO" inverse="false" lazy="true">
+            <key>
+                <column name="CODIGO" />
+            </key>
+            <one-to-many class="com.algaworks.locadora.model.CarroAcessorio" />
+        </set-->
+    </class>
+</hibernate-mapping>

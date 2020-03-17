@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated 17/03/2019 18:04:26 by Hibernate Tools 3.5.0.Final -->
+<hibernate-mapping>
+    <class name="com.algaworks.locadora.model.Pessoa" table="PESSOA">
+        <id name="codigo" type="java.lang.Long">
+            <column name="CODIGO" />
+            <generator class="assigned" />
+        </id>
+        <property name="cpf" type="java.lang.String">
+            <column name="CPF" />
+        </property>
+        <property name="dataNascimento" type="java.util.Date">
+            <column name="DATANASCIMENTO" />
+        </property>
+        <property name="nome" type="java.lang.String">
+            <column name="NOME" />
+        </property>
+        <property name="sexo" type="java.lang.String">
+            <column name="SEXO" />
+        </property>
+        <property name="tipoPessoa" type="int">
+            <column name="TIPOPESSOA" />
+        </property>
+        <one-to-one name="motorista" class="com.algaworks.locadora.model.Motorista"></one-to-one>
+        <one-to-one name="funcionario" class="com.algaworks.locadora.model.Funcionario"></one-to-one>
+    </class>
+</hibernate-mapping>

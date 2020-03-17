@@ -1,0 +1,300 @@
+<!--
+    Aula 11.004. Cache de Primeiro Nivel
+
+1. 
+
+@Test
+public void cache() {
+    TypedQuery<Carro> query = this.manager.createQuery("from Carro c", Carro.class);
+    List<Carro> carros = query.getResultList();
+
+    for (Carro carro : carros) {
+        System.out.println(carro.getCodigo() + " - " + carro.getPlaca());
+    }
+
+    System.out.println("--------------------------------------------------------------------------------")
+
+    Carro carro = this.manager.find(Carro.class, 10L);
+    System.out.println(carro.getCodigo() + " - " + carro.getPlaca());
+}
+
+2. Olha, o Cache de Primeiro Nivel eh bem interessante e bem legal. Veja bem.
+
+3. Olah o que que eu fiz, aqui, eu criei uma nova classezinha, aqui, CachePrimeiroNivel, la no locadora-veiculo-web, mesmo, estou fazendo um selec, aqui, em todos os Carros,
+
+TypedQuery<Carro> query = this.manager.createQuery("from Carro c", Carro.class);
+
+, okay? Mandei pegar eles, imprimi na lista,
+
+    List<Carro> carros = query.getResultList();
+
+    for (Carro carro : carros) {
+        System.out.println(carro.getCodigo() + " - " + carro.getPlaca());
+    }
+
+4. Imprimi a Lista de Todos os Carros.
+
+5. Depois, eu so coloquei um monte de tracos, aqui, para separar, para ficar facil de a gente ver a separacao.
+
+6. Depois, mandei fazer, novamente, um select,
+
+Carro carro = this.manager.find(Carro.class, 10L);
+
+, pelo Codigo 10.
+
+7. Okay? Mandei buscar, la, oh, falar, oh, nao mandei fazer um novo select, nao eh? Eu falei o seguinte, "Manager, me devolve o Carro de Codigo 10",
+
+Carro carro = this.manager.find(Carro.class, 10L);
+
+8. Foi isso que eu falei e imprimi, aqui, tambem, o Codigo e a Placa desse Carro,
+
+System.out.println(carro.getCodigo() + " - " + carro.getPlaca());
+
+9. Okay?
+
+10. Bom, deixa eu mandar executar esse codigo, aqui, e, ai, observa, ai, o que que vai acontecer.
+
+11. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_,
+        carro0_.chassi as chassi2_3_,
+        carro0_.cor as cor3_3_,
+        carro0_.data_criacao as data_cri4_3_,
+        carro0_.data_modificacao as data_mod5_3_,
+        carro0_.foto as foto6_3_,
+        carro0_.codigo_modelo as codigo_m9_3_,
+        carro0_.placa as placa7_3_,
+        carro0_.valor_diaria as valor_di8_3_ 
+    from
+        Carro carro0_
+1 - AAA-1234
+3 - AAA-9999
+4 - BBB-8888
+5 - AAA-7788
+6 - DDD-1234
+8 - XXX-1111
+9 - ADD-8989
+10 - YNP-5588
+12 - AAA-1111
+13 - ABC-1234
+14 - MMM-1111
+------------------------------------------------------------------------
+10 - YNP-5588
+
+12. Okay. Olha so a quantidade de select's que ele fez.
+
+13. Ueh, so um?
+
+14. So Um mesmo.
+
+15. Eh isso mesmo.
+
+16. Veja bem, ele fez Um Select, la, nos Carro's e imprimiu a Lista, que foi quando eu mandei ele criar, aqui, a Query, e falei query.getResultList(), 
+
+    TypedQuery<Carro> query = this.manager.createQuery("from Carro c", Carro.class);
+    List<Carro> carros = query.getResultList();
+
+17. Ele foi, la, e fez o select,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_,
+        carro0_.chassi as chassi2_3_,
+        carro0_.cor as cor3_3_,
+        carro0_.data_criacao as data_cri4_3_,
+        carro0_.data_modificacao as data_mod5_3_,
+        carro0_.foto as foto6_3_,
+        carro0_.codigo_modelo as codigo_m9_3_,
+        carro0_.placa as placa7_3_,
+        carro0_.valor_diaria as valor_di8_3_ 
+    from
+        Carro carro0_
+
+18. Nesse for(), aqui,
+
+    for (Carro carro : carros) {
+        System.out.println(carro.getCodigo() + " - " + carro.getPlaca());
+    }
+
+, ele imprimiu todos os Carros, okay?
+
+19. Beleza, imprimiu aquele traco, que eu havia colocado, e, ai, depois, olha so, eu mandei, no Manager, buscar Um Carro com Codigo 10,
+
+Carro carro = this.manager.find(Carro.class, 10L);
+
+20. E mandei imprimir esse Carro, aqui,
+
+System.out.println(carro.getCodigo() + " - " + carro.getPlaca());
+
+21. Bom, repare que ele nao fez Um Novo Select.
+
+22. Ele nao fez esse novo select, ele foi la e, simplesmente, trouxe, aqui, ou seja, nesse Manager, nesse EntityManager, aqui, ficam armazenados, entao, os SELECT's que ele fez ate ele ser fechado.
+
+23. Como assim ate ele ser fechado?
+
+24. Veja bem.
+
+25. Se eu vier, aqui, e falar, e fizer ele ser fechado e, depois que eu fechar ele, eu tenho que abrir ele de novo,
+
+		TypedQuery<Carro> query = this.manager.createQuery("from Carro c", Carro.class);
+		List<Carro> carros = query.getResultList();
+		
+		for (Carro carro : carros) {
+			System.out.println(carro.getCodigo() + " - " + carro.getPlaca());
+		}
+        
+        >>> this.manager.close();
+        >>> this.manager = factory.createEntityManager();
+
+		System.out.println("------------------------------------------------------------------------");
+		
+		Carro carro = this.manager.find(Carro.class, 10L);
+		System.out.println(carro.getCodigo() + " - " + carro.getPlaca());
+		
+26. Vou mandar executar o mesmo exemplo, a unica coisa de diferente que eu estou fazendo eh fechando e mandando criar novamente o EntityManager e, ai, a gente tira algumas conclusoes,
+
+        this.manager.close();
+        this.manager = factory.createEntityManager();
+
+27. Vamos la.
+
+28. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_,
+        carro0_.chassi as chassi2_3_,
+        carro0_.cor as cor3_3_,
+        carro0_.data_criacao as data_cri4_3_,
+        carro0_.data_modificacao as data_mod5_3_,
+        carro0_.foto as foto6_3_,
+        carro0_.codigo_modelo as codigo_m9_3_,
+        carro0_.placa as placa7_3_,
+        carro0_.valor_diaria as valor_di8_3_ 
+    from
+        Carro carro0_
+1 - AAA-1234
+3 - AAA-9999
+4 - BBB-8888
+5 - AAA-7788
+6 - DDD-1234
+8 - XXX-1111
+9 - ADD-8989
+10 - YNP-5588
+12 - AAA-1111
+13 - ABC-1234
+14 - MMM-1111
+------------------------------------------------------------------------
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_0_,
+        carro0_.chassi as chassi2_3_0_,
+        carro0_.cor as cor3_3_0_,
+        carro0_.data_criacao as data_cri4_3_0_,
+        carro0_.data_modificacao as data_mod5_3_0_,
+        carro0_.foto as foto6_3_0_,
+        carro0_.codigo_modelo as codigo_m9_3_0_,
+        carro0_.placa as placa7_3_0_,
+        carro0_.valor_diaria as valor_di8_3_0_ 
+    from
+        Carro carro0_ 
+    where
+        carro0_.codigo=?
+10 - YNP-5588
+
+29. Olha, so, agora. Ele fez o primeiro SELECT, okay,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_,
+        carro0_.chassi as chassi2_3_,
+        carro0_.cor as cor3_3_,
+        carro0_.data_criacao as data_cri4_3_,
+        carro0_.data_modificacao as data_mod5_3_,
+        carro0_.foto as foto6_3_,
+        carro0_.codigo_modelo as codigo_m9_3_,
+        carro0_.placa as placa7_3_,
+        carro0_.valor_diaria as valor_di8_3_ 
+    from
+        Carro carro0_
+
+, imprimiu, aqui, 
+
+1 - AAA-1234
+3 - AAA-9999
+4 - BBB-8888
+5 - AAA-7788
+6 - DDD-1234
+8 - XXX-1111
+9 - ADD-8989
+10 - YNP-5588
+12 - AAA-1111
+13 - ABC-1234
+14 - MMM-1111
+
+, daquela primeira busca que a gente fez, que foi essa aqui,
+
+		TypedQuery<Carro> query = this.manager.createQuery("from Carro c", Carro.class);
+		>>> List<Carro> carros = query.getResultList(); <<<
+
+, imprimiu aqui,
+
+		for (Carro carro : carros) {
+			System.out.println(carro.getCodigo() + " - " + carro.getPlaca());
+        }
+        
+30. Depois, eu mandei fechar o EntityManager e criei outro,
+
+        this.manager.close();
+        this.manager = factory.createEntityManager();
+
+, imprimiu o traco e, olha so, agora, ele fez Um Outro Select, agora, filtrando pelo Codigo, que foi que eu mandei buscar pelo Codigo 10.
+
+31. Reparou que, quando eu fecho o Manager e abro ele, de novo, significa que ele perdeu as Entidades que ele estava Gerenciando e, depois, quando eu crio, ele, novamente, ele esta em um Estado limpo, entao, ele nao esta Gerenciando mais ninguem.
+
+32. Entao, quando eu mando buscar por um codigo, das Entidades que ele ja trouxe, ele, simplesmente, me devolve, eu nao preciso ir no banco novamente. Isso eh chamado de Cache de Primeiro Nivel.
+
+33. Logo, ali, no primeiro nivel, eu fiz o select, ali, oh, pelo codigo, ele, 'Opa, eu ja tenho essa Entidade, eu ja te devolvo'.
+
+34. Bom, isso tem varias, varias implicacoes.
+
+35. Vamos trocar uma ideia, aqui, a respeito de algumas delas.
+
+36. Imagina que voce esta fazendo um Programa Desktop. 
+
+37. Que nao eh Web, nao tem Sessao Web.
+
+38. Se voce manter, se voce nao fechar o seu Entity Manager, deixar ele sempre aberto, voce nao ter isso daqui entre os seus selects,
+
+        this.manager.close();
+        this.manager = factory.createEntityManager();
+
+, por exemplo, significa que tudo vai ficar na memoria, ali.
+
+39. Entao, o seu sistema vai ficar muito, muito, muito mais rapido, porque nao vai precisar ir no banco de dados.
+
+40. Mas voce tem que tomar cuidado com a quantidade de memoria que voce vai ter para usar, nesse Sistema, okay?
+
+41. A mesma coisa no Sistema Web. No Sistema Web, normalmente, a gente fecha a Requisicao Web. Entao, na hora que ele foi, enquanto ele esta no Servidor, ele esta com o EntityManager aberto, entao, ele consegue ir la, faz as buscas, se ele ja buscou uma vez, voce esta buscando pelo Codigo, repara que ele nao vai buscar novamente, o que eh muito bom, nao eh verdade? 
+
+42. Depois que voce devolveu para o Cliente, voce fecha o EntityManager.
+
+43. Se voce nao fizer isso, em um Sistema Web, deixar o EntityManager na Sessao, por exemplo, eu nunca imaginei isso, mas daria para fazer, colocar o EntityManager, talvez, na Sessao, nem sei se isso funciona, mas o que que vai acontecer?
+
+44. Para cada Usuario do Seu Sistema, vai estar tudo, ali, na memoria. Entao, nao eh viavel, nao eh? A nao ser que voce tenha uma maquina, ai, de 300 milhoes de GB de RAM, ai, sei la. Beleza?
+
+45. Entao, sao situacoes que dependem muito do cenario em que voce esta trabalhando.
+
+46. Se voce estiver fazendo um Sisteminha Simples, Desktop, que nao tem muitas tabelas, e voce quer deixar o Sisteminha bem rapido, voce pode fazer isso.
+
+47. Outra desvantagem que voce pode ter quando voce deixa o EntityManager aberto direto no Sistema Desktop, se alguem for la no banco e alterar alguma coisa direto no banco, voce nao vai ter essa alteracao refletida, porque voce nao vai fazer de novo o Select. Nao eh verdade?
+
+48. A nao ser que voce invalide isso, uma hora ou outra, voce feche o EntityManager.
+
+49. Bom, mas isso eh para voce testar, para voce brincar, ai, okay?
+
+50. Fim da     Aula 11.004. Cache de Primeiro Nivel.
+
+-->

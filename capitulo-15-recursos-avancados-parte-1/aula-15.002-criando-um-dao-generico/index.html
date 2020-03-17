@@ -1,0 +1,787 @@
+<!--
+
+    Aula 15.002. Criando um DAO Generico
+
+1. Vamos deixar as coisas um pouco mais faceis para a criacao de novos DAOs, para as novas Entidades que, por ventura, possam aparecer.
+
+2. Okay? Entao, a ideia eh eu te mostrar, aqui, nesta aula, o inicio, ai, da Criacao de um DAO Generico, nao eh?, eu vou te mostrar como eh que a gente cria, como eh que foi a ideia, para chegar nesse DAO Generico, do zero, aqui, nos estamos com aquele sistema da ultima aula, e eu vou colocar ele com DAO Generico, para voce ver qual que eh a ideia de criacao e a gente discutir algumas outras coisas, ai, tambem, sobre quando usar esse DAO Generico, o que colocar nele, principalmente, beleza?
+
+3. Entao, vamos la.
+
+4. Quando que a gente cria um DAO Generico?
+
+5. Quando a gente quer criar consultas ja pre-definidas para as varias Entidades que a gente tem no nosso Sistema. Consultas e Insercoes, tambem, Atualizacoes, Delecoes, a gente pode ter algumas coisas, tudo que for comum, para as varias Entidades, a gente pode colocar numa Classe Unica e aproveitar esse codigo.
+
+6. Okay?
+
+7. Entao, vamos la, vamos ver qual que eh a ideia disso, acho que, a medida que a aula for desenvolvendo, ai, voce vai entendendo, ai, comigo e seguindo, ai, comigo. 
+
+8. Eh so baixar o Projetinho, testar.
+
+9. Entao, olha la.
+
+10. No DAO, a gente tem, entao, uma classe para cada Entidade, normalmente, no Sistema, nao eh?, e a gente tem essas consultas, que a gente ja, e insercoes, aqui, no caso, salvar(), que a gente ja tinha nesse DAO, PedidoDAO.
+
+11. A mesma coisa com ItemPedidoDAO.
+
+12. E uma outra coisa que eu quero falar, aqui, eh o seguinte. Sera que vale a pena criar uma interface para cada DAO?
+
+13. As vezes, sim.
+
+14. As vezes, eh interessante a gente criar essa interface para o DAO, porque, se a gente quiser substituir a implementacao desse DAO, em uma outra oportunidade, vai ficar mais facil, nao eh?, porque o nosso sistema, todas as outras classes estariam observando, apenas, a interface.
+
+15. Entao, nos vamos comecar a fazer isso, daqui, comecar a criar o nosso DAO Generico, e colocar, tambem, a interface, transformar PedidoDAO em uma interface, e criar uma classe para a implementacao disso, daqui.
+
+16. Bom, a primeira coisa que eu vou fazer, aqui, que eu acho que eu acho que eu comecaria por aqui, no pacote .dao, seria a criacao da interface do meu GenericDAO,
+
+package com.algaworks.pedidosvenda.dao;
+
+public interface GenericDAO {
+
+
+}
+
+17. Essa interface Generica, que vai receber T, que eh o Tipo Generico, ou seja, vai ser a Entidade, Generica, aqui, e eu tambem vou precisar receber o ID, o ID dessa Entidade, o Tipo do ID, na verdade,
+
+public interface GenericDAO<T, ID> {
+    
+}
+
+, entao, vamos, ate, colocar, aqui, oh, extends Serializable, porque, o ID, normalmente,..., precisa ser, na verdade, um cara Serializable. 
+
+18. Entao, a gente vai passar a Classe e o Tipo de dado do ID,
+
+public interface GenericDAO<T, ID extends Serializable> {
+    
+}
+
+19. Como assim, Normandes?
+
+20. Vamos pegar, aqui, a Entidade.
+
+21. Vamos supor que a gente vai criar, agora mesmo, para Pedido.
+
+22. A gente vai passar Pedido, e o Tipo da Chave, do ID, nao eh?, do codigo, nao eh?, do Tipo de Dado representado por esse codigo.
+
+23. Entao, na hora em que eu for criar, eu vou passar, aqui, Pedido,
+
+public interface GenericDAO< >>> T <<< , ID extends Serializable> {
+    
+}
+
+e, aqui, Long,
+
+public interface GenericDAO<T, >>> ID extends Serializable <<< > {
+
+}
+
+24. Voce ja vai entender por que eu preciso desse cara, aqui.
+
+25. Por causa disso, oh: Se eu for criar o metodo buscarPeloCodigo(), eu vou retornar o que?
+
+26. Eu vou retornar T buscarPeloCodigo(ID id),
+
+public interface GenericDAO<T, ID extends Serializable> {
+    
+    T buscarPeloCodigo(ID id);
+}
+
+27. Entao, olha so como eh que esta ficando Generico. Qual eh a Entidade que eu estou trabalhando, aqui, oh?
+
+28. Quando eu estou escrevendo, eu nao sei.
+
+29. Eu estou escrevendo para uma coisa generica, entao, para o T,
+
+public interface GenericDAO< >>> T <<< , ID extends Serializable> {
+    
+    T buscarPeloCodigo(ID id);
+}
+
+30. Se voce olhar, aqui, oh, PedidoDAO, olha o buscarPeloCodigo(), aqui, como eh que ele esta, oh,
+
+public Pedido buscarPeloCodigo(Long codigo) {
+    return this.manager.find(Pedido.class, codigo);
+}
+
+31. Ele retorna o Pedido e eu recebo o Tipo, nao eh?, o Long, e o valor, aqui, da chave primaria, do @Id, dessa Entidade Pedido.
+
+32. Por isso, aqui, no GenericDAO, eu coloquei dessa forma.
+
+33. void salvar(), tambem eh um metodo que a gente pode colocar no DAO Generico,
+
+public interface GenericDAO<T, ID extends Serializable> {
+
+    T buscarPeloCodigo(ID id);
+
+    void salvar(T entidade);
+}
+
+34. Eu quero salvar uma Entidade.
+
+35. Eu quero criar o filtro, eu posso criar o filtro generico, tambem? Posso, ele vai retornar um List<T>, filtrar(), a gente passa, aqui, a Entidade, e a gente pode passar, a gente vai ter que passar um pouquinho de coisas a mais, aqui, com as propriedades que eu quero filtrar, ou seja, quais propriedades dessa Entidade que eu vou fazer o filtro,
+
+public interface GenericDAO<T, ID extends Serializable> {
+
+    T buscarPeloCodigo(ID id);
+
+    void salvar(T entidade);
+
+    List<T> filtrar(T entidade, String... propriedades);
+}
+
+36. Eh isso que vai significar aqui.
+
+37. Deixa eu criar o HibernateGenericDAO, para voce entender isso, aqui, um pouquinho melhor, oh.
+
+38. Eu vou criar, dentro da pasta .dao, uma classe, aqui, dentro de um novo pacote, .hibernate, chamada de HibernateGenericDAO,
+
+package com.algaworks.pedidovenda.dao.hibernate;
+
+public class HibernateGenericDAO {
+
+}
+
+39. Esse HibernateGenericDAO vai implementar o GenericDAO,
+
+public class HibernateGenericDAO implements GenericDAO<T, Serializable> {
+
+
+}
+
+40. No caso, aqui, eu vou passar, esse, cara, aqui, eh um cara Generico, tambem,
+
+public class >>> HibernateGenericDAO<T, ID extends Serializable> <<< implements GenericDAO<T, Serializable> {
+    
+}
+
+41. E, aqui, eu passo o ID,
+
+public class HibernateGenericDAO<T, ID extends Serializable> implements GenericDAO<T, >>> ID <<< > {
+    
+}
+
+42. Preciso implementar esses metodos de GenericDAO,
+
+public class HibernateGenericDAO<T, ID extends Serializable> implements GenericDAO<T, ID> {
+
+    @Override
+    public T buscarPeloCodigo(ID id) {
+        return null;
+    }
+    
+    @Override
+    public void salvar(T entidade) {
+
+    }
+
+    @Override
+    public List<T> filtrar(T entidade, String... propriedades) {
+        return null;    
+    }
+}
+
+43. A primeira coisa que eu vou fazer, aqui, eh injetar o EntityManager,
+
+public class HibernateGenericDAO<T, ID extends Serializable> implements GenericDAO<T, ID> {
+
+    @Inject
+    private EntityManager manager;
+ 
+    @Override
+    public T buscarPeloCodigo(ID id) {
+        return null;
+    }
+    
+    @Override
+    public void salvar(T entidade) {
+
+    }
+
+    @Override
+    public List<T> filtrar(T entidade, String... propriedades) {
+        return null;    
+    }
+}
+
+44. E, ai, vamos implementar, aqui, o buscarPeloCodigo(), olha como eh simples,
+
+    @Override
+    public T buscarPeloCodigo(ID id) {
+        return this.manager.find(entityClass, primaryKey);
+    }
+
+45. Eu preciso da classe, aqui, nao eh?, da classe persistente, e, aqui, eu ja vou passar o id,
+
+    @Override
+    public T buscarPeloCodigo(ID id) {
+        return this.manager.find(entityClass, id);
+    }
+
+46. Certo? O id, aqui, eh o codigo que esta vindo, vai vir, aqui.
+
+47. Mas, eu preciso da classe desse T, aqui,
+
+public class HibernateGenericDAO< >>> T <<< , ID extends Serializable> implements GenericDAO<T, ID> {
+    
+    ...
+
+}
+
+48. Como eh que eu faco para recuperar a classe desse T?
+
+49. Ai, a gente tem que recorrer ao que a gente aprendeu de Generics, que eh o seguinte, coloca, aqui, o Class<T>, que eh a Classe Persistente, vou colocar, aqui, oh, Classe da Entidade,
+
+public class HibernateGenericDAO<T, ID extends Serializable> implements GenericDAO<T, ID> {
+    
+    ...
+
+    private Class<T> classeEntidade;
+
+    ...
+
+}
+
+50. E, no construtor desse cara, public HibernateGenericDAO() {}, eu vou inicializar, aqui, essa classe da entidade, pegando a Classe representada por esse T, aqui,
+
+public class HibernateGenericDAO< >>> T <<< , ID extends Serializable> implements GenericDAO<T, ID> {
+    
+    ...
+
+}
+
+51. Eh isso que ele esta fazendo, que vai ser a classe da Entidade, no caso, Pedido, ItemPedido, okay?,
+
+    public HibernateGenericDAO() {
+        this.classeEntidade = (Class<T>) ((ParameterizedType) getClass().getGenericSuperClass()).getActualTypeArguments()[0];
+    }
+
+52. Para eu poder passar aqui, oh,
+
+    @Override
+    public T buscarPeloCodigo(Id id) {
+        return this.manager.find(this.classeEntidade, id);
+    }
+
+53. E, quando eu for fazer o find(), eu vou passar a Classe da Entidade, aqui, e o codigo.
+
+54. Ai, ele ja vai retornar para mim.
+
+55. Tudo de forma Generica, ta vendo que eu nao estou trabalhando em Pedido, nao estou trabalhando em ItemPedido, nada. 
+
+56. E, se, amanha, tiver uma outra Entidade, eu for criar uma outra Entidade, aqui, no meu Sistema, eh soh..., essa parte ja esta pronta, oh, o HibernateGenericDAO.
+
+57. Normalmente, eh a primeira coisa, eh uma das primeiras coisas que ele vai fazer, eh criar o GenericDAO, o HibernateGenericDAO, voce cria esse cara, ai, e vai comecar a implementar as suas outras classes, no caso, aqui, o PedidoDAO, o ItemPedidoDAO, e por ai vai. Beleza?
+
+58. Entao, vamos la, oh.
+
+59. Para salvar(), eu ja estou com o EntityManager, aqui, 
+
+@Override 
+public void salvar(T entidade) {
+    this.manager
+}
+
+, vamos dar um merge(), mesmo, passando a entidade,
+
+@Override
+public void salvar(T entidade) {
+
+    this.manager.merge(entidade);
+}
+
+60. E o filtrar()?
+
+61. O filtrar(), ja eh um pouquinho mais complicado de a gente conseguir fazer ele Generico.
+
+62. Mas nada de Dificil.
+
+63. Para a gente fazer ele, vamos fechar o resto, aqui, vamos adicionar, aqui, no pom.xml, uma biblioteca, commons-beanutils, da Apache,
+
+    <dependency>
+        <groupId>commons-beanutils</groupId>
+        <artifactId>commons-beanutils</artifactId>
+        <version>1.9.2</version>
+        <scope>compile</scope>
+    </denpendency>
+
+, que vai facilitar a gente trabalhar com o Reflection, ai.
+
+64. Olha so, o que que eu vou fazer, aqui, oh, no metodo filtrar().
+
+65. Primeiro, eu vou fazer, vamos dar uma olhada, aqui, antes, em PedidoDAO, lembra com o filtrar(), aqui, ficou, oh?
+
+66. Eu pego, aqui, a Session, pego a Criteria, ai, eu vou verificando, se ele informou o codigo, eu adiciono a Restricao do codigo, se ele informou a Referencia, eu adiciono a Restricao da Referencia, se informou a Entrega, adicona a Restricao da Entrega.
+
+67. Como eh que eu faco isso de forma Generica?
+
+68. Porque a Entidade, aqui, eh um "T", nao tem jeito de eu saber se a propriedade eh codigo, se eh referencia, se eh entrega, eu nao sei nada disso.
+
+69. Eu sei, apenas, que eh uma Entidade do Tipo T,
+
+@Override
+public List<T> filtrar(T entidade, String... propriedades) {
+
+    return null;
+}
+
+70. Entao, o que que eu vou fazer?
+
+71. Eu vou pegar, aqui, o Session, essa parte a gente nao vai mudar,
+
+@Override
+public List<T> filtrar(T entidade, String... propriedades) {
+    Session session = this.manager.uwrap(Session.class);
+
+    return null;
+}
+
+72. Vamos utilizar, ai, a Criteria do Hibernate, mesmo, vai ser mais facil de a gente trabalhar.
+
+73. Vamos passar, aqui, a classe da entidade, na hora de a gente criar a Criteria. E, aqui, a gente vai retornar criteria.list(),
+
+    Session session = this.manager.unwrap(Session.class);
+    Criteria criteria = session.createCriteria(classeEntidade);
+
+    criteria.list();
+
+74. Beleza, agora, vamos implementar, aqui,
+
+75. Por que que eu coloquei essas propriedades, aqui?,
+
+@Override
+public List<T> filtrar(T entidade, String... >>> propriedades <<< ) {
+
+    ...
+}
+
+76. Porque eu preciso saber por quem que ele quer filtrar. As vezes, ele quer filtrar so por uma propriedade, por duas, nao eh?, para ficar mais Generico.
+
+77. O que que eu vou fazer?
+
+78. Primeiro, vamos verificar se essa propriedades eh diferente de Null, para saber se ele informou alguma coisa. Se ele nao informou nada, vai dar um selec * from a Entidade, aqui, normal.
+
+79. Se ele informou, a gente vai percorrer essa propriedade, aqui, buscando o valor que essa propriedade que eu estou passando vai representar nesse meu Objeto, ou seja, em entidade,
+
+@Override
+public List<T> filtrar(T >>> entidade <<<, String... propriedades) {
+
+    Session session = this.manager.unwrap(Session.class);
+    Criteria criteria = session.createCriteria(classeEntidade);
+
+    if (propriedades != null) {
+        for (String propriedade : propriedades) {
+
+        }
+    }
+
+    return criteria.list();
+
+}
+
+80. Como assim, Normandes?
+
+81. Vamos, antes de eu fazer, ali, aonde a gente usa esse filtrar eh aqui, nao eh?, em PesquisaPedidoBean.java, no metodo pesquisar(),
+
+public void pesquisar() {
+    this.listaPedidos = this.pedidoDAO.filtrar(this.filtro);
+}
+
+82. Quando eu for fazer esse filtro, aqui, eu vou ter que passar dessa forma, oh,
+
+public void pesquisar() {
+    this.listaPedidos = this.pedidoDAO.filtrar(this.filtro, "");
+}
+
+, vamos, aqui, abrir a Telinha, PesquisaPedido.xhtml, eu nao posso passar o codigo, a referencia, ou a entrega?
+
+                <p:outputLabel value="Código" for="codigo"/>
+				<h:inputText id="codigo" value="#{pesquisaPedidoBean.filtro.codigo}"/>
+				
+				<p:outputLabel value="Referência" for="referencia"/>
+				<h:inputText id="referencia" value="#{pesquisaPedidoBean.filtro.referencia}"/>
+				
+				<p:outputLabel value="Entrega" for="entrega"/>
+				<p:selectOneMenu id="entrega" value="#{pesquisaPedidoBean.filtro.entrega}">
+					<f:selectItem itemLabel="Status da entrega"/>
+			    	<f:selectItems value="#{pesquisaPedidoBean.entregas}"/>
+                </p:selectOneMenu>
+                
+83. Entao, eu vou passar, aqui, dessa forma, eu quero filtra pelo "codigo", pela "referencia", e pela "entrega",
+
+public void pesquisar() {
+    this.listaPedidos = this.pedidoDAO.filtrar(this.filtro, "codigo", "referencia", "entrega");
+}
+
+84. Vai ficar dessa forma, aqui, esse metodo filtrar(), em PesquisaPedidoBean.
+
+85. Entao, voltando, aqui, em HibernateGenericDAO, no metodo filtrar(), eu preciso, como eh que eu, aqui, mais uma vez, eu estou no Genrics, eu preciso pegar o valor, eu preciso dar o Get, igual quando a gente fez, aqui, oh, em PedidoDAO, getCodigo(),
+
+public List<Pedido> filtrar(Pedido pedido) {
+    
+    ...
+
+    if (pedido.getCodigo() != null) {
+        criteria.add(Restrictions.eq("codigo", pedido.getCodigo()));
+    }
+
+    ...
+}
+
+86. So que eu nao sei qual que eh a Entidade, nao tem o metodo getCodigo(), aqui, para mim, no objeto do Tipo "T",
+
+public List<T> filtrar(T entidade, String... propriedades) {
+    ...    
+}
+
+87. Entao, o que que eu vou fazer, oh, Object valor = PropertyUtils, esse PropertyUtils eh da biblioteca que a gente acabou de adicionar, la, do commons-beanutils, PropertyUtils.getProperty(bean, name), eu passo, aqui, o bean, que, no caso, eh a entidade, e passo o valor da propriedade,
+
+    Session session = this.manager.unwrap(Session.class);
+    Criteria criteria = session.createCriteria(classeEntidade);
+
+    if (propriedades != null) {
+        for (String propriedade : propriedades) {
+            Object valor = PropertyUtils.getProperty(entidade, propriedade);
+        }
+    }
+
+    return criteria.list();
+
+88. Isso, aqui, que ele esta fazendo para mim, 
+
+    Object valor = PropertyUtils.getProperty(entidade, propriedade);
+
+, eh, exatamente isso daqui, oh, em PedidoDAO, pedido.getCodigo(),
+
+public List<Pedido> filtrar(Pedido pedido) {
+    
+    ...
+
+    if (>>> pedido.getCodigo() <<< != null) {
+        criteria.add(Restrictions.eq("codigo", pedido.getCodigo()));
+    }
+
+    ...
+}
+
+, por exemplo, quando eu passar a String codigo, depois, a String referencia, depois, a String entrega,
+
+89. Eh o que eu vou passar, em PesquisaPedidoBean, no metodo pesquisar(), na chamada de filtrar(),
+
+    public void pesquisar() {
+        this.listaPedidos = pedidoDAO.filtrar(this.filtro, "codigo", "referencia", "entrega");
+    }
+
+90. Entao, ele vai fazer getCodigo(), getReferencia(), getEntrega(), para mim, e vai colocar nesse valor, do tipo Object,
+
+    Object valor = PropertyUtils.getProperty(entidade, propriedade);
+
+91. Aqui, ele lanca uma Excecao, entao, eu vou colocar um try, aqui, catch (Exception e), e vou lancar um RuntimeException, porque, se eu escrevi errado, ali, eu preciso ver essa mensagem la na Tela, voce precisa tratar esse cara e ver isso la na tela, mostrar para o programador, que o programador que fez errado, ai, nao eh?,
+
+    if (propriedades != null) {
+        for (String propriedade : propriedades) {
+            try {
+                Object valor = PropertyUtils.getProperty(entidade, propriedade)
+            } catch (Exceptio e) {
+                throw new RuntimeException("Propriedade nao encontrada: " + propriedade, e);
+            }
+        }
+    }
+
+92. Ai, eu vou verificar, entao, se esse valor for diferente de null, 
+
+    Object valor = PropertyUtils.getProperty(entidade, propriedade);
+    if (valor != null) {
+
+    }
+
+, ai, oh, esse valor, ja eh como se fosse essa linha aqui,
+
+    if (pedido.getCodigo != null) {
+
+    }
+
+93. Entao, se o valor for diferente de null, ai, eu vou adicionar a Restricao, criteria.add(Restrictions.eq(propertyName, value)), passando o nome da propriedade, e o valor dela,
+
+    Object valor = PropertyUtils.getProperty(entidade, propriedade);
+    if (valor != null) {
+        criteria.add(Restrictions.eq(propriedade, valor));
+    }
+
+94. Okay?
+
+95. Isso, aqui, ja funcionaria para casos em que eu quero fazer, apenas, o eq(), nao eh? No caso da nossa Pesquisa, aqui, oh, para o codigo, daria certo, nao eh?, para a entrega, daria certo, mas, e para a String referencia?
+
+96. Tambem daria certo se se for dar o match exatamente igual, nao eh? A referencia, exatamente, o que digitou.
+
+97. Mas e, se eu quiser fazer MatchMode.ANYWHERE, aqui?
+
+98. Ai, voce pode ir caprichando, evoluindo o seu HibernateGenericDAO, ai.
+
+99. A gente nao vai deixar esse HibernateGenericDAO completasso, aqui, nao eh? Nao daria tempo de falar. Mas, voce vai adicionando, a medida que voce for encontrando necessidade.
+
+100. Mas, daqui a pouco eu vou mostrar, existe limitacoes. Voce nao vai adicionar tudo, aqui, senao, esse HibernateGenericDAO, seu vai ficar gigante demais e fazendo, as vezes, coisas especificas, que deveriam ser colocadas dentro do DAO da Entidade.
+
+101. Nos vamos chegar la.
+
+102. Entao, se o valor for diferente de null, mas o valor for uma instancia de String, eu posso fazer da seguinte forma,
+
+    try {
+        Object valor = PropertyUtils.getProperty(entidade, propriedade);
+        if (valor != null) {
+            if (valor instanceof String) {
+
+            } else {
+                criteria.add(Restrictions.eq(propriedade, valor));
+            }
+        }
+    } catch (Exception e) {
+
+    }
+
+103. Se for String, ao inves de eu fazer um eq(), eu vou dar um Restrictions.ilike(), vou passar a propriedade, o valor, e o MatchMode.ANYWHERE,
+
+    if (valor != null) {
+        if (valor instanceof String) {
+            criteria.add(Restrictions.ilike(propriedade, valor, MatchMode.ANYWHERE));
+        } else {
+            criteria.add(Restrictions.eq(propriedade, valor));
+        }
+    }
+
+104. Aqui, ele vai reclamar, porque esse valor precisa ser do tipo String. A gente ja nao verificou que ele eh do tipo String? Ja, entao, eu posso colocar, aqui, sem medo, (String) valor, fazer o Casting para uma String.
+
+105. Entao, isso, aqui, que eu fiz, esse filtrar(), esta pronto, aqui.
+
+106. Eh exatamente, a mesma coisa disso,
+
+	@SuppressWarnings("unchecked")
+	public List<Pedido> filtrar(Pedido filtro) {
+		Session session = this.manager.unwrap(Session.class);
+		Criteria criteria = session.createCriteria(Pedido.class);
+		if (filtro.getCodigo() != null) {
+			criteria.add(Restrictions.eq("codigo", filtro.getCodigo()));
+		}
+		if (filtro.getReferencia() != null && !"".equals(filtro.getReferencia().trim())) {
+			criteria.add(Restrictions.ilike("referencia", filtro.getReferencia(), MatchMode.ANYWHERE));
+		}
+		if (filtro.getEntrega() != null) {
+			criteria.add(Restrictions.eq("entrega", filtro.getEntrega()));
+		}
+		return criteria.list();
+      }
+      
+, nao eh?, so que de uma forma generica.
+
+107. Okay? Aqui, agora, em HibernateGenericDAO, ele vai conseguir filtrar qualquer Entidade do seu Sistema, voce passa, aqui, a Entidade, e passa as propriedades que voce quer filtrar, e vai conseguir fazer o filtro, ai, para voce sozinho.
+
+108. Mas, como, Normandes? Como que a gente consegue fazer isso?
+
+109. Vamos modificar, aqui, os nossos DAO's, que estao, direto, ainda assim, e fazer eles usarem o GenericDAO.
+
+110. A primeira coisa que eu vou fazer eh copiar o PedidoDAO para o pacote .dao.hibernate e vou renomear ele para HibernatePedidoDAO.
+
+111. Porque eu vou pegar esse cara, ou seja, PedidoDAO, e vou transformar numa interface, PedidoDAO, onde eu somente vou deixar o metodo buscarValorTotalVendaDoDia(), porque os demais metodos ja vai ter no GenericDAO,
+
+public interface PedidoDAO {
+
+    List<ValorTotalVendaDoDia> buscarValorTotalVendaDoDia();
+}
+
+112. Por que que eu vou deixar esse metodo, buscarValorTotalVendaDoDia(), aqui, na interface?
+
+113. Porque esse metodo ja eh um metodo mais especifico de Pedido. Nao eh um negocio que eu vou conseguir colocar no GenericDAO e vai funcionar para todo mundo.
+
+114. Entao, quando eu encontrar algo assim, eu deixo no DAO do meu Pedido.
+
+115. Quando for algo Generico, voce vai ver que vai reaproveitar em varias Entidades, voce coloca la, no GenericDAO.
+
+116. Entao, aqui, eu vou estender GenericDAO, a interface GenericDAO,
+
+public interface PedidoDAO extends GenericDAO<T, Serializable> {
+
+    
+    List<ValorTotalVendaDoDia> buscarValorTotalVendaDoDia();
+}
+
+117. E vou passar Pedido, e vou passar, aqui, Long,
+
+public interface PedidoDAO extends GenericDAO<Pedido, Long> {
+    
+    List<ValorTotalVendaDoDia> buscarValoTotaVendaDoDia();
+}
+
+118. Por isso, oh, quando eu estou fazendo o DAO para Pedido, eu passo, la, GenericDAO, passando Pedido, Long, a Entidade que eu estou fazendo e o tipo da Chave Primaria, o tipo do ID dele, ai, para conseguir fazer, ja, os find's, la.  
+
+119. Voce vai ver que a gente nao vai precisa mexer em outras coisas, aqui, porque o meu GenericDAO ja tem aqueles metodos todos.
+
+120. Aqui, oh, no HibernatePedidoDAO, o que que eu vou fazer aqui, oh?
+
+121. extends HibernateGenericDAO, eu passo Pedido, Long,
+
+public class HibernatePedidoDAO extends HibernateGenericDAO<Pedido, Long> implements Serializable {
+
+    
+    ...
+}
+
+, ele vai implementar PedidoDAO, e vai implementar o Serializable, por causa, la, do JSF, do escopo de Visao, que precisa ser Serializable,
+
+public class HibernatePedidoDAO extends HibernateGenericDAO<Pedido, Long> implements PedidoDAO, Serializable {
+
+    ...
+
+}
+
+122. PedidoDAO eh a interface nossa, falando os metodso que precisa ter.
+
+123. E, ai, o metodo salvar(), em HibernatePedidoDAO, 
+
+public void salvar(Pedido pedido) {
+    this.manager.merge(pedido);
+} 
+
+, eu nao preciso mais ter esse metodo salvar(), porque ele ja tem, aqui, oh, no HibernateGenericDAO, oh.
+
+124. Entao, o que que eu vou fazer, aqui, em HibernatePedidoDAO? Eu vou apagar esse cara.
+
+125. O filtrar(), eu tambem nao preciso ter, mais, aqui, eu posso apagar, em HibernatePedidoDAO.
+
+126. O buscarPeloCodigo(), tambem, nao preciso, aqui, mais, eu posso apagar tambem, em HibernatePedidoDAO.
+
+127. Nem o EntityManager eu vou precisar injetar, aqui, mais, em HibernatePedidoDAO.
+
+128. Eu posso pegar o EntityManager do HibernateGenericDAO, como ele ja esta sendo injetado em HibernateGenericDAO, eh so adicionar esse metodo, aqui, oh, em HibernateGenericDAO, protected, para so, quem estender ele, conseguir pegar, 
+
+    protected EntityManager getEntityManager() {
+        return manager;
+    }
+
+129. Aqui, agora, oh, em HibernatePedidoDAO, 
+
+public List<ValorTotalVendaDoDia> buscarValorTotalVendaDoDia() {
+        return this. >>> getEntityManager().createQuery("select "
+        
+        ...
+
+
+130. Olha so como eh que ficou o meu HibernatePedidoDAO. Imagina, eu ja criei, nao eh?, as vezes, no inicio, da um pouquinho mais de trabalho, nao eh?, criar esse HibernateGenericDAO, e tal.
+
+131. Imagina, eu ja criei ele. Ai, eu vou criar, agora, as varias Entidades do meu Sistema. 
+
+132. So definir com extends HibernateGenericDAO, tal, tal, tal, pronto. Nao preciso mais ter, mais, metodos, aqui, aqui, os metodos comuns.
+
+133. Nao eh? Somente os metodos especificos, aqui, de buscas e de consultas especificas.
+
+134. Okay?
+
+135. Vamos fazer, aqui, para o ItemPedido?
+
+136. Vou copiar ele para o pacote .dao.hibernate. Renomear para HibernatePedidoDAO.
+
+137. Vou, aqui, no ItemPedidoDAO, transformar esse cara numa interface. Essa interface estende GenericDAO, passando ItemPedido e Long como chave primaria.
+
+138. Nao preciso injetar mais o EntityManager, e, aqui, eu nao tenho nenhum outro metodo, eu nao estou usando, nao eh?, o metodo salvar(), buscarPeloCodigo(), para ItemPedido, mas, abstrai a ideia, nao eh?, pensa que voce poderia ter isso dai em outras Entidades do seu Sistema.
+
+139. Mas, buscarItensPendentes(), seria um metodo especifico, ai, do ItemPedidoDAO, que eu nao colocaria ele no GenericDAO.
+
+140. Vamos la para o HibernateItemPedidoDAO. Agora, ele vai estender HibernateGenericDAO, para ItemPedido, Long, nao eh? Vai implementar ItemPedidoDAO, e Serializable, e nao preciso nem injetar o EntityManager, aqui,
+
+	@SuppressWarnings("unchecked")
+	public List<ItemPedido> buscarItensPendentes() {
+		Session session = this.>>> getEntityManager().unwrap(Session.class);
+
+141. Aqui, eu estou pegando a Session, nao eh? Eu posso fazer o seguinte, oh, eu posso tirar, aqui,
+
+        @SuppressWarnings("unchecked")
+        public List<ItemPedido> buscarItensPendentes() {
+            // >>> Sessioin session = this.getEntityManager().unwrap(Session.class);    
+            Criteria criteria = session.createCriteria(ItemPedido.class);
+
+            ...
+        }
+
+, la no meu HibernateGenericDAO, eu posso adicionar, aqui, tambem, oh, 
+
+        protected Session getSession(){
+            return this.manager.unwrap(Session.class);
+        }
+
+142. E dou um getSession(), aqui,
+
+        @SuppressWarnings("unchecked")
+        public List<ItemPedido> buscarItensPendentes() {
+            Criteria criteria = this.getSession().createCriteria(ItemPedido.class);
+
+            ...
+        }
+
+143. Okay?
+
+144. E, aqui, eu faco a Consulta.
+
+145. Entao, imagina, se eu for precisar criar uma tela, aqui, que busca o ItemPedido pelo Codigo, esta facil, porque ja tem esse metodo que busca o ItemPedido, pelo codigo. Ja tem um metodo que filtra o Pedido, se eu quiser.
+
+146. Okay? 
+
+147. Bom, eu acho que eh isso daqui.
+
+148. Repara que eu nao alterei os meus Controllers, aqui, ou seja, os ManagedBean's, eu nao alterei a classe de Servico. Oh, o Servico PedidoService esta chamando o metodo salvar(), do DAO PedidoDAO. O metodo salvar() esta la em GenericDAO, que vai ser executado pelo HibernateGenericDAO. 
+
+149. Beleza?
+
+150. Bom, eu acho que isso daqui.
+
+151. Vamos subir, para ver se esta tudo funcionando.
+
+152. E, ai, a ideia eh, pegue o Sistema, vai devagarzinho, eu sei que, as vezes, pode parecer complicado, no inicio, mas, vai devagarzinho, ai, que vai dar certo.
+
+153. Acessar em http://localhost:8080/pedidos-venda/ValorVendasPorDia.xhtml. 
+
+154, Okay, oh. Vamos fazer o teste no Sistema todo, acessar o Cadastro de Pedido, http://localhost:8080/pedidos-venda/CadastroPedido.xhtml.
+
+155. Preencher: em Referencia, Campinas, Adicionar item: Descricao, Sabonete; Quantidade, 10; Valor Unitario, 2,00. Salvar.
+
+156. Pedido salvo com sucesso.
+
+157. Clicar no botao Pesquisa. Em http://localhost:8080/pedidos-venda/PesquisaPedido.xhtml, clicar e Pesquisar.
+
+158. Okay, apareceram todos os registros.
+
+159. Agora, vamos filtrar por Status PENDENTE. Oh, o filtro, la, Generico, oh, so Pesquisa Pendente,
+
+Hibernate: 
+    select
+        this_.codigo as codigo1_1_0_,
+        this_.data_venda as data_ven2_1_0_,
+        this_.entrega as entrega3_1_0_,
+        this_.referencia as referenc4_1_0_,
+        this_.valor_total as valor_to5_1_0_ 
+    from
+        pedido this_ 
+    where
+        lower(this_.referencia) like ? 
+        and this_.entrega=?
+
+160. Ta vendo? Aquele filtro, la, que a gente fez, esta no meu HibernateGenericDAO, ele esta executando no metodo filtrar().
+
+161. Se voce olhar, aqui, oh, no HibernatePedidoDAO, o unico metodo que ele tem eh esse daqui, ou seja, buscarValorTotalVendaDoDia().
+
+162. Vamos ver os Relatorios / Entregas pendentes.
+
+163. Mostrou o Pedido de codigo 4.
+
+164. O Relatorio Vendas por dia, tambem, funcionou, exibiu os registros com sucesso.
+
+165. Ou seja, o Sistema continua funcionando, agora, com um DAO Generico.
+
+166. Entao, so para finalizar lembre-se.
+
+167. Nem tudo voce vai colocar nesse HibernateGenericDAO.
+
+168. Tem coisas que voce vai chegar a conclusao de que voce precisa colocar no DAO especifico.
+
+169. Mas, voce pode evoluir esse DAO Generico, aqui, adicionando os metodos de Delecao, nao eh?, adicionando algumas outras, outros filtros, ai, que voce queira fazer, que vai servir para todas essas Entidades, ai, do Seu Sistema.
+
+170. Fim da     Aula 15.002. Criando um DAO Generico.
+
+-->

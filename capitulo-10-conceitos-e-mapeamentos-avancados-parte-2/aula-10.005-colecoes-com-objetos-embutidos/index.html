@@ -1,0 +1,418 @@
+<!--
+
+
+    Aula 10.005. Colecoes com Objetos Embutidos
+
+1. 
+
+@Entity
+@Table(name = "proprietario")
+public class ProprietarioColecaoTiposBasicos {
+
+    private Long codigo;
+    private String nome;
+    private List<String> telefones = new ArrayList<>();
+
+    @Id
+    @GeneratedValue
+    public Long getCodigo() {
+        return codigo;
+    }
+
+    ...
+}
+
+2. E se essa Colecao nossa, aqui, 
+
+    private List<String> telefones = new ArrayList<>();
+
+, nao for de um Tipo Basico?
+
+3. E se for, por exemplo, Um Objeto?
+
+4. Entao, o que que eu vou fazer aqui, nesse exemplo?
+
+5. Vamos alterar ele, aqui para, ao inves de termos o Telefone da forma que a gente escreveu la, como Uma String,
+
+        private List< >>> String <<< > telefones = new ArrayList<>();
+
+, nos vamos colocar Um Objeto Telefone,
+
+        private List<Telefone> telefones = new ArrayList<>();
+
+6. E eu vou criar esse objeto, aqui agora.
+
+7. Vamos criar essa classe, Telefone, no pacote modelo, mesmo, 
+
+package com.algaworks.curso.jpa2.modelo;
+
+public class Telefone {
+
+
+}
+
+, e, aqui, eu vou anotar ela com, como eh Um Objeto Embutido, com @Embeddable,
+
+package com.algaworks.curso.jpa2.modelo;
+
+import javax.persistence.Embeddable;
+
+@Embeddable
+public class Telefone {
+
+}
+
+8. Okay? Vamos colocar, aqui, eu quero separar, por exemplo, eu quero separar o prefixo, separar o numero, separar um ramal, opcional, por exemplo. Vamos supor que eu queira fazer isso daqui,
+
+package com.algaworks.curso.jpa2.modelo;
+
+import javax.persistence.Embeddable;
+
+@Embeddable
+public class Telefone {
+
+    private String prefixo;
+    private String numero;
+    private String ramal;
+
+
+}
+
+9. Vamos criar, aqui, o Construtor Default, para eu mandar gerar um Construtor, aqui, e vamos mandar gerar os Getters e os Setters, tambem,
+
+@Embeddable
+public class Telefone {
+
+    private String prefixo;
+    private String numero;
+    private String ramal;
+
+    public Telefone() {
+
+    }
+
+    public Telefone(String prefixo, String numero, String ramal) {
+        this.prefixo = prefixo;
+        this.numero = numero;
+        this.ramal = ramal;
+    }
+
+    ...
+
+}
+
+10. Okay. Entao, essa, aqui, essa classe Telefone, aqui, agora, vai ser a Classe que eu quero usar para fazer do meu Tipo Embutido, aqui dentro,
+
+@Entity
+@Table(name = "proprietario")
+public class ProprietarioColecoesTiposBasicos {
+
+    ...
+    private List< >>> Telefone <<< > telefones = new ArrayList<>();
+
+    ...
+}
+
+, okay?, para fazer Uma Colecao de Telefone. So que, como eu disse, eu nao quero fazer esse Mapeamento, eu so quero que fique separado, em outra tabela, mas eu nao quero criar, la, o @JoinColumn, esse tipo de coisa com a classe Telefone. 
+
+11. Okay? Eu so quero fazer esse "Relacionamento", entre aspas, usando @ElementCollection.
+
+12. Entao, vamos la.
+
+13. A gente tinha feito, aqui, como String,
+
+
+    ...
+
+    private List<Telefone> telefones = new ArrayList<>();
+
+
+    ...
+
+    @ElementCollection
+    @CollectionTable(name = "proprietario_telefones",
+        joinColumns = @JoinColumn(name = "cod_proprietario")
+    )
+    @Column(name = "numero_telefone")
+    public List<Telefone> getTelefones() {
+        return telefones;    
+    }
+
+    public void setTelefones(List<Telefone> telefones) {
+        this.telefones = telefones;    
+    }
+
+    ...
+
+, nao vai ser como String, mais, nao eh? Agora, eh do Tipo Telefone.
+
+14. Okay. Entao, vamos la. Entao, @ElementCollection, vai ser um @CollectionTable, tambem, proprietario_telefones, @JoinColumn, @JoinColumn continua o cod_proprietario, okay? So que, aqui, o que que eu vou usar?
+
+15. Para eu trocar o nome da coluna, nao vai ser com @Column, mais.
+
+16. Eu vou usar o @AttributeOverrides, okay?, e, aqui dentro, eu consigo colocar, aqui, as colunas que eu quero subsituir o nome, usando o @AttributeOverride, ai, eu vou falar, 'Eu quero que a coluna, la, que se chama numero, na classe Telefone, a gente criou como atributo na classe Telefone, eu quero trocar o nome dela, eu nao quero que seja numero, eu quero que seja, por exemplo, column = @Column(name = "numero_telefone")',
+
+    @ElementCollection
+    @CollectionTable(name = "proprietario_telefones",
+        joinColumns = @JoinColumn(name = "cod_proprietario")
+    )
+    @AttributeOverrides({
+        @AttributeOverride(name = "numero", column = @Column(name = "numero_telefone"))
+    })
+    public List<Telefone> getTelefones() {
+        return telefones;    
+    }
+
+17. Beleza? Entao, oh, continua da mesma forma, eh Uma Colecao, eh Um Elemento de Colecao,
+
+    >>> @ElementCollection <<<
+    @CollectionTable(name = "proprietario_telefones",
+        joinColumns = @JoinColumn(name = "cod_proprietario")
+    )
+    @AttributeOverrides({
+        @AttributeOverride(name = "numero", column = @Column(name = "numero_telefone"))
+    })
+    public List<Telefone> getTelefones() {
+        return telefones;    
+    }
+
+, veja que nos nao estamos fazendo Join com ele. Olha la, tem Uma Tabela para fazer esse Join, so que a gente nao esta fazendo o Mapeamento de Telefone,
+
+    @ElementCollection
+    >>> @CollectionTable(name = "proprietario_telefones", <<<
+        joinColumns = @JoinColumn(name = "cod_proprietario")
+    )
+    @AttributeOverrides({
+        @AttributeOverride(name = "numero", column = @Column(name = "numero_telefone"))
+    })
+    public List<Telefone> getTelefones() {
+        return telefones;    
+    }
+
+, o nome dela continua o mesmo,
+
+    @ElementCollection
+    @CollectionTable(name = " >>> proprietario_telefones <<< ",
+        joinColumns = @JoinColumn(name = "cod_proprietario")
+    )
+    @AttributeOverrides({
+        @AttributeOverride(name = "numero", column = @Column(name = "numero_telefone"))
+    })
+    public List<Telefone> getTelefones() {
+        return telefones;    
+    }
+
+, o nome da coluna que faz o Join para ca eh esse,
+
+    @ElementCollection
+    @CollectionTable(name = "proprietario_telefones",
+        joinColumns = @JoinColumn(name = " >>> cod_proprietario <<< ")
+    )
+    @AttributeOverrides({
+        @AttributeOverride(name = "numero", column = @Column(name = "numero_telefone"))
+    })
+    public List<Telefone> getTelefones() {
+        return telefones;    
+    }
+
+, so que, agora, eu estou querendo trocar o nome de uma coluna, la, na Entidade Telefone, de numero para numero_telefone,
+
+    @ElementCollection
+    @CollectionTable(name = "proprietario_telefones",
+        joinColumns = @JoinColumn(name = "cod_proprietario")
+    )
+    @AttributeOverrides({
+        @AttributeOverride( >>> name = "numero", column = @Column(name = "numero_telefone") <<< )
+    })
+    public List<Telefone> getTelefones() {
+        return telefones;    
+    }
+
+, okay? E o resto das colunas vao ser prefixo e ramal, nao vai mudar,
+
+@Embeddable
+public class Telefone {
+
+    private String prefixo;
+    private String numero;
+    private String ramal;
+
+    ...
+
+}
+
+18. Bom, para voce pegar, aqui, o exemplo, certinho, deixa eu apagar essas duas tabelas. Okay, beleza, nao tem mais nenhuma tabela no nosso banco de dados. Para a gente criar essas tabelas do zero, entao, vamos la, na classe ExemploObjetosEmbutidos,  vamos criar o codigo, aqui, para a gente testar isso,
+
+public class ExemploObjetosEmbutidos {
+
+    public static void main(String[] args) {
+        EntityManager em = JPAUtil.createEntityManager();
+
+        em.getTransaction().begin();
+
+
+
+        em.getTransaction().commit();
+        em.close();
+    }
+
+}
+
+19. Entoa, vamos la, ja tem a Transacao, vamos criar o novo Proprietario, 
+
+    EntityManager em = JPAUtil.createEntityManager();
+
+    em.getTransaction().begin();
+
+    Proprietario proprietario = new Proprietario();
+
+
+    em.getTransaction().commit();
+    em.close();
+
+20. Vamos setar o nome, aqui, 'Maria', proprietario.getTelefones().add(new Telefone("34", "1234-5678", "104")); proprietario.getTelefones().add(new Telefone("11", "9876-5432", null)); E, ai, a gente, so falta persistir o proprietario,
+
+    EntityManager em = JPAUtil.createEntityManager();
+
+    em.getTransaction().begin();
+
+    ProprietarioColecoesTiposBasicos proprietario = new ProprietarioColecoesTiposBasicos();
+    proprietario.setNome("Maria");
+    proprietario.getTelefones().add(new Telefone("34", "1234-5678", "104"));
+    proprietario.getTelefones().add(new Telefone("11", "9876-5432", null));
+
+    em.persist(proprietario);
+
+    em.getTransaction().commit();
+    em.close();
+
+21. Okay, vamos executar esse cara, aqui, para a gente ver o que que vai acontecer la no banco de dados.
+
+22. Retornou,
+
+Hibernate: 
+    
+    alter table proprietario_telefones 
+       add column numero_telefone varchar(255)
+Hibernate: 
+    
+    alter table proprietario_telefones 
+       add column prefixo varchar(255)
+Hibernate: 
+    
+    alter table proprietario_telefones 
+       add column ramal varchar(255)
+Hibernate: 
+    
+    alter table proprietario_telefones 
+       add constraint FKnv6yijts74mcuo3ls8sf08o0k 
+       foreign key (cod_proprietario) 
+       references proprietario (codigo)
+fev 24, 2019 8:19:43 AM org.hibernate.engine.transaction.jta.platform.internal.JtaPlatformInitiator initiateService
+INFO: HHH000490: Using JtaPlatform implementation: [org.hibernate.engine.transaction.jta.platform.internal.NoJtaPlatform]
+Hibernate: 
+    select
+        next_val as id_val 
+    from
+        hibernate_sequence for update
+            
+Hibernate: 
+    update
+        hibernate_sequence 
+    set
+        next_val= ? 
+    where
+        next_val=?
+Hibernate: 
+    insert 
+    into
+        proprietario
+        (nome, codigo) 
+    values
+        (?, ?)
+Hibernate: 
+    insert 
+    into
+        proprietario_telefones
+        (cod_proprietario, numero_telefone, prefixo, ramal) 
+    values
+        (?, ?, ?, ?)
+Hibernate: 
+    insert 
+    into
+        proprietario_telefones
+        (cod_proprietario, numero_telefone, prefixo, ramal) 
+    values
+        (?, ?, ?, ?)
+
+23. Vamos dar um Refresh, aqui, no Workbench, para ver o que que nos temos, aqui. Ele ja criou as duas tabelas, proprietario e proprietario_telefones,
+
+select * from proprietario
+
+# codigo, nome
+5, Maria
+
+
+select * from proprietario_telefones
+
+# cod_proprietario, numero_telefone, prefixo, ramal
+5, 1234-5678, 34, 104
+5, 9876-5432, 11, 
+
+
+24. Na tabela proprietario_telefones, agora, as informacoes estao separadas em mais de uma coluna, ao inves de ser uma simples String, e fica mais interessante, nao eh?
+
+25. Entao, para a gente fazer a Consulta, deixa eu copiar essa classe, aqui, renomeando para ConsultaObjetosEmbutidos, nao precisa, mais da Transacao, okay, para a gente fazer a Consulta, entao, Proprietario proprietario = em.find(arg0, arg1),
+
+    public static void main(String[] args) {
+
+        EntityManager em = JPAUtil.createEntityManager();
+
+        ProprietarioColecoesTiposBasicos proprietario = em.find(ProprietarioColecoesTiposBasicos.class, 5L);
+        System.out.println("Nome: " + proprietario.getNome());
+
+        for (Telefone telefone : proprietario.getTelefones()) {
+            System.out.println("Telefone: (" + telefone.getPrefixo() + ") "
+                + telefone.getNumero() 
+                + (telefone.getRamal() != null ? " x" + telefone.getRamal() : ""));
+        }
+
+
+        em.close();
+
+    }
+
+26. Vamos executar. Retornou,
+
+Hibernate: 
+    select
+        proprietar0_.codigo as codigo1_0_0_,
+        proprietar0_.nome as nome2_0_0_ 
+    from
+        proprietario proprietar0_ 
+    where
+        proprietar0_.codigo=?
+
+Nome: Maria
+
+Hibernate: 
+    select
+        telefones0_.cod_proprietario as cod_prop1_1_0_,
+        telefones0_.numero_telefone as numero_t2_1_0_,
+        telefones0_.prefixo as prefixo3_1_0_,
+        telefones0_.ramal as ramal4_1_0_ 
+    from
+        proprietario_telefones telefones0_ 
+    where
+        telefones0_.cod_proprietario=?
+Telefone: (34) 1234-5678 x104
+Telefone: (11) 9876-5432
+
+27. Okay, mostrou o nome, aqui, em cima, 'Maria', depois, ele fez o select, la, oh, na tabela proprietario_telefones, e nos trouxe os telefones, e, ai, oh, a gente conseguiu buscar os telefones em cima de um Objeto Embutido, agora, sem precisar fazer, em cima, aqui, de Telefone, o Mapeamento de Uma Tabela, fazer um JoinColumn, e tal.
+
+28. Ou seja, eh uma forma de voce fazer, tambem, esse Mapeamento. As vezes, voce, como eu disse, nao precisa, nao eh?, nao quer fazer o Mapeamento de Uma Entidade, quer so fazer um Objeto Embutido, eh muito simples de se fazer tambem.
+
+29. Fim da     Aula 10.005. Colecoes com Objetos Embutidos.
+
+
+-->

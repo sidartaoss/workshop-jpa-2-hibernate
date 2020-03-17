@@ -1,0 +1,29 @@
+<!--
+    Aula 04.016. Camada de Persistencia
+
+1.  Agora que ja vimos muita coisa sobre Mapeamento Objeto-Relacional (ORM), o que acha de tentar criar a camada de persistencia (Modelo e DAO) de um sistema novo?
+
+2. Abaixo esta a descricao de um sistema simples de matricula, mas, com alguns relacionamentos para voce praticar.
+
+3. O sistema deve permitir o CRUD de um Aluno. Este possui um nome e um numero de matricula.
+
+4. Tambem devemos ter um professor que ira ministrar um curso, que possui um nome e sua especialidade, por exemplo, Banco de Dados, Programacao, etc.
+
+5. E, claro que precisamos de uma turma. Uma turma possui uma descricao de sala, por exemplo, B03.
+
+6. Ate aqui parece simples, nao? Mas, ainda nao acabou.
+
+7. Uma turma possui varios alunos e um aluno pode estar matriculado em varias turmas. No momento da matricula, voce deve armazenar uma observacao referente ao pagamento do aluno, por exemplo, "parcelado em 2 vezes", "pagamento a vista", etc.
+
+8. Se voce pensou que teremos uma tabela Matricula e que essa Tabela faz o Relacionamento entre os Alunos e a Turma, parabens, voce esta indo bem!
+
+9. Mas, como vamos fazer isso? Simples, o Relacionamento Muitos-Para-Muitos pode ser quebrado em Um-Para-Muitos e Muitos-Para-Um!
+
+9. Pense comigo: Um aluno pode fazer varias matriculas, mas uma matricula eh de apenas um Aluno. Portanto, de Aluno para Matricula, teremos um Mapeamento Um-Para-Muitos.
+
+10. Agora, uma Matricula eh feita em apenas uma turma, mas uma Turma pode ter varias matriculas.
+
+11. Gostou do desafio? Faca-o com e, se possivel, crie classes de testes (da forma como fizemos no inicio do curso) para testar e verificar o que esta acontecendo no banco de dados.
+
+12. Fim da     Aula 04.016. Camada de Persistencia.
+-->

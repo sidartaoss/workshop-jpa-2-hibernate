@@ -1,0 +1,355 @@
+<!--
+
+Aula 04.006. Excercicio: Mapeando a Primary Key
+
+1. Como vimos nas ultimas aulas, temos algumas possibilidades de mapeamento da Primary Key. Especialmente em como podemos gerar o valor para este ID.
+
+2. Temos quatro estrategias de geracao do valor da Primary Key, sao elas: AUTO, TABLE, SEQUENCE e IDENTITY. Nem todas sao suportadas por todos os bancos de dados, voce ira aprender a medida que for conhecendo e testando essas opcoes no banco de dados que trabalhar.
+
+3. Para o MySQL, a forma mais comum de mapeamento eh usando IDENTITY, pois ira usar o AUTO INCREMENTO. No Oracle, SEQUENCE eh uma estrategia bastante comum tambem.
+
+4. Se voce precisar mapear uma SEQUENCE, eh necessario informar o nome dela no mapeamento, veja abaixo como ficaria o mapeamento,
+
+    @Id
+    @SequenceGenerator(name = "gerador", sequenceName = "NOME_SEQUENCE_NO_BANCO")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "gerador")
+    private Long codigo;
+
+5. Agora, eh hora de voce fazer alguns testes e aprender o que ira acontecer no banco de dados. Vamos utilizar a estrategia TABLE na Entidade Fabricante.
+
+* DICA: Delete suas tabelas a medida que ver a necessidade de se observar um comportamento novo no banco de dados.
+
+6. Para isso, a forma mais simples e o seu primeiro teste eh mapear a Primary Key abaixo. Voce ira reparar que uma nova tabela foi criada no banco de dados com o nome padrao (Na versao que estou usando, o nome foi hibernate_sequences),
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.TABLE)
+    private Long codigo;
+
+7. Salve um novo fabricante no sistema, utilizando a interface web. 
+
+7.1. Retornou,
+
+Hibernate: 
+    select
+        sequence_next_hi_value 
+    from
+        hibernate_sequences 
+    where
+        sequence_name = 'Fabricante'
+Hibernate: 
+    insert 
+    into
+        hibernate_sequences
+        (sequence_name, sequence_next_hi_value) 
+    values
+        ('Fabricante', ?)
+Hibernate: 
+    update
+        hibernate_sequences 
+    set
+        sequence_next_hi_value = ? 
+    where
+        sequence_next_hi_value = ? 
+        and sequence_name = 'Fabricante'
+Hibernate: 
+    insert 
+    into
+        Fabricante
+        (nome, codigo) 
+    values
+        (?, ?)
+
+
+, repare que o codigo foi gerado corretamente.
+
+8. Agora, consulte a tabela hibernate_sequences (select * from hibernate_sequences), repare que ela tem duas colunas - sequence_name e sequence_next_hi_value
+
+9. A primeira coluna eh o nome da entidade, no nosso caso, Fabricante. Percebe que, se nos utilizarmos essa estrategia, ou seja, TABLE, em outras entidades, o que ira acontecer eh uma nova entrada para cada tabela mapeada dessa maneira.
+
+10. Agora, tem um segredo com esse mapeamento que nos iremos desvenda-lo agora. Salve mais 5 fabricantes, utilizando sempre a interface web,
+
+10.1. Retornou, para o segundo registro,
+
+Hibernate: 
+    insert 
+    into
+        Fabricante
+        (nome, codigo) 
+    values
+        (?, ?)
+
+, ou seja, nao inseriu nada em hibernate_sequences.
+
+10.2. Retornou, para o terceiro registro,
+
+Hibernate: 
+    insert 
+    into
+        Fabricante
+        (nome, codigo) 
+    values
+        (?, ?)
+
+, ou seja, nao inseriu nada em hibernate_sequences.
+
+11. Se voce consultar a tabela Fabricante, vera que todos os codigos foram gerados corretamente. Agora, faca uma consulta na tabela hibernate_sequences.
+
+select * from fabricante
+
+codigo              nome
+1                   Chevrollet
+2                   Honda
+3                   Fiat
+4                   Renault
+
+select * from hibernate_sequences
+
+sequence_name           sequence_next_hi_value
+Fabricante              1
+
+12. Ficou confuso? Por que ainda esta 1 no sequence_next_hi_value?
+
+13 O segredo eh que o Hibernate nao ira toda vez no banco de dados buscar qual eh o proximo valor, ele simplesmente faz uma alocacao (pega uma determinada quantidade por vez).
+
+14. Quer entender um pouco melhor, pare o Apache Tomcat dentro do Eclipse e inicie novamente. ATENCAO: agora, nao apague nada no banco de dados, deixe ele como esta.
+
+15. Salve um novo fabricante,
+
+    insert 
+    into
+        Fabricante
+        (nome) 
+    values
+        ('Volkswagen')
+
+15.1. Retornou,
+
+Error Code: 1364. Field 'codigo' doesn't have a default value
+
+15.2. 
+
+    insert 
+    into
+        Fabricante
+        (nome, codigo) 
+    values
+        ('Volkswagen', 5)
+
+, okay. Inseriu com sucesso.
+
+16. Pesquise e veja se ele foi inserido. Qual eh o codigo gerado por ele?
+
+codigo          nome
+1               Chevrollet
+2               Honda
+3               Fiat
+4               Renault
+5               Volkswagen
+
+17. O que?!
+
+18. Agora, faca uma consulta na tabela hibernate_sequences,
+
+select * from hibernate_sequences
+
+sequence_name           sequence_next_hi_value
+Fabricante              1
+
+19. Ficou mais confuso ainda?
+
+20. Vamos a explicacao. O Hibernate ira fazer apenas uma consulta para essa tabela e ira alocar uma quantidade de codigos em memoria.
+
+21. Quando esses codigos terminarem eh que ele volta no banco, mas nao para saber qual eh o proximo codigo, mas, sim, para saber qual eh o proximo montante que ele tem que pegar. Vou explicar isso melhor agora.
+
+22. Vamos alterar algumas propriedades desse mapeamento para deixa-lo mais customizado. Agora, eh uma boa hora para apagar as tabelas do schema locadora.
+
+23. Veja o codigo abaixo,
+
+	@TableGenerator(name = "fabricante_generator", table = "GERADOR_CODIGO", pkColumnName = "ENTIDADE", valueColumnName = "ALOCACAO", allocationSize = 5)
+	@GeneratedValue(strategy = GenerationType.TABLE, generator = "fabricante_generator")
+	public Long getCodigo() {
+		return codigo;
+    }
+    
+24. Com a anotacao @TableGenerator, eu consigo customizar essa tabela de codigos. Repare, acima, que, alem de trocar o nome da tabela e das colunas, eu consigo dizer o tamanho da alocacao.
+
+25. Neste caso, eu redizi para 5, significando que ele fara alocacoes de 5 em 5. Faca, agora, varios testes. Insira 6 fabricantes.
+
+25.1. Retornou, para o primeiro registro,
+
+Hibernate: select ALOCACAO from GERADOR_CODIGO where ENTIDADE = 'Fabricante' for update
+Hibernate: insert into GERADOR_CODIGO(ENTIDADE, ALOCACAO) values('Fabricante', ?)
+Hibernate: update GERADOR_CODIGO set ALOCACAO = ? where ALOCACAO = ? and ENTIDADE = 'Fabricante'
+Hibernate: insert into Fabricante (nome, codigo) values (?, ?)
+
+25.2. Retornou, para o segundo registro,
+
+Hibernate: insert into Fabricante (nome, codigo) values (?, ?)
+
+25.3. Retornou, para o terceiro registro,
+
+Hibernate: insert into Fabricante (nome, codigo) values (?, ?)
+
+25.4. Retornou, para o quarto registro,
+
+Hibernate: insert into Fabricante (nome, codigo) values (?, ?)
+
+25.5. Retornou, para o quinto registro,
+
+Hibernate: select ALOCACAO from GERADOR_CODIGO where ENTIDADE = 'Fabricante' for update
+Hibernate: update GERADOR_CODIGO set ALOCACAO = ? where ALOCACAO = ? and ENTIDADE = 'Fabricante'
+Hibernate: insert into Fabricante (nome, codigo) values (?, ?)
+
+select * from fabricante;
+
+codigo              nome
+1                   Chevrollet
+2                   Honda
+3                   Fiat
+4                   Mitsubishi
+5                   Renault
+
+select * from gerador_codigo;
+
+entidade            alocacao
+Faricante           2
+
+25.6. Retornou, para o sexto registro,
+
+Hibernate: insert into Fabricante (nome, codigo) values (?, ?)
+
+25.7. Retornou, para o setimo registro,
+
+Hibernate: insert into Fabricante (nome, codigo) values (?, ?)
+
+25.8. Retornou, para o oitavo registro,
+
+Hibernate: insert into Fabricante (nome, codigo) values (?, ?)
+
+25.9. Retornou, para o nono registro,
+
+Hibernate: insert into Fabricante (nome, codigo) values (?, ?)
+
+25.10. Retornou, para o decimo registro,
+
+Hibernate: select ALOCACAO from GERADOR_CODIGO where ENTIDADE = 'Fabricante' for update
+Hibernate: update GERADOR_CODIGO set ALOCACAO = ? where ALOCACAO = ? and ENTIDADE = 'Fabricante'
+Hibernate: insert into Fabricante (nome, codigo) values (?, ?)
+
+select * from gerador_codigo;
+
+entidade            alocacao
+Faricante           3
+
+25.11. Parar o Servidor Tomcat. Inserir 5 registros diretamente, com o Workbench, no banco de dados, 
+
+select * from fabricante;
+
+codigo      nome
+1	        Chevrollet
+2	        Honda
+3	        Fiat
+4	        Mitsubishi
+5	        Renault
+6	        Audi
+7	        BMW
+8	        Citroen
+9	        Ford
+10	        Ferrari
+11	        Jac Motors
+12	        Jaguar
+13	        Jeep
+14	        Kia
+15	        Land Rover
+
+select * from gerador_codigo
+ENTIDADE        ALOCACAO
+Fabricante      3
+
+25.12. Reiniciar o Servidor. Inserir um novo registro atraves da tela do sistema. 
+
+25.13. Retornou erro,
+
+Hibernate: select ALOCACAO from GERADOR_CODIGO where ENTIDADE = 'Fabricante' for update
+Hibernate: update GERADOR_CODIGO set ALOCACAO = ? where ALOCACAO = ? and ENTIDADE = 'Fabricante'
+Hibernate: insert into Fabricante (nome, codigo) values (?, ?)
+
+ERROR: Duplicate entry '15' for key 'PRIMARY'
+
+Caused by: com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException: Duplicate entry '15' for key 'PRIMARY'
+
+select * from gerador_codigo;
+
+ENTIDADE            ALOCACAO
+Fabricante	        4
+
+select * from fabricante;
+
+codigo      nome
+1	        Chevrollet
+2	        Honda
+3	        Fiat
+4	        Mitsubishi
+5	        Renault
+6	        Audi
+7	        BMW
+8	        Citroen
+9	        Ford
+10	        Ferrari
+11	        Jac Motors
+12	        Jaguar
+13	        Jeep
+14	        Kia
+15	        Land Rover
+
+25.14. Ao tentar inserir o mesmo registro, novamente, pela tela do sistema, inseriu com sucesso. Retornou,
+
+Hibernate: insert into Fabricante (nome, codigo) values (?, ?)
+
+select * from fabricante;
+
+codigo          nome
+1	            Chevrollet
+2	            Honda
+3	            Fiat
+4	            Mitsubishi
+5	            Renault
+6	            Audi
+7	            BMW
+8	            Citroen
+9	            Ford
+10	            Ferrari
+11	            Jac Motors
+12	            Jaguar
+13	            Jeep
+14	            Kia
+15	            Land Rover
+16	            Peugeot
+
+
+select * from gerador_codigo;
+
+ENTIDADE            ALOCACAO
+Fabricante	        4
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-->

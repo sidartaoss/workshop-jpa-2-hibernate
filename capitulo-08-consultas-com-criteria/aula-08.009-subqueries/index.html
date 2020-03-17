@@ -1,0 +1,233 @@
+<!--
+
+    Aula 08.009. Subqueries
+
+1. 
+
+    @Test
+    public void mediaDasDiariasDosCarros() {
+        CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+
+        CriteriaQuery<Double> criteriaQuery = builder.createQuery(Double.class);
+
+        // from Carro c
+        Root<Carro> c = criteriaQuery.from(Carro.class);
+
+        select avg(c.valorDiaria) from Carro c
+        criteriaQuery.select(builder.avg(c.<Double>get("valorDiaria")));
+
+        TypedQuery<Double> query = this.manager.createQuery(criteriaQuery);
+
+        Double media = query.getSingleResult();
+
+        System.out.println("Media da diaria: " + media);
+    }
+
+2. Esse teste que eu criei, aqui, oh, mediaDasDiariasDosCarros(), eh para te explicar, daqui a pouquinho, sobre as subqueries.
+
+3. Entao, vamos la. Olha so o que que eu fiz, aqui. A gente ja viu, um pouquinho para traz, ai, quando a gente estava vendo as funcoes de agregacao, olha so o que que esse camarada faz. Primeiro, eu crio o CriteriaBuilder e, ai, o CriteriaQuery, crio o Root, aqui, em cima de Carro, e olha so o criteriaQuery.select(), aqui, que eu estou fazendo. Eu estou selecionando a media (avg), o avg vai selecionar, fazer a media de quem? Do Valor da diaria dos Carros.
+
+4. Entao, ele vai somar e dividir pela quantidade, para fazer a media, o avg ja vai fazer isso tudo para a gente.
+
+5. Entao, eu ja vou ter a media dos valores diarios do Carro, aqui.
+
+6. Mando executar, coloco, aqui, oh, 'Media da diaria', vamos mandar executar, aqui, para a gente ver.
+
+7. Selecionar o metodo mediaDasDiariasDosCarros / Run As / JUnit Test. No meu caso, aqui, vamos ver quanto que vai ter.
+
+8. Retornou,
+
+Hibernate: 
+    select
+        avg(carro0_.valor_diaria) as col_0_0_ 
+    from
+        Carro carro0_
+Media das diarias: 186.5
+
+9. Okay, o teste executou, olha la, ele ja faz o select (avg), entao, ele ja vai saber fazer as contas para a gente, e a Media dos carros, que eu tenho, aqui, cadastrado, deu 186.5. Entao, no seu ai, salva um monte de carros com valores de diarias diferentes, vai dar uma media.
+
+10. Bom, o que que eu quero fazer para te explicar a Subquery?
+
+11. Eu quero saber o seguinte. Eu quero saber quais sao os carros que eu tenho, cadastrados, que o Valor da acima da Media?
+
+12. O Valor da diaria deles esta acima da Media.
+
+13. Eu quero saber quais sao as Placas desses carros, por exemplo.
+
+14. Entao, o que que eh a ideia do SubSelect?
+
+15. Entao, eu vou fazer um Select nos Carros, onde o Valor da diaria vai ser maior que o resultado desse Select, vai ser maior do que 186.5
+
+    select
+        avg(carro0_.valor_diaria) as col_0_0_ 
+    from
+        Carro carro0_
+
+16. Entao, oh, faz um Select, nos Carros, onde o Valor da Diaria seja maior do que o resultado desse Select, aqui, okay?,
+
+    select
+        avg(carro0_.valor_diaria) as col_0_0_ 
+    from
+        Carro carro0_
+
+17. Entao, esse Select, aqui, que a gente fez, vai virar uma Subquery no outro Select.
+
+18. Okay? Vamos fazer o exemplo, aqui, ver se fica mais claro.
+
+19. Eu criei, aqui, oh, carrosComValoresAcimaDaMedia(),
+
+    @Test
+    public void carrosComValoresAcimaDaMedia() {
+        CriteriaBuilder criteriaBuilder = this.manager.getCriteriaBuilder();
+        CriteriaQuery<Carro> criteriaQuery = builder.createQuery(Carro.class);
+
+        
+    }
+
+, entao, criei a CriteriaQuery, normal, em cima de Carro.
+
+20. Agora, a SubQuery.
+
+21. A Subquery, existe, aqui, tambem, oh, a classe Subquery, do pacote javax.persistence.criteria,
+
+    CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+
+    CriteriaQuery<Carro> criteriaQuery = builder.createQuery(Carro.class);
+
+    Subquery<T>
+
+22. E, para ela, aqui, eu preciso falar o que que ela vai estar retornando. Bom, como vai retornar um valor, ali, com casas decimais, na verdade, entao, eh um Double, e eu vou chamar esse cara de subquery. E eu crio ele, oh, a partir da CriteriaQuery, nossa, que a gente ja criou, .subquery(), e vai me retornar um Double, porque eh o resultado da Media, que vai ser o avg(),
+
+        CriteriaQuery<Carro> criteriaQuery = builder.createQuery(Carro.class);
+        Subquery<Double> subquery = criteriaQuery.subquery(Double.class);
+
+23. Okay?
+
+24. Vamos criar, aqui, o Root, em cima de Carro, a Query, minha, principal,
+
+            CriteriaQuery<Double> criteriaQuery = builder.createQuery(Double.class);
+            Subquery<Double> subquery = criteriaQuery.subquery(Double.class);
+
+            Root<Carro> c = criteriaQuery.from(Carro.class);
+
+25. E, tambem tem que ter u Root para a subquery, vou chamar, aqui, de carroSubquery, porque a minha Subquery tambem esta fazendo o select em cim de Carro, nao eh verdade?
+
+            // from Carro cSub
+            Root<Carro> cSub = subquery.from(Carro.class);
+
+26. Entao, aqui, eu vou fazer, extamente, esse select,
+    select
+        avg(carro0_.valor_diaria) as col_0_0_ 
+    from
+        Carro carro0_
+
+27. Entao, eh em cima do Carro, a minha Subquery.
+
+28. Okay? Entao, vamos la.
+
+29. Bom, na minha Subquery, eu vo fazer o select, da mesma forma que a gente fez la em cima. So que o avg espera esse cara como tipo Double,
+
+        subquery.select(builder.avg(cSub.<Double>get("valorDiaria"));
+
+30. Beleza. Na nossa CriteriaQuery, nos vamos fazer o select() em cima do Root Carro,
+
+        criteriaQuery.select(c);
+
+31. E, na nossa CriteriaQuery, ainda, nos vamos adicionar, com o CriteriaBuilder, a restricao, where, fazendo o seguinte, eu quero que, quando for maior ou igual, greaterThanOrEqualTo(), a c.get("valorDiaria"), so que, como parametro y, nos vamos colocar a subquery,
+
+        criteriaQuery.where(builder.graterThanOrEqualTo(c.<Double>get("valorDiaria"), subquery));
+
+32. Aqui, ele vai falar, 'Opa, eu nao estou entendendo esse tipo, aqui, porque a gente esta fazendo a comparacao, aqui, com Subquery, que eh do tipo Double. Entao, vamos la, colocar um Double, aqui.'
+
+33. Entao, olha so o que que eu fiz.
+
+34. Na minha Query principal, eu colocando um where, falando, olha, eu quero que o valor da diaria, no Root, da minha Query principal, o valor da diaria seja maior do que o resultado da subquery, que eu vou fazer.
+
+35. A subquery que eu estou fazendo, ela vai retornar, a media, que eh o avg(), a media dos valores das diarias, entao, eu adiciono essa restricao, aqui.
+
+36. Fechou. Eh so terminar o que a gente ja esta acostumado, vamos criar, aqui,
+
+            TypedQuery<Carro> query = this.manager.createQuery(criteriaQuery);
+            List<Carro> resultado = this.manager.getResultList();
+
+            for (Carro carro : resultado) {
+                System.out.println(carro.getPlaca());
+            }
+
+37. Vamos mostrar, aqui, a Placa, por exemplo, e o Valor, para a gente ver se tem algum dos carros que tem o valor da diaria maior que o valor medio da diaria que, no nosso caso, aqui, eh 186.5.
+
+38. Seleciono aqui, botao direito, Run As, JUnit test.
+
+39. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_,
+        carro0_.chassi as chassi2_3_,
+        carro0_.cor as cor3_3_,
+        carro0_.data_criacao as data_cri4_3_,
+        carro0_.data_modificacao as data_mod5_3_,
+        carro0_.codigo_modelo as codigo_m8_3_,
+        carro0_.placa as placa6_3_,
+        carro0_.valor_diaria as valor_di7_3_ 
+    from
+        Carro carro0_ 
+    where
+        carro0_.valor_diaria>=(
+            select
+                avg(carro1_.valor_diaria) 
+            from
+                Carro carro1_
+        )
+AAA-1234 - 205.00
+BBB-8888 - 250.00
+AAA-7788 - 230.00
+FFF-1212 - 200.00
+XXX-1111 - 200.00
+ADD-8989 - 200.00
+YNP-5588 - 230.00
+
+40. Okay. Olha so a Consulta que ele fez. 
+
+41. Fez um select em cima de Carro.
+
+42. Esse, aqui, eh o meu select principal,
+
+select
+        carro0_.codigo as codigo1_3_,
+        carro0_.chassi as chassi2_3_,
+        carro0_.cor as cor3_3_,
+        carro0_.data_criacao as data_cri4_3_,
+        carro0_.data_modificacao as data_mod5_3_,
+        carro0_.codigo_modelo as codigo_m8_3_,
+        carro0_.placa as placa6_3_,
+        carro0_.valor_diaria as valor_di7_3_ 
+    from
+        Carro carro0_ 
+
+, um CriteriaQuery, ali, onde o carro.valor_diaria, onde esse cara, aqui, Carro carro0_, da minha CriteriaQuery, .valor_diaria, eh maior ou igual a quem? Olha so a minha Subquery, aqui,
+
+select
+                avg(carro1_.valor_diaria) 
+            from
+                Carro carro1_
+
+43. Okay? Eh maior que a Media do Valor da diaria dessa outra Query, aqui, que a gente acabou de fazer, ou seja, da minha Subquery,
+
+select
+                avg(carro1_.valor_diaria) 
+            from
+                Carro carro1_
+
+44. E, ai, o resultado, oh, nao teve ninguem abaixo de 186.5, la, que era a media aproximadamente.
+
+45. Okay? Legal isso daqui, nao eh? Eh util, ai, tem situacoes que voce vai precisar de fazer Subquery, ai. Quando voce chegar nessa situacao, lembre de que voce pode construir as suas Subqueries, ai, tambem, com Criteria, nao precisa chegar no SQL normal, ainda, nao.
+
+46. Fim da     Aula 08.009. Subqueries.
+
+
+
+
+
+
+-->

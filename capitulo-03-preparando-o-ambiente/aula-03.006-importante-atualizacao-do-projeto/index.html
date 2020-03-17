@@ -1,0 +1,248 @@
+<!-- 
+
+Aula 03.006. Importante: Atualizacao do Projeto
+
+1. Esta eh uma aula atualizacao.
+
+2. O que que eh uma aula atualizacao?
+
+3. Eh que eu peguei o Projeto que a gente vai desenvolver durante este curso e atualizei as bibliotecas que a gente usa nele.
+
+4. A biblioteca do Primefaces, JSF, OmniFaces, atualizei essas coisas, porque trouxeram alguamas facilidades, depois dessas novas versoes, e eu queria te mostrar, aqui, e muitos alunos pedem, 'Ah, eu queria desenvolver nas versoes mais novas'. E tambem resolvi alguns bugs resolvi alguns bugs que tinham na aplicacao, e tentei deixar, aqui, de uma forma mais atualizada.
+
+5. Entao, se voce puder seguir, aprender, assiste a video-aula, mas tenta implementar com a versao mais nova que eu estou te mostrando, aqui, que eu acho que vai ser mais sucesso para voce.
+
+6. Beleza? Eu vou te apresentar, aqui, o projeto, mostrar algumas coisas que eu fiz, eu vou deixar o link, esse link que esta aparecendo, ai, agora, eh um video do Youtube que eu gravei para te ensinar como importar um Projeto Web Maven no Eclipse, tambem, eu sei que tem, ate, a aula, aqui, mas se voce quiser pegar nesse novo video, para aprender tambem, eu acho que vai ser interessante.
+
+7. Okay? Olha so, vamos comecar, aqui, pelo pom.xml, e vou te mostrar o que eu atualizei, o Omnifaces,
+
+        <!-- Omnifaces
+        <omnifaces.version>2.1</omnifaces.version>
+
+, atualizei o Primefaces,
+
+        <!-- Primefaces
+        <primefaces.version>5.2</primefaces.version>
+
+, entao, as ultimas versoes, agora, que eu estou gravando o video,
+
+        <!-- JSF Version
+        <javax.faces.version>2.2.10</javax.faces.version>
+
+, JSF, do CDI, tambem, 
+
+        <!-- Weld - Implementacao do CDI
+        <weld.version>2.2.10.Final</weld.version>
+        <!-- Weld depende do Jandex
+        <jandex.version>1.2.3.Final</jandex.version>
+
+, okay?
+
+8. Eu fiz umas atualizacoes de Log, aqui, tambem, para o log ficar mais interessante,
+
+        <!-- Logging
+        <slf4j.version>1.7.12</slf4j.version>
+        <log4j.version>1.2.17</log4j.version>
+
+9. Essa do Log, se voce vier aqui, em 'src/mai/resources', tem um arquivinho, aqui, oh, lo4j.xml, eu coloquei o hibernate em debug,
+
+    <logger name="org.hibernate">
+        <level value="debug" />
+    </logger>
+
+, okay? Entao, vai ver, la, muitos detalhes do hibernate.
+
+10. No persistence.xml, eu estou com o Data Source,
+
+    <non-jta-data-source>java:comp/env/jdbc/locadoraDB</non-jta-data-source>
+
+, no Curso, la na frente, eu explico sobre o Data Source, mas, se voce quiser, ja, comecar a usa-lo, olha so como eh que funciona, eu tenho esse nome, aqui, 
+
+    <non-jta-data-source>java:comp/env/ >>> jdbc/locadoraDB <<< </non-jta-data-source>
+
+, jdbc/locadoraDB, eu preciso desse nome, aqui, tambem, em,
+
+     'src/main/webapp/META-INF/context.xml'
+
+, aqui que eu defino as configuracoes do Banco de Dados,
+
+    <Resource name="jdbc/locadoraDB" auth="Container"
+        factory="org.apache.naming.factory.BeanFactory" type="com.mchange.v2.c3p0.ComboPooledDataSource"
+        driverClass="com.mysql.jdbc.Driver" jdbcUrl="jdbc:mysql://localhost:3306/locadora"
+        user="root" password="admin" minPoolSize="3" maxPoolSize="3" 
+    />
+
+, voce precisa criar, ai, o Banco de Dados, 'locadora', okay?, entao, la, em 'src/main/webapp/META-INF/context.xml', vai la no Workbench e cria o database 'locadora', com UTF-8, usuario e senha, e, no WEB-INF/web.xml, eu adiciono esse <resource-ref />, aqui,
+
+    <resource-ref>
+        <description>DB Connection</description>
+        <res-ref-name>jdbc/locadoraDB</res-ref-name>
+        <res-type>javax.sql.DataSoruce</res-type>
+        <res-auth>Container</res-auth>
+    </resource-ref>
+
+
+, com esse mesmo nome.
+
+11. O que mais que eu preciso fazer para o Data Source funcionar?
+
+12. Aqui, dentro do Tomcat, que voce vai importar, vai instalar o Tomcat aqui dentro do Eclipse. Ai, la na pastinha que voce instalou ele, em Tomcat/lib, voce vai colocar os JAR's c3p0-0.9.5., o mchange-commons-java-0.2., e o driver do MySQL, o mysql-connector-java-5.1.3., para conectar no banco de dados. Okay? Nao esquece que tem que colocar essas 3 LIB's dentro da pasta lib do Tomcat, onde voce extraiu o Tomcat. c3p0, essa LIB, e essa mchange, tambem, eh do c3p0.
+
+13. Bom, eu acho que eh isso aqui, de configuracao. Deixa eu iniciar o Projeto, te mostrar ele funcionando, e navegar por outras etapas, aqui.
+
+14. Por exemplo, esse beans.xml, agora, eh um arquivo que ficara em branco, esse beans.xml eh para o CDI funcionar, mas ele vai ficar em branco, okay?
+
+15. Aqui, no Browser, se eu digitar, http://localhost:8080/locadora-veiculo-web, vamos, aqui, em Fabricante, Menu Cadastros / Fabricante.
+
+16. Cadastro Fabricante, vamos colocar Nome: 'Chevrolet', e clicar em Salvar. Salvou, venho, aqui, em Pesquisa, esta aqui, oh, o Chevrolet, posso editar, colocar um 'Chevrolet 2', aqui, Salvar, Pesquisar, editou, e tirar esse '2', agora.
+
+17. Posso excluir? Vamos excluir, tambem, entao.
+
+18. Entao, exclui. Vamos adicionar de novo, Nome: 'Chevrolet.'
+
+19. Okay, ta aqui, o Chevrolet, agora, de Codigo 2, que eh o ultimo que foi adicionado.
+
+20. Cadastros / Modelo Carro, Novo, Fabricante: Chevrolet, Modelo Onix, ele eh um Hatch compacto, Salvar, Pesquisar, esta aqui, mostra, ja, o Fabricante, se eu editar, vai vir com tudo selecionado, oh, o Chevrolet selecionado, okay?
+
+21. Ai, se voce olhar, as vezes, 'Ah, por que que o meu nao esta vindo selecionado?'
+
+22. Voce vai aprender isso durante o Curso, ai, mas so para ja deixar meio explicado, eh no Converter, de ModeloCarroConverter. Aqui, tem que buscar Com Fabricante pelo Codigo, para ele poder mostrar, para ele vir com o fabricante selecionado. Entao, na hora de converter, porque, na hora que eu coloco, aqui, oh, modeloCarro=1,
+
+http://localhost:8080/locadora-veiculo-web/modeloCarro/CadastroModeloCarro.xhtml?modeloCarro=1
+
+, ele vai editar esse modelo de carro de codigo 1 e, ai, ele precisa buscar o Modelo do Carro Com o Fabricante ja inicializado.
+
+23. E, ai, nesse Converter, tem que ser aqui, oh, no metodo buscarComFabricantePeloCodigo() e, ai, fazer esse SELECT, aqui, com o codigo,
+
+select c from ModeloCarro c inner join fetch c.fabricante where c.codigo = :codigo
+
+, e eu vou te explicar isso daqui no curso, ai, o que que eh o inner join fetch, voce vai aprender ai, fica tranquilo.
+
+24. Beleza? So para voce ja ir ficando atento a esses detalhes.
+
+25. Entao, o Modelo do Carro esta aqui, na tela de Edicao de Modelo. Vamos colocar, aqui, em Categoria, Hatch medio, so para a gente ver, ai, a edicao funcionando.
+
+26. Oh, aqui, oh, na Pesquisa, o Hatch medio, beleza?
+
+27. Deixa eu apagar ele, aqui, tambem. Oh, apagou, vamos criar de novo, Fabricante Chevrolet, Modelo Onix, Categoria Hatch medio. Clicar em Salvar, e Pesquisar.
+
+28. Vamos cadastrar um Acessorio, aqui, tambem. Vamos em Novo, Nome 'GPS', Salvar, Pesquisar.
+
+29. Vamos cadastrar um carro, agora?
+
+30. Cadastros / Carro / Novo. Modelo Carro 'Onix', Placa 'AAA-1111', Cor 'Branco', Valor da Diaria 80,00. Aqui, o Upload de Fotos, quando voce estiver, la, na aula de atualizacao de fotos, de salvar arquivos no Banco de Dados, aqui, eu uso esse exemplo para te mostrar como salvar um arquivo no Banco de Dados. Entao, voce pode vir, aqui, por exemplo, e selecionar um arquivo .jpg, em Acessorios, marcar GPS. E vou Salvar.
+
+31. Okay, vamos la na Pesquisa, entao, esta aparecendo ele aqui. Clicou na imagem, vai aparecer, aqui, a fotinho do Carro que eu fiz o Upload. Entao, isso tudo eu atualizei a biblioteca que faz isso, no Primefaces, foram corrigidos, tambem, alguns bugzinhos, entao, nessa versao, esta funcionando melhor.
+
+32. Okay? Clicando aqui, mostra o acessorio selecionado. Se eu editar, o que eu fiz, tambem? Eu fiz uma alteracao la, oh, vem, aqui, com o Modelo selecionado, vamos alterar a Placa dele, aqui, mas eu nao vou passar outra foto de carro.
+
+33. Vou desmarcar, aqui o GPS. Vou salvar, venho, aqui, em Pesquisa. Oh, a imagem continua aqui, okay?, entao, resolvi esse bugzinho que tinha na Aplicacao. O acessorio, agora, eu nao tenho mais nenhum Acessorio cadastrado, porque eu apaguei.
+
+34. Vamos colocar o GPS, aqui, de novo.
+
+35. Salvar, venho em Pesquisar, novamente. Agora, tem o GPS e aparece a imagem, tambem, continua aqui.
+
+36. Vamos cadastrar um novo carro, aqui. Vamos cadastrar um novo modelo. Vamos cadastrar, aqui, o Camaro, da Chevrolet, Categoria Esportivo.
+
+37. Salvar, Pesquisar, o registro foi Salvo.
+
+38. Vamos cadastrar um Novo Carro, agora. Entao, vai ser o Camaro, com a placa 'BBB-1111', Cor Amarelo, escolher outro arquivo de imagem, Cor Preto, Valor diaria 500,00, e marcar GPS tambem. Salvar, Pesquisar, entao, aqui, oh, eu cliquei no botao da Imagem, apareceu a imagem do Onix, cliquei no botao da Imagem, apareceu a imagem do Camaro.
+
+39. Funcionario Motorista, tambem esta funcionando. Aqui, eh para te mostrar a questao da heranca, vou cadastrar, aqui, o Jose, Data de nascimento 10/10/1986, CPF 123, CNH 123, Salvar, Pesquisar.
+
+40. Na Pesquisa, eu estou usando Heranca, para te mostrar como a gente faz o mapeamento de Heranca. Tambem vou te explicar isso tudo no Curso, okay?
+
+41. Fique tranquilo, isso eh so para voce ver que o projeto esta funcionando, na versao atualizada.
+
+42. Entao, vamos la, ele vai alugar, aqui, o Camaro, Motorista Jose, eu vou entregar hoje, vai devolver no domingo, gastou 2000,00, fez Protecao terceiro, Protecao causas naturais, Salvar. Okay, o aluguel foi salvo. Se a gente vier, aqui, em Aluguel por Carro, fazer o Relatorio do Camaro, Pesquisei, oh, esse eh o valor total, ai.
+
+43. Estou te mostrando algumas formas de Consulta tambem.
+
+44. Entao, assim, oh, o que eu queria te mostrar era o Projeto, que esta funcionando, aqui, principalmente, aquela parte de imagens, a parte de edicao, tambem, nao eh?, so mais uma vez, se eu vier aqui e editar um Carro, oh, editar o Camaro, vem, la, o Fabricante selecionado, todas essas partes estao funcionando.
+
+45. O que que mudou?
+
+46. Algumas coisas mudaram, os arquivos de configuracao, como eu ja te falei, aqui, do beans.xml, que, agora, eh so um arquivo em branco, ele tem que ter, mas tem que ter um arquivo em branco.
+
+47. Uma parte importante, aqui, para eu destacar, eh o seguinte, no cabecalho, aqui, em CadastroAcessorio.xhtml, namespaces tambem foram atualizados, mudaram.
+
+48. Entao, durante o curso, voce vai ver que tem algumas telas que estao com esse nome, aqui, diferente, 
+
+<ui:composition template="/WEB-INF/template/LayoutPadrao.xhtml"
+    xmlns="http://www.w3.org/1999/xhtml"
+    >>> xmlns:h="http://xmlns.jcp.org/jsf/html"
+    >>> xmlns:f="http://xmlns.jcp.org/jsf/core"
+    xmlns:ui="http://java.sun.com/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:o="http://omnifaces.org/ui">
+
+, porque isso, aqui, mudou nas versoes mais novas, tambem.
+
+49. Okay?
+
+50. A questao de inicializar, tambem, eu modifiquei, agora, eu uso esse <f:viewAction>, ele chama esse metodo inicializar, 
+
+    <f:viewAction action="#{cadastroAcessorioBean.inicializar}"/>
+
+, voce vai aprender isso tudo no Curso, ai, fica tranquilo.
+
+51. Aqui, no Controller, por exemplo, no CadastroFabricanteBean.java, ele vai chamar, aqui, o inicializar(),
+
+	public void inicializar() {
+		if (this.fabricante == null) {
+			limpar();
+		}
+	}
+
+, e eu verifico, aqui, oh, se o fabricante for igual a null, significa que ele nao esta editando. Se ele nao estiver editando, eu chamo o limpar(), que eh para inicializar o objeto Fabricante.
+
+52. Se ele estiver editando, vai ser chamado setFabricante(),
+
+	public void setFabricante(Fabricante fabricante) {
+		this.fabricante = fabricante;
+	}
+
+53. Fica tranquilo, que eu vou te explicar isso, tambem.
+
+54. Beleza? Eh so para falar dessas diferencas, mesmo.
+
+55. Eh, basicamente, eh esse Cabecalho, aqui, que mudou,
+
+<ui:composition template="/WEB-INF/template/LayoutPadrao.xhtml"
+    xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core"
+    xmlns:ui="http://java.sun.com/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:o="http://omnifaces.org/ui">
+
+, essa parte de inicializacao,
+
+			<f:viewAction action="#{cadastroAcessorioBean.inicializar}"/>
+
+, aqui, tambem, alguns arquivos.
+
+56. Aqui, tambem, mudou, no pacote util, a gente tinha, aqui, um monte de classes utilitarias, que eu nao preciso mais delas, okay?, que, nesta versao nova, eles ja corrigiram isso, nao preciso mais daquilo la, que voce vai ver no Curso, entao, se voce esta usando essas bibliotecas, nao vai precisar mais daquilo la.
+
+57. Porque, ai, no Converter, por exemplo, aqui, no AcessorioConverter.java, eu ja posso injetar o DAO do Converter,
+
+import javax.inject.Inject;
+
+    @Inject
+    private AcessorioDAO acessorioDAO;
+
+, okay?
+
+58. Voce vai ver que, durante o Curso, eu falo que nao tem jeito, a gente cria umas classes, aqui, utilitarias, so para fazer isso.
+
+59. Entao, esta vendo?, ficou mais simples injetar aqui.
+
+60. Bom, eh isso. Eu deu uma melhorada, tambem, em algumas partes, voce vai ver quando voce estiver desenvolvendo o Curso, sempre da uma olhadinha nessa pasta, aqui, oh, que esta no github.com/algaworks, se voce vier, aqui, no curso-jpa-hibernate / Aulas, procura, aqui, uma pastinha, Projeto atualizado, okay?
+
+61. E, aqui, esse, aqui, que eh o codigo que eu atualizei com essas versoes novas, que esta mais correto.
+
+62. Entao, voce assiste as aulas, entende o conceito, mas tenta usar as classes do Primefaces, do CDI, que eu estou usando, aqui.
+
+63. Fim da Aula 03.006. Importante: Atualizacao do Projeto.
+
+-->

@@ -1,0 +1,428 @@
+<!--
+    Aula 16.007 - Multi-Tenancy com Schemas diferentes.
+
+1. Vamos ver a outra forma de fazer o Multi-Tenancy, com separacoes de Schema.
+
+2. Entao, vamos la, oh, a primeira coisa que a gente vai mexer vai ser, aqui, no persistence.xml.
+
+3. Aqui, ao inves de ser DATABASE, nos vamos colocar SCHEMA,
+
+    <persistence-unit name="gerenciadorAcessoPU" transaction-type="RESOURCE_LOCAL">
+
+        <non-jta-data-source>java:comp/env/jdbc/imperio-rodas</non-jta-data-source>
+
+        <properties>
+
+            <property name="hibernate.dialect" value="org.hibernate.dialiect.MySQL" />
+
+            <property name="hibernate.show_sql" value="true" />
+            <property name="hibernate.format_sql" value="true" />
+
+            <property name="hibernate.multiTenancy" value="SCHEMA" />
+        </properties>
+
+    </persistence-unit>
+
+4. Okay?
+
+5. So para lembrar, o Schema que vai ser trocado. O que que eh o Schema no Banco, Normandes?
+
+6. Vamos la, dar uma olhada, aqui, oh.
+
+7. Agora, vai ser o Mesmo Banco de Dados, so que o Schema vai ser outro. 
+
+8. Aqui, oh, eu estou chamando de padaria_real, e outro, de imperio_rodas.
+
+9. A gente vai trocar esses Schemas, aqui, no Banco.
+
+10. Okay?
+
+11. Eu nao sei se voce esta reparando, mas eu coloquei, aqui, os Schemas "imperio_rodas" e "padaria_real", com underscore, agora, ao inves de um tracinho.
+
+12. Isso porque, nos testes que eu fiz, aqui, nao vai fazer com tracinho, entao, a gente vai ter que substinuir com underscore.
+
+13. Entao, edita o host, ai, e coloca, ao inves de o tracinho, vamos colocar o underscore.
+
+14. Outra coisa que nao vai dar certo, eh usar o DataSource, aqui,
+
+    <-- non-jta-data-source>java:comp/env/jdbc/imperio-rodas</non-jta-data-source --
+
+15. Entao, vamos la, eu coloquei SCHEMA,
+
+    <property name="hibernate.multiTenancy" value="SCHEMA" />
+
+, vamos configurar as outras coisas.
+
+16. Como nao vai funcionar com DataSource, aqui, provavelmente, algum problema do Hibernate, que eles ainda vao corrigir, nos vamos re-colocar as propriedades de conexao com o banco de dados,
+
+    <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost/imperio_rodas" />
+    <property name="javax.persistence.jdbc.user" value="root" />
+    <property name="javax.persistence.jdbc.password" value="admin" />
+    <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver" />
+
+17. Nos vamos trocar, aqui, esse tracinho por underscore,
+
+    <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost/ >>> imperio_rodas <<< " />
+
+, porque, senao, nao vai funcionar, ele nao vai aceitar alterar o Schema com o tracinho. Okay? Aqui, estao as propriedades de conexao. Okay, eu defini, aqui, o SCHEMA,
+
+        <property name="hibernate.multiTenancy" value="SCHEMA" />
+
+18. Ah, eh so isso, Normandes?
+
+19. Nao, para esse caso, aqui, a gente precisa criar o MultiTenantProvider, que vai fazer essa troca do Schema para a gente,
+
+<property name="hibernate.multi_tenant_connection_provider" value="com.algaworks.gerenciador.util.jpa.MultiTenantProvider" />
+
+20. Mas, o que que eh isso? O que que significa isso?
+
+21. Colocar essa propriedade, aqui, oh,
+
+<property name=">>> hibernate.multi_tenant_connection_provider <<<"
+
+, e criar uma classe que vai ser o nosso Provider, vai prover a Conexao para a gente,
+
+<property name="hibernate.multi_tenant_connection_provider" value=">>> com.algaworks.gerenciador.util.jpa.MultiTenantProider <<<" />
+
+22. Entao, eu vou criar essa class, aqui, oh, nesse pacote, oh, .util.jpa, 
+
+package com.algaworks.gerenciador.util.jpa;
+
+public class MultiTenantProvider {
+    
+}
+
+, okay?
+
+23. E, nessa classe, a gente vai precisar implementar o MultiTenantConnectionProvider, e o ServiceRegistryAwareService,
+
+import org.hibernate.engine.jdbc.connections.spi.MultiTenantConnectionProvider;
+import org.hibernate.service.spi.ServiceRegistryAwareService;
+
+public class MultiTenantProvider implements MultiTenantConnectionProvider, ServiceRegistryAwareService {
+
+    private static final long serialVersionUID = 1L;
+
+    @Override
+    public boolean isUnwrappableAs(Class unwrapType) {
+
+        return false;
+    }
+
+    @Override
+    public <T> T unwrap(Class<T> unwrapType) {
+        
+        return null;
+    }
+
+    @Override
+    public Connection getAnyConnection() throws SQLException {
+
+        return null;
+    }
+
+    @Override
+    public void releaseAnyConnection(Connection connection) throws SQLException {
+
+    }
+
+    @Override
+    public Connection getConnection(String tenantIdentifier) throws SQLException {
+
+        return null;
+    }
+
+    @Override
+    public void releaseConnection(String tenantIdentifier, Connection connection) throws SQLException {
+
+    }
+
+    @Override
+    public boolean supportsAggressiveRelease() {
+
+        return false;
+    }
+
+    @Override
+    public void injectServices(ServiceRegistryImplementor serviceRegistry) {
+
+    }
+
+}
+
+24. Okay. Vamos adicionar os metodos, aqui, e alterar alguns deles, aqui, para fazer isso, ai, que a gente vai precisar, que eh criar o DriverManager, paar eu enviar a Conexao, nao eh?, do DriverManager, e, na hora em que ele precisar da Conexao, por exemplo, oh, ele precisa conectar em alguem, ele vai passar o tenantIdentifier,
+
+    @Override
+    public Connection getConnection(String >>> tenantIdenfier) throws SQLException {
+
+        return null;
+    }
+
+, que a gente ja viu que vai ser o pedaco da URL, e, nesse momento, aqui, a gente troca o Schema e devolve a conexao.
+
+25. Beleza?
+
+26. Eh simples assim.
+
+27. Entao, vamos la.
+
+28. Para a gente poder fazer isso, nos vamos adicionar algumas propriedades, aqui. A primeira delas vai ser o ConnectionProvider,
+
+import org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl;
+
+public class MultiTenantProvider implements MultiTenantConnectionProvider, ServiceRegistryAwareService {
+
+
+    ...
+
+    private DriverManagerConnectionProviderImpl connectionProvider;
+}
+
+29. Nesse metodo, injectServices(),
+
+@Override
+public void injectServices(ServiceRegistryImplementor serviceRegistry) {
+
+}
+
+, que eh chamado, por eu estar implementando essa interface, ServiceRegistryAwareService, Quando o Servico eh registrado, eh iniciado, ele chama esse metodo, e nos vamos colocar esse codigo, aqui,
+
+@Override
+public void injectServices(ServiceRegistryImplementor serviceRegistry) {
+    Map lSettings = serviceRegistry.getService(ConfigurationService.class).getSettings();
+
+    this.connectionProvider = new DriverManagerConnectionProviderImpl();
+    this.connectionProvider.injectServices(serviceRegistry);
+    this.connectionProvider.configure(lSettings);
+}
+
+30. Que esta inicializando o ConnectionProvider, ou seja, o cara que vai prover a conexao, a partir das Configuracoes que a gente informou, la, no persistence.xml.
+
+31. Okay?
+
+32. Vamos la. O getAnyConnection(), 
+
+@Override
+public Connection getAnyConnection() throws SQLException {
+
+    return null;
+}
+
+, ele precisa pegar Alguma Conexao, para ele fazer os Testes iniciais, e por ai vai, okay?
+
+@Override
+public Connection getAnyConnection() throws SQLException {
+
+    return this.connectionProvider.getConnection();
+}
+
+33. Okay?
+
+34. O releaseAnyConnection(), a gente precisa liberar essa Conexao,
+
+@Override
+public void releaseAnyConnection(Connection connection) throws SQLException {
+    try {
+        connection.createStatement().execute("use test");
+    } catch (SQLException e) {
+        throw new HibernateException("Could not alter JDBC connection to specified schema [public] ", e);
+    }
+    this.connectionProvider.closeConnection(connection);
+}
+
+35. Okay? Vamos implementar todo mundo, aqui.
+
+36. Aqui, a gente escolhe uma delas. Ao inves de test, aqui, vamos informar imperio_rodas,
+
+    try {
+        connection.createStatement().execute("use imperio_rodas");
+    } catch (SQLException e) {
+        ...
+    }
+
+, okay?, que vai ser a default.
+
+, nao eh? A "any", para ele fazer os testes iniciais, e por ai vai.
+
+37. Quando ele precisar de uma Conexao, ai, olha so como eh que vai ficar o codigo,
+
+@Override
+public Connection getConnection(String tenantIdentifier) throws SQLException {
+    final Connection connection = this.getAnyConnection();
+    try {
+        connection.createStatement().execute("use " + tenantIdentifier);
+    } catch (SQLException e) {
+        throw new HibernateException("Could not alter JDBC connection to specified schema [" + tenantIdentifier + "]", e);
+    }
+    return connection;
+}
+
+38. Quando ele precisar de uma conexao de Um Tenant ID, a gente vai executar, oh, "use ", e passa, la, o tenant ID,
+
+    connection.createStatement().execute( >>> "use " + tenantIdentifier <<< );
+
+39. Entao, aqui, oh, ele vai conseguir trocar de Schema, ora, ele vai estar com o Schema do imperio_rodas, ora ele vai estar na padaria_real, por ai, vai, vai conseguir ficar trocando, aqui, com o tenantIdentifier. Isso tudo ele vai fazer automatico para a gente.
+
+40. Beleza?
+
+41. O releaseConnection(), nos vamos mandar ele fazer o release de qualquer conexao, passando a conexao, que ele ja vai fazer isso, la, pra gente,
+
+@Override
+public void releaseConnection(String tenantIdentifier, Connection connection) throws SQLException {
+    this.releaseAnyConnection(connection);
+}
+
+42. Beleza?
+
+43. Acho que eh so isso daqui, mesmo, que a gente precisa, para fazer o Multi-Tenant funcionar.
+
+44. Perceberam, entao?
+
+45. Passamos, aqui, agora, o Schema, o tenantID vai ser o nome do schema do banco,
+
+@Override
+public Connection getConnection(String tenantIdentifier) throws SQLException {
+    final Connection connection = this.getAnyConnection();
+    try {
+         connections.createStatement().execute("use " + tenantIdentifier);
+    } catch(SQLException e) {
+        ...
+    }
+}
+
+46. Eu ja criei, aqui, oh, esse Schema, padaria_real, e imperio_rodas.
+
+47. Ja troquei, no C:\Windows\System32\Drivers\etc\hosts, para imperio_rodas e padaria_real com underscore,
+
+# Copyright (c) 1993-2009 Microsoft Corp.
+#
+# This is a sample HOSTS file used by Microsoft TCP/IP for Windows.
+#
+# This file contains the mappings of IP addresses to host names. Each
+# entry should be kept on an individual line. The IP address should
+# be placed in the first column followed by the corresponding host name.
+# The IP address and the host name should be separated by at least one
+# space.
+#
+# Additionally, comments (such as these) may be inserted on individual
+# lines or following the machine name denoted by a '#' symbol.
+#
+# For example:
+#
+#      102.54.94.97     rhino.acme.com          # source server
+#       38.25.63.10     x.acme.com              # x client host
+
+# localhost name resolution is handled within DNS itself.
+#	127.0.0.1       localhost
+#	::1             localhost
+
+127.0.0.1       imperio_rodas.localhost
+127.0.0.1       padaria_real.localhost
+
+48. Acredito que eh isso, daqui.
+
+49. Deve funcionar, se eu nao esqueci de mais nada, ai.
+
+50. Vamos iniciar o Tomcat.
+
+51. Vamos ver?
+
+52. Esta subindo, ai.
+
+53. Eh o imperio_rodas, so que, ao inves de tracinho, eu vou colocar o underscore,
+
+http://imperio_rodas.localhost:8080/gerenciador-acesso/PesquisaUsuario.xhtml
+
+54. Okay, subiu o Hibernate, fez o select,
+
+Hibernate: 
+    select
+        count(usuario0_.codigo) as col_0_0_ 
+    from
+        usuario usuario0_
+Hibernate: 
+    select
+        count(this_.codigo) as y0_ 
+    from
+        usuario this_ 
+    where
+        this_.status=?
+
+
+, oh, Total de usuarios: 0.
+
+55. Vamos colocar, aqui, agora, o padaria_real,
+
+http://padaria_real.localhost:8080/gerenciador-acesso/PesquisaUsuario.xhtml
+
+56. Beleza, Total de usuarios: 0.
+
+57. Vamos cadastrar, os Usuarios, aqui. Entao, vamos la. Aqui, no padaria-real, eu vou colocar o Ricardo. Salvar.
+
+58. Beleza, 
+
+Total usuários: 1 
+Usuários ativos: 1
+
+59. Aqui, no imperio-rodas, eu vou colocar o Francisco. Salvar.
+
+60. Beleza,
+
+Total usuários: 1 
+Usuários ativos: 1
+
+61. Vamos dar uma olhada la no Banco de dados?
+
+62. No imperio_rodas,
+
+select * from usuario;
+
+# codigo, nome, status
+3, Francisco, ATIVO
+
+
+
+63. Na padaria_real,
+
+select * from usuario;
+
+# codigo, nome, status
+3, Ricardo, ATIVO
+
+
+64. Esta so o Ricardo.
+
+65. Perceberam, entao, que ele consegue fazer essa distincao para a gente?
+
+66. Nao eh? Vamos cadastrar, aqui, em imperio_rodas, a Sarah. Salvei, oh, aqui, tem 2,
+
+Total usuários: 2 
+Usuários ativos: 2
+
+
+67. E, aqui, em http://padaria_real.localhost:8080/gerenciador-acesso/CadastroUsuario.xhtml, 
+
+Total usuários: 1 
+Usuários ativos: 1
+
+, so vai ter Um Usuario.
+
+68. Perceberam, entao, que, para trocar o Schema, a gente tem que ensinar, para ele, como trocar esse Schema. E a gente faz isso criando esse MultiTenantProvider. Na hora de retornar a conexao, que a gente vai executa, antes de retornar a conexao, a gente executa, troca o Schema, e devolve a conexao,
+
+@Override
+public Connection getConnection(String tenantIdentifier) throws SQLException {
+    final Connection connection = this.getAnyConnection();
+    try {
+        connection.createStatement().execute("use " + tenantIdentifier);
+    } catch (SQLException e) {
+        ...
+    }
+}
+
+, beleza?
+
+69. Fim da     Aula 16.007 - Multi-Tenancy com Schemas diferentes.
+
+
+
+-->

@@ -1,0 +1,69 @@
+<!-- 
+
+Aula 01.001. Introducao ao Curso de JPA 2 e Hibernate
+
+1. Ola, tudo bem?
+
+2. Bem vindo ao Curso de Persistencia com JPA 2 e Hibernate.
+
+3. O meu nome eh Normandes, e eu vou ficar com voce ate o final deste curso, aqui, na AlgaWorks.
+
+4. Se voce ja foi aluno, muito bem vindo de volta. Se voce eh um novo aluno, tambem, seja muito bem vindo, e obrigado, ai, pela confianca de fazer esse treinamento com a gente.
+
+5. Okay? Bom, eu vou falar para voce, aqui, um pouquinho, nao eh?, nesta primeira video-aula, algumas coisas importantes. E vamos comecar com o que a gente vai aprender neste curso.
+
+6. Entao, nos vamos utilizar o MySQL, como banco de dados, para a gente trabalhar com a persistencia, okay?, nos vamos instalar o MySQL aqui. Eu estou usando o Windows, a gente escolheu o Windows, porque eh a plataforma mais comum, nao eh?, dos nossos alunos, mas, se voce estiver usando Linux, eu vou deixar um exercicio ai, um passo-a-passo de como eh que voce instala o MySQL no Linux tambem.
+
+7. Okay? Bom, depois, nos vamos fazer uma introducao a Persistencia, nos vamos criar um Projeto com metodo main() mesmo, para a gente comecar a dar os primeiros passos, ali, no JPA com Hibernate, nos ja vamos interagir com o banco, salvando, apagando, atualizando o Banco de dados, com classes muito simples.
+
+8. Nos vamos comecar assim. Depois, entra uma parte bem legal, vou mostrar, aqui, para voce, nos vamos ver esse, ta vendo esse Diagrama de Classes, aqui, oh? Eh de um Sisteminha que eu chamei, aqui, uma Locadora de Veiculos. A gente vai criar esse Sisteminha e, aqui, oh, nesse sistema de Locadora de Veiculos, nos vamos ver situacoes reais, que acontecem na hora que voce esta trabalhando, na pratica, ai, com o JPA, com Hibernate.
+
+9. Entao, voce passa por essas situacoes de criar um sistema. E ai, a gente nao vai ficar so naquele modelo teorico de, 'Ah, criei essa Tabela, Tabela Passaro, e, ai, voce cria a Tabela Asa, um Passaro tem duas Asas,...'. Nao, nos vamos criar coisas mais reais, nos vamos criar, por exemplo, um Carro tem varios Acessorios, nos vamos aplicar coisas mais parecidas com a vida real.
+
+10. E esse sisteminha, aqui, nos vamos fazer ele utilizando Web, tambem.
+
+11. Entao, como eu te disse. Nos vamos comecar com classes simples, para fazer uma introducao, para voce ver como eh, onde eh que a gente baixa, como eh que funciona essa configuracao em um Projeto simples. Depois, a gente vai entrar num projeto Web, utilizando o Apache Tomcat, utilizando o Maven, utilizando JSF, inclusive, com o framework Primefaces.
+
+12. Nao vou ensinar Primefaces, JSF, a gente vai ver alguns detalhezinhos, ali, nos vamos focar, mesmo, eh no JPA 2 e Hibernate.
+
+13. Okay? Essa eh..., o nosso curso eh sobre JPA e Hibernate, mas nos ja vamos aproveitar e, ai, dar uma introduzida no Tomcat, no Maven, no JSF 2 com Primefaces, para a gente criar esse sisteminha.
+
+14. Obviamente, que, se tiver alguma situacao que a gente nao conseguiu encaixar nesse sistema, a gente cria uma outra classe com o metodo main(), la, para demonstrar determinada situacao importante do JPA, okay?
+
+15. Bom, o que mais, aqui, que eu posso falar para voce?
+
+16. A gente vai ver, entao, geracao das Primary Keys, mapeamentos Muitos-Para-Um, Um-Para-Um, Um-Para-Muitos, Muitos-Para-Muitos, vamos trabalhar com Lazy, com Eager, Chaves Compostas, a gente vai trabalhar com Data, com Enumeracao, com Heranca.
+
+17. Nesse Sisteminha aqui, eu deixei de proposito, aqui, oh, a gente vai ter um Cadastro de Motorista, de Funcionario, ambos sao Pessoas, entao, a gente vai trabalhar, inclusive, com Heranca, ai, para a gente ver como isso funciona, okay?
+
+18. A gente vai ver detalhes da Transacao, como eh que funciona a Transacao, vamos evoluir, tambem, as nossas consultas, utilizando JPQL, utilizando Criteria, para criar as nossas consultas. 
+
+19. Nos vamos ver coisas de gravacao e exclusao, em Cascata, e varios outros detalhes, ai, importantes, que a gente precisa para conseguir trabalhar bem com JPA 2 e o Hibernate.
+
+20. Okay? 
+
+21. Bom, vai ajudar se voce ja conhecer um pouquinho de Banco de Dados. Eu vou dar uma introducao, aqui, sobre Banco de Dados, sobre a criacao das tabelas, como eh que isso funciona, como eh que a gente instala o MySQL, como eh que eh o relacionamento de uma chave estrangeira, mas eu nao vou te explicar todos os detalhes de um banco de dados.
+
+22. Se voce ja conhecer um pouquinho, ali, como eh que funciona o banco de dados, vai te ajudar sim. Se voce conhece 0 de banco de dados, e disser, 'Oh, nunca vi Banco de Dados, eu quero comecar'. Bom, nessa pequena introducao, voce podia aproveitar, entao, e baixar material sobre Banco de Dados, para aprender o maximo que voce puder de Banco de Dados.
+
+23. Okay? Vai ajudar se voce ja conhecer Java, obviamente. 
+
+24. Eu nao vou explicar, aqui, Java, como eh que funciona, o que que eh um objeto, o que que eh uma classe, nao, isso nao tem neste curso. Entao, voce precisa conhecer um pouco de Java. 
+
+25. Se voce nao conhece, a gente tem um Curso, aqui, de fundamentos Java e orientacao a objetos, onde a gente da essa parte introdutoria, explicando, inclusive, orientacao a objetos, com varios detalhes, ai, seria um outro curso. 
+
+26. Se voce comecou neste curso errado, entre em contato com a gente, e a gente da um jeitinho de migrar voce de curso. Okay?
+
+27. Bom, algumas duvidas comuns, dos nossos alunos.
+
+28. Oh, Normandes, eu estou com uma duvida nessa video aula, como eh que faco?
+
+29. Bom, na AlgaWorks, todos os nossos cursos, voce pode interagir com a gente, com os nossos alunos.
+
+30. Dica ou Conselho que eu te dou eh relacionado a isso, tire as suas duvidas, faca o curso no seu ritmo, nao tente assistir o maximo de video-aulas por dia, va assistindo as video-aulas pouco a pouco, as nossas video-aulas costumam ser curtas, nao tem nenhuma video-aula de 2 horas de duracao, direto, sao video-aulas curtas, justamente para dar tempo de voce assimilar o que voce esta assistindo. Entao, voce assiste, da aquela parada, da aquela pensada. 'Bom, eh isso aqui mesmo que eu entendi, deixa eu fazer um teste, aqui. Sera que o Normandes fez isso aqui, esta funcionando de verdade? Sera que ele esta mentindo, aqui? Entao, faz aquele teste, leve o curso no seu ritmo. 
+
+31. E, se ficar com duvidas, pode perguntar, o legal de ser,..., de as video-aulas,..., do curso on-line, eh, nao estar na turma, eh que voce nao precisa ter vergonha de perguntar, nao eh?, normalmente, muita gente tem vergonha de perguntar na frente de todo mundo. Aqui, voce esta perguntando sozinho, ai, na sua casa. Eu vou entrar ali, e vou te ajudar a responder, a tirar a duvida daquela video-aula, daquele exercicio que a gente esta fazendo. Combinado?
+
+32. Fim da Aula 01.001. Introducao ao Curso de JPA 2 e Hibernate.
+
+-->

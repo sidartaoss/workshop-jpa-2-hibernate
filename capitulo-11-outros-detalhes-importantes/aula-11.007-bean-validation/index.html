@@ -1,0 +1,192 @@
+<!--
+
+    Aula 11.007. Bean Validation
+
+1. Uma coisa que a gente consegue melhorar bastante, no nosso codigo, eh essa regra, aqui, de validacao,
+
+public class CadastroAcessorioService implements Serializable {
+
+    ...
+
+    @Inject
+    private AcessorioDAO acessorioDAO;
+
+    @Transactional
+    public void salvar(Acessorio acessorio) throws NegocioException {
+
+>>>        if (acessorio.getDescricao() == null || acessorio.getDescricao().trim().equals("")) {
+>>>            throw new NegocioException("A descricao do acessorio eh obrigatorio");
+>>>        }
+
+        this.acessorioDAO.salvar(acessorio);
+    }
+}
+
+2. Validar, aqui, no nosso Service, na nossa logica, nao esta tao legal, essa validacao das nossas Entidades, aqui, do que eh informado ou nao. 
+
+3. No caso, aqui, de salvar o Acessorio, o que que a gente estava fazendo?
+
+4. Verificando se a descricao era nula ou se o Usuario informou alguma coisa. Depois de dar o trim(), se ainda for igual a Vazio, a gente fala que a Descricao, lanca uma Excecao falando que a Descricao eh obrigatorio.
+
+5. E, ai, la no nosso ManagedBean, em CadastroAcessorioBean.java, aqui no metodo salvar(),
+
+public void salvar() {
+    try {
+        this.cadastroAcessorioService.salvar(this.acessorio);
+    } catch (NegocioException e) {
+        FacesUtil.addErrorMessage(e.getMessage());
+    }
+
+    this.limpar();
+}
+
+, a gente tentava salvar, se caisse numa Excecao de Negocio, a gente adicionava a mensagem de erro na tela.
+
+6. Beleza. Tratamento de excecao, aqui, para a Regra de Negocio esta belezinha, realmente, eh para ser usado.
+
+7. Mas, talvez, essa Validacao, aqui, no metodo CadastroAcessorioService, a gente consegue melhorar,
+
+    @Transactional
+    public void salvar(Acessorio acessorio) throws NegocioException {
+        if (acessorio.getDescricao == null || acessorio.getDescricao().trim().equals("")) {
+            throw new NegocioException("A descricao do acessorio eh obrigatorio");
+        }
+        this.acessorioDAO.salvar(acessorio);
+    }
+
+, que eh usando, justamente, o Bean Validation. Com ele, a gente consegue validar o status dos nossos Beans antes de chegar aqui. Entao, a gente nao precisaria ficar esse codigo, aqui, para validar o Estado dos nossos Beans.
+
+8. E, ai, como eh que a gente faz esse cara funcionar?
+
+9. A primeira coisa eh vir, aqui, no pom.xml, e adicionar a dependencia do Bean Validation,
+
+    <dependency>
+        <groupId>org.hibernate</groupId>
+        <artifactId>hibernate-validator</artifactId>
+        <version>5.0.1.Final</version>
+        <scope>compile</scope>
+    </dependency>
+
+10. Okay?
+
+11. Bom, agora, com isso, a gente vai adicionar algumas anotacoes, aqui, para fazer essa Validacao, em Acessorio.java,
+
+@Entity
+public class Acessorio {}
+
+    >>>
+    public String getDescricao() {
+        return descricao;
+    }
+
+    public void setDescricao(String descricao) {
+        this.descricao = descricao;
+    }
+
+, e nao vai ser necessario, mais, colocar esse if,
+
+@Transactional
+public void salvar(Acessorio acessorio) throws NegocioExcecao {
+
+    if (acessorio.getDescricao == null || acessorio.getDescricao().trim().equals("")) {
+        throw new NegocioException("A descricao do acessorio eh obrigatorio");
+    }
+
+}
+
+12. E o legal, aqui, com o JSF, eh que existe uma integracao com o Bean Validation.
+
+13. E, ai, ja eh automatico, a gente vai adicionar o Bean Validation, o JSF ja sabe, 'Opa, ele esta usando o Bean Validation, ja vou fazer a validacao e, na hora que tentar salvar, se essa Validacao nao passar, ele ja vai mostrar na telinha.'
+
+14. Voce vai ver daqui a um pouquinho.
+
+15. Entao, olha so, o que que eu vou colocar aqui?
+
+    public String getDescricao() {
+        return descricao;
+    }
+
+16. @Not, e, aqui, oh, tem o @NotNull, por exemplo, do pacote javax.validation.constraints, tem mais duas, aqui, oh, @NotBlank e @NotEmpty, do pacote org.hibernate.validator.constraints. O @NotNull, ja da para imaginar, ele nao vai deixar que esse campo seja Null, okay?
+
+17. E o @NotBlank e o @NotEmpty?
+
+18. Bom, eles sao bem parecidos, com a diferenca do seguinte.
+
+19. O @NotEmpty, ele vai verificar, nao eh?, que uma String, uma Colecao, um Mapa, um Array, o tamanho tem que ser maior do que zero. Entao, se ele informar, por exemplo, um monte de espaco vazio, vai passar. 
+
+20. O @NotBlank, nao. O @NotBlank vai verificar: Nao pode ser nulo, e, depois, ele vai dar um trim(), e validar, ou seja, se, depois do trim(), ainda estiver vazio, nao pode passar.
+
+21. E, ai, eu posso passar, aqui, como parametro, uma String, que eh a mensagem que vai ser mostrada na tela. Entao, eu poderia colocar uma mensagem diferente, aqui,
+
+    @NotBlank(message = "A descricao deve ser informada.")
+    public String getDescricao() {
+        return descricao;
+    }
+
+22. Vou colocar assim.
+
+23. Vou, ate, comentar esse camaradinha, para voce ver que ele nao vai passar aqui,
+
+@Transactional
+public void salvar(Acessorio acessorio) throws NegocioException {
+    
+    /**
+    if (acessorio.getDescricao == null || acessorio.getDescricao().trim().equals("")) {
+        throw new NegocioException("A descricao do acessorio eh obrigatorio.");
+    }
+    **/
+
+    this.acessorioDAO.salvar(acessorio);
+}
+
+24. Entao, oh, nao tem mais essa validacao, aqui, eu so coloquei o @NotBlank,
+
+    @NotBlank(message = "A descricao deve ser informada.")
+    public String getDescricao() {
+        return descricao;
+    }
+
+25. E uma coisa legal. Nao faz parte, aqui, do escopo eu te mostrar anotacoes customizadas do Bean Validation, mas voce consegue criar, inclusive, as suas anotacoes. Existem varias e varias anotacoes, do Bean Validation, para fazer todo o tipo de validacao, ate com Expressao Regular, voce consegue fazer isso, okay?, e voce pode criar a suas proprias anotacoes, baseadas, ai, no Bean Validation.
+
+26. As vezes, voce tem alguma Regra de Negocio especifica que voce precisa validar de uma forma que as anotacoes que ja existem nao te atendam, voce pode criar a sua propria e deixar o seu sistema, nao eh?, a sua logica de negocio de sistema escrito, aqui, 
+
+@Transactional
+public void salvar(Acessorio acessorio) throws NegocioException {
+    
+    /**
+>>>    if (acessorio.getDescricao == null || acessorio.getDescricao().trim().equals("")) {
+        throw new NegocioException("A descricao do acessorio eh obrigatorio.");
+    }
+    **/
+
+    this.acessorioDAO.salvar(acessorio);
+}
+
+, somente logica de negocio, nao logica de validacao mesmo, okay?
+
+27. Bom, eu acredito que eh so isso daqui que a gente deva fazer, e ja vai funcionar.
+
+28. Deixa eu te mostrar, aqui, oh, se eu mandar iniciar o Tomcat, vamos acessar, aqui, http://localhost:8080/locadora-veiculo-web/, esperando carregar, aqui, vou te mostrar como eh que vai acontecer.
+
+29. Vamos, aqui, em Cadastro de Acessorio, http://localhost:8080/locadora-veiculo-web/acessorio/PesquisaAcessorio.xhtml, agora, tem que esperar ele subir o Hibernate, ele so sobe depois da primeira vez que a gente tenta acessar alguma coisa do Hibernate.
+
+30. Beleza, caiu na tela, la de pesquisa.
+
+31. Eu vou clicar, aqui, no botao Novo, beleza. Eu vou tentar Salvar Um Acessorio sem informar nada, aqui.
+
+32. Olha so.
+
+33. 'A descricao deve ser informada.'
+
+34. E la, oh, o JSF, ja deixou, inclusive, destacado, aqui, oh, 'Esse campo, aqui, esta errado'. 
+
+35. Ou seja, entao, existe essa possibilidade de a gente fazer a Validacao usando o Bean Validation. Eh so voce adicionar a dependencia, ai, do Hibernate, no pom.xml. Se voce estiver criando um sistema com JSF, essa integracao ja esta pronta para voce, beleza?
+
+36. E voce nao precisa mais fazer validacoes de estado da sua Entidade, aqui, na sua Logica de Negocio. Aqui, voce deixa para fazer conta, para fazer alguma outra Regra mesmo e, por fim, salvar no Banco de Dados.
+
+@Transactional
+public void salvar(Acessorio acessorio) throws NegocioException {
+    this.acessorioDAO.salvar(acessorio);
+}
+
+-->

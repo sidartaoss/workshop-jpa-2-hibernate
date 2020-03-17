@@ -1,0 +1,351 @@
+    <!--
+        Aula 13.002. Delete e Update Com Criteria
+
+    1. 
+
+    @Entity
+    @Table(name = "fatura")
+    public class Fatura implements Serializable {
+
+        ...
+
+        private Long codigo;
+        private BigDecimal valor;
+        private Date vencimento;
+        private boolean vencida;
+
+        ...
+
+        @Id
+        @GeneratedValue(GenerationType.IDENTITY)
+        public Long getCodigo() {
+            return codigo;
+        }
+    }
+
+    2. Noi JPA 2.1, eles tambem adicionaram voce conseguir fazer o Update e Delete via Criteria.
+
+    3. Antes, a gente conseguia fazer, obviamente, usando condicoes, okay? Antigamente, a gente nao conseguia fazer com JPQL. Agora, a gente vai fazer com Criteria tambem.
+
+    4. Para te demonstrar esse Recurso, eu criei, aqui, uma classe Fatura, uma Entidade Fatura, tem, la, codigo, valor, vencimento e vencida. Talvez, isso, aqui, nao tenha sentido, nao eh?, voce fala, 'Mas,...', se esta a Data antiga, ou seja, vencimento, ja eh vencida. Sim, concordo com voce, mas, vamos supor que esse, aqui, eh um sistema legado, que ja esta funcionando na empresa, voce esta fazendo apenas um sistema por cima dele, que precisa verificar, por exemplo, todas as faturas que estao vencidas, todo dia, a meia-noite, por exemplo, vai rodar o seu Jobzinho, uma tarefa sua, e vai verificar, se venceu, entao, vamos setar a flag como vencida. Beleza? Eh isso que eu quero fazer, aqui, com voce usando Criteria.
+
+    5. Eh isso mesmo. A gente vai usar Criteria para fazer isso, daqui.
+
+    6. Bom, e, ai, o que que eu coloquei, aqui, para fazer o Provisionamento? 3 faturas,
+
+    <?xml version="1.0" encoding="UTF-8"?>
+
+    <dataset>
+        <fatura codigo="1" valor="100" vencimento="2013-01-02" vencida="0" />
+        <fatura codigo="2" valor="200" vencimento="2021-06-15" vencida="0" />
+        <fatura codigo="3" valor="140" vencimento="2013-02-10" vencida="0" />
+    </dataset>
+
+    , com valores diferentes e, essa primeira, e a ultima, ja estao vencidas. Ja, essa segunda, aqui, ela nao esta vencida, ainda, o vencimento dela eh para frente, para ficar mais facil de ver, que essas duas, aqui, a primeira e a ultima, estao vencidas e a segunda nao.
+
+    7. Beleza? Entao, isso, aqui, vai ser o nosso Provisionamento, nos vamos trabalhar com essa base de dados, inicialmente, e a gente vai alterar ela.
+
+    8. Okay? Entao, eu vou rodar, aqui, o GerarTabelas, para a gente gerar essas tabelas, aqui, a tabela Fatura, vamos la, dar uma olhadinha, no Workbench, select * from fatura;
+
+    9. Retornou,
+
+    # codigo, valor, vencida, vencimento
+
+    10. A tabela fatura foi gerada, aqui, nao tem nada, porque nos vamos criar, agora, aqui, a FaturaPersistenceTest.
+
+    package com.algaworks.model;
+
+    public class FaturaPersistenceTest {
+
+        private JIntegrity helper;
+
+        private EntityManager manager;
+
+        @Before
+        public void init() {
+            this.helper = new JIntegrity();
+            this.helper.useMySQL();
+            this.helper.cleanAndInsert();
+
+            this.manager = JPAHelper.currentEntityManager();
+
+            if (!this.manager.getTransaction().isActive()) {
+                this.manager.getTransaction().begin();
+            }
+
+        }
+
+        @After
+        public void end() {
+            if (this.manager.getTransaction().isActive()) {
+                this.manager.getTransaction().commit();
+            }
+        }
+
+        @Test
+        public void ...
+    }
+
+    11. Essa classe, aqui, faz, basicamente, o mesmo que a classe UsuarioPersistenceTest, so que, como agora, a gente vai alterar o banco de dados, eu vou iniciar a Transacao, se ela nao estiver iniciada ainda, 
+
+    ...
+
+        if (!this.manager.getTransaction().isActive()) {
+            this.manager.getTransaction().begin();
+        }
+
+    ...
+
+    , e vou fazer o commit no final, depois de cada metodo,
+
+        ...
+        @After
+        public void end() {
+            if (this.manager.getTransaction().isActive()) {
+                this.manager.getTransaction().commit();
+            }
+        }
+
+    12. Beleza? Isso que eu quero fazer.
+
+    13. Bom, vamos la.
+
+    14. O que que eu vou fazer aqui? 
+
+    15. Eu vou criar o primeiro metodo de Teste, que vai dizer o seguinte, que ele deve atualizar faturas vencidas, por exemplo,
+
+    @Test
+    public void deveAtualizarFaturasVencidas() {
+
+    }
+
+    16. Entao, a gente vai setar, la, aquela flag para true, nao eh?, no caso, 1, no MySQL, se tiver vencida a fatura, beleza?
+
+    17. Entao, vamos la, vamos lembrar, aqui, como eh que a gente cria Criteria, aqui, o Criteria do JPA 2.1?
+
+    18. Primeiro, a gente precisa do Builder, para criar a nossa Criteria, e a gente pega ele a partir do EntityManager, 
+
+        CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+
+    19. Agora, eu vou ter, aqui, oh, o CriteriaUpdate<T>, beleza? Entao, eh a Criteria que vai fazer a atualizacao em cima de quem? Em cima de Fatura,
+
+        ...
+
+        import javax.persistence.criteria.CriteriaUpdate;
+
+        ...
+
+        CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+
+        CriteriaUpdate<Fatura> 
+
+    20. Okay? Essa eh a minha Criteria. E eu crio ela a partir do CriteriaBuilder, builder.createCriteriaUpdate(), para qual classe? Fatura,
+
+            CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+
+            CriteriaUpdate<Fatura> criteria = builder.createCriteriaUpdate(Fatura.class);
+
+    21. Beleza? Entao, vamos criar o Root, para a gente conseguir pegar os dados, nao eh?, da Fatura. E eu crio, ele, tambem, a partir da Criteria. Entao, eh o Root, para a gente conseguir pegar os atributos dentro dele, la,
+
+                CriteriaBuiler builder = this.manager.getCriteriaBuilder();
+                CriteriaUpdate<Fatura> criteria = builder.createCriteriaUpdate(Fatura.class);
+
+                // from Fatura f
+                Root<Fatura> f = criteria.from(Fatura.class);
+
+    22. Beleza?
+
+    23. Entao, okay. Entao, agora, a gente ja pode comecar a montar a nossa condicao, que eh no criteria.set(), eu quero fazer um Update,
+
+                    ...
+
+                    Root<Fatura> f = criteria.from(Fatura.class);
+
+                    criteria.set(attribute, value);
+
+    24. Em qual atributo? No atributo "vencida", okay?, eu quero setar, aqui, oh, no atributo vencida da classe Fatura, para true,
+
+                        ...
+
+                        criteria.set("vencida", true)
+
+                        ...
+
+    25. Vou colocar true o que, mas em qual condicao?
+
+    26. Onde,
+
+                            ...
+
+                            criteria.set("vencida", true)
+                                .where()
+
+    , vamos pegar no CriteriaBuilder, de novo, builder.lessThan(x, y), passando a data, precisamos fazer o Casting, aqui, para Date, root.<Date>get("vencimento"), ou seja, onde a Data de vencimento eh menor do que a Data de hoje, por exemplo,
+
+            CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+            CriteriaUpdate<Fatura> criteria = builder.createCriteriaUpdate(Fatura.class);
+            
+            Root<Fatura> f = criteria.from(Fatura.class);
+
+            criteria.set("vencida", true)
+                .where(builder.lessThan(f.<Date>get("vencimento"), new Date()));
+
+    27. Okay? Entao, aqui, a gente precisa pegar no Root, que eh a nossa Entidade, a gente recuperou ela la dentro do nosso Criteria, e, ai, eu preciso colocar o Generics, aqui, para o lessThan(), aqui, conseguir entender, e eu conseguir passar o Date, aqui,
+
+                    criteria.set("vencida", true)
+                    .where(
+                        builder.lessThan(
+                            f.<Date>get("vencimento"), new Date()));
+
+    28. Beleza? Entao, eu estou falando, 'Seta como vencida, onde a Data de vencimento eh menor do que a data de hoje'.
+
+    29. Pronto. Agora, a gente ja pode mandar criar a nossa Query, Query query = this.manager.createQuery(), usando o Criteria, que a gente fez, e, agora, eh so invocar o metodo executeUpdate(),
+
+                                Query query = this.manager.createQuery(criteria);
+                                query.executeUpdate();
+
+    28. Pronto. Beleza?
+
+    29. Se eu mandar executar esse cara, aqui, ou seja, deveAtualizarFaturasVencidas(), vamos ver o que que vai acontecer.
+
+    30. Retornou,
+
+    Hibernate: 
+        update
+            fatura 
+        set
+            vencida=? 
+        where
+            vencimento<?
+
+    31. Olha so o SQL que ele gerou,
+
+    Hibernate: 
+        update
+            fatura 
+        set
+            vencida=? 
+        where
+            vencimento<?
+
+    32. update fatura set vencida = 'alguma coisa' onde o vencimento eh menor do que a data que a gente colocou ali.
+
+    33. Entao, se a gente vier, aqui, em FATURA e fizer um SELECT, select * from fatura, agora, a gente vai ver, aqui, oh, que esta com vencida, no primeiro e ultimo registros, foram setados para 1, nao eh?, para true,
+
+    # codigo, valor, vencida, vencimento
+    1, 100.00, 1, 2013-01-02 02:00:00
+    2, 200.00, 0, 2021-06-15 03:00:00
+    3, 140.00, 1, 2013-02-10 02:00:00
+
+    34. Lembra que a gente provisionou elas todas como zero?
+
+    <dataset>
+        <fatura codigo="1" valor="100" vencimento="2013-01-02" vencida="0" />
+        <fatura codigo="2" valor="200" vencimento="2021-06-15" vencida="0" />
+        <fatura codigo="3" valor="140" vencimento="2013-02-10" vencida="0" />
+    </dataset>
+
+    35. Mas, ai, utilizando essa CriteriaUpdate, a gente fez um Update em uma galera, ao mesmo tempo, nao precisamos fazer um por um, porque nao faz sentido a gente fazer o Select para buscar a Lista de Faturas que estao vencidas e, depois, uma por uma, ir setando a flag, nao eh?
+
+    36. Imagina o desperdicio de performance. No Update, eh bem melhor fazer isso.
+
+    37. E eu vou aproveitar, nesta mesma aula, aqui, para te mostrar,
+
+    @Test
+    public void deveDeletarFaturasVencidas() {
+
+    }
+
+    , por exemplo. Eu quero pegar isso, daqui, e deletar as faturas vencidas.
+
+    38. Voce vai ver, oh, eu vou copiar, aqui, voce vai ver que eh bem parecido.
+
+    @Test
+    public void deveDeletarFaturasVencidas() {
+        CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+
+        CriteriaUpdate<Fatura> criteria = builder.createCriteriaUpdate(Fatura.class);
+
+        Root<Fatura> f = criteria.from(Fatura.class);
+
+        criteria.set("vencida", true)
+            .where(builder.lessThan(
+                f.<Date>get("vencimento"), new Date()));
+
+        Query query = this.manager.createQuery(criteria);
+
+        query.executeUpdate();
+    }
+
+    39. A primeira coisa que voce deve imaginar que eh diferente, ao inves de CriteriaUpdate, vai ser CriteriaDelete. Se eh um CriteriaDelete, nao eh createCriteriaUpdate(), eh createCriteriaDelete(). E, no Delete, nao existe o set(), nao eh?, nao faz sentido eu ter o set(). Entao, no Delete(), so faz o sentido de eu ter a clausula, eu quero apagar, entao, eu vou apagar uma galera de uma vez, nao eh?, no caso, aqui, eu vou apagar duas, vai ficar so a Fatura de Codigo 2, nao eh? Entao, eu quero apagar uma galera, ou seja, eu quero fazer uma acao em massa, nao eh? Esses caras, aqui, no Banco de Dados, foram criados para voce fazer a atualizacao, tanto a atualizacao quanto a delecao em massa, usando Criteria,
+
+    @Test
+    public void deveDeletarFaturasVencidas() {
+        CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+        CriteriaDelete criteria = builder.createCriteriaDelete(Fatura.class);
+        Root<Fatura> f = criteria.from(Fatura.class);
+        criteria.where(builder.lessThan(f.<Date>get("vencimento"), new Date()));
+        Query query = this.manager.createQuery(criteria);
+        query.executeUpdate();
+    }
+
+    40. Entao, oh, eu vou apagar todos, agora, onde a Data de vencimento eh menor do que a Data de hoje.
+
+    41. Beleza? So isso daqui.
+
+    42. Vamos mandar executar de novo, a gente vai ver o DELETE gerado, aqui. Retornou,
+
+    Hibernate: 
+        delete 
+        from
+            fatura 
+        where
+            vencimento<?
+
+    43. Se a gente verificar no Banco de dados,
+
+    select * from fatura;
+
+    , olha la, ficou somente a Fatura de Codigo 2, que eu tinha te falado,
+
+    # codigo, valor, vencida, vencimento
+    2, 200.00, 0, 2021-06-15 03:00:00
+
+    44. Ta certo? Entao, essa, aqui, tambem foi uma das novidades, nao eh?, o CriteriaUpdate e CriteriaDelete, no JPA 2.1.
+	
+	@Test
+	public void deveAtualizarFaturasVencidas() {
+		CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+		
+		CriteriaUpdate<Fatura> criteria = builder.createCriteriaUpdate(Fatura.class);
+		
+		// from Fatura f
+		Root<Fatura> f = criteria.from(Fatura.class);
+		
+		criteria.set("vencida", true)
+		.where(
+				builder.lessThan(
+						f.<Date>get("vencimento"), new Date()));
+		
+		Query query = this.manager.createQuery(criteria);
+		
+		query.executeUpdate();
+		
+	}
+	
+	@Test
+	public void deveDeletarFaturasVencidas() {
+		CriteriaBuilder builder = this.manager.getCriteriaBuilder();
+		CriteriaDelete<Fatura> criteria = builder.createCriteriaDelete(Fatura.class);
+		Root<Fatura> f = criteria.from(Fatura.class);
+		criteria.where(builder.lessThan(f.<Date>get("vencimento"), new Date()));
+		Query query = this.manager.createQuery(criteria);
+		query.executeUpdate();
+	}	
+
+    45. Fim da     Aula 13.002. Delete e Update Com Criteria
+
+
+                
+
+    -->

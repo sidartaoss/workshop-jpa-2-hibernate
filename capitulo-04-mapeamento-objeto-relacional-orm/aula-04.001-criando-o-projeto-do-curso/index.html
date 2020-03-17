@@ -1,0 +1,80 @@
+<!-- 
+
+Aula 04.001. Criando o Projeto do Curso
+
+1. Bom, vamos criar um Projeto, agora, que vai ser a Locadora de Veiculos, baseado nesse Diagrama de Classes, aqui, que eu ate ja mostrei para voces, no inicio, eh aquele sisteminha que eu mostrei, em aulas passadas, para falar o que que a gente vai ver, para poder nos dar a possibilidade de criar uma aplicacao mais parecida com o mundo real, para a gente ver os detalhes que acontecem no mundo real, para a gente nao simplesmente aprender o JPA, mas aprender ele em uma aplicacao de verdade.
+
+2. Entao, esta aplicacao, aqui, tem varios cenarios de relacionamento, varios cenarios de mapeamento, existem questoes relacionadas a Transacao, a abrir / fechar sessao, porque, em uma aplicacao web, voce passa sempre por isso, okay?
+
+3. E uma aplicacao web eh, normalmente, o que voce vai trabalhar no seu dia-a-dia, como programador Java.
+
+4. A nao ser que voce va para, trabalhar com Android, por exemplo, dispositivos moveis, e, ai, talvez, voce nao vai mexer tanto, se voce for fazer aplicativos nativos, nao vai fazer uma aplicacao web. Eh logico que a aplicacao com persistencia existe, mas, se voce for fazer uma aplicacao para rodar em um dispositivo movel, no Android, por exemplo, ou, ate, para o iPhone, que seja uma aplicacao web, os conceitos sao, mais ou menos, os mesmos aqui, dos problemas que a gente pode ter, com o Cliente/Servidor.
+
+5. Okay? Bom, entao, a gente vai criar esse Sisteminha, aqui. Na verdade, a gente vai baixar ele, a parte inicial, do GitHub, por que?
+
+6. Porque ele ja esta configurado com algumas coisas que a gente precisa para o JSF, tem algumas classes que sao relacionadas ao Contexto la do JSF, do Primefaces, do CDI que a gente vai utilizar para fazer a Injecao de Dependencias para a gente, entao, como este curso nao eh sobre isso, eu prefiro que voce baixe esse Projeto, eh um projeto bem cruzinho, voce vai ver que nao tem nada, e a gente vai trabalhando, vai criando as coisas a partir desse projeto.
+
+7. Lembrando que o foco nao eh JSF, nao eh Primefaces, nao eh CDI, o nosso foco eh trabalhar na camada de Persistencia, no nosso modelo, no nosso acesso a dados, okay?
+
+8. Bom, entao, vamos la, mais uma vez, mostrar, aqui, como eh que a gente vai baixar, ele eh o projeto que vai estar dentro de Aulas / Criando projeto do curso, entao, vai ser esse camarada aqui.
+
+9. Entao, para a gente baixar, eu vou baixar, aqui, fazer o Download Zip, mais uma vez, aqui, do Projeto, do Repositorio inteiro, salvei ele, aqui, ele eh pequeno, vamos extrair eu so quero extrai aquele la, locadora-veiculo-web.
+
+10. Entao, vamos extrair para dentro do Workspace.
+
+11. Abrir o Eclipse. Nao esquece de deixar esse Servers aberto, aqui, no Eclipse, que ele eh relacionado a aba Servers, aqui, no Eclipse, do Tomcat.
+
+12. Clicamos em File / Import..., vamos em Maven / Existing Maven Projects.
+
+13. Se voce quiser, tambem, ir em Existing Projects into Workspace, tambem da certo, eu vou, aqui, pelo Maven.
+
+14. No seu computador, pode ser que demore um pouco mais do que o meu, porque o meu, como eu ja fiz uma vez, ele nao vai baixar as dependencias da Internet, entao, quando voce estiver fazendo isso, voce precisa estar conectado na Internet, e ele vai baixar as dependencias do Repositorio do Maven.
+
+15. Entao, aqui, a gente clica em Finish. Pode ser que de alguns probleminhas, mas, nos vamos corrigindo esses probleminhas pouco-a-pouco. Vamos la, vamos dar uma olhada, aqui, no que que ele esta reclamando.
+
+16. Bom, depois que importou, vamos clicar com o botao direito na raiz do projeto, Properties / Project Facets.
+
+17. Okay? Bom, Project Facets, o que que a gente vai marcar? Nos vamos marcar esse cara como um Modulo Web, ou seja, Dynamic Web Module, para a gente conseguir arrastar ele la para dentro do Tomcat, e, ai, vamos clicar, aqui, nesse Further configuration available..., para a gente falar qual que eh a pasta que, como o nosso Projeto eh um Projeto Maven, o diretorio, la, que contem a parte Web, eh o 'src/main/webapp', entao, nos vamos colocar, em Content directory, 'src/main/webapp', para ele considerar esse local como sendo o Diretorio Web.
+
+18. Vamos marcar, aqui, o JavaScript, tambem. No JavaServer Faces, vamos colocar o 2.1, marcar essa opcao tambem, para ele autocompletar, para a gente, algumas coisas tambem. Ja esta o Java 8, JavaScript 1.0, Dynamic Web Module 3.0. Se voce quise clicar, aqui, no JavaServer Faces, quando a gente marcou, aqui, o JavaServer Faces, e a gente clicar, aqui, em Further configuration available..., nas configuracoes disponiveis, deixa aqui, nao eh?, em Content directory, 'src/main/webapp', vai em Next, JSF Capabilites, se estiver setado User Library em Type, voce deixa desmarcado, ou seja, setar para Disable Library Configuration, deixa desmarcado a opcao Configure JSF servlet in deployment descriptor, tambem, porque eu ja estou mandando esses arquivos configurados, ai, nesse Import...
+
+19. Vamos dar um Okay, aqui, vamos mandar dar um Apply, aqui, o que ele vai fazer,..., pode ser que esse iniciozinho, ai, de um pouquinho de trabalho para voce, mas, nao eh normal, nao, mas eh comum de acontecer, entao, vamos ter um pouquinho de paciencia, e a gente ja consegue configurar o seu ambiente, ai, com sucesso.
+
+20. Ele ainda esta reclamando, aqui, de alguma coisinha, eu vou clicar, aqui, na Aba Problems, se, para voce, nao estiver aparecendo esse Problems, eh Window / Show view / Problems.
+
+21. Ai, ele esta falando, aqui, que no pom.xml nao esta atualizado, vamos clicar com um botao direito, dar um Quick Fix, e dar um Finish.
+
+22. Vamos dar um F5 na raiz do Projeto, vamos, de novo, la, em Properties / Project Facets, so para dar uma olhada, ah, ele marcou, aqui, o JPA, oh. Eu vou desmarcar esse JPA, apesar de a gente estar trabalhando com JPA, eu nao quero usar os modulos do Eclipse para o JPA, nao. Da um Apply, aqui, de novo.
+
+23. Agora, vamos dar uma conferida em Web Project Settings, que eh o Context root, 'locadora-veiculo-web'.
+
+24. Okay, entao, voce vai estar marcado so o Dynamic Web Module, Java, JavaScript, JavaServer Faces, okay? Pode dar um Ok, ai, dar mais um F5 na raiz do projeto, aqui, acho que nao tem nenhum problema mais, nao.
+
+25. Um detalhe muito importante, deixa eu abrir, aqui, o Workbench, que eh o que? Se voce vier aqui dentro de 'src/main/resources/META-INF', voce vai encontrar o arquivo persistence.xml. Eu vou abrir, ele, aqui, e, no arquivo persistence.xml, se voce lembra bem la, eh onde a gente define as propriedades de conexao com o banco, certo?
+
+26. E, ai, nos temos que ter o esquema do banco de dados criado, quando a gente estiver subindo essa aplicacao. Entao, o esquema, aqui, do banco, que eu chamei, de locadora. Entao, por isso que eu mandei abrir o Workbench, para a gente poder criar esse Schema.
+
+27. No meu, aqui, ja esta criado, esse Schema, locadora, mas, so para voce lembrar, eh so voce clicar nesse botaozinho, aqui, Create new schema in the connected server, e escrever, aqui, em Name, locadora, dar um Apply, e ele vai criar o Schema locadora. As tabelas do banco de dados, que vai criar vai ser o proprio JPA, la, com o Hibernate, para a gente. Beleza?
+
+28. Configura, ai, o usuario, senha, do seu banco de dados.
+
+29. Okay, eu acredito que eh so isso daqui, vamos ver se nao vamos ter nenhuma surprezinha. A gente clica, agora, em cima da raiz do projeto, arrasta para a aba Servers, em Tomcat, ele vai publicar aqui, okay?
+
+30. Vamos mandar subir o Servidor, e vamos ver se nao aparece nenhum outro errinho.
+
+31. A gente fica de olho aqui, rapidamente.
+
+32. Bom, aparentemente, nao deu nenhum erro estranho, aqui, no Tomcat, na hora em que subiu o Tomcat, a gente vem, aqui, agora, e nos vamos acessar o http://localhost:8080/locadora-veiculo-web/, okay?, esse aqui eh o endereco que a gente vai acessar.
+
+33. Vamos dar um <Enter>, aqui, okay.
+
+34. Conseguimos acessar a Pagina Inicial do nosso Sisteminha, esses menus, aqui, nao tem nenhum funcionando, se clicar, aqui, nao vai acontecer nada, okay?, porque a gente, ainda, nao criou.
+
+35. Nos vamos criar essas pagininhas, aqui, na verdade, voce vai copiar elas, ai, okay?, e nos vamos criar a parte de Persistencia.
+
+36. Bom, se voce chegou a acessar essa telinha, aqui, parabens, voce conseguiu configurar o seu ambiente com sucesso, agora, a gente esta pronto para comecar, realmente, continuar com o nosso curso de JPA.
+
+37. Fim da Aula 04.001. Criando o Projeto do Curso.
+
+
+-->

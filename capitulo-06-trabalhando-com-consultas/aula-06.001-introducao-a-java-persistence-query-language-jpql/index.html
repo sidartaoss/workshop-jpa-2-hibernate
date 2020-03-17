@@ -1,0 +1,395 @@
+<!--
+    Aula 06.001. Introducao a Java Persistence Query Language (JPQL)
+
+1. Vamos iniciar, agora, uma das partes mais importantes, que eh trabalhar com Consultas, nao eh? A gente precisa saber bem trabalhar com Consulta, porque voce vai fazer muitas consultas nos seus sistemas,
+
+                            Consultas
+
+
+
+                                SQL
+                              BD MySQL
+
+2. Entao, vamos entender como eh que elas funcionam, a gente vai fazer varios exemplos, vao ter varios exercicios para voce tambem.
+
+3. Bom, vamos la. Vamos so conversar, rapidinho, aqui, que tipo de consulta que eu estou falando. Quando a gente tem um Banco de Dados, la, por exemplo, o MySQL, a Consulta, a Linguagem que a gente utiliza para chegar no banco eh o SQL, certo?
+
+4. Bom, o nosso programa, entao, nao eh?, o nosso programa Java, aqui,
+
+                            Consultas
+
+
+                          Meu Programa Java
+
+
+                                SQL
+                              BD MySQL
+
+, se eu quiser fazer um SQL, criar um Connection, aqui, eu faco isso e mando esse SQL para o Banco de dados.
+
+5. Mas, como a gente esta trabalhando com JPA, existe, aqui, no meio, um carinha chamado de JPQL, 
+
+                            Consultas
+
+
+                          Meu Programa Java
+
+                                JPQL
+
+                                SQL
+                              BD MySQL
+
+, que eh uma linguagem, a gente ja viu ate um pouquinho, nao eh?, bem rapido. Agora, nos vamos ver mais detalhes, para a gente poder chegar no Banco de Dados.
+
+6. Entao, ao inves de o Meu Programa Java, na verdade, ele nao vai ter um contato direto com SQL, ele vai ter um contato, oh, o JPQL. O meu Programa Java vai escrever JPQL e esse JPQL vai ser transformado em um SQL, e enviado para o Banco de Dados.
+
+7. O resultado, aqui, do SQL, volta, o JPQL transforma e entrega, aqui, para o Meu Programa Java, ja em forma de objeto, que fica muito mais facil e legal de trabalhar.
+
+8. Mas eh so esse forma que existe de Consulta, Normandes?
+
+9. Nao. Tem o JPQL e o Criteria,
+
+                            Consultas
+
+
+                            Meu Programa Java
+
+                            JPQL / Criteria
+
+                                SQL
+                              BD MySQL
+
+10. Mas, a gente vai ver, agora, o JPQL,
+
+                            Consultas
+
+
+                            Meu Programa Java
+
+                            >>> JPQL <<< / Criteria
+
+                                SQL
+                              BD MySQL
+
+11. Okay? La, na frente, a gente vai falar sobre o Criteria.
+
+12. No JPQL, eh uma forma de a gente chegar, transformar o que a gente estiver escrevendo, aqui, no nosso Programa Java, em SQL.
+
+13. Mas, nao vamos trabalhar diretamente com SQL, agora.
+
+14. Okay?
+
+15. Bom, vamos la.
+
+16. Para a gente fazer isso daqui, o que que a gente vai trabalhar?
+
+17. Obviamente, no nosso sisteminha.
+
+18. Eu acabei de acabei de apagar, aqui, todos os dados de todas as tabelas e levantei o MySQL, entao, o meu sisteminha Locadora esta zero bala, nao tem nada salvo la.
+
+19. Vou salvar, aqui, alguns Fabricantes, por exemplo, Chevrolet, e, ai, eu queria que voce fizesse o mesmo, Honda. Ta bom, Chevrolet e Honda, por enquanto, isso daqui.
+
+20. Okay? Apaga todo banco, ai, de novo, e vai criando novamente, para a gente comecar a fazer essa parte de Consultas.
+
+21. Bom, aqui, eu salvei so esses dois Fabricantes, porque eu vou preparar, agora, eu falei para voces que a gente vai trabalhar nos Relatorios. Mas, antes de a gente chegar nos Relatorios, vamos fazer alguns testes mais simples, mesmo que seja aqui, em cima, ainda do nosso Sistema, mas ainda nao em Relatorios, vamos trabalhar em algumas classes, com metodo main(), de uma forma bem simples, ali.
+
+22. Lembra dos primeiros testes que a gente fez, la no crud-jpa-hibernate, que nos tinhamos, aqui, no metodo main(), onde a gente, por exemplo, ja tinha ate um exemplo, la, ConsultaComJPQL, em que a gente tinha o metodo main(), e a gente executava as partes bem basicas, aqui, nao eh?, do nosso sistema, 
+
+		EntityManagerFactory emf = Persistence.createEntityManagerFactory("exemploPU");
+		EntityManager em = emf.createEntityManager();
+		
+		/** long codigo = 1L; **/
+		/** long codigo = 5L; **/
+		long codigo = 3L;
+		Cliente cliente = em.find(Cliente.class, codigo);
+		
+		if (cliente != null) {
+			System.out.println("Nome: " + cliente.getNome());
+			System.out.println("Idade: " + cliente.getIdade());
+			System.out.println("Profissao: " + cliente.getProfissao());
+			System.out.println("Sexo: " + cliente.getSexo());
+		} else {
+			System.out.println("Cliente nao encontrado.");
+        }
+        
+, do CRUDzinho. Foram as primeiras interacoes que a gente teve.
+
+23. Bom, eu quero fazer a mesma coisa, eu vou montar um outro projetinho, aqui, para a gente criar nessa ideia, so que a gente vai trabalhar mais com as consultas, com JPQL, agora, e, ai, a medida que a gente for avancando, eu vou adicionando exercicios, eu vou te mostrando como eh que a gente cria os relatorios, para evoluir o nosso sisteminha, la, a locadora de veiculos.
+
+24. Mas, primeiro, vamos entender alguns conceitos do JPQL, usando esse mesmo modelo, aqui, do crud-jpa-hibernate, que a gente fez la no inicio.
+
+25. Bom, para isso, eu vou criar, entao, New / Java Project / e eu vou chamar ele aqui, de consultas-locadora-veiculo.
+
+26. Entao, sao todas as consultas, nos vamos fazer varias consultas no locadora de veiculo.
+
+27. Okay? Vamos dar um Next, aqui, a gente pode adicionar, ja, as bibliotecas, a gente tem a User Library, aqui, que eh o do Hibernate, da um Finish, a gente pode adicionar outra Library, de conectividade, que eh o Driver do MySQL, e pronto.
+
+28. A gente ja vai criar o nosso projeto com as LIBs que a gente ja tinha feito, ja tinha configurado la atras, okay?
+
+29. Ta ficando facil, nao eh? No Eclipse, eh bem legal.
+
+30. Bom, aqui, agora, entao, a gente ja vai, ja tem o Hibernate, as LIBs do Hibernate e do MySQL. Vamos criar a pastinha META-INF, para colocar o persistence.xml la dentro?
+
+31. Entao, vamos cria, aqui, em src/ botao Direito / New / Folder / META-INF. O persistence.xml, eu vou copia esse daqui do projeto locadora-veiculo-web, porque ele eh exatamente o que a gente precisa, o locadora de veiculo, locadoraVeiculoPU, 
+
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.0"
+	xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd">
+	
+	<persistence-unit name="locadoraVeiculoPU" transaction-type="RESOURCE_LOCAL">
+		<properties>
+		    <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/locadora?useTimezone=true&amp;serverTimezone=UTC" />
+		    <property name="javax.persistence.jdbc.user" value="root" />
+		    <property name="javax.persistence.jdbc.password" value="admin" />
+		    <property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver" />
+			<!-- validate | update | create | create-drop --
+			<property name='hibernate.hbm2ddl.auto' value="update" />
+			<property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect" />
+			<property name="hibernate.show_sql" value="true" />
+			<property name="hibernate.format_sql" value="true" />
+		</properties>
+	</persistence-unit>
+	
+</persistence>
+
+, para conectar la no Schema locadora, no banco de dados.
+
+32. Certo? Ja copiei, aqui, em locadora-veiculo-web, o META-INF, o que que eu vou copiar, aqui, agora? Eu vou copiar, do locadora-veiculo-web, deixa eu copiar as classes de modelo. Entao, eu vou copiar e colar em src/, dentro do projeto consultas-locadora-web.
+
+33. Eu copiei direto para ca, em consultas-locadora-web, todos os modelos do nosso sistema que a gente tinha feito em locadora-veiculo-web, para a gente poder trabalhar com as consultas, aqui.
+
+34. Okay? Bom, o que eu vou copiar, agora, desse crud-jpa-hibernate, eh a classe JPAUtil.java, que, simplesmente, inicializava, la, para a gente, o Persistence, para a gente nao ter que ficar digitando isso daqui toda hora.
+
+35. Eu vou copiar esse JPAUtil, aqui, dentro do pacote .modelo, mas eu vou tirar ele desse pacote e vou colocar dentro do pacote .util. Vai ficar um vermelhinho, a gente clica aqui, no Eclipse, e manda mover para o pacote .util.
+
+36. E, ai, aqui, a gente tem que trocar o nome do Contexto de Persistencia, no persistence.xml, aqui, eh 'locadoraVeiculoPU', vou definir ele aqui.
+
+37. Okay, ja estamos com modelo, ja estamos com JPAUtil, persistence.xml. Bom, agora, eh so a gente criar aqui, mesmo, uma nova classe, dentro do pacote .consultas, e nos vamos colocar, aqui, ConsultaFornecedores, por exemplo,
+
+package com.algaworks.curso.jpa2.consultas;
+
+public class ConsultaFornecedores {
+
+    public static void main(String[] args) {
+
+    }
+}
+
+38. Entao, a primeira consulta vai ser bem simplezinha, so para a gente deixar o ambiente configurado, e, a partir dai, a gente vai evoluindo, okay?
+
+39. ConsultaFornecedores. Se a gente, se voce quiser entrar la e lembrar, em ConsultaComJPQL, oh, a gente, primeiro, precisava do EntityManagerFactory. Depois, criava o EntityManager e, a partir do EntityManager, a gente criava a Query, e pegava o resultado, nao eh isso? Entao, a gente, la, no Consulta de Fornecedores, EntityManagerFactory, a gente ia no JPAUtil.createEntityManager().getEntityManagerFactory(). Agora, a gente precisa do EntityManager,
+
+public class ConsultaFornecedores {
+
+    public static void main(String[] args) {
+        EntityManagerFactory emf = JPAUtil.createEntityManager().getEntityManagerFactory();
+        EntityManager em
+    }
+}
+
+, e, o EntityManagerFactory eh capaz de criar, para a gente, o EntityManager, okay?,
+
+public class ConsultaFornecedores {
+
+    public static void main(String[] args) {
+        EntityManagerFactory emf = JPAUtil.createEntityManager().getEntityManagerFactory();
+        EntityManager em = emf.createEntityManager();
+    }
+}
+
+40. So para lembrar, vou deixar, aqui, no final, eh bom a gente fechar o EntityManager, nao eh?, a gente ja viu isso dai,
+
+public class ConsultaFornecedores {
+
+    public static void main(String[] args) {
+        EntityManagerFactory emf = JPAUtil.createEntityManager().getEntityManagerFactory();
+        EntityManager em = emf.createEntityManager();
+
+        em.close();
+    }
+}
+
+41. Okay. Entao, aqui, no meio, a gente vai fazer as nossas consultas. Se voce lembrar, la, quando a gente fez a Lista de Clientes, a gente tinha o EntityManager.createQuery, escreviamos o JPQL aqui, e falavamos a classe que eu quero que ele ja converta, 
+
+    List<Cliente> clientes = em.createQuery("from Cliente where sexo = 'M'", >>> Cliente.class <<<)
+            .getResultList();
+
+, para nao ter que ficar fazendo casting de objetos, e dou um getResultList(), alguma coisa do tipo.
+
+42. Se a gente for fazer para os fornecedores, entao, a gente vai fazer uma lista de Fabricante, fabricantes
+
+        List<Fabricante> fabricantes = 
+
+, que eh o que a gente tem la salvo no banco de dados, e vai ser o EntityManager.createQuery(), onde nos vamos passar, aqui, "select f from Fabricante f", aqui, nos vamos colocar Fabricante.class, ja para ele poder fazer os castings para a gente, .getResultList(),
+
+            List<Fabricante> fabricantes = em.createQuery("select f from Fabricante f", Fabricante.class)
+                                                .getResultList();
+
+
+public class ConsultaFornecedores {
+
+    public static void main(String[] args) {
+        EntityManagerFactory emf = JPAUtil.createEntityManager().getEntityManagerFactory();
+        EntityManager em = emf.createEntityManager();
+
+        List<Fabricante> fabricantes = em.createQuery("select f from Fabricante f", Fabricante.class)
+                                                .getResultList();
+
+        em.close();
+    }
+}                                                
+
+43. Okay? Entao, o que que eu estou fazendo aqui? Nao eh?, vamos comecar a entrar mais nesses detalhes. Eu estou fazendo um select e um SQL? Nao eh um SQL, eh JPQL. Oh, Normandes, mas eh muito parecido. Realmente, eh bastante parecido. Eles fizeram, no JPQL, bem parecido com o SQL, para voce que ja sabe mexer com SQL nao ter tanta dificuldade, aprender uma linguagem totalmente nova.
+
+44. Mas, aqui, 
+
+        List<Fabricante> fabricantes = em.createQuery(" >>> select f from Fabricante f <<< ", Fabricante.class)
+                                                .getResultList();
+
+, a diferenca eh que eu nao estou fazendo select em uma tabela, eu estou fazendo select em uma instancia. Repara o f maiusculo, em 'Fabricante f'.
+
+45. Se a gente for no banco de dados, ele criou um f minusculo, para a tabela fabricante. Ah, mas o banco de dados pode ser que nao seja case-sensitive. Beleza, mas, as vezes, a tabela poderia ter outro nome, as vezes, essa tabela fabricante poderia comecar com a inicial da empresa, trocando o nome da tabela, por exemplo, aw-fabricante, e, ai, aqui, a gente colocaria, faria o select da mesma forma, no JPQL, em cima de Fabricante.
+
+46. A gente esta fazendo a consulta em cima daquela Entidade Fabricante, e nao quero nem saber qual que eh o nome da tabela no banco de dados, porque a gente poderia ter trocado o nome dessa tabela.
+
+47. Bom, e, aqui, eu coloquei ConsultaFornecedores, e nao eh Consulta de Fornecedores, eh Consulta de Fabricantes. Eu vou renomear, aqui, o nome da classe.
+
+48. Entao, beleza, fizemos o select, aqui, eu dou um alias, 'f', como se eu estivesse declarando o nome da variavel, para Fabricante, voce vai ver que legal que tem nisso daqui. Entao, olha la, Fabricante f, entao, eu estou falando, eu quero todos os fabricantes.
+
+49. Por que todos? Ueh, nao tem nenhuma clausula, aqui, limitando nada, nao eh? Entao, o 'f' eh do tipo Fabricante, entao, ele vai me retornar so o 'f'.
+
+50. Okay? E, aqui, a gente poderia fazer, entao, um foreach, aqui, em Fabricante, em cima dessa lista que acabou de me retornar, 
+
+            for (Fabricante fabricante : fabricantes) {
+                System.out.println(fabricante.getNome());
+            }
+
+51. Vamos ver o que que ele vai imprimir, aqui, para a gente. Vou mandar executar. Olha so, ele trouxe, la, Chevrolet e Honda.
+
+52. Retornou,
+
+Hibernate: 
+    select
+        fabricante0_.codigo as codigo1_5_,
+        fabricante0_.nome as nome2_5_ 
+    from
+        Fabricante fabricante0_
+Chevrolet
+Honda
+
+53. Ele transformou para o select no banco de dados, okay?, e trouxe, la, o Chevrolet e a Honda.
+
+54. Okay? Bom, so para deixar um gostinho, ai, para a gente ja comecar a ir brincando, aqui, eu estou fazendo, a gente ja viu isso daqui, nao eh?,
+
+		List<Fabricante> fabricantes = em.createQuery("select f from Fabricante f", Fabricante.class)
+															.getResultList();
+        
+, esse tipo de coisa. E se eu quiser, Normandes, eu so preciso do nome, eu tenho que buscar toda a Entidade, aqui, ela inteirinha? 
+
+55. Nao, se voce quiser so o nome, eh bem legal. Sabe como eh que a gente pode fazer isso?
+
+56. Isso daqui, esse fzinho, nao eh o objeto? Nao eh o objeto Fabricante? O nome dele, tecnicamente, eh alias, nao eh?, o nome de verdade, mas a gente pode chamar, aqui, o nome da variavel f, como se fosse o objeto Fabricante, que ele esta retornando. Bom, se 'f' eh uma especie de variavel para Fabricante, eu sei que, em Fabricante, eu tenho os atributos codigo, eu tenho o atributo nome, nao tenho? Entao, sera que eu posso dar um getNome(), aqui, e buscar somente o nome, aqui?
+
+		List<Fabricante> fabricantes = em.createQuery("select f >>>  <<< from Fabricante f", Fabricante.class)
+															.getResultList();
+
+57. Voce poderia fazer um getNome(), aqui,
+
+		List<Fabricante> fabricantes = em.createQuery("select >>> f.getNome <<< from Fabricante f", Fabricante.class)
+															.getResultList();
+
+, so que nao eh getNome(), voce nao precisa fazer esse 'get', aqui, porque ele sabe o que voce esta buscando. Entao, voce tira o 'get' e nao precisa ter essa letra com 'N' maiusculo,
+
+		List<Fabricante> fabricantes = em.createQuery("select f.nome from Fabricante f", Fabricante.class)
+                                                            .getResultList();
+                                                            
+58. Entao, eu so estou falando, oh, 'Eu quero que voce busque, para mim, o nome la dentro de Fabricante'. Ou seja, voce coloca, direto, o nome do atributo, como se voce estivesse acessando, ao inves de ser privado, voce esta acessando aqui,
+
+@Entity
+public class Fabricante {
+ 
+	private Long codigo;
+    private String >>> nome <<<;
+    
+, so que, na verdade, ele vai fazer o getNome(),
+
+@Entity
+public class Fabricante {
+ 
+	private Long codigo;
+	private String nome;
+
+    ...
+
+	/**
+	 * @return the nome
+	 */
+	public String >>> getNome() <<< {
+		return nome;
+	}
+
+, okay?
+
+59. Entao, olha la, f.nome, ele vai buscar o nome do Fabricante.
+
+60. Bom, o nome do Fabricante, de que tipo que eh?
+
+61. O nome, oh, eh do tipo String,
+
+@Entity
+public class Fabricante {
+ 
+	private Long codigo;
+    private >>> String <<< nome;
+    
+62. Bom, se eh do tipo String, ele vai me devolver uma Lista de String,
+
+        List<String> fabricantes = em.createQuery("select f.nome from Fabricante f", Fabricante.class)
+                                    .getResultList();
+
+63. Entao, vamos colocar, aqui, oh, o nome dos fabricantes, oh,
+
+        List<String> >>> nomeDosFabricantes <<< = em.createQuery("select f.nome from Fabricante f", Fabricante.class)
+                                    .getResultList();
+
+64. Bom, se eh uma Lista de String, vai me devolver uma Lista de String,
+
+        List<String> nomeDosfabricantes = em.createQuery("select f.nome from Fabricante f", >>> String.class <<<)
+                                    .getResultList();
+
+65. Beleza?
+
+66. E, aqui, agora, no foreach, nao eh mais Fabricante, eh apenas uma String, e, aqui, nos vamos chamar de nome, e, aqui, eu vou colocar nomeDosFabricantes, e, aqui, em System.out.println(), eu vou colocar, 'Nome: ' + nome,
+
+            for (String nome : nomeDosFabricantes) {
+                System.out.println("Nome: " + nome);    
+            }
+    
+, so para voce ver a diferenca.
+
+67. So isso, Normandes?
+
+68. Acredita que eh so um negocio desses e a gente e eh bem simples de a gente trabalhar, nao eh verdade? Eh trabalhar em cima de objetos.
+
+69. Entao, vamos executar de novo, aqui, vamos esperar ele inicializar e vamos ver a diferenca. Olha la,
+
+Hibernate: 
+    select
+        fabricante0_.nome as col_0_0_ 
+    from
+        Fabricante fabricante0_
+Nome: Chevrolet
+Nome: Honda
+
+70. O resultado foi o mesmo.
+
+71. So que olha so o select, agora, que ele trouxe. Ele so trouxe o nome. Ele so foi la buscar o nome, da Tabela Fabricante. Ele nao buscou todas as informacoes, ele so devolveu, entao, a lista de Strings.
+
+72. Legal, nao eh?
+
+73. Bem legal, e, ai, a gente vai ver que a gente vai trabalhar em cima de objetos, trabalhar no mundo orientado a objetos, e nao trabalhar no mundo SQL. Vai ver que, quando voce acostumar com isso daqui, voce vai se divertir muito e nem vai querer ver mais SQL na sua frente.
+
+74. Fim da     Aula 06.001. Introducao a Java Persistence Query Language (JPQL).
+
+-->

@@ -1,0 +1,158 @@
+<!--
+    Aula 06.005. Trabalhando com Projecoes
+
+1. 
+
+package com.algaworks.curso.jpa2.consultas;
+
+import javax.persistence.EntityManager;
+
+import com.algaworks.curso.jpa2.util.JPAUtil;
+
+public class ConsultaDescricaoECategoriaDeModeloCarro {
+
+    public static void main(String[] args) {
+        EntityManager em = JPAUtil.createEntityManager();
+
+
+
+        em.close();
+    }
+}
+
+2. Vao existir situacoes em que voce nao vai querer trazer todos os atributos de um objeto, mas tambem voce nao quer trazer so um.
+
+3. Porque, as vezes, voce tem uma classe, sei, la, ela tem, la, dez atributos, aqui, alguma coisa assim, e voce quer trazer dois, tres, desses atributos, nao eh? Entao, como eh que a gente vai fazer isso?
+
+4. Vamos fazer um teste aqui, com ModeloCarro, mesmo. Eu vou fazer o seguinte, eu quero saber a descricao e a categoria, mas eu nao quero saber o fabricante, agora, so como um exemplo, aqui, okay?,
+
+@Entity
+public class ModeloCarro {
+
+    private Long codigo;
+    private String descricao;
+    private Fabricante fabricante;
+    private Categoria categoria;
+
+    ...
+}
+
+5. Pense que voce poderia ter um objeto grande, onde voce quer buscar apenas partes desse objeto.
+
+6. Okay? Entao, vamos la. Eu quero trazer a descricao e a categoria, apenas.
+
+7. Eu criei, aqui, a classe ConsultaDescricaoECategoriaDeModeloCarro, inicializo a parte comum, e vamos la.
+
+8. Bom, como eu disse, a gente vai fazer, eu vou criar, aqui, uma String,
+
+String jpql = "";
+
+, nos vamos buscar de Modelo de Carro,
+
+String jpql = "from ModeloCarro mc";
+
+, o que que nos vamos buscar la? mc.descricao e mc.categoira, eu quero a descricao e a categoria,
+
+String jpql = "select mc.descricao, mc.categoria from ModeloCarro mc";
+
+, a categoria eh um Enum. Certo? So para lembrar.
+
+9. Okay. Entao, olha, la, eu estou buscando a descricao e a categoria de Modelo de Carro,
+
+String jpql = "select mc.descricao, mc.categoria from ModeloCarro mc";
+
+10. Okay? Bom, vamos jogar isso aqui la no EntityManager,
+
+        String jpql = "select mc.descricao, mc.categoria from ModeloCarro mc";
+        em.createQuery(jpql, );
+
+, e, agora, vamos ver, aqui, qual metodo que a gente vai utilizar. O primeiro, aqui, eh de Criteria, nos vamos ver mais para frente, eh o metodo com somente o parametro String, ou o metodo com o parametro String e onde eu passo, tambem, o Tipo de Classe?
+
+11. Bom, a gente vai usar o outro metodo, agora, onde eu passo somente o parametro String,
+
+        String jpql = "select mc.descricao, mc.categoria from ModeloCarro mc";
+        em.createQuery(jpql);
+
+12. Por que que nos vamos usar o outro metodo, agora? Qual o tipo desse retorno aqui?,
+
+        String jpql = "select >>> mc.descricao, mc.categoria <<< from ModeloCarro mc";
+        em.createQuery(jpql);
+
+, consegue adivinhar para mim?
+
+13. Qual eh o tipo dele? Eh uma String? Nao, nao eh uma String, porque eu estou retornando dois valores, nao eh?
+
+14. Entao, isso daqui,
+
+        String jpql = "select >>> mc.descricao, mc.categoria <<< from ModeloCarro mc";
+        em.createQuery(jpql);
+
+, vai me retornar um array de objetos, uma lista de arrays de objetos. Certo?
+
+15. Entao, o que que eu estou fazendo? Isso aqui vai me retornar, entao, uma Lista de array de objetos,
+
+        String jpql = "select mc.descricao, mc.categoria from ModeloCarro mc";
+        List<Object[]> resultados = em.createQuery(jpql).getResultList();
+
+16. Por que uma lista de arrays? Uma lista porque eu estou pedindo um resultList(),
+
+        String jpql = "select mc.descricao, mc.categoria from ModeloCarro mc";
+        List<Object[]> resultados = em.createQuery(jpql). >>> getResultList() <<<;
+
+, nao tem filtro aqui, nao eh apenas um unico Modelo de Carro, sao varios, entao, eh uma lista.
+
+17. Por que um array de objetos?
+
+18. No array, na posicao 0, vai ter esse cara,
+
+        String jpql = "select >>> mc.descricao <<< , mc.categoria from ModeloCarro mc";
+        List<Object[]> resultados = em.createQuery(jpql).getResultList();
+
+, o array, na posicao 1, vai ter esse outro carinha, aqui,
+
+        String jpql = "select mc.descricao, >>> mc.categoria <<< from ModeloCarro mc";
+        List<Object[]> resultados = em.createQuery(jpql).getResultList();
+
+19. E, ai, quando a gente fizer o foreach, aqui, oh, array de object, 
+
+    for (Object[] obj : resultados) {
+
+    }
+
+, olha o que que vai acontecer, eu vou falar que a descricao esta em obj[0], o array na posicao 0, e a Categoria esta em obj, na posicao 1,
+
+    for (Object[] obj : resultados) {
+        System.out.println("Descricao: " + obj[0] + ". E categoria: " + obj[1]);
+    }
+
+20. Simples assim. Ele da esse warning, aqui,
+
+    List<Object[]> resultados = >>> em.createQuery(jpql).getResultList(); <<<
+
+, porque a gente nao esta checando, ele retorna uma lista nao tipada, em getResultList(). Eu estou falando que eh Object[], mas, ele nao tem certeza disso.
+
+21. Entao, por isso que ele fica amarelinho, aqui.
+
+22. Mas, acredita em mim, que vai funcionar. Agora, vamos executar.
+
+23. Retornou,
+
+Hibernate: 
+    select
+        modelocarr0_.descricao as col_0_0_,
+        modelocarr0_.categoria as col_1_0_ 
+    from
+        ModeloCarro modelocarr0_
+Descricao: Cruze. E categoria: HATCH_MEDIO
+Descricao: Civic. E categoria: SEDAN_GRANDE
+Descricao: Fit. E categoria: HATCH_COMPACTO
+
+24. Olha la, ele trouxe a descricao Cruze, e a categoria dele, HATCH_MEDIO, descricao Civic, e a categoria, tambem, SEDAN_GRANDE. O Fit, a categoria eh um HATCH_COMPACTO, que a gente tinha feito.
+
+25. Okay? Legal isso aqui, tambem, nao eh? Isso aqui eh bastante util, como eu disse, aonde voce esta fazendo uma consulta em que voce nao quer trazer tudo, mas voce quer trazer partes de um objeto.
+
+26. Pode ser que esse objeto seja muito grande, dependendo do tipo de dados, la, que esteja mapeado, la, isso pode piorar a performance, voce esta gastando mais memoria, entao, vamos trazer so o que interessa, okay? Entao, eh assim que a gente consegue fazer essas projecoes, aqui, buscando apenas o que a gente quer. Okay?
+
+27. Fim da     Aula 06.005. Trabalhando com Projecoes.
+
+-->

@@ -1,0 +1,628 @@
+<!--
+    Aula 05.001. Inicializacao Tardia (Lazy-loading) e Ansiosa (Eager-loading)
+
+1. Esta aula, agora, eh importante demais, viu, presta bastante atencao, por que? Porque eh uma situacao que acontece direto, no mundo real. E o legal dessa nossa aula, desse nosso estilo de aula, de criar um sistema mais proximo possivel de um sistema real, e nao ficar fazendo um exemplozinho Hello World simplezinho, eh que voce vai ver quando que isso pode acontecer, okay?
+
+2. Entao, vamos la, vamos entender o que que significa, entao, essas palavrinhas, Inicializacao Tardia, que, em ingles, significa Lazy-loading, e Inicializacao Ansiosa, que eh o Eager-loading.
+
+3. Okay? Vamos entender, vamos ver aqui. Para a gente fazer, para eu te mostrar esses problemas acontecendo, eu vou te mostrar,..., bom, vamos mudar, nao vamos falar problema nao, porque isso nao eh um problema, isso eh uma caracteristica, entao, vamos falar diferente, nao eh?, entao, se voce estiver conversando com seus amigos, 'Ih, voce viu?, esta dando problema de Lazy-loading...', nao, nao eh problema de Lazy-loading, o problema eh que a gente tem que saber, entender o que que significa e, ai, depois que a gente entende, isso dai deixa de ser um problema e eh so a gente aprender e fazer da forma correta.
+
+4. Beleza? Entao, a partir de agora, para voce impressionar os seus amigos, voce vai falar, 'Bom, isso nao eh um problema, nao, eh so a gente dar uma ajustada aqui...', beleza?
+
+5. Bom, vamos la, entao, para a gente entender essa caracteristica do Lazy e do Eager, nos vamos voltar, aqui, na Pesquisa de Carro, que tem os Acessorios.
+
+6. Entao, Um Carro tem Varios Acessorios. No Mapeamento, vamos voltar la, em Carro, Um Carro, nao eh?, no nosso Modelo Carro. Entao, Um Carro tem varios Acessorios, oh, por que que eu sei, oh?, tem uma Lista, aqui, de acessorios,
+
+@Entity
+public class Carro {
+
+    ...
+    List<Acessorios> acessorios;
+
+    ...
+    @ManyToMay
+    @JoinTable(
+        name = "carro_acessorio"
+        , joinColumns = @JoinColumn(name = "codigo_carro")
+        , inverseJoinColumns = @JoinColumn(name = "codigo_acessorio")
+    )
+    public List<Acessorio> getAcessorios() {
+        return acessorios;
+    }
+
+}
+
+, e, se a gente for la no Mapeamento, vai estar anotado com @ManyToMany.
+
+7. Bom, no meu modelo de dados, neste instante, eu tenho,
+
+select * from carro_acessorio
+
+# codigo_carro, codigo_acessorio
+        1,              1
+        2,              1
+        2,              2
+
+, o carro de codigo 1 com o acessorio de codigo 1, e o carro de codigo 2 com 2 acessorios, os acessorios de codigo 1 e 2.
+
+8. Quais carros que sao esses? 
+
+select * from carro;
+
+# codigo,       chassi,             cor,            placa,          valor_diaria,           codigo_modelo
+1,              ,                   Branco,             AAA-1234,        200.00,                     1
+2,              ,                   Azul,               BBB-2222,        250.00,                     2
+3,              NULL,               Prata,              OOO-1010,        100.00,                     2
+
+9. Entao, sao os modelos de carro 1 e 2. A gente tem 3 carros cadastrados, mas, somente 2 modelos de carros,
+
+select * from modelocarro;
+
+# codigo, descricao, codigo_fabricante
+    1,      Cruize,         1
+    2,      Civic,          2
+    
+
+, o Cruize e o Civic.
+
+10. Vamos voltar aqui,
+
+select * from carro;
+
+# codigo,       chassi,             cor,            placa,          valor_diaria,           codigo_modelo
+1,              ,                   Branco,             AAA-1234,        200.00,                     1
+2,              ,                   Azul,               BBB-2222,        250.00,                     2
+3,              NULL,               Prata,              OOO-1010,        100.00,                     2
+
+, entao, o Cruize e o Civic. O de Placa 000-1010, ele eh o de codigo 3 e, se a gente olhar aqui, onde faz o relacionamento CARRO_ACESSORIO, nao tem o carro de codigo 3, 
+
+select * from carro_acessorio;
+
+# codigo_carro, codigo_acessorio
+1,                      1
+2,                      1
+2,                      2
+
+, entao, so para a gente entender. O carro de placa AAA-1234, BBB-2222, tem acessorios. Esse de OOO-1010 nao tem acessorios. Esta nesta forma que esta cadastrado o meu modelo, agora, que tem no meu banco de dados, agora.
+
+11. Com os testes que a gente vai fazendo, provavelmente, o seu vai estar bem diferente do meu, aqui. Entao, faz o seguinte, as vezes, apaga ai o Schema, cria de novo, cadastra alguns carros, alguns com acessorios, outros sem acessorios, para voce entender esse teste aqui, oh.
+
+12. Entao vamos la, essa implementacao.
+
+13. Bom, para a gente implementar isso, o que que eu vou adicionar aqui, oh?
+
+14. Na telinha, PesquisaCarros.xhtml, agora, eu adicionei, la naquele botao, lembra que tem aquele botao, quando a gente acaba de fazer a pesquisa de carro, aparece um botao, la, que eu falei que, quando a gente clicasse, ia mostrar os acessorios.
+
+15. E, realmente, ele vai chamar, vai mostrar, na tela, um dialogo, um painelzinho, como se fosse um popupzinho, certo?, mostrando os acessorios.
+
+16. Como eh esse dialogo, aqui? Ele vai mostrar, entao, na hora que a gente clicar naquele botao e, aqui, ele vai imprimir, entao, uma lista com, ele vai la no ManagedBean PesquisaCarroBean, o carroSelecionado, que for o carro que eu selecionar la na tabela, que eh a linha que eu clicar, e ele vai mostrar acessorios,
+
+<p:dialog id="mostraAcessoriosDialog" header="Acessórios" widgetVar="mostraAcessorios" modal="true">
+    <p:dataList value="#{pesquisaCarroBean.carroSelecionado.acessorios}" var="acessorio" itemType="disc"
+            rendered="#{not empty pesquisaCarroBean.carroSelecionado.acessorios}">
+        #{acessorio.descricao}
+    </p:dataList>
+    <h:outputText value="Nenhum acessório" rendered="#{empty pesquisaCarroBean.carroSelecionado.acessorios}"/>
+</p:dialog>
+            
+17. Bom, ele vai mostrar isso daqui, se nao tiver nada,... se tiver alguma coisa, ele mostra a descricao daquele acessorio, #{acessorio.descricao}, senao, ele mostra 'Nenhum acessorio'.
+
+18. Bom, PesquisaCarroBean.java nao mudou nada, CarroDAO tambem nao mudei nada, no Carro.java tambem nada.
+
+19. A unica coisa que eu adicionei foi adicionar o dialogo e adicionar, aqui, o comportamento para o botao, 
+
+<p:column headerText="Acessórios" style="width: 100px; text-align: center">
+    <p:commandButton icon="ui-icon-extlink" title="Acessórios" action="#{pesquisaCarroBean.buscarCarroComAcessorios}"
+            process="@this" oncomplete="mostraAcessorios.show()" update=":frmPesquisa:mostraAcessoriosDialog">
+        <f:setPropertyActionListener target="#{pesquisaCarroBean.carroSelecionado}" value="#{carro}" />
+    </p:commandButton>
+</p:column>
+
+20. Quando a gente clicar no botao, vai acontecer alguma coisa.
+
+21. Bom, deixa eu inicializar aqui, o Tomcat, deixa eu colocar, aqui, ja, http://localhost:8080/locadora-veiculo-web/. 
+
+22. Agora, ele vai iniciar, quando a gente acessar a Pagina de Pesquisa de Carro, ai, sim, ele vai inicializar o Hibernate, e vai fazer a consulta dos carros,
+
+http://localhost:8080/locadora-veiculo-web/carro/PesquisaCarros.xhtml
+
+, retornou,
+
+Hibernate: select carro0_.codigo as codigo1_2_, carro0_.chassi as chassi2_2_, carro0_.cor as cor3_2_, carro0_.codigo_modelo as codigo6_2_, carro0_.placa as placa4_2_, carro0_.valor_diaria as valor5_2_ from Carro carro0_
+Hibernate: select modelocarr0_.codigo as codigo1_4_1_, modelocarr0_.descricao as descrica2_4_1_, modelocarr0_.codigo_fabricante as codigo3_4_1_, fabricante1_.codigo as codigo1_3_0_, fabricante1_.nome as nome2_3_0_ from ModeloCarro modelocarr0_ left outer join Fabricante fabricante1_ on modelocarr0_.codigo_fabricante=fabricante1_.codigo where modelocarr0_.codigo=?
+Hibernate: select modelocarr0_.codigo as codigo1_4_1_, modelocarr0_.descricao as descrica2_4_1_, modelocarr0_.codigo_fabricante as codigo3_4_1_, fabricante1_.codigo as codigo1_3_0_, fabricante1_.nome as nome2_3_0_ from ModeloCarro modelocarr0_ left outer join Fabricante fabricante1_ on modelocarr0_.codigo_fabricante=fabricante1_.codigo where modelocarr0_.codigo=?
+
+23. Beleza, entao, ele trouxe, la, todos os carros.
+
+24. Como a gente viu, esse aqui, AAA-1234, tem um Acessorio, esse, BBB-2222, tem 2 acessorios, esse, OOO-1010, nao tem nenhum acessorio, okay?
+
+25. E, aqui, na coluna Acessorios, eh aquele comportamento daquele botao, quando a gente clicar aqui, ele vai abrir o painelzinho para mostrar os Acessorios.
+
+26. Oh, eu limpei o log aqui, do Tomcat, e vou clicar aqui, e, ai, a gente vai ver o que que vai acontecer. Cliquei. Nenhum acessorio. Ueh, Normandes, mas voce nao falou la que tinha acessorio?
+
+27. Vamos ver o Log do Servidor.
+
+28. Ixe... deu uma excecao,
+
+29. Retornou,
+
+org.hibernate.LazyInitializationException: failed to lazily initialize a collection of role: com.algaworks.curso.jpa2.modelo.Carro.acessorios, could not initialize proxy - no Session
+
+, LazyInitializationException, entao, ele esta falando, oh, que deu uma falha preguicosa, para inicializar a colecao, qual colecao? com.algaworks.curso.jpa2.modelo.Carro.acessorios, ele falou, 'Olha, nao consigo inicializar isso daqui'. Depois, ja que voce nao inicializou, eu nao consigo mais inicializar. Entao, ela lanca essa excecao, que significa, na pratica, o que? O que que significa isso, Normandes?
+
+30. Pensa comigo. A gente nao precisa do EntityManager, a Entidade estar dentro do Entity Manager para a gente poder manipular ela, para a gente brincar com ela?
+
+31. Eh isso mesmo. Entao, quando ela esta dentro do Entity Manager, eu consigo ir no Banco de Dados, buscar mais coisas. Como ela nao esta dentro do Entity Manager, mas o Entity Manager esta fechado, ja finalizamos ele, significa que a gente nao consegue ir no banco de dados de novo, okay? Entao, a gente tem duas opcoes, aqui.
+
+32. Ou: quando a gente estiver carregando, essa Pagina, e essa vai ser a pior solucao, o que que a gente pode fazer?
+
+33. Na hora em que estiver carregando, eu falo, 'Opa, estou carregando, aqui, um novo Carro, ja traz os Acessorios dele'. Estou carregando outro Carro, 'Opa, ja vamos trazer os Acessorios'. Ou seja, traz todos os Acessorios desses carros, Ansiosamente, ou seja, de uma forma Eager.
+
+34. Eager, em ingles, ansioso.
+
+35. Okay? Entao, quando voce esta trazendo, voce fala, 'Opa, estou Ansioso por esse Valor, deixa eu trazer ele'. Entao, a gente vai trazer ele de forma Eager.
+
+36. Como eh que a gente faz isso, Normandes?
+
+37. Eh dificil demais. Olha so, para voce ver. A gente vai vir aqui no @ManyToMany, na classe Carro, metodo getAcessorios(), nos vamos utilizar o atributo fetch, que espera um FetchType, do javax.persistence, FetchType.EAGER,
+
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+        name = "carro_acessorio"
+        , joinColumns = @JoinColumn(name = "codigo_carro")
+        , inverseJoinColumns = @JoinColumn(name = "codigo_acessorio")
+    )
+    public List<Acessorio> getAcessorios() {
+        return acessorios;
+    }
+
+38. O que que eu estou falando? Toda vez que eu buscar Um Carro, eu quero buscar, tambem, os Acessorios.
+
+39. Entao, eh isso que eu estou falando, aqui, com esse FetchType.EAGER.
+
+40. Busquei Um Carro, traz os Acessorios.
+
+41. Mas, se voce nao precisar? Nao quero nem saber, precisou de Um Carro, eu vou trazer os Acessorios.
+
+42. Por isso que eu disse que essa forma eh ruim. Por que? Nem sempre,... voce garante que, toda vez o Usuario vai clicar no botao de Popup de Acessorios?, para cada registro?
+
+43. Nao, as vezes, o Usuario so quer ver alguma coisa, aqui, do Carro, o Valor da diaria, nao vai clicar em Acessorios.
+
+44. Para que que voce vai trazer dados a mais a toa? Nao eh? Entao, nao eh uma forma, para este caso, nao eh uma forma legal de a gente fazer.
+
+45. Mas, eu vou fazer, aqui, dessa forma, para voce acreditar em mim, nao eh? Vai que voce fala, 'Po, Normandes, voce esta mentindo'.
+
+46. Vamos ver, aqui, se funciona, entao? Acessar http://localhost:8080/locadora-veiculo-web/carro/PesquisaCarros.xhtml.
+
+47. Retornou,
+
+Hibernate: select carro0_.codigo as codigo1_2_, carro0_.chassi as chassi2_2_, carro0_.cor as cor3_2_, carro0_.codigo_modelo as codigo6_2_, carro0_.placa as placa4_2_, carro0_.valor_diaria as valor5_2_ from Carro carro0_
+Hibernate: select modelocarr0_.codigo as codigo1_4_1_, modelocarr0_.descricao as descrica2_4_1_, modelocarr0_.codigo_fabricante as codigo3_4_1_, fabricante1_.codigo as codigo1_3_0_, fabricante1_.nome as nome2_3_0_ from ModeloCarro modelocarr0_ left outer join Fabricante fabricante1_ on modelocarr0_.codigo_fabricante=fabricante1_.codigo where modelocarr0_.codigo=?
+Hibernate: select modelocarr0_.codigo as codigo1_4_1_, modelocarr0_.descricao as descrica2_4_1_, modelocarr0_.codigo_fabricante as codigo3_4_1_, fabricante1_.codigo as codigo1_3_0_, fabricante1_.nome as nome2_3_0_ from ModeloCarro modelocarr0_ left outer join Fabricante fabricante1_ on modelocarr0_.codigo_fabricante=fabricante1_.codigo where modelocarr0_.codigo=?
+Hibernate: select acessorios0_.codigo_carro as codigo1_2_1_, acessorios0_.codigo_acessorio as codigo2_6_1_, acessorio1_.codigo as codigo1_0_0_, acessorio1_.descricao as descrica2_0_0_ from carro_acessorio acessorios0_ inner join Acessorio acessorio1_ on acessorios0_.codigo_acessorio=acessorio1_.codigo where acessorios0_.codigo_carro=?
+Hibernate: select acessorios0_.codigo_carro as codigo1_2_1_, acessorios0_.codigo_acessorio as codigo2_6_1_, acessorio1_.codigo as codigo1_0_0_, acessorio1_.descricao as descrica2_0_0_ from carro_acessorio acessorios0_ inner join Acessorio acessorio1_ on acessorios0_.codigo_acessorio=acessorio1_.codigo where acessorios0_.codigo_carro=?
+Hibernate: select acessorios0_.codigo_carro as codigo1_2_1_, acessorios0_.codigo_acessorio as codigo2_6_1_, acessorio1_.codigo as codigo1_0_0_, acessorio1_.descricao as descrica2_0_0_ from carro_acessorio acessorios0_ inner join Acessorio acessorio1_ on acessorios0_.codigo_acessorio=acessorio1_.codigo where acessorios0_.codigo_carro=?
+
+48. Fez, para cada registro de Carro, Um Select em Acessorios.
+
+49. Quando eu clicar, aqui, na Tela de Pesquisa de Carros, no botao para cada registro de Acessorios, esta retornando os respectivos Acessorios, ou seja, para o primeiro registro, ha 1 Acessorio, para o segundo registro, ha 2 acessorios e, para o ultimo registro, nao ha Acessorios.
+
+50. E, se voce reparar no Log do Servidor, nenhuma excecao foi disparada.
+
+51. E, ai, se voce olhar com mais detalhe ainda, essa consulta eh a consulta logo que ele carregou a Pagina de Pesquisa de Carros. Se voce olhar, aqui, a consulta que ele fez, oh, ele foi e buscou os carros, buscou, la, o Carro, e, ai, depois, olha so o que que ele esta fazendo, deixa eu buscar os acessorios para o carro tal, para cada carro, ele vai fazer o select, la, e buscar os acessorios de cada carro,
+
+SELECT acessorios0_.codigo_carro AS codigo1_2_1_,
+       acessorios0_.codigo_acessorio AS codigo2_6_1_,
+       acessorio1_.codigo AS codigo1_0_0_,
+       acessorio1_.descricao AS descrica2_0_0_
+FROM carro_acessorio acessorios0_
+INNER JOIN Acessorio acessorio1_ ON acessorios0_.codigo_acessorio=acessorio1_.codigo
+WHERE acessorios0_.codigo_carro=?
+
+52. Por que, entao, que eu disse que nao eh uma boa pratica, neste caso? Nao eh nunca bom usar EAGER?
+
+53. Nao, nao eh que nunca eh bom, vamos supor que, nesta tela aqui, ou, nesta tela nao, nesta Entidade, toda vez que voce fosse precisar de um Carro, 100% das vezes, voce precisasse dos Acessorios, nao eh este caso, nao eh?, mas pode ter uma situacao em que, sempre que voce busca uma Entidade, voce quer a outra, nao tem jeito de uma viver sem a outra, entao, ja vou mapear, aqui, como EAGER, porque eu sei que eu vou precisar dela. Agora, no nosso caso, nao eh interessante, porque nem sempre ele vai clicar na Coluna Acessorios.
+
+54. Okay? Entao, como que eu posso fazer? Eu posso, simplesmente, apagar isso,
+
+    @ManyToMany
+    @JoinColumn(
+        //...
+    )
+    public List<Acessorio> getAcessorios() {
+        //...    
+    }
+
+, ou, deixar mapeado, aqui, como LAZY,
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinColumn(
+        //...
+    )
+    public List<Acessorio> getAcessorios() {
+        //...    
+    }
+
+55. Deixando mapeado como LAZY, que eh o comportamento padrao, para o @ManyToMany, ele nao vai trazer.
+
+56. Okay? Bom, Normandes, se ele nao vai trazer, e essa nao eh a melhor forma de a gente fazer, como eh que a gente faz isso?
+
+57. Bem simples, tambem.
+
+58. O que que a gente pode fazer?
+
+59. A gente pode, no momento do click no botao do registro na tela de Pesquisa de Carros, chamar um metodo que vai inicializar apenas o acessorio desse carro, concorda comigo? Nao eh muito mais simples? Po, tem um Carro, aqui, ah, entao, deixa eu buscar o Acessorio la desse Carro, vai ser bem mais simples, nao eh?, so quando o cara clicar.
+
+60. Entao, o que que a gente pode fazer?
+
+61. Aqui na PesquisaCarros.xhtml, eu posso colocar, aqui, uma action, no botaozinho, que eh uma chamada de um metodo la no nosso ManagedBean, buscarCarroComAcessorios(), 
+
+<p:commandButton icon="ui-icon-extlink" title="Acessórios" 
+    >>> action="#{pesquisaCarroBean.buscarCarroComAcessorios}" <<<
+        process="@this" oncomplete="mostraAcessorios.show()" update=":frmPesquisa:mostraAcessoriosDialog">
+    <f:setPropertyActionListener target="#{pesquisaCarroBean.carroSelecionado}" value="#{carro}" />
+</p:commandButton>
+
+, e a gente vai la, no PesquisaCarroBean.java, e vamos criar esse metodo,
+
+public void buscarCarroComAcessorios() {
+
+}
+
+, e, ai, a gente vai buscar o Carro com Acessorios, usando, obviamente, o DAO. O Carro, quando eu clico la, quando eu clicar nesse botao, ele seta, ele passa esse Carro para essa variavel,
+
+<p:commandButton icon="ui-icon-extlink" title="Acessórios" 
+        action="#{pesquisaCarroBean.buscarCarroComAcessorios}"
+        process="@this" oncomplete="mostraAcessorios.show()" update=":frmPesquisa:mostraAcessoriosDialog">
+    <f:setPropertyActionListener >>> target="#{pesquisaCarroBean.carroSelecionado}" <<< value="#{carro}" />
+</p:commandButton>
+
+, carroSelecionado. Entao, no atributo carroSelecionado, na classe PesquisaCarroBean.java, eu tenho o codigo,
+
+public void buscarCarroComAcessorios() {
+    this.carroSelecionado.getCodigo();
+}
+
+, okay? Entao, se eu vier no DAO, agora, carroDAO, e chamar o metodo buscarCarroComAcessorios(), e passo o codigo,
+
+public void buscarCarroComAcessorios() {
+    this.carroDAO.buscarCarroComAcessorios(this.carroSelecionado.getCodigo());
+}
+
+62. E, ai, so voltando na tela, mais uma vez, la embaixo, no dialogo, 
+
+<p:dialog id="mostraAcessoriosDialog" header="Acessórios" widgetVar="mostraAcessorios" modal="true">
+    <p:dataList value="#{pesquisaCarroBean.carroSelecionado.acessorios}" var="acessorio" itemType="disc"
+            rendered="#{not empty pesquisaCarroBean.carroSelecionado.acessorios}">
+        #{acessorio.descricao}
+    </p:dataList>
+    <h:outputText value="Nenhum acessório" rendered="#{empty pesquisaCarroBean.carroSelecionado.acessorios}"/>
+</p:dialog>
+
+, que nos mostra, entao, todos os acessorios, repare que eu estou usando a variavel carroSelecionado,
+
+<p:dialog id="mostraAcessoriosDialog" header="Acessórios" widgetVar="mostraAcessorios" modal="true">
+    <p:dataList value="#{pesquisaCarroBean.>>>carroSelecionado<<<.acessorios}" var="acessorio" itemType="disc"
+            rendered="#{not empty pesquisaCarroBean.>>>carroSelecionado<<<.acessorios}">
+        #{acessorio.descricao}
+    </p:dataList>
+    <h:outputText value="Nenhum acessório" rendered="#{empty pesquisaCarroBean.>>>carroSelecionado<<<.acessorios}"/>
+</p:dialog>
+
+63. Ah, entao, se eh carroSelecionado, eu simplesmente vou atribuir para carroSelecionado,
+
+public void buscarCarroComAcessorios() {
+    this.carroSelecionado = this.carroDAO.buscarCarroComAcessorios(this.carroSelecionado.getCodigo());
+}
+
+, ou seja, vou buscar o Carro, agora, com os Acessorios inicializados, passando, entao, aqui, o codigo.
+
+64. Entao, ele vai la, fazer essa busca, e setar de volta no Carro Selecionado. Nesse momento, o JSF vai conseguir buscar os Acessorios, inicializar os Acessorios, porque eu ja vou ter feito essa consulta.
+
+65. Nao existe esse metodo, entao, vou criar, em CarroDAO, o metodo buscarCarroComAcessorios().
+
+66. E, aqui, nos vamos usar, entao, o EntityManager para criar essa Query para gente, nos vamos aprender a fazer essa Query, aqui, depois, com Criteria, vai ficar bem feliz,
+
+public Carro buscarCarroComAcessorios(Long codigo) {
+    return this.em.createQuery("from Carro c JOIN ")
+}
+
+, JOIN, nos vamos fazer um JOIN, ou seja, juntar as duas, ligar as duas, duas o que? Quem que a gente esta buscando? Nao eh acessorios? Entao, vamos fazer um JOIN com acessorios, voce tem que dar um nomezinho para ela, aqui, a, onde o codigo, c.codigo, eh igual a um parametro, aqui, que vai entrar,
+
+public Carro buscarCarroComAcessorios(Long codigo) {
+    return this.em.createQuery("from Carro c JOIN c.acessorios a where c.codigo = ? ")
+}
+
+67. Qual parametro eh esse, Normandes? .setParameter(), na primeira posicao, ali, nos vamos colocar o codigo,
+
+public Carro buscarCarroComAcessorios(Long codigo) {
+    return this.em.createQuery("from Carro c JOIN c.acessorios a where c.codigo = ? ")
+            .setParameter(1, codigo)
+}
+
+, e vai retornar getSingleResult(), porque a gente so vai retornar Um objeto. Agora, basta fazer o casting para Carro,
+
+public Carro buscarCarroComAcessorios(Long codigo) {
+    return (Carro) this.em.createQuery("from Carro c JOIN c.acessorios a where c.codigo = ? ")
+            .setParameter(1, codigo)
+            .getSingleResult();
+}
+
+68. Entao, vamos repassar, aqui, rapidamente. Nos vamos ver isso aqui,
+
+public Carro buscarCarroComAcessorios(Long codigo) {
+    return (Carro) this.em.createQuery(" >>> from Carro c JOIN c.acessorios a where c.codigo = ? <<< ")
+            .setParameter(1, codigo)
+            .getSingleResult();
+}
+
+, nos vamos ter um modulo especialmente so para falar sobre JPQL. Mas, nos estamos buscando Um Carro, dando um nomezinho para a Entidade, aqui, Carro c, por que eu preciso dar esse nomezinho para essa variavel Carro? Para usar aqui, oh, 
+
+public Carro buscarCarroComAcessorios(Long codigo) {
+    return (Carro) this.em.createQuery("from Carro c JOIN >>> c.acessorios <<< a where c.codigo = ? ")
+            .setParameter(1, codigo)
+            .getSingleResult();
+}
+
+, fazendo um JOIN, ou seja, ja inicializa, ai, para mim, quem? Os acessorios. Coloca, aqui, um a-zinho, 
+
+public Carro buscarCarroComAcessorios(Long codigo) {
+    return (Carro) this.em.createQuery("from Carro c JOIN c.acessorios >>> a <<< where c.codigo = ? ")
+            .setParameter(1, codigo)
+            .getSingleResult();
+}
+
+, para dar um nome, se a gente precisar usar, onde c.codigo eh igual a ponto de interrogacao.
+
+69. Esse .setParameter(1, ), eh, exatamente, esse primeiro ponto de interrogacao, passando o codigo, e fala, me da Um Unico Resultado. Por que voce tem certeza de que eh so Um? Porque eu estou buscando pelo codigo,
+
+public Carro buscarCarroComAcessorios(Long codigo) {
+    return (Carro) this.em.createQuery("from Carro c JOIN c.acessorios a where >>> c.codigo = ? <<< ")
+            .setParameter(1, codigo)
+            .getSingleResult();
+}
+
+, nao tem jeito de vir 2 registros. Bom, entao, aqui, eu ja criei o metodo, ja mandei executar, Pesquisa de Carros, http://localhost:8080/locadora-veiculo-web/carro/PesquisaCarros.xhtml, vamos mandar executar de novo, e vamos ver se nos vamos ter mais algum probleminha.
+
+70. Agora que inicializou o Tomcat, vai inicializar o Hibernate. Inicializou, beleza.
+
+71. Bom, se a gente olhar aqui, no Log do Console, a gente nao buscou nenhuma vez os Acessorios, so buscou os Carros,
+
+Hibernate: select carro0_.codigo as codigo1_2_, carro0_.chassi as chassi2_2_, carro0_.cor as cor3_2_, carro0_.codigo_modelo as codigo6_2_, carro0_.placa as placa4_2_, carro0_.valor_diaria as valor5_2_ from Carro carro0_
+Hibernate: select modelocarr0_.codigo as codigo1_4_1_, modelocarr0_.descricao as descrica2_4_1_, modelocarr0_.codigo_fabricante as codigo3_4_1_, fabricante1_.codigo as codigo1_3_0_, fabricante1_.nome as nome2_3_0_ from ModeloCarro modelocarr0_ left outer join Fabricante fabricante1_ on modelocarr0_.codigo_fabricante=fabricante1_.codigo where modelocarr0_.codigo=?
+Hibernate: select modelocarr0_.codigo as codigo1_4_1_, modelocarr0_.descricao as descrica2_4_1_, modelocarr0_.codigo_fabricante as codigo3_4_1_, fabricante1_.codigo as codigo1_3_0_, fabricante1_.nome as nome2_3_0_ from ModeloCarro modelocarr0_ left outer join Fabricante fabricante1_ on modelocarr0_.codigo_fabricante=fabricante1_.codigo where modelocarr0_.codigo=?
+
+, os Carros e os Modelos dos Carros, porque o Modelo, se a gente olhar na Classe Carro, eh um Mapeamento @ManyToOne, e o padrao do Mapeamento ManyToOne eh EAGER. Entao, sempre que voce tiver um ManyToOne, o padrao eh EAGER, se voce nao quiser esse comportamento, voce adiciona, aqui, tambem, 'Olha, eu nao quero que traga, toda vez, o Modelo do Carro',
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = codigo_modelo)
+    public ModeloCarro getModelo() {
+        return modelo;
+    }
+
+72. Agora, retornou, no Log do Servidor, apenas,
+
+Hibernate: select carro0_.codigo as codigo1_2_, carro0_.chassi as chassi2_2_, carro0_.cor as cor3_2_, carro0_.codigo_modelo as codigo6_2_, carro0_.placa as placa4_2_, carro0_.valor_diaria as valor5_2_ from Carro carro0_
+
+73. Bom, vamos deixar, por enquanto, EAGER, para nao dar problema em outras partes do Sistema, mas, depois, a gente da mais uma olhada nisso tambem.
+
+74. Bom, entao, ele nao buscou nenhum Acessorio. Okay? Vou mandar limpar o Log, e, agora, eu vou clicar aqui, para ver os Acessorios, vamos ver o que que vai acontecer?
+
+75. Apareceu 'Nenhum acessorio', no Popup. Por que, Normandes, o que que deu de errado?
+
+76. Retornou, no Log do Servidor,
+
+jan 08, 2019 10:25:41 PM org.hibernate.hql.internal.ast.HqlSqlWalker generatePositionalParameter
+WARN: [DEPRECATION] Encountered positional parameter near line 1, column 83.  Positional parameter are considered deprecated; use named parameters or JPA-style positional parameters instead.
+Hibernate: select carro0_.codigo as codigo1_2_0_, acessorio2_.codigo as codigo1_0_1_, carro0_.chassi as chassi2_2_0_, carro0_.cor as cor3_2_0_, carro0_.codigo_modelo as codigo6_2_0_, carro0_.placa as placa4_2_0_, carro0_.valor_diaria as valor5_2_0_, acessorio2_.descricao as descrica2_0_1_ from Carro carro0_ inner join carro_acessorio acessorios1_ on carro0_.codigo=acessorios1_.codigo_carro inner join Acessorio acessorio2_ on acessorios1_.codigo_acessorio=acessorio2_.codigo where carro0_.codigo=?
+Hibernate: select modelocarr0_.codigo as codigo1_4_1_, modelocarr0_.descricao as descrica2_4_1_, modelocarr0_.codigo_fabricante as codigo3_4_1_, fabricante1_.codigo as codigo1_3_0_, fabricante1_.nome as nome2_3_0_ from ModeloCarro modelocarr0_ left outer join Fabricante fabricante1_ on modelocarr0_.codigo_fabricante=fabricante1_.codigo where modelocarr0_.codigo=?
+jan 08, 2019 10:25:41 PM com.sun.faces.lifecycle.InvokeApplicationPhase execute
+ADVERTÊNCIA: #{pesquisaCarroBean.buscarCarroComAcessorios}: java.lang.ClassCastException: [Ljava.lang.Object; cannot be cast to com.algaworks.curso.jpa2.modelo.Carro
+javax.faces.FacesException: #{pesquisaCarroBean.buscarCarroComAcessorios}: java.lang.ClassCastException: [Ljava.lang.Object; cannot be cast to com.algaworks.curso.jpa2.modelo.Carro
+	at com.sun.faces.application.ActionListenerImpl.processAction(ActionListenerImpl.java:117)
+	at javax.faces.component.UICommand.broadcast(UICommand.java:315)
+	at javax.faces.component.UIData.broadcast(UIData.java:1106)
+	at javax.faces.component.UIViewRoot.broadcastEvents(UIViewRoot.java:786)
+	at javax.faces.component.UIViewRoot.processApplication(UIViewRoot.java:1251)
+	at com.sun.faces.lifecycle.InvokeApplicationPhase.execute(InvokeApplicationPhase.java:81)
+	at com.sun.faces.lifecycle.Phase.doPhase(Phase.java:101)
+	at com.sun.faces.lifecycle.LifecycleImpl.execute(LifecycleImpl.java:118)
+	at javax.faces.webapp.FacesServlet.service(FacesServlet.java:593)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:231)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:53)
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:193)
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:166)
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:199)
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:96)
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:490)
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:139)
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:92)
+	at org.apache.catalina.valves.AbstractAccessLogValve.invoke(AbstractAccessLogValve.java:668)
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74)
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:343)
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:408)
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:66)
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:834)
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1417)
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:49)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:61)
+	at java.lang.Thread.run(Thread.java:748)
+Caused by: javax.faces.el.EvaluationException: java.lang.ClassCastException: [Ljava.lang.Object; cannot be cast to com.algaworks.curso.jpa2.modelo.Carro
+	at javax.faces.component.MethodBindingMethodExpressionAdapter.invoke(MethodBindingMethodExpressionAdapter.java:101)
+	at com.sun.faces.application.ActionListenerImpl.processAction(ActionListenerImpl.java:101)
+	... 30 more
+Caused by: java.lang.ClassCastException: [Ljava.lang.Object; cannot be cast to com.algaworks.curso.jpa2.modelo.Carro
+	at com.algaworks.curso.jpa2.dao.CarroDAO.buscarCarroComAcessorios(CarroDAO.java:53)
+	at com.algaworks.curso.jpa2.dao.CarroDAO$Proxy$_$$_WeldSubclass.buscarCarroComAcessorios(CarroDAO$Proxy$_$$_WeldSubclass.java)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.jboss.weld.interceptor.proxy.SimpleInterceptionChain.invokeNextInterceptor(SimpleInterceptionChain.java:85)
+	at org.jboss.weld.interceptor.proxy.InterceptorMethodHandler.executeInterception(InterceptorMethodHandler.java:112)
+	at org.jboss.weld.interceptor.proxy.InterceptorMethodHandler.invoke(InterceptorMethodHandler.java:88)
+	at org.jboss.weld.bean.proxy.CombinedInterceptorAndDecoratorStackMethodHandler.invoke(CombinedInterceptorAndDecoratorStackMethodHandler.java:55)
+	at com.algaworks.curso.jpa2.dao.CarroDAO$Proxy$_$$_WeldSubclass.buscarCarroComAcessorios(CarroDAO$Proxy$_$$_WeldSubclass.java)
+	at com.algaworks.curso.jpa2.controller.PesquisaCarroBean.buscarCarroComAcessorios(PesquisaCarroBean.java:58)
+	at com.algaworks.curso.jpa2.controller.PesquisaCarroBean$Proxy$_$$_WeldClientProxy.buscarCarroComAcessorios(PesquisaCarroBean$Proxy$_$$_WeldClientProxy.java)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:498)
+	at org.apache.el.parser.AstValue.invoke(AstValue.java:247)
+	at org.apache.el.MethodExpressionImpl.invoke(MethodExpressionImpl.java:267)
+	at org.jboss.weld.util.el.ForwardingMethodExpression.invoke(ForwardingMethodExpression.java:39)
+	at org.jboss.weld.el.WeldMethodExpression.invoke(WeldMethodExpression.java:50)
+	at com.sun.faces.facelets.el.TagMethodExpression.invoke(TagMethodExpression.java:105)
+	at javax.faces.component.MethodBindingMethodExpressionAdapter.invoke(MethodBindingMethodExpressionAdapter.java:87)
+	... 31 more
+
+77. Ele falou assim, oh, ClassCastException, nao conseguiu converter um Object para Carro.
+
+78. Mas, como assim? O que que significa isso?
+
+79. Vamos dar uma olhada, aqui, na nossa consulta?
+
+	public Carro buscarCarroComAcessorios(Long codigo) {
+		return (Carro) this.em.createQuery("from Carro c JOIN c.acessorios a where c.codigo = ?")
+				.setParameter(1, codigo)
+				.getSingleResult(); 
+	}
+
+80. Como eu disse, a gente vai ver mais detalhes, aqui, ainda, no JPQL, a linguagem que a gente esta usando aqui. Mas, por que que eu deixei dar esse erro? Porque a gente usou sempre assim, oh, 'from Carro'. Quando a gente esta usando mais de uma Entidade, no caso, aqui, Carro c JOIN c.acessorios a, ou seja, esta fazendo JOIN com outras Entidades, voce tem que falar aqui, 'Bom, mas quem voce quer retornar? O 'c' (Carro)? O 'a' (Acessorio)?
+
+81. Entao, voce vai colocar, "Eu quero retornar o 'c'", que eh o Carro, aqui,
+
+	public Carro buscarCarroComAcessorios(Long codigo) {
+		return (Carro) this.em.createQuery(" >>> select c <<< from Carro c JOIN c.acessorios a where c.codigo = ?")
+				.setParameter(1, codigo)
+				.getSingleResult(); 
+    }
+    
+, eh isso que voce tem que falar.
+
+82. Agora, vou so dar um re-publish, aqui, botao direito no Servidor Tomcat / Publish, ele fez o Hot Deploy, ou seja, fez o Deploy em Tempo de Execucao. Se der alguma coisa errada, voce para e volta o Tomcat de novo.
+
+83. Bom, vamos la, deixa eu inicializar aqui, chamar de novo, http://localhost:8080/locadora-veiculo-web/carro/PesquisaCarros.xhtml, agora, sim, ele vai inicializar o Hibernate. Beleza, buscou la,
+
+Hibernate: select carro0_.codigo as codigo1_2_, carro0_.chassi as chassi2_2_, carro0_.cor as cor3_2_, carro0_.codigo_modelo as codigo6_2_, carro0_.placa as placa4_2_, carro0_.valor_diaria as valor5_2_ from Carro carro0_
+Hibernate: select modelocarr0_.codigo as codigo1_4_1_, modelocarr0_.descricao as descrica2_4_1_, modelocarr0_.codigo_fabricante as codigo3_4_1_, fabricante1_.codigo as codigo1_3_0_, fabricante1_.nome as nome2_3_0_ from ModeloCarro modelocarr0_ left outer join Fabricante fabricante1_ on modelocarr0_.codigo_fabricante=fabricante1_.codigo where modelocarr0_.codigo=?
+Hibernate: select modelocarr0_.codigo as codigo1_4_1_, modelocarr0_.descricao as descrica2_4_1_, modelocarr0_.codigo_fabricante as codigo3_4_1_, fabricante1_.codigo as codigo1_3_0_, fabricante1_.nome as nome2_3_0_ from ModeloCarro modelocarr0_ left outer join Fabricante fabricante1_ on modelocarr0_.codigo_fabricante=fabricante1_.codigo where modelocarr0_.codigo=?
+
+84. Agora, se eu clicar aqui, no botao de cada registro da coluna Acessorios, olha o Acessorio aqui, sendo exibido na Popup.
+
+85. Retornou, no Log do Console,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_2_,
+        carro0_.chassi as chassi2_2_,
+        carro0_.cor as cor3_2_,
+        carro0_.codigo_modelo as codigo6_2_,
+        carro0_.placa as placa4_2_,
+        carro0_.valor_diaria as valor5_2_ 
+    from
+        Carro carro0_ 
+    inner join
+        carro_acessorio acessorios1_ 
+            on carro0_.codigo=acessorios1_.codigo_carro 
+    inner join
+        Acessorio acessorio2_ 
+            on acessorios1_.codigo_acessorio=acessorio2_.codigo 
+    where
+        carro0_.codigo=?
+Hibernate: 
+    select
+        modelocarr0_.codigo as codigo1_4_1_,
+        modelocarr0_.descricao as descrica2_4_1_,
+        modelocarr0_.codigo_fabricante as codigo3_4_1_,
+        fabricante1_.codigo as codigo1_3_0_,
+        fabricante1_.nome as nome2_3_0_ 
+    from
+        ModeloCarro modelocarr0_ 
+    left outer join
+        Fabricante fabricante1_ 
+            on modelocarr0_.codigo_fabricante=fabricante1_.codigo 
+    where
+        modelocarr0_.codigo=?
+Hibernate: 
+    select
+        acessorios0_.codigo_carro as codigo1_2_1_,
+        acessorios0_.codigo_acessorio as codigo2_6_1_,
+        acessorio1_.codigo as codigo1_0_0_,
+        acessorio1_.descricao as descrica2_0_0_ 
+    from
+        carro_acessorio acessorios0_ 
+    inner join
+        Acessorio acessorio1_ 
+            on acessorios0_.codigo_acessorio=acessorio1_.codigo 
+    where
+        acessorios0_.codigo_carro=?
+
+
+86. Agora, quando eu busquei, o que que ele fez?
+
+87. Buscou o Acessorio,
+
+Hibernate: 
+    select
+        acessorios0_.codigo_carro as codigo1_2_1_,
+        acessorios0_.codigo_acessorio as codigo2_6_1_,
+        acessorio1_.codigo as codigo1_0_0_,
+        acessorio1_.descricao as descrica2_0_0_ 
+    from
+        carro_acessorio acessorios0_ 
+    inner join
+        Acessorio acessorio1_ 
+            on acessorios0_.codigo_acessorio=acessorio1_.codigo 
+    where
+        acessorios0_.codigo_carro=?
+
+88. Agora, ele buscou o Acessorio. E so buscou o Acessorio daquele carro. Ele nao buscou todos os Acessorios, so buscou de quem a gente pediu. Quando eu clicar, eu vou mandar limpar o Log, cliquei aqui, no segundo registro, mostrou os Acessorios, e, ai, ele trouxe, fez, de novo, o Select no Acessorio,
+
+Hibernate: 
+    select
+        acessorios0_.codigo_carro as codigo1_2_1_,
+        acessorios0_.codigo_acessorio as codigo2_6_1_,
+        acessorio1_.codigo as codigo1_0_0_,
+        acessorio1_.descricao as descrica2_0_0_ 
+    from
+        carro_acessorio acessorios0_ 
+    inner join
+        Acessorio acessorio1_ 
+            on acessorios0_.codigo_acessorio=acessorio1_.codigo 
+    where
+        acessorios0_.codigo_carro=?
+
+, ele foi la e buscou os Acessorios daquele outro Carro, okay? Entao, so para resumir esse finalzinho de aula, aqui.
+
+89. Nao eh que Lazy eh um problema. Nao, Lazy eh uma coisa boa. A gente viu que o comportamento padrao do @ManyToMany eh Lazy e isso eh uma coisa boa.
+
+90. Por que eh uma coisa boa? 
+
+91. Porque nao vai deixar o seu sistema pesado.
+
+92. No nosso caso, aqui, so tem 3 Carros, buscar esses Acessorios, aqui, nao faz nenhuma diferenca de performance visivel, mas, imagina um sistema, ai, com milhares de Carros, com um monte de Carros, nao eh?, nao tem como, em um outro tipo de sistema, para cada Carro, ir la e fazer um Select em Acessorios, voce vai piorar muito a performance do seu Sistema.
+
+93. Entao, o Lazy eh uma coisa boa. A gente tem que saber eh por que que ele aconteceu e saber como resolver. E, ai, a gente, 'Ah eh so mandar Eager'. Nao, nao eh assim que voce resolve o problema de Lazy, voce aprendeu aqui. Nao eh assim que voce resolve, simplesmente indo la e mapeando como Eager. Nao, voce analisa, 'Ah, esta acontecendo porque o Entity Manager ja fechou, a gente viu, chegou aqui na telinha web, o Entity Manager ja esta fechado'. Se eu for tentar acessar qualquer Entidade que ja foi fechada, que precisa buscar no Banco de dados, ele vai dar uma Excecao, falando que deu erro de Lazy, ou seja, aquela Entidade nao consegue ir no Banco de Dados buscar mais uma vez.
+
+94. Beleza? Bom, tenta pegar esse codigo ai e executar, faca os seus testes, tira, aqui, o LAZY, poe EAGER,
+
+	@ManyToMany(fetch = FetchType.LAZY)
+	@JoinTable(name = "carro_acessorio", 
+			joinColumns = @JoinColumn(name = "codigo_carro"),
+			inverseJoinColumns = @JoinColumn(name = "codigo_acessorio")
+	)
+	public List<Acessorio> getAcessorios() {
+		return acessorios;
+	}
+
+, tenta nao colocar essa pesquisa, e voce vai comecar a ver os problemas, as excecoes Lazy acontecendo, ai.
+
+95. Fim da     Aula 05.001. Inicializacao Tardia (Lazy-loading) e Ansiosa (Eager-loading).
+
+
+-->

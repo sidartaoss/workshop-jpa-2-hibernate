@@ -1,0 +1,371 @@
+<!-- 
+
+    Aula 07.001. Entendendo a Sessao e Transacao no Projeto.
+
+1. Bom, voce ja pode ter se perguntado, algumas vezes, como eh que esse EntityManager para ele chegar aqui?
+
+public class AcessorioDAO implements Serializable {
+
+    private static final long serialVersionUID = 0L;
+
+    @Inject
+    private EntityManager >>> manager <<<;
+
+    ...
+}
+
+, eh so colocar @Inject e ele ja vai chegar aqui?
+
+2. Por que que isso esta funcionando?
+
+3. Como eh que a gente esta conseguindo jogar esse EntityManager dentro dos nossos DAO's?
+
+4. Bom, por que voce pode estar se perguntando isso?
+
+5. Porque la, nos exemplos que a gente estava fazendo nos CRUD's, ou nas Consultas, a gente sempre criou o EntityManagerFactory, a partir do Persistence, declaramos, la, o persistence-unit, que esta no persistence.xml, e, ai, a gente conseguia criar o EntityManager,
+
+    EntityManagerFactory emf = Persistence.createEntityManagerFactory("exemploPU");
+    EntityManager em = emf.createEntityManager();
+
+6. Quando a gente precisava da Transacao, a gente invocava,
+
+    em.getTransaction().begin();
+    em.persist(cliente);
+    em.getTransaction().commit();
+
+    em.close();
+
+, salvava, e, depois, dava um Commit, e, depois, se a gente quisesse dar um rollback, a gente dava um rollback, e, depois, fechavamos, precisavamos fechar o EntityManager.
+
+7. Bom, isso daqui, quando a gente esta fazendo uma aplicacao de teste, uma aplicacao de exemplo, a gente tem que fazer isso daqui tudo na mao, nao eh verdade? Bom, no caso da nossa aplicacao web, aqui, a gente esta usando um framework de injecao de dependencias, que eh o CDI.
+
+8. Entao, a gente esta usando ele para nos ajudar a injetar, a criar os objetos para a gente. Entao, o EntityManager, aqui, com esse @Inject, 
+
+    @Inject
+    private EntityManager manager;
+
+, ele vai ser jogado aqui dentro para a gente, quando a gente precisar dele.
+
+9. Okay? Bom, como eh que faz, entao? Ele ja sabe, eh so colocar isso dai, que ele ja esta fazendo?
+
+10. Nao, veja bem.
+
+11. Aqui, no nosso projeto, tem um pacotezinho util e, dentro, o pacote jpa. Se a gente entrar aqui, tem o EntityManagerProducer.java.
+
+12. E, ai, aqui, se a gente der uma analisada aqui, o que que ele esta fazendo?
+
+13. Ele esta criando o EntityManagerFactory.
+
+14. Quando eu coloco essa anotacao, @AnnotationScoped, eu estou falando o seguinte, 'Eu quero que seja criada essa classe no escopo da Aplicacao',
+
+@AnnotationScoped
+public class EntityManagerProducer {
+
+    private EntityManagerFactory factory;
+
+    public EntityManagerProducer() {
+        this.factory = Persistence.createEntityManagerFactory("locadoraVeiculoPU")
+    }
+
+    ...
+}
+
+, ou seja, esse objeto, EntityManagerProducer, vai ser criado 1 Por Aplicacao.
+
+15. Entao, na aplicacao inteira, a gente so vai ter Um objeto desse. E, quando ele for criado, no construtor dele, olha so quem que eu estou inicializando: o EntityManagerFactory, usando Persistence.createEntityManagerFactory(), assim como a gente tinha feito nos exemplos anteriores, nos exemplos simples.
+
+16. Okay? Entao, a gente criou ele aqui, o EntityManagerFactory.
+
+17. Bom, e, ai, agora, usando essas duas anotacoes, aqui,
+
+>>>@Produces
+>>>@RequestScoped
+public EntityManager create() {
+    return factory.createEntityManager();
+}
+
+, eu estou dizendo o seguinte, sempre que alguem, como, por exemplo, o AcessorioDAO, colocar, la, o @Inject para o EntityManager, e eu colocar essa anotacao @Produces, aqui, ele vai criar o EntityManagerFactory para mim.
+
+18. Como?
+
+19. Chamando esse metodo, createEntityManager(). Da mesma forma que a gente fazia la.
+
+20. E essa anotacao @RequestScoped, esta falando o seguinte, 'Eu vou criar o EntityManager, la para o AcessorioDAO, para todos os DAO's que estao chamando, no Escopo de Requisicao.'
+
+21. Ou seja, toda vez que eu iniciar uma Requisicao Web, quando eu for la no Browser, der o <ENTER> e aquela Requisicao iniciar, eu vou criar um EntityManagerFactory.
+
+22. E, quando a Requisicao estiver terminando, eu colocando, aqui, esse metodo com @Disposes, aqui,
+
+public void close(@Disposes EntityManager manager) {
+    manager.close();
+}
+
+, toda vez, entao, que eu estiver terminando aquele EntityManager, ele vai passar esse metodo, e eu consigo fechar o EntityManager.
+
+23. Bem legal, nao eh?
+
+24. Isso aqui eh uma tarefa bem repetitiva, que a gente tem que fazer toda hora. Entao, os frameworks vao nos ajudando. Assim como o JPA nos auxilia muito a fazer a consulta no banco de dados, os frameworks de injecao de dependencia tambem nos ajudam muito a injetar objetos, a criar os objetos.
+
+25. Entao, para eu criar o EntityManager, eu utilizei essa estrutura aqui,
+
+@ApplicationScoped
+public class EntityManagerProducer {
+
+    private EntityManagerFactory factory;
+
+    public EntityManagerProducer() {
+        this.factory = Persistence.createEntityManagerFactory("locadoraVeiculoPU");
+    }
+
+    @Produces
+    @RequestScoped
+    public EntityManager create() {
+        return this.factory.createEntityManager();
+    }
+
+    public void close(@Disposes EntityManager manager) {
+        manager.close();
+    }    
+}
+
+26. E a Transacao, Normandes?
+
+27. Aqui, voce so esta criando o EntityManager, mas e a Transacao?
+
+28. Bom, lembra la que, na Transacao, a gente precisava, no metodo salvar(), a gente precisava colocar essa anotacao @Transactional,
+
+public class CadastroAcessorioService implements Serializable {
+
+    private static final serialVersionUID = 0L;
+
+    @Inject
+    private AcessorioDAO acessorioDAO;
+
+    >>> @Transactional
+    public Acessorio salvar(Acessorio acessorio) throws NegocioException {
+
+        ...
+    }
+}
+
+29. E essa anotacao @Transactional eh nossa, tambem.
+
+30. Esta la no pacotezinho .util.jpa. Bom, essa anotacao Transactional.java, aqui, nao em nada nela aqui,
+
+@InterceptorBinding
+@Retention(RetentionPolicy.RUNTIME)
+@Target({Element.TYPE, Element.METHOD})
+public @interface Transactional {
+
+}
+
+, mas existe um interceptador, ou seja, TransactionInterceptor.java, para aquela anotacao,
+
+@Interceptor
+@Transactional
+public class TransactionInterceptor implements Serializable {
+
+    private static final long serialVersionUID = 0L;
+
+    private @Inject EntityManager manager;
+
+    @AroundInvoke
+    public Object invoke(InvocationContext context) throws Exception {
+        EntityTransaction transaction = this.manager.getTransaction();
+        boolean owner = false;
+        try {
+            if (!transaction.isActive()) {
+                /** Truque para fazer rollback no que ja passou. **/
+                /** Senao, um futuro commit confirmaria ate mesmo operacoes sem transacao **/
+                transaction.begin();
+                transaction.rollback();
+                /** Agora, sim, inicia a transacao **/
+                transaction.begin();
+                owner = true;                
+            }
+            return context.proceed();
+        } catch(Exception e) {
+            if (transaction != null && owner) {
+                transaction.rollback();
+            }
+            throw e;
+        } finally {
+            if (transaction != null && transaction.isActive() && owner) {
+                transaction.commit();
+            }
+        }
+    }
+}
+
+, tambem usando, aqui, no CDI, eu consigo interceptar, eu consigo fazer a interceptacao das chamadas do metodo.
+
+31. Como eh que esta funcionando isso aqui?
+
+32. Quando eu encontrar a anotacao @Transactional, ele vai interceptar,
+
+>>> @Interceptor
+>>> @Transactional
+public class TransactionInterceptor implements Serializable {
+
+, ele vai chamar esse metodo, aqui, 
+
+@AroundInvoke
+public Object invoke(InvocationContext context) throws Exception {
+
+    ...
+
+, antes da execucao do nosso metodo. E, depois, tambem, porque ele esta Em Volta. Quando eu anoto esse metodo com @AroundInvoke, eu estou falando o seguinte, 'Eu quero que voce execute esse metodo,
+
+@AroundInvoke
+public Object invoke(InvocationContext context) throws Exception {
+
+    ...
+
+, antes de executar o metodo que esteja anotado com @Transactional,
+
+@Transactional
+public void salvar(Acessorio acessorio) throws NegocioException {
+    ...
+}
+
+33. Okay? Entao, vamos la mais uma vez, oh, quando eu defini essa classe, dessa forma, com essa anotacao, 
+
+@AroundInvoke
+public Object invoke(InvocationContext context) throws Exception {
+
+    ...
+
+, eu estou falando, 'Execute esse metodo antes de executar o salvar()',
+
+@Transactional
+public void salvar(Acessorio acessorio) throws NegocioException {
+    ...
+}
+
+34. Entao, ele vai vir aqui, 
+
+@AroundInvoke
+public Object invoke(InvocationContext context) throws Exception {
+
+    ...
+
+, e ele vai comecar a executar esse cara. E vamos ver o que que ele faz. Oh, ele pega a Transacao do EntityManager, 
+
+    EntityTransaction transaction = this.manager.getTransaction();
+
+, oh, eu mandei injetar o EntityManager,
+
+    private @Inject EntityManager manager;
+
+, ja vem injetado, para ca, e eu pego a Transacao,
+
+EntityTransaction transaction = this.manager.getTransaction();
+
+35. E, aqui, existe um truquezinho, bem simples, que eh o seguinte, oh, ele vai entrar aqui no metodo. Se a Transacao nao estiver ativa, ele vai entrar dentro do if(), e, ai, ele da o begin() e da o rollback(), por que que ele faz isso daqui?
+
+36. Ele faz um truquezinho, porque vai que deu algum problema em algum lugar e, ai, se tiver alguma coisa pendente, ele vai iniciar a transacao e dar o rollback.
+
+37. Para a gente nao ter nenhum problema com operacoes, ali, sem Transacao, operacoes para traz, ali, okay? Coisas erradas poderiam estar acontecendo.
+
+38. E, ai, sim, ele inicia uma nova Transacao.
+
+39. Nesse context.proceed(), ele esta falando, 'Agora, voce vai e continua a executar o metodo'.
+
+40. Nesse caso, o metodo salvar(),
+
+@Transactional
+public void salvar(Acessorio acessorio) throws NegocioException {
+    ...
+}
+
+41. Entao, ele vem e executou o metodo salvar(). Quando esse metodo terminar, ele vai voltar, ele volta aqui, oh, nesse return,
+
+    ...
+    >>> return context.proceed();
+  } catch (Exception e) {
+      if (transaction != null && owner) {
+          transaction.rollback();
+      }
+      throw e;
+  } finally {
+      if (transaction != null && transaction.isActive() && owner) {
+          transaction.commit();
+      }
+  }
+
+42. Se aconteceu alguma excecao la dentro, ele da o rollback na Transacao. Senao, se nao aconteceu nenhuma excecao, antes de ele dar o return, ele vai executar o finally, e, ai, no finally, ele vai executar o commit(). Ou seja, esse interceptador aqui esta fazendo o que para a gente?
+
+43. 1. Abrindo a Transacao; 2. A gente consegue Salvar; 3. Se nao deu nenhum erro, ele, simplesmente, da o commit; 3. Se deu algum erro, alguma excecao foi lancada, como, por exemplo, aqui, oh, 
+
+@Transactional
+public void salvar(Acessorio acessorio) throws NegocioException {
+    if (acessorio.getDescricao() == null acessorio.getDescricao().trim().equals("")) {
+        >>> throw new NegocioException("A descricao do acessorio eh obrigatorio");
+    }
+}
+
+, se alguma excecao foi lancada, ele da o rollback e nada vai ser salvo no banco de dados.
+
+44. Okay? Usamos esse truque, aqui,
+
+    if (!transaction.isActive()) {
+        >>>transaction.begin();
+        >>>transaction.rollback();
+
+        transaction.begin();
+
+        owner = true;
+    }
+
+45. Essa outra variavel owner, aqui, a gente inicializou com false. Ele so vai entrar, entao, dentro do if() para dar o rollback ou para dar o commit se owner for true. Porque, se deu algum probleminha antes, aqui, a gente nao precisa dar o rollback, porque, as vezes, pode ter dado algum problema antes, aqui, na Transacao, nao tenha chegado nesse ponto aqui,
+
+    if (!transaction.isActive()) {
+        transaction.begin();
+        transaction.rollback();
+
+        transaction.begin();
+
+        >>> owner = true; <<<
+    }
+
+46. Okay?
+
+47. Bom, eh assim que funciona, aqui, que a gente criou essa questao da Criacao do EntityManager e de abrir e fechar Transacao.
+
+48. Porque ficar abrindo, toda vez, aqui, a Transacao,
+
+@Transactional
+public void salvar(Acessorio acessorio) throws NegocioException {
+
+    ...
+}
+
+, ficar toda vez, no DAO, tendo que criar o EntityManager, eh uma coisa que nao faz muito sentido, se eh uma tarefa muito repetitiva.
+
+49. Entao, a gente pode usar a mao dos frameworks para nos auxiliar nisso dai. 
+
+50. Bom, um detalhe, entao, sobre isso, que, como nos fizemos dessa forma, a gente esta controlando a Transacao na mao, o transaction-type, que a gente definiu la pelo nosso persistence-unit, no persistence.xml, 
+
+    <persistence-unit name="locadoraVeiculoPU" transaction-type="RESOURCE_LOCAL">
+        ...
+    </persistence-unit>
+
+51. eh RESOURCE_LOCAL.
+
+52. Aqui, eu estou dizendo o seguinte, 'Eu quero controlar a Transacao na minha aplicacao, a minha Aplicacao mesmo toma conta da Transacao'.
+
+53. Eh o que a gente esta fazendo, aqui, no TransactionInterceptor.
+
+54. Eh no Interceptador da Transacao que a gente cuida, que a gente inicia, em que a gente da rollback, em que a gente da o commit. Eu coloco, aqui, no transaction-type, RESOURCE_LOCAL, ou seja, essa responsabilidade eh da minha aplicacao.
+
+55. Eu vou mostrar, para voce, que existe a possibilidade de a gente usar o JTA, o Java Transaction API.
+
+56. Para isso, eu vou te mostrar um exemplo, ate, no JBoss, usando o container Java EE, para a gente fazer um controle de Transacao pelo container.
+
+57. Okay? Para a gente nao ter que colocar essas informacoes aqui, na mao.
+
+58. Okay? Bom, eh isso daqui, essa eh uma tarefa comum, entao, um Interceptador como esse (TransactionInterceptor.java), um Produtor de EntityManage como esse (EntityManagerProducer.java), eh muito comum voce criar uma vez e reutilizar em varios projetos, ai, que voce for fazer, voce vai usar a mesma ideia, nos projetos que voce for colocar em Producao. Entao, salva essas classes, ai, esse Interceptador, a anotacao Transactional, para voce poder usar essa ideia, ai, tambem, nos proximos projetos que voce for participar.
+
+59. Fim da     Aula 07.001. Entendendo a Sessao e Transacao no Projeto.
+
+-->

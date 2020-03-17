@@ -1,0 +1,46 @@
+<!--
+
+    Aula 10.007. Exercicio - Exibindo a Imagem.
+
+1. Agora que ja temos uma imagem no banco de dados, tenho duas propostas para voce.
+
+2. A primeira sera voce mostrar a imagem atraves de um codigo simples, utilizando o JOptionPane. Isso nem eh um desafio.
+
+3. Voce pode usar a parte de testes do projeto locadora-veiculo-web e criar mais um teste com o codigo abaixo,
+
+@Test
+public void buscarFoto() {
+    Carro carro = manager.find(Carro.class, 14L);
+
+    if (carro.getFoto() != null) {
+        BufferedImage img = ImageIO.read(new ByteArrayInputStream(carro.getFoto()));
+
+        JOptionPane.showMessageDialog(null, new JLabel(new ImageIcon(img)));
+    } else {
+        System.out.println("Carro nao possui foto.");
+    }
+}
+
+4. Retornou,
+
+Hibernate: 
+    select
+        carro0_.codigo as codigo1_3_0_,
+        carro0_.chassi as chassi2_3_0_,
+        carro0_.cor as cor3_3_0_,
+        carro0_.data_criacao as data_cri4_3_0_,
+        carro0_.data_modificacao as data_mod5_3_0_,
+        carro0_.foto as foto6_3_0_,
+        carro0_.codigo_modelo as codigo_m9_3_0_,
+        carro0_.placa as placa7_3_0_,
+        carro0_.valor_diaria as valor_di8_3_0_ 
+    from
+        Carro carro0_ 
+    where
+        carro0_.codigo=?
+
+, e exibiu a imagem em um JOptionPane.
+
+5. 
+
+-->

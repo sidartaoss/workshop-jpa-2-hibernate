@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+"http://hibernate.sourceforge.net/hibernate-mapping-3.0.dtd">
+<!-- Generated 17/03/2019 18:04:26 by Hibernate Tools 3.5.0.Final -->
+<hibernate-mapping>
+    <class name="com.algaworks.locadora.model.CarroAcessorio" table="CARROACESSORIO">
+        <id name="id" type="com.algaworks.locadora.model.CarroAcessorioId">
+            <column name="ID" />
+            <generator class="assigned" />
+        </id>
+        <many-to-one name="carro" class="com.algaworks.locadora.model.Carro" fetch="join">
+            <column name="CARRO" />
+        </many-to-one>
+        <many-to-one name="acessorio" class="com.algaworks.locadora.model.Acessorio" fetch="join">
+            <column name="ACESSORIO" />
+        </many-to-one>
+    </class>
+</hibernate-mapping>

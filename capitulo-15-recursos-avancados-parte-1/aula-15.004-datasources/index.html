@@ -1,0 +1,103 @@
+<!--
+    Aula 15.004. Datasources
+
+1. Bem, nas ultimas Aplicacoes, ai, que a gente fez, eu usei o DataSource, para configurar Conexao com o Banco de Dados, como eh o caso, ai, dessa aplicacao, gerenciador-acesso, nao eh?, que a gente tinha feito, para explicar um pouquinho a respeito do Cache, mas a gente nao conversou um pouquinho sobre os DataSources.
+
+2. Entao, vamos la.
+
+3. Qual que eh a diferenca? Por que que existe o DataSource? Por que que a gente nao deixa a conexao sendo gerenciada na nossa Aplicacao?
+
+4. Bom, primeiro, porque deixar a Conexao sendo Gerenciada na nossa Aplicacao nao Recomendavel, existem alguns autores, que recomendam, falam, assim, oh, "Olha, eu prefiro que voce nao deixe a sua Aplicacao tomar conta disso."
+
+5. Beleza? Entao, voce ja separa, tira essa Responsabilidade da Aplicacao.
+
+6. E, tambem, imagina se voce tem um DataSource para conectar com o Banco, voce pode ter mais de uma Aplicacao, usando aquele mesmo DataSource, para conectar naquele Banco.
+
+7. Nao eh?
+
+8. Entao, fica Um Local Unico para voce configurar, usuario, senha, configurar numero de,..., configurar o Pool, por exemplo, de Conexoes. Okay?
+
+9. No caso, aqui, do Tomcat, nao eh?, se a gente estiver configurando, a gente pode colocar, aqui, no context.xml, da Aplicacao, em /src/main/webapp/META-INF/context.xml, ou a gente pode, se voce for configurar no Tomcat, eu faria assim, em Producao, configurar no Tomcat, vamos supor que esse Tomcat, aqui, \apache-tomcat-9.0.14, eu vou usar para Producao.
+
+10. Abre, dentro da pasta \apache-tomcat-9.0.14\conf, tem um arquivo context.xml, la, e voce consegue colocar a mesma configuracao, aqui, 
+
+	<Resource name="jdbc/GerenciadorAcessoDB" auth="Container" type="javax.sql.DataSource"
+			maxTotal="100" 
+			maxIdle="30" 
+			maxWaitMillis="10000"
+			username="root" 
+			password="admin" 
+			driverClassName="com.mysql.jdbc.Driver"
+            url="jdbc:mysql://localhost:3306/gerenciador_acesso" />
+            
+, usando esse context.xml, aqui, da Aplicacao, voce pode colocar la em \apache-tomcat-9.0.14\conf\context.xml, do Tomcat, para fazer a configuracao do DataSource.
+
+11. E, usando DataSource, tambem, a gente vai conseguir configurar diversos parametros de Pool.
+
+12. O que que seria esse Pool?
+
+13. Seriam varias conexoes simultaneas, ele ja vai la e levanta varias conexoes com o Banco, e, ai, na hora em que voce precisa acessar esse Banco, a sua Aplicacao nao comeca do zero, iniciando essa Conexao, TCP, que eh uma coisa demorada. Entao, o Pool de Conexoes, ali, no DataSource, ja vai ajudar a gente tambem, okay?
+
+14. No caso, aqui, deste DataSource, 
+
+<Resource name="jdbc/GerenciadorAcessoDB" auth="Container" type="javax.sql.DataSource"
+			maxTotal="100" 
+			maxIdle="30" 
+			maxWaitMillis="10000"
+			username="root" 
+			password="admin" 
+			driverClassName="com.mysql.jdbc.Driver"
+            url="jdbc:mysql://localhost:3306/gerenciador_acesso" />
+
+, a gente esta usando essa commons DBCP, em https://commons.apache.org/proper/commons-dbcp/configuration.html, que eh o Default, ai, do Tomcat. E, aqui, existem varios parametros, depois, se voce quiser dar uma olhadinha, nessa URL, oh, aqui, existem, oh, os varios parametros, que voce pode colocar na configuracao do DataSource.
+
+15. Okay?
+
+16. Os padroes: username, password, url, driverClassName, ja foram alguns que a gente viu, defaultAutoCommit, ele deixa a responsabilidade, aqui, oh, para o Driver, quando voce ve, aqui, oh, Default.
+
+17. Vamos ver um pouquinho mais.
+
+18. Oh, initialSize, ou seja, o Numero Inicial de Conexoes que serao criadas quando o pool esta iniciando.
+
+19. Entao, o Default eh zero. Entao, as vezes, voce fala, 'Po, nao, eu quero ja criar, iniciar com algumas conexoes criadas, nao eh?, a Aplicacao ja suba com algumas conexoes, porque, na hora em que for acessar, ja vai ser mais rapido'.
+
+20. O numero maximo de conexoes que pode ter, ou seja, maxTotal, o Default eh 8.
+
+21. O numero maximo de conexoes em idle, ou seja, em stand-by, ali, paradas, que pode ter.
+
+22. O minimo de conexoes em idle. 
+
+23. maxWaitMillis, nao eh?, vai ser o tempo maximo, em millissegundos, que o pool vai esperar por uma conexao. Se ele nao conseguir, ele vai retornar uma Excecao.
+
+24. Entao, eh legal a gente configurar esse valor, aqui,
+
+<Resource name="jdbc/GerenciadorAcessoDB" auth="Container" type="javax.sql.DataSource"
+			maxTotal="100" 
+			maxIdle="30" 
+			>>> maxWaitMillis="10000"
+			username="root" 
+			password="admin" 
+			driverClassName="com.mysql.jdbc.Driver"
+            url="jdbc:mysql://localhost:3306/gerenciador_acesso" />
+
+, para nao deixar o valor Default, que ele espera para sempre, indefinitely, porque, se estiver com algum problema, la, a Rede, nao estiver conseguindo conectar com o Banco, ele, 'Ah, lanca uma Excecao e fala, "Ah, nao consegui conectar"', voce ja fica sabendo direto.
+
+25. Nao eh?
+
+26. Questoes, aqui, oh, validationQuery. Eh uma consulta que ele vai fazer para validar se a Conexao esta certa, entao, ele vai la no Banco, faz uma Conexao, normalmente, coloca uma Consulta simples, la, sei la, select 1 from dual, se for no Oracle, por exemplo, select [alguma_coisa] de uma tabela, la, para verificar, se a conexao esta funcionando, ele esta conseguindo chegar no Banco, nao eh? 
+
+27. E tem varias outras, ai, propriedades, que voce pode colocar, para configurar esse Pool.
+
+28. removeAbandoned. Essa ai, ela vai, eh uma flag, o Default eh false, que significa que ela vai remover as conexoes que foram abandonadas. Porque, o que que significa essa Conexao Abandonada?
+
+29. Voce pega Uma Conexao, voce tem que devolver ela, voce tem que fechar aquilo la. Entao, as vezes, a Aplicacao pode ter dado algum erro, alguma coisa, e voce fala, 'Nao, eu preciso remover essa Conexao, para nao ficar la Perdida, Presa para sempre'.
+
+30. Nao eh? Entao, voce pode setar essas informacoes, setar o Timeout, do tempo que ele vai esperar antes de a Conexao Abandonada ser removida, ou seja, removeAbandonedTimeout.
+
+31. Nao eh?, logAbandoned, ou seja, se ele vai logar as Conexoes Abandonadas, mostrar isso no Log, falando, para voce, que ele fez essa remocao dessa Conexao Abandonada.
+
+32. Okay? Entao, o DataSource seria isso, seria essa Camada, ai, entre o Banco de Dados, nao eh?, e a sua Aplicacao, que eh Gerenciada pelo Container, beleza? Quem Gerencia ela eh o Container, e isso eh legal, eh uma coisa boa. Entao, recomendo voce utilizar, para Gerenciar a Conexao na sua Aplicacao.
+
+33. Fim da     Aula 15.004. Datasources.
+
+-->

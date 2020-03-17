@@ -1,0 +1,421 @@
+<!--
+    Aula 05.004. Mapeando Heranca com Tabela Unica
+
+1. Continuando o nosso sistema, a gente vai fazer, agora, o Cadastro do Motorista.
+
+2. Bem, se a gente olhar, aqui, no nosso Diagrama de Classes, UML, a gente ve que o Motorista eh Uma Pessoa.
+
+3. Entao, ele esta estendendo essa classe, aqui, Pessoa.
+
+4. Por que que a gente fez isso? Porque a gente tambem vai ter o Cadastro do Funcionario, que tambem tem coisas comuns de Pessoa. Entao, a gente resolveu estender de uma classe chamada, aqui, de Pessoa.
+
+5. Bom, e, ai, a gente pode fazer isso aqui de algumas formas. E a gente vai usar Heranca para fazer esse Mapeamento.
+
+6. A gente, ate, poderia inventar uma forma de Relacionamento com uma outra tabela, mas, para a gente aprender o Mapeamento em foma de Heranca, nos vamos fazer esse Mapemanto, aqui, com Heranca, okay?
+
+7. Nos vamos ver, nos Sistema, uma forma, eu vou colocar em um exercicio, para voce, uma outra forma para voce testar, okay?, e as outras a gente vai discutindo, ai, ao longo do curso.
+
+8. Beleza? Bom, vamos la. Para a gente fazer o Cadastro, entao, do Motorista, vamos dar uma olhada, a gente tem, entao, que criar essa classe Pessoa, aqui, que tem os atributos nome, dataNascimento, cpf, tem o sexo, tambem, e tem o numero do CNH, que eh so da classe Motorista.
+
+9. Bom, para a gente fazer isso, nos vamos ter que criar uma classe Pessoa, okay?, e uma classe Motorista, que vai estender Pessoa.
+
+10. Entao, vamos la, no Eclipse, para a gente comecar a fazer esse Mapeamento.
+
+11. Eu ja comecei a colocar algumas coisas do Controller, mas vamos la, vamos criar a classe Pessoa, primeiro, New / Class / Pessoa.
+
+12. Bom, se voce olhar, Uma Pessoa existe no nosso sistema?
+
+13. Uma Pessoa nao existe, somente Uma Pessoa nao existe. Existe, sim, Um Motorista e Um Funcionario.
+
+14. A gente nao vai ter um Cadastro de Pessoa, certo? Entao, se a gente nao tem um Cadastro de Uma Pessoa, a Pessoa nao existe, vamos colocar essa classe como uma classe abstrata. Por que?
+
+15. Porque, simplesmente, por si so, nao faz sentido, nao eh verdade?
+
+16. Bom, o que que essa Pessoa vai ter?
+
+17. Ela vai ter, aqui, o atributo codigo, o atributo nome, o atributo dataNascimento e o atributo cpf,
+
+package com.algaworks.curso.jpa2.modelo;
+
+import java.util.Date;
+
+public abstract class Pessoa {`
+
+    private Long codigo;
+    private String nome;
+    private Date dataNascimento;
+    private String cpf;
+
+}
+
+18. Beleza. Eu vou deixar o sexo para depois, as vezes, eu deixo em um exercicio, ai, para voce lembrar, treinar como eh que faz o mapeamento de enumeracao.
+
+19. Bom, entao, vamos la, codigo, nome, dataNascimento, cpf.
+
+20. Okay, vamos criar os Getters e os Setters, para as nossas subclasses estenderem a classe Pessoa, certo?
+
+21. E, aqui, a gente faz o mapeamento normal.
+
+22. O atributo codigo vai ser o ID da nossa tabela. Estrategia la, do Auto_Increment, do MySQL,
+
+import javax.persistence.Id;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    public Long getCodigo() {
+        return codigo;
+    }
+
+, deixa o MySQL se virar, la.
+
+23. A Data de Nascimento. Tem que colocar, aqui, @Temporal, e TemporalType.DATE, nao eh?, a nao ser que voce saiba a hora que a Pessoa nasceu. Vamos dar o nome da coluna, aqui, tambem, @Column(name = "data_nascimento"), a gente pode colocar com @Column, qualquer um desses elementos, e mudar o nome da coluna,
+
+import javax.persistence.Temporal;
+import javax.persistence.Column;
+
+    @Temporal(TemporalType.DATE)
+    @Column(name = "data_nascimento")
+    public Date getDataNascimento() {
+        return dataNascimento;
+    }
+ 
+24. Entao, se a gente quiser colocar aqui, oh, data_nascimento, e nao quer que fique junto, a gente pode colocar, isso aqui eh muito, muito comum.
+
+25. Sempre lembre-se disso. A data de nascimento, no Java, a gente costuma colocar em Camel Case, tudo junto. Mas, no Banco de dados, muitas vezes, eh separado, por underscore. Entao, com essa anotacao @Column, aqui, voce vai ver ela direto, ai, vai ter que usar ela direto nos seus mapeamentos.
+
+26. Okay. Mapeamos aqui. Vamos criar a classe Motorista,
+
+package com.algaworks.curso.jpa2.modelo;
+
+public class Motorista {
+
+}
+
+27. A classe Motorista, entao, como a gente viu, ela estende de Pessoa.
+
+28. E o que que ela tem a mais? O que que ela esta especializando de Pessoa?
+
+29. O numero da CNH,
+
+package com.algaworks.curso.jpa2.modelo;
+
+public class Motorista {
+
+    private String numeroCNH;
+
+}
+
+30. Vamos gerar o Getter e o Setter,
+
+package com.algaworks.curso.jpa2.modelo;
+
+public class Motorista {
+
+    private String numeroCNH;
+
+    public String getNumeroCNH() {
+        return numeroCNH;
+    }
+
+    public void setNumeroCNH(String numeroCNH) {
+        this.numeroCNH = numeroCNH;
+    }
+
+}
+
+31. Bom, e agora? O que que a gente faz para mapear aqui? Eh so fazer isso aqui?
+
+32. Nao, nao.
+
+33. Tem que colocar, aqui, ainda, o @Entity, em Pessoa,
+
+import javax.persistence.Entity;
+
+@Entity
+public abstract class Pessoa {
+
+    ...
+}
+
+34. Nao muda, tambem, na classe Motorista. A gente vai mapear com @Entity,
+
+import javax.persistence.Entity;
+
+@Entity
+public class Motorista extends Pessoa {
+
+    ...
+
+}
+
+35. Agora que entra o detalhezinho para falar a Estrategia que a gente vai utilizar da Heranca. Existem algumas estrategias, ai, da Heranca, e nos vamos ver todas elas, fique tranquilo. Mas, agora, para o nosso sistema, para essa parte, aqui, agora, nos vamos usar essa Estrategia aqui, oh, 
+
+import javax.persistence.Inheritance;
+
+@Entity
+@Inheritance
+public abstract class Pessoa {
+
+    ...
+}
+
+, a gente mapeia, aqui, como Heranca, e coloca, qual que eh a Estrategia que eu quero usar?,
+
+@Entity
+@Inheritance(strategy = )
+public abstract class Pessoa {
+
+    ...
+}
+
+36. O tipo da Estrategia que eu quero usar, ai, eu vou colocar, o Tipo da Heranca, InheritanceType,
+
+import javax.persistence.InheritanceType;
+
+@Entity
+@Inheritance(strategy = InheritanceType)
+public abstract class Pessoa {
+
+    ...
+}
+
+, o Tipo da Heranca, do pacote javax.persistence, InheritanceType.SINGLE_TABLE,
+
+@Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+public abstract class Pessoa {
+
+    ...
+}
+
+37. Nos vamos usar essa Estrategia, aqui, agora. Eh a Estrategia de Uma Tabela unica. Voce vai ver o que que isso vai virar no banco de dados, o que que essa Estrategia Unica nos diz,
+
+                            Heranca
+
+
+                    InheritanceType.SINGLE_TABLE
+
+38. Quando a gente usa esse Tipo de Estrategia de Mapeamento da Heranca, na hora em que gerar a tabela, a gente salvar, vai ter, la, eu so coloquei Codigo e Nome, aqui, vai gerar o Codigo, o Nome, as outras informacoes la no Banco de Dados, e o Tipo, vai adicionar uma coluna a mais la, de Tipo, e a gente vai falar qual que eh o Tipo, MOTORISTA / FUNCIONARIO, a gente vai falar para as nossas Subclasses, eu vou colocar la, oh, essa subclasse, aqui, eh um MOTORISTA, essa outra eh um FUNCIONARIO,
+
+                Codigo          Nome                        Tipo
+                1               Luiz Silva                  MOTORISTA
+                2               Jose dos Santos             FUNCIONARIO
+
+39. E, ai, quando eu fizer a Pesquisa, o JPA, la, o Hibernate, vai fazer sozinho, vai saber buscar. Se eu estiver buscando o Motorista, ele vai colocar, la na clausula Where, where tipo = 'MOTORISTA'.
+
+40. Ai, ele traz so as linhas que a coluna Tipo for igual a MOTORISTA.
+
+41. Mesma coisa para FUNCIONARIO.
+
+42. Ele coloca tudo, entao, em Uma Tabela.
+
+43. Essa eh uma das formas mais comuns e das mais performaticas tambem.
+
+44. Okay?
+
+45. Por que? Nao falei no inicio? Nem sempre eh bom voce comecar a colocar Heranca demais nos seus codigos, ta bom?
+
+46. O banco de dados nao trabalha com Heranca, ele nao eh feito para isso, entao, dependendo do tipo que voce usar, a performance pode ser prejudicada. E, tambem, Heranca, dependendo, se voce usar demais Heranca, ela vai dificultar, depois, a manutencao do seu codigo.
+
+47. Entao, assim, Heranca eh legal, eh feito, ai, para a gente usar, mas, toma cuidado, assim, nao eh,..., nao vai sair usando para todo lado, nao, 'Ah, isso aqui da para usar uma Heranca', nao. Tenten nao usar. Se der para fazer sem Heranca, ficar elegante sem Heranca, prefira, nao fica abusando nao, okay?
+
+48. Entao, vai ser isso daqui que vai ser gerado no Banco de dados,
+
+                Codigo          Nome                        Tipo
+                1               Luiz Silva                  MOTORISTA
+                2               Jose dos Santos             FUNCIONARIO
+
+, vai adicionar essa coluna Tipo, aqui, e ele vai inserir, aqui, para a gente, essa coluna Tipo a mais aqui, com o codigo.
+
+49. Vamos la, entao, como eh que a gente faz isso, aqui, na classe?
+
+50. Bom, a gente vai, aqui, na Entidade Pessoa, aqui, na classe abstrata Pessoa, e nos vamos falar qual que eh o nome dessa Coluna,
+
+                Codigo          Nome                        >>> Tipo <<<
+                1               Luiz Silva                  MOTORISTA
+                2               Jose dos Santos             FUNCIONARIO
+
+, e qual que eh o tipo de dado,
+
+                Codigo          Nome                        Tipo
+                1               Luiz Silva                  >>> MOTORISTA <<<
+                2               Jose dos Santos             >>> FUNCIONARIO <<<
+
+, que a gente pode colocar aqui.
+
+51. Entao, a gente vem aqui, 
+
+@Entity
+@Inheritance(strategy = Inheritance.SINGLE_TABLE)
+>>> <<<
+public abstract class Pessoa {
+
+    ...
+}
+
+, coloca uma outra anotacao, DiscriminatorColumn, do pacote javax.persistence, 
+
+import javax.persistence.DiscriminatorColumn;
+
+@Entity
+@Inheritance(strategy = Inheritance.SINGLE_TABLE)
+@DiscriminatorColumn
+public abstract class Pessoa {
+
+    ...
+}
+
+, para falar, oh, 'Qual que eh a coluna que discrimina as filhas? Qual que eh o nome dessa coluna?'
+
+52. Vamos colocar Qual eh o Tipo de Pessoa, por exemplo, que tem la,
+
+@Entity
+@Inheritance(strategy = Inheritance.SINGLE_TABLE)
+@DiscriminatorColumn(name = "TIPO_PESSOA")
+public abstract class Pessoa {
+
+    ...
+}
+
+, e, ai, fica facil de a gente ver, nao eh?
+
+53. E qual que eh o Tipo? discriminatorType?
+
+54. DiscriminatorType., tem CHAR, INTEGER, e STRING.
+
+55. Pode colocar um CHAR, nao eh?, Um unico caracter la, a gente coloca la a inicial, por exemplo, a primeira letra, um numero, ou uma String, para a gente escrever MOTORISTA, deixar mais facil de ler,
+
+@Entity
+@Inheritance(strategy = Inheritance.SINGLE_TABLE)
+@DiscriminatorColumn(name = "TIPO_PESSOA", discriminatorType = DiscriminatorType.STRING)
+public abstract class Pessoa {
+
+    ...
+}
+
+56. Colocamos, entao, essa forma aqui.
+
+57. Quando a gente for la para Motorista, ele ja esta estendendo tudo la, repara que, para Motorista, eu nao precisei nem colocar o ID, porque ele ja esta estendendo la da classe Pessoa, nao eh verdade?, e, aqui, eu vou colocar o DiscriminatorValue, do pacote javax.persistence, para falar qual que eh o valor que vai ser inserido nessa coluna,
+
+import javax.persistence.DiscriminatorValue;
+
+@Entity
+@DiscriminatorValue("MOTORISTA")
+public class Motorista {
+
+    private String numeroCNH;
+
+    ...
+}
+
+58. Vamos colocar, aqui, 'MOTORISTA', tudo maiusculo.
+
+59. Okay?
+
+60. Simples, assim.
+
+61. Bem facil, nao eh nao?
+
+62. Agora, eh so a gente continuar no desenvolvimento do nosso sistema.
+
+63. Aqui, eu so criei a parte do JSF. No CadastroMotoristaBean.java, agora, eu ja posso importar, aqui, o Motorista. Entao, falta, ai, a gente criar o Servico, na Pesquisa, falta a gente criar o DAO, tambem, para a gente terminar esse CRUD, aqui, do Cadastro de Motorista.
+
+64. Vamos fazendo esses caras, junto, aqui.
+
+65. Vamos comecar pelo DAO, criar uma nova classe, aqui, MotoristaDAO.
+
+66. Atalho no Eclipse para substituir o nome das variaveis / parametros dentro do metodo: Alt + Shift + R: pressionar em cima do nome da variavel.
+
+67. Okay, fizemos, aqui, um DAO do Motorista, usando um CTRL+C / CTRL+V, bem discarado, aqui, nao eh?, para ganhar tempo, okay, fizemos o DAO, vamos fazer o Servico, agora.
+
+68. A gente vem, aqui, no pacote .service, vamos dar um CTRL+C / CTRL+V na classe CadastroCarroService.java, renomeando para CadastroMotoristaService.java.
+
+69. Okay. Vamos voltar la no nosso Controller, do JSF. CTRL+SHIFT+O.
+
+70. Agora, la na pagininha, CadastroMotorista.xhtml, deixa eu so tirar, aqui o Sexo, que eu vou deixar para voce fazer. Okay, entao, la, a gente esta mostrando o Codigo, o Nome, a Data de nascimento, o CPF e a CNH. A CNH eh especifica do Motorista, certo?
+
+71. Bom, eu acho que eh so isso daqui, deixa eu iniciar o MySQL, aqui, a primeira vez vai demorar um pouquinho, e, ai, eu ja estou com o Workbench, aqui, iniciado, para a gente ver a tabela que ele vai criar, aqui, no banco de dados, e a forma como ela vai estar criada.
+
+72. Vamos esperar, aqui, o Servidor subir, o MySQL, okay, vamos la, entrar, aqui, em http://localhost:8080/locadora-veiculo-web/motorista/PesquisaMotorista.xhtml, agora, ele vai inicializar, aqui, o Hibernate, vai ver que nao existe, la, a tabela, beleza, retornou, no Log do Servidor,
+
+Hibernate: 
+    select
+        motorista0_.codigo as codigo2_5_,
+        motorista0_.cpf as cpf3_5_,
+        motorista0_.data_nascimento as data4_5_,
+        motorista0_.nome as nome5_5_,
+        motorista0_.numero_cnh as numero6_5_ 
+    from
+        Pessoa motorista0_ 
+    where
+        motorista0_.tipo_pessoa='MOTORISTA'
+
+73. Olha so, se voce olhar, ele ja faz o Select, nao eh?, porque a nossa tabela eh de Pesquisa, ja vem com o Select pronto.
+
+74. Oh, buscou em Pessoa, onde o tipo_pessoa eh igual a 'MOTORISTA'. Ele ja tentou buscar. Logicamente, nao tem nada cadastrado, vamos la cadastrar um Novo Motorista, para eu te mostrar.
+
+75. Entao, o Nome, Jose dos Santos, Data de Nascimento, vou colocar qualquer uma, aqui, mesmo, 12/08/1980, CPF, 11111111111, nao tem validacao de CPF, Carteira de Motorista, 45454545, alguma coisa assim.
+
+76. Mandar Salvar, aqui, falou que foi Salvo com Sucesso. 
+
+77. Vamos olhar no Banco de Dados, aqui, a Tabela que foi gerada.
+
+78. Oh, gerou a tabela pessoa, okay? Vamos fazer um select nela para a gente ver o que que tem la, 
+
+select * from pessoa
+
+#   tipo_pessoa,    codigo,     cpf,            data_nascimento,    nome,               numero_cnh
+    MOTORISTA,      1,          11111111111,    1980-08-10,         Jose dos Santos ,   45454545
+
+79. Olha so, ele colocou, aqui, oh, a coluna tipo_pessoa, com 'MOTORISTA'. Ai, colocou o resto das informacoes, la, que a gente salvou. Mas esta vendo que ele faz sozinho esse tipo_pessoa?
+
+80. Olha so, no INSERT que ele fez, la na tabela Pessoa, 
+
+Hibernate: 
+    insert 
+    into
+        Pessoa
+        (cpf, data_nascimento, nome, numero_cnh, tipo_pessoa) 
+    values
+        (?, ?, ?, ?, 'MOTORISTA')
+
+, ele colocou, la, o values, ele ja colocou fixo 'MOTORISTA',
+
+    values
+        (?, ?, ?, ?, 'MOTORISTA')
+
+81. Muito bom, nao eh? Bom, vou parar por aqui, para esta aula nao ficar muito grande.
+
+82. Deixa eu so mostrar a Consulta, voltar la na tela de consulta, deixa eu limpar o log, aqui. Se a gente for la, na tela de pesquisa de motorista, ele ja trouxe o Motorista pra gente. Se voce olhar la na consulta, de novo, oh, ele so vai trazer, entao, quando tipo_pessoa for igual a 'MOTORISTA', o qual foi definido, voltando, aqui, no nosso Modelo Motorista, aqui, a gente falou, 'Oh, o DiscriminatorValue eh MOTORISTA',
+
+@Entity
+@DiscriminatorValue("MOTORISTA")
+public class Motorista extends Pessoa {
+
+    ...
+}
+
+83. Se a gente tiver uma outra classe, que eh o que a gente vai ter, Funcionario, ele vai buscar somente onde for FUNCIONARIO,
+
+Hibernate: 
+    select
+        motorista0_.codigo as codigo2_5_,
+        motorista0_.cpf as cpf3_5_,
+        motorista0_.data_nascimento as data4_5_,
+        motorista0_.nome as nome5_5_,
+        motorista0_.numero_cnh as numero6_5_ 
+    from
+        Pessoa motorista0_ 
+    where
+        motorista0_.tipo_pessoa='MOTORISTA'
+
+84. Entao, nao eh?, so para finalizar, na nossa tabela, tipo_pessoa, a gente pode ter, entao, varias subclasses. Quando o tipo_pessoa for diferente, ele vai trazer somente aquele tipo de pessoa que a gente definiu.
+
+85. Fim da     Aula 05.004. Mapeando Heranca com Tabela Unica.
+
+
+
+
+-->

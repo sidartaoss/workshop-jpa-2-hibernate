@@ -1,0 +1,242 @@
+<!--
+    Aula 12.002. Funcoes de Agregacao SUM e Restricoes SQL
+
+1. Vou te mostrar, agora, um pouquinho mais do Criteria, falar sobre Projections, que a gente usa para fazer aquelas Consultas de Agregacao.
+
+2. E tambem vou te mostrar como eh que voce faz uma Restricao usando o SQL nativo.
+
+3. Okay? Porque pode ser que voce precise, como vai ser o caso dessa consulta, aqui.
+
+4. Eu ja fiz, aqui, uma telinha, que eu aloquei, aqui, no relatorio, que eh o Total de Ganho em Alugueis no Mes.
+
+5. Beleza? Essa telinha, aqui, a gente vai implementar a busca dela, agora mesmo. Esta la no menu de Relatorios, "Total ganho em alugueis no mes".
+
+6. Olha so, o quao dificil que eh essa telinha. Tem, aqui, o mes, que a gente vai passar o mes que a gente quer saber, e, quando eu clicar, aqui, em Pesquisa, eu vou colocar, aqui, Total ganho no mes, entao, se estiver Janeiro, se estiver Maio, entao, vai aparecer aqui.
+
+7. Okay?, o tanto que ganho naquele mes.
+
+8. Para a gente, so poder ver, por exemplo, se eu vier, aqui, em Pesquisar, no Relatorio de Pesquisa de Aluguel Por Criteria, na base de dados que eu tenho, agora, em Fevereiro, tem 1.500,00. Entao, quando a gente for no Relatorio de Total Ganho em Alugueis no Mes de Fevereiro, eu quero mostrar, aqui, 1.500,00, que eh o que eu tenho la no banco, agora.
+
+9. Beleza? Entao, o que que eu tenho que fazer?
+
+10. Um select que vai somar o Valor Total no Aluguel.
+
+11. Beleza?
+
+12. So que filtrado pelo Mes do Pedido.
+
+13. Entao, vamos la.
+
+14. Eu ja fiz, aqui, a telinha para voce nao perder tempo fazendo telinha, eh uma telinha bem simples, na hora em que a gente clicar no botao Pesquisa, 
+
+<p:commandButton value="Pesquisa" id="botaoPesquisa" action="#{relatorioAluguelBean.buscarTotalAlugueisNoMes}" update=""... 
+
+, ele vai chamar o buscarTotalAlugueisNoMes.
+
+15. Em RelatorioAluguelBean, esta, aqui, os meses, o AluguelDAO ja esta sendo injetado aqui, pra mim, e, aqui, no buscarTotalAlugueisNoMes(), aonde eu vou fazer ,
+
+public void buscarTotalAlugueisNoMes() {
+    this.aluguelDAO.calcularTotalDoMesDe(this.mesSelecionado.ordinal())
+}
+
+, .ordinal() para pegar, exatamente, a posicao do enum, onde JANERIO eh a posicao 0, FEVEREIRO eha posicao 1, MARCO eh a posicao 3, e assim por diante,
+
+private enum Meses {JANEIRO, FEVEREIVO, MARCO, ABRIL, MAIO, JUNHO, JULHO, AGOSTO, SETEMBRO, OUTUBRO, NOVEMBRO, DEZEMBRO};
+
+, e vou passar, aqui, mais 1,
+
+    public void buscarTotalAlugueisNoMes() {
+        this.aluguelDAO.calcularTotalDoMesDe(this.mesSelecionado.ordinal() + 1);
+    }
+
+16. Como eu disse, para eu deixar esse codigo, aqui, um pouquinho mais organizado, seria melhora a gente criar o enum Meses separado, passar, aqui, no Construtor do enum, qual que eh o valor do mes, por exemplo, seria uma forma de melhorar um pouquinho.
+
+17. Mas eu quero focar com voce aqui, no metodo calcularTotalDoMesDe(), que eh o metodo que a gente vai criar agora.
+
+18. 
+
+public BigDecimal calcularTotalDoMesDe(int mes) {
+
+
+    return null;
+}
+
+19. Faltou colocar aqui, oh, em RelatorioAluguelBean, 
+
+public void buscarTotalAlugueisNoMes() {
+    this.totalDoMes = this.aluguelDAO.calcularTotalDoMesDe(this.mesSelecionado.ordinal() + 1);
+}
+
+20. Esse totalDoMes eh, exatamente, o Total que vai aparecer, aqui, na tela.
+
+21. Okay?
+
+22. Entao, vamos la, atribuimos, vamos escrever a Query, aqui, agora.
+
+23. Beleza. Entao, o que que eu preciso fazer, a primeira coisa?
+
+24. Eu vou fazer com o Session, Criteria do Hibernate. Entao, eu tenho que pegar do EntityManager, e desempacotar, a Session do Hibernate, la de dentro.
+
+25. Agora, eu ja posso criar o Criteria, a partir do Session, eu vou criar para Aluguel, que eh la que eu quero fazer o select, okay?, que eu quero fazer a soma o valorTotal, da classe Aluguel, onde a Data do pedido eh do mes que eu vou informar,
+
+@RequestScoped
+public Session createHibernateSession() {
+    EntityManagerFactory factory = Persistence.createEntityManagerFactory("locadoraVeiculoPU");
+    return (Session) factory.createEntityManager();
+}
+
+public BigDecimal calcularTotalDoMes(int mes) {
+    Session session = this.createHibernateSession();
+
+    Criteria criteria = session.createCriteria(Aluguel.class);
+
+
+}
+
+26. Beleza? O mes da venda que eu quero saber, que eu vou passar como parametro para o metodo, eh o mes que veio.
+
+27. Okay. Entao, vamos la. Se voce pensar nessa Consulta, aqui, a primeira coisa que a gente quer fazer, se a gente quiser calcular o total, quanto que eu vendi em um determinado mes, precisa fazer a soma.
+
+28. Entao,
+
+    Session session = this.createHibernateSession();
+    Criteria criteria = session.createCriteria(Aluguel.class);
+    criteria.setProjection()
+
+, entao, no Projection, eu estou falando, "Eu quero ter esses campos, aqui, no resultado da minha consulta."
+
+29. Quais campos que eu quero fazer?
+
+30. Projections.sum("valorTotal");
+
+    Session session = this.createHibernateSession();
+    Criteria criteria = session.createCriteria(Aluguel.class);
+    criteria.setProjection(Projections.sum("valorTotal"));
+
+31. criteria.add(), vou adicionar, agora, a Restricao que eu quero. A Restricao que eu quero eh no mes da data do pedido, vai ser o mes que eu informei, aqui, nos parametros.
+
+32. Entao,
+
+    Session session = this.em.unwrap(Session.class);
+    Criteria criteria = session.createCriteria(Aluguel.class);
+    criteria.setProjection(Projections.sum("valorTotal"));
+    criteria.add(Restrictions.sqlRestriction("sql", value, type));
+
+, para a gente informar, aqui, a gente vai usar uma funcao, month(), que tem na maioria dos bancos de dados, "month(data_pedido) = ?", ou seja, month de dataPedido vai ser igual a 1 parametro. O que que eh esse month(), aqui? Esse month() vai ser executado pelo banco de dados, mas ele vai passar esse SQL restriction, passa, exatamente, isso daqui, "month(data_pedido) = ?", la na clausula where, para o SQL, okay?, para o banco de dados, okay?, ele vai montar exatamente isso daqui, isso, daqui, eh SQL, "month(data_pedido) = ?". Entao, eu estou passando, aqui, tem situacoes que voce nao vai conseguir fazer, nao existem, no Criteria, ou alguma situacao que voce nao consiga fazer, entao, voce pode usar funcoes do banco de dados,
+
+33. 
+
+    Session session = this.em.unwrap(Session.class);
+    Criteria criteria = session.createCriteria(Aluguel.class);
+    criteria.setProjection(Projections.sum("valorTotal"));
+    criteria.add(Restrictions.sqlRestriction("month(data_pedido) = ?", value, type));
+
+, eu estou te mostrando, justamente, isso, como eh que isso funciona.
+
+34. Okay. Qual que eh o valor que eu vou passar? Eh o mes,
+
+    criteria.add(Restrictions.sqlProjection("month(data_pedido) = ?", mes, ));
+
+35. E qual que eh o tipo desse campo que eu estou passando?
+
+36. StandardBasicTypes.INTEGER, eh o Inteiro que eu estou passando, ali,
+
+    criteria.add(Restrictions.sqlRestriction("month(data_pedido) = ?", mes, StandardBasicTypes.INTEGER));
+
+37. Entao, oh, recapitulando, Projection fala, 'Eu quero ter essesc caras, aqui, no meu retorno'. Quais caras? Ai, eu comeco a passar,
+
+    criteria.setProjectio(Projections.sum("valorTotal"));
+
+38. Aqui, no caso, Projections.sum(), so a soma do valorTotal.
+
+39. Aqui, no caso, eu estou passando um cara que agrupa, okay?, que vai somar todo mundo numa linha e vai retornar um resultado apenas.
+
+40. O sqlRestriction(), eu falo, 'Eu quero passar essa Restricao SQL para a minha consulta, ou seja, 'month(data_pedido) = ?', esse aqui eh sql puro.
+
+41. Beleza?
+
+42. Tanto eh, oh, olha o jeito que eu estou escrevendo, data_pedido tem que ser extamente do jeito que vai ser gerado no banco de dados. Aqui, no meu caso, data_pedido a coluna, olha la, eu nao alterei, ela eh gerada como data_pedido. Beleza?
+
+43. Se a gente consultar aqui, no Workbench, olha o jeito que esta data_pedido.
+
+44. Isso eh SQL puro.
+
+45. Agora, eu ja posso retornar,
+
+    return criteria.
+
+, quando eu faco uma soma,
+
+    criteria.setProjection(Projections.sum("valorTotal"));
+
+, quantas linhas eu retorno?
+
+46. So uma, nao eh?
+
+47. Voce faz select sum(alguma_coisa) from UMA_TABELA;
+
+48. Ele vai retornar so uma linha.
+
+49. Entao, quantos resultados tem aqui? Apenas, um, entao, a gente passa que eu quero retornar um uniqueResult(), eu so sei que nao eh uma Lista de Valores, okay?
+
+50. Eu adiciono Casting, aqui, para passar a compilar.
+
+51. E, se eu nao esqueci de nada, imagino que isso esta pronto.
+
+52. Vamos testar para a gente ver, nao eh?
+
+53. Deixa eu reiniciar o Servidor.
+
+54. Retornou,
+
+Hibernate: 
+    select
+        sum(this_.valor_total) as y0_ 
+    from
+        Aluguel this_ 
+    where
+        month(data_pedido) = ?
+
+55. Na Pagina do Relatorio Total ganho em alugueis no mes,
+
+Total ganho no mês
+R$ 1500.00
+
+56. Fez o select. Olha la o Select que ele fez,
+
+Hibernate: 
+    select
+        sum(this_.valor_total) as y0_ 
+    from
+        Aluguel this_ 
+    where
+        month(data_pedido) = ?
+
+57. Ja fez a soma do valor_total, em ALUGUEL, month(data_pedido) = ?.
+
+58. A funcao month() vai ser enviada, la, para o MySQL.
+
+59. E o MySQL sabe interpretar isso, que eh pegar apenas o mes de uma data.
+
+60. Entao, repara que o SELECTzinho, aqui, usando Criteria, eh bem facil de fazer.
+
+61. A medida que voce vai pegando confianca, ai, voce vai ver que nao tem nenhum problema voce criar consultas usando o Criteria do Hibernate, porque eh bem facil mesmo.
+
+62. 
+
+public BigDecimal calcularTotalDoMesDe(int mes) {
+    Session session = this.em.unwrap(Session.class);
+
+    Criteria criteria = session.createCriteria(Aluguel.class);
+
+    criteria.setProjection(Projections.sum("valorTotal"));
+
+    criteria.add(Restrictions.sqlRestriction("month(data_pedido) = ?", mes, StandardBasicTypes.INTEGER));
+
+    return (BigDecimal) criteria.uniqueResult();
+}
+
+63. Fim da      Aula 12.002. Funcoes de Agregacao SUM e Restricoes SQL.
+
+
+-->

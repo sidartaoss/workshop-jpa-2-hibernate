@@ -1,0 +1,642 @@
+<!--
+    Aula 13.001. Conversores
+
+1. Bom, a gente vai comecar a ver algumas das novidades do JPA 2.1. 
+
+2. E, para eu te mostrar a primeira delas, que eh o Converter, eu vou utilizar, inclusive, do JDK 1.8, do Java 8, isso mesmo.
+
+3. E, se voce nunca usou o Java 8, nao tem problema, voce esta no Curso do JPA, eu sei, mas ja eh interessante, nao eh?, voce comecar a ver um pouquinho.
+
+4. Entao, nesse link que eu estou colocando, aqui, embaixo, no blog da AlgaWorks, tem uma aula que a gente colocou, la, uma aula gratis, que explica a introducao ao Lambda do Java 8.
+
+5. E, la, no iniciozinho da aula, eu mostro como eh que a gente instala o Java 8 e o Eclipse, no caso, aqui, com o Java 8 tambem.
+
+6. Beleza? Eh muito, muito simples. Na verdade, eu mostro mais os links, la, para voce baixar, nao eh?, te mostro o processo, la.
+
+7. Beleza? Entao, vamos a aula. Como eu disse, eu quero te mostrar os Converters.
+
+8. E eu vou te mostrar, tambem, o contexto desse Converter, por que que a gente utiliza ele, na API de datas novas do Java 8 tambem.
+
+9. Beleza? Entao, por isso que nos estamos usando o JDK 8.
+
+10. Eu vou usar a nova API de datas do Java 8.
+
+11. Enquanto o Hibernate ainda nao tem suporte para esses tipos de dados novos do Java 8, a gente tem que utilizar o Converter.
+
+12. Okay? Entao, eh uma forma de eu explicar, ai, como eh que ele funciona. Pode ser que voce encontre um caso parecido, ai, no seu dia-a-dia.
+
+13. Entao, vamos la.
+
+14. E eu vou criar o projeto inteirinho do zero, nao eh?, um projeto Maven, aqui, para a gente fazer, fiquei com vontade de criar um projetinho do zero, desde o inicio, aqui, com voce.
+
+15. Entao, vamos la. Vou clicar, aqui, em New / Project... / Maven Project, marcar o simples, 'Create a simple project (skip archetype selection)', Group Id, com.algaworks, Artifact Id, novidades-jpa-2.1, Version 1.0.0-SNAPSHOT. Okay, beleza?
+
+16. Entao, a gente acaba de criar um Projeto Maven, ele coloca, aqui, o JRE 1.5, nao eh?, a gente precisa terminar de configurar, aqui, o nosso pom.xml.
+
+17. E, aqui, eu vou copiar, aqui, da minha cola, em pom.xml. O que que eu coloquei, aqui?
+
+18. Eu coloquei a propriedade UTF-8, para tirar o warning,
+
+    <properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+19. Coloquei a compilacao da versao 1.8, entao, ele vai gerar o codigo no Java 1.8, 
+
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.1</version>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+					<compilerArgument>-proc:none</compilerArgument>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+, e coloquei as dependencias do Hibernate, oh, ja eh a 5.4.1.Final, 
+
+!-- Núcleo do Hibernate --
+<dependency>
+    <groupId>org.hibernate</groupId>
+    <artifactId>hibernate-core</artifactId>
+    <version>5.4.1.Final</version>
+    <scope>compile</scope>
+</dependency>
+
+!-- Implementação de EntityManager da JPA --
+<dependency>
+    <groupId>org.hibernate</groupId>
+    <artifactId>hibernate-entitymanager</artifactId>
+    <version>5.4.1.Final</version>
+    <scope>compile</scope>
+</dependency>
+
+, eu coloquei, aqui, oh. Eu coloquei MySQL, JUnit, Hamcrest, DBUnit, jIntegrity.
+
+20. Por que? Esse projetinho, aqui, eu vou fazer um Teste de Integracao, como se fosse um Teste de Integracao, para a gente poder testar essa novidade do Converter.
+
+21. Beleza? Entao, vamos la. Quando a gente troca, aqui, nao eh?, o compilador ja fala, oh, esta desatualizado, aqui, o seu projeto.
+
+22. Voce clica, aqui, na Raiz do Projeto, com o botao direito, vem, aqui, em Maven / Update Project... / Da um Ok.
+
+23. E ele ja troca, la, ja foi para a versao 1.8 do Java, em JRE System Library.
+
+24. Bom, vamos la, vamos continuar agora.
+
+25. O que que a gente vai fazer?
+
+26. Pra gente trabalhar com jIntegrity, eu preciso, aqui, dentro de src/test/resources, criar algumas coisinhas, como, por exemplo, criar um novo arquivo, aqui, jintegrity.properties.
+
+27. E, nesse cara, eu vou colocar esse conteudo, aqui, oh, path=dados, xml=Usuario, que eh o seguinte, eu estou falando para ele que os arquivos xml vao se encontrar na pasta dados. Que pasta eh essa? Eh essa aqui, src/test/resources/dados. Nos ja vamos colocar. E o arquivo que tem la eh Usuario.xml.
+
+28. Entao, vamos la, criar src/test/resources/dados/Usuario.xml.
+
+29. O que que vai ter nesse Usuario.xml?
+
+30. Os dados para a gente inserir na Tabela de Usuario.
+
+31. Okay? Agora, mesmo, a gente preenche ela ai.
+
+32. Bom, para o jIntegrity conectar no banco de dados, a gente tambem precisa do arquivo hibernate.properties, que vai ter esse conteudo, aqui,
+
+hibernate.connection.driver_class=com.mysql.cj.jdbc.Driver
+hibernate.connection.url=jdbc:mysql://localhost:3306/novidades_jpa_2_1
+hibernate.connection.username=root
+hibernate.connection.password=admin
+
+33. Eu estou falando a classe que eu quero conectar, do MySQL, e eu ja criei o schema, la, novidades_jpa_2_1.
+
+34. Okay? Criei esse schema, la, antes.
+
+35. Bom, por enquanto, eh isso daqui. 
+
+36. Vamos seguir, e vamos criar o nosso modelo, nos vamos criar, aqui, oh, em src/main/java, no pacote com.algaworks.model, a classe Usuario,
+
+package com.algaworks.model;
+
+public class Usuario {
+
+
+}
+
+37. O que que eu quero fazer, aqui, nesse Usuario?
+
+38. Vamos la, eu vou comecar a te apresentar o problema.
+
+39. @Entity @Table(), nome da tabela, que eu gosto sempre de colocar, implements Serializable,
+
+@Entity
+@Table(name = "usuario")
+public class Usuario implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+
+
+}
+
+40. Okay. O que que nos vamos fazer, aqui, agora?
+
+41. A gente vai ter as propriedades codigo, nome, e, agora, que vem a novidade. Eu vou ter, aqui, a data, ao inves de eu usar o Date, normal, que tem, do pacote java.util, eu ja vou usar a classe nova de data do Java 8, que eh a LocalDate. A classe LocalDate so tem Dia/Mes/Ano, ela nao tem informacao de hora, que eh uma classe legal para a gente a Data de nascimento,
+
+import java.time.LocalDate;
+
+@Entity
+@Table(name = "usuario")
+public class Usuario implements Serializable {
+
+    ...
+
+    private Long codigo;
+    private String nome;
+    private LocalDate dataNascimento;
+
+    ...
+}
+
+42. Beleza?
+
+43. Entao, eu vou usar ela para colocar a Data de nascimento, que so tem Dia/Mes/Ano, eu nao preciso saber a hora que o cara nasceu, nao eh?
+
+44. Entao, vamos la. Deixa eu gerar, aqui, os Getters e os Setters e vamos gerar o hashCode() e o equals(), so em cima do codigo.
+
+45. Okay.
+
+46. E vamos mapear, aqui. Vamos usar o Tipo de Estrategia IDENTITY, ou seja, deixa o MySQL colocar o codigo para a gente.
+
+47. 
+
+    ...
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    public Long getCodigo() {
+        return codigo;
+    }
+
+48. Agora, a Data de nascimento.
+
+49. A Data de nascimento, eu vou trocar, aqui, o nome da coluna, no banco de dados, eu gosto que fica assim, oh, "data_nascimento", ficar o underscore no banco de dados,
+
+    ...
+
+    @Column(name = "data_nascimento")
+    public LocalDate getDataNascimento() {
+        return dataNascimento;
+    }
+
+50. So que, eu nao posso colocar, aqui, o @Temporal, como voce esta acostumado,
+
+    >>> @Temporal <<<
+    @Column(name = "data_nascimento")
+    public LocalDate getDataNascimento() {
+        return dataNascimento;
+    }
+
+51. Se eu colocar, aqui, oh, ele vai reclamar, ele vai falar, @Temporal, so pode ser para java.util.Date ou java.util.Calendar, nao pode colocar nesse tipo de dado, aqui, que voce esta colocando. Na hora em que eu for executar, vai dar problema. Vamos fazer o seguinte, deixa aqui e eu vou te mostrar, voce vai ver o problema acontecer,
+
+    @Temporal(TemporalType.DATE)
+    @Column(name = "data_nascimento")
+    public LocalDate getDataNascimento() {
+        return dataNascimento;
+    }
+
+52. Entao, vamos la, entao, a partir disso daqui, eu vou criar uma classe que vai nos auxiliar a gerar as tabelas.
+
+53. Nos vamos vir, aqui, oh, criar, aqui, no src/test/java, com.algaworks.util, GerarTabelas, 
+
+package com.algaworks.util;
+
+public class GerarTabelas {
+
+}
+
+54. Deixa eu pegar, aqui, a minha cola,
+
+public class GerarTabelas {
+
+    private static EntityManagerFactory emf = Persistence.createEntityManagerFactory("novidadesJPA21PU");
+
+    public static EntityManager createEntityManager() {
+        return emf.createEntityManger();
+    }
+
+    public static void main(String[] args) {
+        // Executando esse codigo antes dos testes, ira fazer o Hibernate gerar as
+        // tabelas a partir do arquivo persistence.xml.
+        EntityManager manager = GerarTabelas.createEntityManager();
+        manager.close();
+        System.out.println(">>>>> Tabelas geradas com sucesso! <<<<<");
+        System.exit(0);
+    }
+}
+
+55. Oh, veja bem, ele vai gerar as tabelas, so que ele precisa desse persistence-unit, aqui, que eu ainda nao criei.
+
+56. Entao, vamos criar la, aqui, dentro de src/main/resources.
+
+57. Fica dentro da folder META-INF.
+
+58. persistence.xml.
+
+59. Okay?
+
+60. Entao, aqui, oh, 
+
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence version="2.0"
+  xmlns="http://java.sun.com/xml/ns/persistence" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://java.sun.com/xml/ns/persistence http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd">
+
+  <persistence-unit name="novidadesJPA21PU" transaction-type="RESOURCE_LOCAL">
+    <properties>
+      <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/novidades_jpa_2_1" />
+      <property name="javax.persistence.jdbc.user" value="root" />
+      <property name="javax.persistence.jdbc.password" value="admin" />
+      <property name="javax.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver" />
+
+      <property name="hibernate.hbm2ddl.auto" value="update"/>
+      <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect"/>
+      <property name="hibernate.show_sql" value="true" />
+      <property name="hibernate.format_sql" value="true" />
+    </properties>
+  </persistence-unit>
+
+</persistence>
+
+, eh o mesmo que o GerarTabelas precisa, aqui,
+
+    private static EntityManagerFactory factory = Persistence.createEntityManagerFactory("novidadesJPA21PU");
+
+61. Beleza?
+
+62. O que mais que eu vou criar, aqui?
+
+63. Eu vou criar o log4j, que fica aqui, em src/main/resources, para a gente ver, log4j.properties, para a gente ver a saida, ai, do jIntegrity e do hibernate, aqui, no Console,
+
+# Set root logger level to DEBUG and its only appender to A1.
+log4j.rootLogger=INFO, A1
+
+log4j.appender.A1=org.apache.log4j.ConsoleAppender
+log4j.appender.A1.layout=org.apache.log4j.PatternLayout
+log4j.appender.A1.layout.ConversionPattern=%d [%t] %-5p %c - %m%n
+
+log4j.logger.com.jintegrity=WARN
+
+64. Okay, okay, vamos tentar gerar a tabela. Eh so mandar executar esse cara, aqui, GerarTabelas, ai, vamos ver o que que ele vai reclamar, aqui.
+
+65. Retornou,
+
+Caused by: org.hibernate.AnnotationException: @Temporal should only be set on a java.util.Date or java.util.Calendar property: com.algaworks.model.Usuario.dataNascimento
+
+66. Olha so, o @Temporal so pode ser usado no java.util.Date ou no java.util.Calendar.
+
+67. Entao, eu estou tentando usar, la, na dataNascimento, que eh uma propriedade dessas que nao pode.
+
+68. Entao, esta errado,
+
+@Temporal(TemporalType.DATE)
+@Column(name = "data_nascimento")
+public LocalDate getDataNascimento() {
+    return dataNascimento;
+}
+
+69. Beleza? Entao, nao posso colocar esse @Temporal, aqui,
+
+@Column(name = "data_nascimento")
+public LocalDate getDataNascimento() {
+    return dataNascimento;
+}
+
+70. Beleza? Esse @Temporal so serve para java.util.Date e java.util.Calendar.
+
+71. Entao, vamos la. Mas, entao, eu quero usar LocalDate, aqui, porque o LocalDate tem essa vantagem, ai, nao eh?, de ser mais simples, de ter um monte de metodos interessantes, tambem. Entao, como eh que a gente pode fazer?
+
+72. Vamos la, deixa eu pegar, aqui. Nos vamos utilizar o Convert.
+
+73. O que eh o Convert?
+
+74. Nos vamos fazer o seguinte, oh, tem uma anotacao nova, aqui, que eles adicionaram do pacote javax.persistence, que eh essa @Convert, e ela tem, aqui, a propriedade converter, e ele vai esperar uma classe para fazer essa conversao,
+
+@Convert(converter = )
+@Column(name = "data_nascimento")
+public LocalDate getDataNascimento() {
+    return dataNascimento;
+}
+
+75. Qual classe que eh essa?
+
+76. Nos vamos criar. Pode ser o nome que voce quiser. Vamos chamar, aqui, de LocalDateConverter,
+
+@Convert(converter = LocalDateConverter.class)
+@Column(name = "data_nascimento")
+public LocalDate getDataNascimento() {
+    return dataNascimento;
+}
+
+77. Por exemplo. Essa eh a classe que eu vou querer utilizar para fazer essa conversao. E que classe eh essa? Onde eh que a gente vai colocar?
+
+78. Vamos criar ela, aqui, oh, no pacote .model.util, por exemplo,
+
+package com.algaworks.model.util;
+
+public class LocalDateConverter {
+
+}
+
+79. O que que essa classe tem que ter para fazer essa conversao?
+
+80. Ela tem que ser anotada com @Converter,
+
+import javax.persistence.Converter;
+
+@Converter
+public class LocalDateConverter {
+
+}
+
+, e implementar AttributeConverter, do pacote javax.persistence.
+
+
+... 
+
+import javax.persistence.Converter;
+import javax.persistence.AttributeConverter;
+
+@Converter
+public class LocalDateConverter implements AttributeConverter<X, Y> {
+
+}
+
+81. E, aqui, eu falo qual que eh o atributo do meu model, ou seja, java.time.LocalDate, e qual que eh o atributo que esta no banco de dados, ou seja, java.util.Date,
+
+@Converter
+public class LocalDateConverter implements AttributeConverter< >>> LocalDate, Date <<< > {
+    
+}
+
+82. Ou seja, ele vai converter de LocalDate para Date e de Date para LocalDate, dependendo de onde a gente esta indo. Se a gente esta indo da nossa Aplicacao para o Banco, ele vai converter de LocalDate para Date. Se a gente esta vindo do Banco para a nossa classe, nao eh?, criar um Objeto, ele converte do Date para o LocalDate. Como que ele converte isso?
+
+83. Eu vou ser obrigado a implementar esses 2 metodos, aqui, oh, convertToDatabaseColumn(), e convertToEntityAttribute().
+
+84. Ta vendo? Entao, quando a gente esta indo, oh, para a coluna do Banco, para o Banco de Dados, a gente vai executar aqui,
+
+@Override
+public Date convertToDatabaseColumn(LocalDate attribute) {
+    return null;
+}
+
+85. E como eh que eu converto o LocalDate para o Date?
+
+86. Muito simples. Eu preciso usar, tambem, uma classe nova, esse cara, aqui, oh, essa classe, que so existe a partir do Java 8, java.time.Instant. Essa classe, Instant, ela vai nos auxiliar.
+
+87. Como?
+
+88. Eu pego, aqui, no atributo, invocando o metodo atStartOfDay(), na Zone, .atZone(), tem que utilizar informacoes da Zone, aqui, para a gente converter para esse Instant,
+
+...
+
+import java.time.Instant;
+import java.time.ZoneId;
+...
+
+@Override
+public Date convertToDatabaseColumn(LocalDate attribute) {
+    Instant instant = attribute.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
+
+}
+
+89. Entao, eu estou pegando a data de aniversario, la, do cara, que eu vou informar em LocalDate, eu vou te mostrar como eh que a gente cria ela, muito simples, fica bem mais facil que utilizar o java.util.Date, normal, e, para eu converter ele para Um Instante, eu faco isso. E, agora, para eu converter do Instante para o java.util.Date, eu uso Date, o Date, mesmo, do java.util, Date.from(), passando o Instante,
+
+@Override
+public Date convertToDatabaseColumn(LocalDate attribute) {
+    Instant instant = attribute.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant();
+    return Date.from(instant);
+}
+
+90. Ueh, esse metodo from() eu nao conhecia, nao, Normandes.
+
+91. Eh, porque ele, tambem, foi adicionado a partir da versao 8 do Java, na classe java.util.Date.
+
+92. Okay? Entao, o que ele faz, esse cara, aqui, na verdade, ele esta retornando um new Date(), pegando o Instant, em milissegundos. Beleza? Eh so um new Date(), pegando os milissegundos, da a mesma coisa.
+
+93. Beleza? Entao, dessa forma, aqui, eu consigo transformar para um Date, e mandar para o Banco de Dados.
+
+94. E o contrario?
+
+95. Quando estiver vindo do Banco de Dados e eu quero converter para LocalDate?
+
+96. Simples tambem. A gente, tambem, vai utilizar da classe Instant.
+
+97. Ai, tem um metodo, aqui, ofEpochMilli(), que eu vou criar, baseado em um milissegundo,
+
+@Override
+public LocalDate convertToEntityAttribute(Date dbData) {
+    Instant instant = Instant.ofEpochMilli(long epochMilli);
+}
+
+98. Entao, tem, aqui, o getTime(), que me devolve em millisegundos, nao eh isso? E, aqui, eu vou retornar o que? return LocalDateTime, eu preciso usar o LocalDateTime, ofInstant(), ai, eu coloco, aqui, o Instant, e preciso passar, tambem, informacoes da zona, ZoneId., passar o default,
+
+@Override
+public LocalDate convertToEntityAttribute(Date dbData) {
+    Instant instant = Instant.ofEpochMilli(dbData.getTime());
+    return LocalDateTime.ofInstant(instant, ZoneId.systemDefault()).toLocalDate();
+}
+
+99. Simples, assim. Ai, ele ja me devolve o LocalDate sem hora, nao eh?, nao tem informacoes de hora nesse LocalDate.
+
+100. So isso.
+
+101. So isso mesmo, Normandes?
+
+102. Voce acredita?
+
+103. So falta importar esse cara,
+
+@Convert(converter = LocalDateConverter.class)
+@Column(name = "data_nascimento")
+public LocalDate getDataNascimento() {
+    return dataNascimento;
+}
+
+104. Beleza. Nao tem que fazer mais nada, aqui.
+
+105. Vamos criar, entao, a nossa classe de teste, que seria a nossa classe de Teste de Integracao, vou criar em src/test/java, aqui, no pacote com.algaworks.model, tambem, vou chamar ela de UsuarioPersistenceTest,
+
+package com.algaworks.model;
+
+public class UsuarioPersistenceTest {
+
+
+}
+
+106. Okay? O que que esse cara, aqui, vai ter?
+
+107. Bom, eu vou usar o JIntegrity, entao, eu preciso do JIntegrity, vou chamar ele de helper. Vou usar o EntityManager, tambem. Antes de comecar o Teste, iniciamos o helper, falamos para o helper que a gente esta usando o MySQL, falo para ele 'Limpa e Insere os Dados', 
+
+public class UsuarioPersistenceTest {
+
+    private JIntegrity helper;
+
+    private EntityManager manager;
+
+    @Before
+    public void init() {
+        this.helper = new JIntegrity();
+        this.helper.useMySQL();
+
+        this.helper.cleanAndInsert();
+    }
+
+}
+
+108. Ah, mas que dados?
+
+109. Esta faltando, aqui, para a gente, criar, aqui, os dados, aqui, que vai inserir no banco de dados, em src/test/resources/dados/Usuario.xml,
+
+<?xml version="1.0" encoding="UTF-8"?>
+
+<dataset>
+    <usuario codigo="1" nome="Joao" data_nascimento="1990-10-02" />
+    <usuario codigo="2" nome="Maria" data_nascimento="1991-04-02" />
+</dataset>
+
+110. Que eh o seguinte, oh, o Usuario tem, la, o codigo, o nome e a data de nascimento. Coloco no formato que o MySQL entende, okay? Entao, ANO-MES-DIA, beleza? 
+
+111. Podemos voltar para ca, na classe UsuarioPersistenceTest.
+
+112. Entao, isso, aqui, ele ja vai inserir, vai limpar tudo que tem la e inserir, okay?
+
+113. Ah, uma coisa que faltou, tambem, a gente gerar as tabelas, nao eh?
+
+114. Entao, vamos aqui, em GerarTabelas, executar mais uma vez, esse camarada, aqui.
+
+115. Okay.
+
+116. Beleza? Entao, conseguimos gerar a tabela.
+
+117. Entao, beleza, a gente ja conseguiu, aqui, a gente vai limpar os dados que, porventura, tem na tabela e inserir novamente,
+
+@Before
+public void init() {
+    this.helper = new JIntegrity();
+    this.helper.useMySQL();
+
+    this.helper.cleanAndInsert();
+
+
+}
+
+, e vamos iniciar o EntityManager,
+
+@Before
+public void init() {
+    this.helper = new JIntegrity();
+    this.helper.useMySQL();
+
+    this.helper.cleanAndInsert();
+
+    this.manager = JPAHelper.currentEntityManager();
+}
+
+, com o EntityManager atual.
+
+118. Vamos criar, aqui, o metodo de Teste, 
+
+@Test
+public void deveRetornarDataDeNascimentoDoUsuario() {
+
+}
+
+119. Qual Usuario? Vamos buscar, aqui, agora,
+
+@Test
+public void deveRetornarDataDeNascimentoDoUsuario() {
+    Usuario usuario = this.manager.find(Usuario.class, 1L);
+
+
+}
+
+120. Vamos olhar, la, em Usuario.xml, para o usuario de codigo 1, a data de nascimento eh 02 de outubro de 1990. Beleza?
+
+121. Entao, a gente tem que confirmar isso. assertEquals(), que, olha so como eu vou te mostrar como eh que a gente cria uma data em um dia especifico usando LocalDate, ai, voce ve como eh simples. LocalDate.of(), ai, aqui, eu tenho que passar o ano, o mes, e o dia,
+
+@Test
+public void deveRetornarDataDeNascimentoDoUsuario() {
+    Usuario usuario = this.manager.find(Usuario.class, 1L);
+
+    // assertEquals(LocalDate.of(year, month, dayOfMonth))
+    assertEquals(LocalDate.of(1990, 10, 2), )
+}
+
+120. Okay? E isso, aqui, tem que ser igual ao usuario.getDataNascimento(),
+
+@Test
+public void deveRetornarDataDeNascimentoDoUsuario() {
+    Usuario usuario = this.manager.find(Usuario.class, 1L);
+
+    assertEquals(LocalDate.of(1990, 10, 2), usuario.getDataNascimento());
+}
+
+121. Okay. Entao, oh, se tudo der certo, a gente vai conseguir converter da data do Banco para esse LocalDate, do Java 8, que ainda nao tem o suporte, provavelmente, eles vao colocar, mas, enquanto nao tem, a gente tem que fazer essa conversao, se quiser usar o Java 8,
+
+@Test
+public void deveRetornarDataDeNascimentoDoUsuario() {
+    Usuario usuario = this.manager.find(Usuario.class, 1L);
+
+    assertEquals(>>> LocalDate.of(1990, 10, 2), usuario.getDataNascimento());
+}
+
+122. Acho que eh isso daqui. E vamos executar para ver? Vamos executar como teste.
+
+123. Okay, retornou,
+
+Hibernate: 
+    select
+        usuario0_.codigo as codigo1_0_0_,
+        usuario0_.data_nascimento as data_nas2_0_0_,
+        usuario0_.nome as nome3_0_0_ 
+    from
+        usuario usuario0_ 
+    where
+        usuario0_.codigo=?
+
+124. Na Guia JUnit, ficou verdinho.
+
+125. Ele conseguiu ir la do Banco, buscar, vamos la, dar uma olhada no Banco, fazer o select, aqui, de novo?
+
+select * from usuario;
+
+126. Retornou,
+
+# codigo, data_nascimento, nome
+1, 1990-10-02 03:00:00, Joao
+2, 1991-04-02 03:00:00, Maria
+
+
+127. A gente ve, oh, as datas, aqui, que foram inseridas no Banco, e a gente conseguiu converter para LocalDate, do Java 8.
+
+128. Enfim, o que eu queria te mostrar era isso. Mas, se voce falar assim, 'Eu nao vou usar o Java 8, entao, isso daqui nao serve para mim'. Nao, beleza, mas, as vezes, voce tem, falando em Datas, tambem, as vezes, voce tem uma Data, la, no formato que eh mais complicado, voce teria que fazer alguma, se fosse antes do JPA 2.1, voce teria que ficar convertendo, aqui, no codigo do model, 
+
+@Convert(converter = LocalDateConverter.class)
+@Column(name = "data_nascimento")
+public LocalDate getDataNascimento() {
+    return dataNascimento;
+}
+
+129. Dessa forma, aqui, voce separa as responsabilidades, fica uma coisa mais limpa, mais facil de voce ver.
+
+130. Entao, eh bem provavel que existam situacoes onde tem determinados campos, no banco, que nao tem, aqui, na classe de conversao, LocalDateConverter, algum atributo novo. Ou voce ja quer converter em um determinado, voce quer pegar varias colunas, la, e montar em um objeto, nao sei se seria uma forma legal de fazer. Mas, enfim, voce tem algumas opcoes de trabalhar com esse Converter, que eles colocaram no JPA 2.1. 
+
+131. Fim da     Aula 13.001. Conversores.
+
+
+
+
+
+
+-->

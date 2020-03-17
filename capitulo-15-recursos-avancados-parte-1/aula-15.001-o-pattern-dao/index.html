@@ -1,0 +1,1028 @@
+<!--
+    Aula 15.001. O Pattern DAO
+
+1. Vamos conversar um pouquinho mais sobre o DAO, o Data Access Object.
+
+2. Eh que a gente, durante o Curso, ai, a gente, no nosso Sistema, a gente usou DAO, mas vamos conversar mais sobre ele, aqui, beleza?, falar, aqui, um pouco da Teoria, e mostrar, de novo, um Sisteminha, criando o Sisteminha com DAO, e, se voce tiver alguma pergunta, ai, a mais, a gente conversa.
+
+3. Beleza? Entao, olha so. A gente tem o Banco de Dados, e eu preciso acessar esse Banco de Dados.
+
+4. Para isso, a gente cria, no nosso Sistema, uma Camada, de Software, ali, que vai ser representada pelo DAO.
+
+5. Essa camada de software sao classes e interfaces, nao eh nada mais do que isso.
+
+6. Mas as responsabilidades dessas classes e interfaces eh que sao importantes.
+
+7. As responsabilidades dela sao Acessar o Banco de Dados.
+
+8. Beleza? A gente nao vai escrever, nunca, uma Logica de Negocio dentro do DAO.
+
+9. A gente escreve a Logica de Negocio dentro da Camada de Logica.
+
+                                    DAO - Data Access Object
+
+
+
+                                            Logica
+
+                                              DAO
+
+                                          Banco De Dados
+
+10. Eh ai que a gente vai fazer todas as contas do nosso sistema, colocar a Logica, mesmo, de como eh que funciona o Sistema, nessa outra Camada, em outras Classes e Interfaces.
+
+11. Nao eh? Assim como a Apresentacao, que mostra as coisas para o Usuario, esta la em cima,
+
+                                    DAO - Data Access Object
+
+
+
+                                          Apresentacao
+
+                                            Logica
+
+                                              DAO
+
+                                          Banco De Dados
+
+12. E o acesso, normalmente, eh nesse sentido,
+
+                                    DAO - Data Access Object
+
+
+
+                                           Apresentacao
+                                                |
+                                                v
+                                              Logica
+                                                |
+                                                v
+                                               DAO
+                                                |
+                                                v
+                                          Banco De Dados
+
+13. No DAO, a gente nao vai ter acesso a Logica, nao faca isso.
+
+14. Beleza? E nem coloque regra de negocio dentro do DAO.
+
+15. E o Hibernate, o JPA, ele eh usado, ali, na Camada de DAO.
+
+16. Beleza? Entao, no DAO, a gente vai colocar o nosso EntityManager, a gente vai fazer as nossas Consultas, com Criteria, com JPA, beleza?
+
+17. Eh isso dai.
+
+18. E, para isso, eu criei mais um Sisteminha, para a gente brincar um pouquinho, de DAO, para a gente conversar um pouquinho mais sobre ele, aqui, que eh o Seguinte. 
+
+19. Esse Sisteminha, eh um Sisteminha simples, de fazer Pedidos de venda, e adicionar itens dentro desse Pedido.
+
+20. Entao, olha so, a nossa classe, o nosso pacote .model, aqui, ele tem la, oh, a Entidade Pedido, as propriedades codigo, uma referencia a esse pedido, eu coloquei uma String qualquer, aqui, para a gente brincar, entao, a gente coloca, aqui, no atributo referencia, qualquer coisa, a Cidade, por exemplo, desse Pedido.
+
+21. A Data em que esta sendo feito a venda, o Valor Total desse Pedido, a Entrega, aqui, eh um enum, tem, la, se ela esta PENDENTE, ou REALIZADA, e os Itens desse Pedido,
+
+@Entity
+@Table(name = "pedido")
+public class Pedido implements Serializable {
+
+    ...
+
+    private Long codigo;
+    private String referencia;
+    private Date dataVenda;
+    private BigDecimal valorTotal;
+    private Entrega entrega;
+    private List<ItemPedido> itensPedido;
+
+    ...
+}
+
+22. Em um Item de um Pedido, tem, la, descricao, que eu vou falar, sei la, eh um sabonete, eh um shampoo, alguma coisa assim, a quantidade, o valor unitario, nao eh?, o valor deste item, e tem uma referencia para Pedido, ou seja, 1 Item eh de 1 Pedido,
+
+@Entity
+@Table(name = "item_pedido")
+public class ItemPedido implements Serializable {
+
+    ...
+
+    private Long codigo;
+    private String descricao;
+    private Integer quantidade;
+    private BigDecimal valor;
+    private Pedido pedido;
+
+    ...
+
+}
+
+23. Beleza? O Modelo eh assim. E eu criei algumas telas, aqui, que a gente vai brincar, para a gente poder brincar e mexer, aqui, nos DAO's.
+
+24. Beleza?
+
+25. Vamos comecar pela tela de Cadastro de Pedido.
+
+26. Essa tela Cadastro de Pedido, aqui, eu vou informar, dar uma olhada, aqui, rapidinho, nesta pagina, que eu fiz. Aqui, no momento da gravacao desta aula, ja tem a versao nova do JSF, entao, eu ja fiz ela atualizada com o JSF 2.2, ja estou usando a ultima versao do CDI, tambem, entao, tem algumas coisas que estao diferentes, ai, do sistema-locadora-web, que foram atualizadas para melhorar um pouquinho.
+
+27. Beleza? Entao, pegue este projeto, aqui, que ele esta mais atualizado.
+
+28. Olha so. No Cadastro de Pedido, eu tenho, eu vou cadastrar, la, eu vou ver o codigo, eu coloquei como <h:outputText, entao, a gente so pode mostrar, porque isso vai ser gerado,
+
+    <p:outputLabel value="Codigo" />
+    <h:outputText value="#{cadastroPedidoBean.pedido.codigo}" />
+
+29. Assim como a Data da venda, vai ser uma nova data quando estiver criando essa venda, nao eh?
+
+    <p:outputLabel value="Data da venda" />
+    <h:outputText value="#{cadastroPedidoBean.pedido.dataVenda}">
+        <f:convertDateTime pattern="dd/MM/yyyy" />
+    </h:outputText>
+
+30. O Valor total tambem vai se calculado, porque vai ser a soma de todos os Itens,
+
+    <p:outputLabel value="Valor total" />
+    <h:outputText value="#{cadastroPedidoBean.pedido.valorTotal}" />
+
+31. A Referencia, que a gente vai colocar uma String qualquer, la, vamos colocar, por exemplo, a Cidade,
+
+    <p:outputLabel value="Referencia" />
+    <h:inputText id="referencia" value="#{cadastroPedidoBean.pedido.referencia}" />
+
+32. A Entrega, para a gente falar se ela esta pendente ou nao, se ela ja foi realizada,
+
+    <p:outputLabel value="Entrega" for="entrega" />
+    <p:selectOneMenu id="entrega" value="#{cadastroPedidoBean.pedido.entrega}">
+        <f:selectItems value="#{cadastroPedidoBean.entregas}" />
+    </p:selectOneMenu>
+
+33. E, ai, eu vou ter um botaozinho, "Adicionar item", beleza? Quando eu clicar nesse botaozinho, eu adiciono um novo item no meu Pedido, olha so, eu fui la no pedido,
+
+    <p:commandButton style="margin-top: 20px" value="Adicionar item" actionListener="#{cadastroPedidoBean.>>> pedido <<<.adicionarNovoItem}" update="itemTable" />
+
+, e criei um metodo, aqui, oh, adicionarNovoItem(), 
+
+public void adicionarNovoItem() {
+    if (this.itensPedido == null) {
+        this.itensPedido = new ArrayList<>();
+    }
+    ItemPedido itemPedido = new ItemPedido();
+    itemPedido.setPedido(this);
+    this.itensPedido.add(itemPedido);
+}
+
+, que ele verifica se a Lista, ali, de Itens, esta Nula, cria um novo ArrayList. Ai, ele cria um novo ItemPedido, configura, nesse novo ItemPedido, o Pedido, que eh Este Objeto, aqui, e adiciona na Lista de itensPedido, esse ItemPedido que eu acabei de criar.
+
+34. E, aqui, a gente tem um dataTable, que a gente vai cadastrar o Item. A gente vai adicionar, la, Descricao, Quantidade e Valor unitario desse Item. Beleza?
+
+35. Depois, quando eu clicar em Salvar, a ideia eh a gente salvar isso no banco de dados, nao eh?, a gente trabalhar em cima dos DAO's, aqui, para te mostrar essa Camada funcionando.
+
+36. Entao, vamos olhar, aqui, o ManagedBean, CadastroPedidoBean.java. Ele tem, aqui, o Pedido,
+
+    ...
+
+    private Pedido pedido;
+
+    ...
+
+, que a gente esta cadastrando, uma Lista de Entregas, que eh para aparecer na Telinha,
+
+    ...
+
+    private List<Entrega> entregas;
+
+    ...
+
+, PedidoService, 
+
+        ...
+
+        @Inject
+        private PedidoService pedidoService;
+
+        ...
+
+, lembra desse cara, aqui, oh?
+
+                                    DAO - Data Access Object
+
+
+
+                                           Apresentacao
+                                                |
+                                                v
+                                             >>> Logica <<<
+                                                |
+                                                v
+                                               DAO
+                                                |
+                                                v
+                                          Banco De Dados
+
+, a Logica?
+
+37. A Logica nao acessa o DAO, aqui, oh?
+
+38. Entao, eu criei, aqui, uma classe, oh, PedidoService, que tem o metodo salvar(), e, aqui, eu vou colocar a Regra de Negocio que eu quero definir,
+
+        ...
+
+        @Inject
+        private PedidoDAO pedidoDAO;
+
+        @Transactional
+        public void salvar(Pedido pedido) {
+            BigDecimal valorTotal = BigDecimal.ZERO;
+
+            if (pedido.getItensPedido() != null) {
+                for (ItemPedido item : pedido.getItensPedido()) {
+                    valorTotal = valorTotal.add(item.getValor()
+                                                .multiply(new BigDecimal(item.getQuantidade())));
+                }
+            }
+
+            pedido.setValorTotal(valorTotal);
+
+            if (pedido.getCodigo == null) {
+                pedido.setDataVenda(new Date());
+            }
+
+            this.pedidoDAO.salvar(pedido);
+
+        }
+
+39. E, depois, ele vai acessar o DAO para salvar o Pedido.
+
+40. Beleza?
+
+41. Entao, oh, o que que eu estou fazendo, aqui, de regra, oh? Eu estou precisando determinar o valorTotal, que eh a soma dos itens, nao eh?, os valores de cada item. Entao, eu somo os valores dos itens, aqui, e defino o valor total do pedido. Assim como, se o Pedido, se o codigo for nulo, eu seto a Data de Venda, ou seja, entao, eu nao estou editando o Pedido, eh um Pedido Novo. Entao, eu defino a Data de Venda, com a Data atual, e mando salvar no Banco de dados, usando o DAO.
+
+42. Okay?
+
+43. Bom, bem parecido, nao eh?, com o que ja tinha no Sistema. No PedidoDAO, a gente tem, la, o EntityManager, entao, o EntityManager fica no DAO,
+
+public class PedidoDAO implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    @Inject
+    private EntityManager manager;
+
+    public void salvar(Pedido pedido) {
+
+    }
+
+    public List<Pedido filtrar(Pedido filtro) {
+        return null;
+    }
+
+    public Pedido buscarPeloCodigo(Long codigo) {
+        return null;
+    }
+
+}
+
+44. Eu nao vou injetar o EntityManager la, no CadastroPedidoBean, por exemplo, eu sempre vou colocar ele aqui, no DAO.
+
+45. Beleza? E, aqui, no EntityManager, eu posso pegar ele, aqui, .merge(), fazer um merge com pedido,
+
+public void salvar(Pedido pedido) {
+    this.manager.merge(pedido);
+}
+
+46. Por que que eu faco um merge()? Porque, se eu estiver atualizando, se eu estiver salvando, o merge ja vai conseguir fazer isso, ai, para mim, de forma direta.
+
+47. Beleza? Depois, a gente implementa, aqui, o filtrar(), o buscarPeloCodigo(), para a gente fazer a pesquisa e fazer a edicao.
+
+48. Bom, vamos ver se isso, daqui, ja sobe.
+
+49. Vamos iniciar o Tomcat, aqui.
+
+50. Okay? Vamos la ver se ele vai funcionar. Beleza, apareceu, aqui, a telinha.
+
+51. Como eu disse, as informacoes de Codigo, Data da venda, Valor total, a gente nao vai editar, Referencia, eu vou colocar, aqui, Rio de Janeiro, por exemplo, e PENDENTE.
+
+52. Vamos clicar em Adicionar item, em Descricao, Sabonete, em Quantidade, 10, em Valor Unitario, 1.50.
+
+53. Mandar Salvar, ele vai iniciar, aqui, o Hibernate.
+
+54. Beleza, olha la, inseriu o Pedido, e inseriu o Item Pedido,
+
+Hibernate: 
+    insert 
+    into
+        pedido
+        (data_venda, entrega, referencia, valor_total) 
+    values
+        (?, ?, ?, ?)
+Hibernate: 
+    insert 
+    into
+        item_pedido
+        (descricao, codigo_pedido, quantidade, valor) 
+    values
+        (?, ?, ?, ?)
+
+55. Vamos dar uma olhada, aqui, em Pedido, relacionamento com ItemPedido,
+
+@OneToMany(mappedBy = "pedido" cascade = CascadeType.ALL)
+public List<ItemPedido> getItensPedido() {
+    return itensPedido;    
+}
+
+56. No Relacionamento com ItemPedido, eu tenho CascadeType.ALL, por isso que ele ja salva o ItePedido, quando eu mando salvar o Pedido.
+
+57. Okay?
+
+58. Eu coloquei, tambem, nao sei se voce percebeu, ali, ele fazendo um monte de INSERT, antes, porque eu ja coloquei, aqui, o carregar-dados.sql, para a gente adicionar, ja, alguns Pedidos, alguns Itens de Pedidos, para a gente nao precisar ficar cadastrando toda hora.
+
+59. Entao, o que que eu quero que voce perceba, aqui, oh?
+
+60. Que, na parte da Apresentacao, que eh o CadastroPedidoBean, eu acessei a Logica, que eh o PedidoService, e, da Logica, eu acessei o DAO, ou seja, PedidoDAO.
+
+61. Beleza?
+
+62. Mas nada impede, dependendo do que voce for usar, por exemplo, numa Consulta, voce usar o PedidoDAO la no ManagedBean, ou seja, em CadastroPedidoBean, que representa a Camada de Apresentacao.
+
+63. Nao fica errado, nao.
+
+64. Beleza? Nao fica ruim, nao. Se voce tiver Logica de Negocio, ai, eh melhor voce criar a Camada de Servico, mesmo, colocar a Regra de Negocio, aqui, em PedidoSerice, igual eu fiz, aqui, e injetar a Logica, aqui, dentro, do ManagedBean, ou seja, em CadastroPedidoBean, injetar PedidoService.
+
+65. Mas, se voce for fazer apenas uma Consulta simples, alguma coisa assim, pode usar o PedidoDAO, dentro do ManagedBean.
+
+66. Tem gente que nao gosta disso, tem gente que coloca, ate mesmo uma, vamos supor, vamos fazer uma Consulta simples, pelo Codigo, ele coloca, aqui, na camada de Logica, nao eh?, no Servico, essa Consulta e so vai ter uma linha. So, daqui, do Servico, chama o DAO.
+
+67. Tem gente que gosta de fazer isso porque, ah, se ele resolver, amanha, colocar alguma outra regra, fica facil dele editar, ali, no Servico, beleza? Eh uma outra opcao.
+
+68. Mas, fica a vontade, ai. 
+
+69. Existem, assim, as recomendacoes, nao eh?, mas nao existe aquele negocio, assim, 'Nossa, se voce fizer assim,vai ficar muito errado.' 
+
+70. Nao, para este caso, assim, nao fica tao errado, nao.
+
+71. Beleza?
+
+72. Okay, entao, o Cadastro, a gente fez, aqui, CadastroPedidoBean, simples, ele, simplesmente, chama o metodo salvar(), la, no Service, depois, adiciona a mensagem, e chama o limpar(), aqui, para a gente, criar um novo Pedido, e mostrar, novamente, a Lista, la,
+
+public void salvar() {
+    this.pedidoService.salvar(this.pedido);
+    FacesUtil.addSuccessMessage("Pedido salvo com sucesso!");
+    limpar();
+}
+
+73. Okay. Vamos, agora, implementar a Tela de Consulta, la em PesquisaPedido.xhtml. Em PesquisaPedido.xhtml, eu vou ter, la, um PanelGrid, em que eu vou poder pesquisar pela Referencia, pelo Codigo, pelo Status da Entrega, la, se ja esta ENTREGUE, ou se esta PENDENTE a entrega.
+
+74. E, ai, ele vai mostrar, aqui, no DataTable, o resultado, o Codigo, a Referencia, a Data da Venda, o Valor Total, a Entrega, e vai ter um Botaozinho, la, que a gente pode clicar para Editar aquele Pedido.
+
+75. Beleza?
+
+76. Entao, vamos implementar, aqui. Em PesquisaPedidoBean, como eu disse, eu nao acho que fica tao errado a gente injetar o DAO, aqui, nao, o PedidoDAO, para a gente fazer esse Acesso, aqui, do DAO para essa consulta.
+
+77. Se voce nao gostar, falar, 'Ah, Normandes, eu prefiro colocar tudo no Service', fica a vontade. 
+
+78. Tambem tem, sei la, tem vezes que eu ja fiz assim, de colocar tudo no Servico, na Logica, e nunca colocar o DAO, aqui, direto, no ManagedBean.
+
+79. Beleza?
+
+80. E olha so como eh que eu pensei essa telinha, aqui, oh.
+
+81. Em PesquisaPedido, la em PesquisaPedidoBean, eu coloquei um filtro. Entao, esse filtro, o que eh esse filtro?
+
+82. Esse filtro seria a Entidade do Pedido, aqui.
+
+83. Beleza?
+
+84. Entao, eu vou preencher algumas coisas, aqui, algumas propriedades do Pedido, e vou passar para o metodo filtrar, do DAO,
+
+public void pesquisar() {
+    this.listaPedidos = this.pedidoDAO.filtrar(this.filtro);
+}
+
+85. E, ai, esse metodo PedidoDAO.filtrar(), a gente vai implementar ele, la, agora, com esse filtro que veio, aqui,
+
+public List<Pedido> filtrar(Pedido pedido) {
+
+}
+
+86. Vamos implementar isso, daqui, com Criteria, mesmo, do Hibernate,..., createCriteria para Pedido.class. Aqui, ele vai retornar criteria.list();
+
+public List<Pedido> filtrar(Pedido pedido) {
+    Session session = this.manager.unwrap(Session.class);
+    
+    Criteria criteria = session.createCriteria(Pedido.class);
+
+
+
+
+
+    return criteria.list();
+
+}
+
+87. Entao, olha so o que que eu posso fazer, aqui, oh.
+
+88. Se eu passei um filtro, por que que eu chamei esse metodo de filtrar()?
+
+89. Porque eu posso vir, aqui, oh, e comecar a fazer isso agora, Se o Codigo foi informado, ou seja, Se ele for Diferente de Null, eu posso adicionar, aqui, um Restrictions para o codigo,
+
+    Session session = this.manager.unwrap(Session.class);
+    Criteria crietria = session.createCriteria(Pedido.class);
+
+    if (filtro.getCodigo() != null) {
+        criteria.add(Restrictions.eq("codigo", filtro.getCodigo()));
+    }
+
+    return criteria.list();
+
+90. Eu posso fazer isso daqui, okay? Eu adiciono um Restrictions, pelo Codigo.
+
+91. Se ele informou a Referencia, ou seja, se a Referencia eh diferente de Null, e tambem for diferente de um Espaco Em Branco, ou seja, uma String Vazia, que, as vezes, ele pode colocar, la, alguma coisa, como vazio, entao, a gente pode, ja faz esse Teste, ai, tambem, para nao aceitar nem String vazia, a gente adiciona, aqui, oh, a gente adiciona, aqui, oh, Restrictions.ilike(), para a gente, tambem, nao importar com letra minuscula e maiuscula, para "referencia", filtro.getReferencia(), MatchMode.ANYWHERE. Beleza?
+
+    if (filtro.getReferencia != null && !"".equals(filtro.getReferencia())) {
+        criteria.add(Restrictions.ilike("referencia", filtro.getReferencia(), MatchMode.ANYWHERE))
+    }
+
+92. Se ele informou a Entrega, a gente tambem adiciona, aqui, o filtro da Entrega,
+
+    if (filtro.getEntrega != null) {
+        criteria.add(Restrictions.eq("entrega", filtro.getEntrega()));
+    }
+
+93. Okay. Entao, a gente, colocando assim, ta vendo?, a gente fez mais um pouco de Regra de Consulta, repara que isso, aqui, eh so consulta em cima, la no DAO.
+
+94. Beleza?
+
+95. Acredito que, com isso, daqui, ja vai funcionar, vou reiniciar, aqui, o Servidor Tomcat.
+
+96. Agora, vamos na Tela de Pesquisa, http://localhost:8080/pedidos-venda/PesquisaPedido.xhtml.
+
+97. E, ai, olha so, eu posso informar Codigo, Referencia, o Status da Entrega, e clicar no botao Pesquisar.
+
+98. Se eu nao clicar em nada, ele vai fazer o filtro, simplesmente, selecionando todo mundo. Vamos ver, aqui,
+
+Hibernate: 
+    select
+        this_.codigo as codigo1_1_0_,
+        this_.data_venda as data_ven2_1_0_,
+        this_.entrega as entrega3_1_0_,
+        this_.referencia as referenc4_1_0_,
+        this_.valor_total as valor_to5_1_0_ 
+    from
+        pedido this_
+
+99. Fez o SELECT sem adicionar nenhum filtro. Trouxe, la, todos que ele ja inseriu, aqui, antes, quando ele estava subindo o Servidor, 
+
+Hibernate: 
+    insert into pedido (referencia, data_venda, valor_total, entrega) values ("Rio de Janeiro", "2014-08-07", 200, "REALIZADA")
+Hibernate: 
+    insert into pedido (referencia, data_venda, valor_total, entrega) values ("Ribeirão Preto", "2014-08-08", 240, "REALIZADA")
+Hibernate: 
+    insert into pedido (referencia, data_venda, valor_total, entrega) values ("Belo Horizonte", "2014-08-09", 325, "REALIZADA")
+Hibernate: 
+    insert into item_pedido (descricao, quantidade, valor, codigo_pedido) values ("Sabonete Líquido", 50, 2, 1)
+Hibernate: 
+    insert into item_pedido (descricao, quantidade, valor, codigo_pedido) values ("Shampoo", 25, 4, 1)
+Hibernate: 
+    insert into item_pedido (descricao, quantidade, valor, codigo_pedido) values ("Churrasqueira elétrica", 240, 1, 2)
+Hibernate: 
+    insert into item_pedido (descricao, quantidade, valor, codigo_pedido) values ("Monitor", 325, 1, 3)
+
+100. Se eu colocar Referencia, aqui, por exemplo "Rio", clicar em Pesquisar, olha la, ele traz o Registro so do Rio de Janeiro,
+
+Hibernate: 
+    select
+        this_.codigo as codigo1_1_0_,
+        this_.data_venda as data_ven2_1_0_,
+        this_.entrega as entrega3_1_0_,
+        this_.referencia as referenc4_1_0_,
+        this_.valor_total as valor_to5_1_0_ 
+    from
+        pedido this_ 
+    where
+        lower(this_.referencia) like ?
+
+101. Se eu colocar, aqui, "preto", ele vai trazer, la, o Registro de Ribeirao Preto,
+
+Hibernate: 
+    select
+        this_.codigo as codigo1_1_0_,
+        this_.data_venda as data_ven2_1_0_,
+        this_.entrega as entrega3_1_0_,
+        this_.referencia as referenc4_1_0_,
+        this_.valor_total as valor_to5_1_0_ 
+    from
+        pedido this_ 
+    where
+        lower(this_.referencia) like ?
+
+102. O Status da Entrega, tambem posso informar, posso informar o Codigo, aqui. Ai, aqui, fica meio complicado, nao eh, de eu informar o Codigo 1, aqui, e "preto" em Referencia, o Ribeirao Preto nao eh do Codigo 1. Entao, eu so posso colocar o Codigo 1.
+
+103. Beleza? Entao, aquele filtro, aquele metodo filtrar(), que a gente criou, aqui, no DAO, tambem nos ajuda a adicionar um filtro dinamico nas nossas telinhas, ai.
+
+104. Okay?
+
+105. Bom, para a gente poder clicar nesse botaozinho, aqui, de Editar, eu preciso implementar o Converter, porque ele vai redirecionar para a tela de Cadastro, esse botaozinho, aqui, na tela de Pesquisa de Pedido, vai redirecionar para a tela de Cadastro, passando o codigo do Pedido.
+
+106. Entao, o Converter ja esta aqui, oh, PedidoConverter.java, o Converter ja esta aqui, e ele precisa buscar pelo Codigo, no Banco de dados,
+
+    if (value != null) {
+        retorno = this.pedidoDAO.buscarPeloCodigo(new Long(value));
+    }
+
+107. E isso esta implementado no DAO. Entao, eh so a gente ir la no DAO,
+
+public Pedido buscarPeloCodigo(Long codigo) {
+    return this.manager.(Pedido.class, codigo);
+}
+
+108. E, entao, a Tela vai estar pronta, tambem, para editar este Pedido.
+
+109. Vamos reinicar o Tomcat.
+
+110. Acessar em http://localhost:8080/pedidos-venda/PesquisaPedido.xhtml.
+
+111. Clicar em Pesquisar.
+
+112. Vamos esperar o Hibernate subir, mais uma vez.
+
+113. Se eu clicar, por exemplo, aqui, em Editar, para o Registro de Codigo 1, ele ja trouxe, aqui, os Itens do Pedido.
+
+114. Eu acho que eu nao fiz um Cadastro, aqui, para a gente testar, nao eh?
+
+115. Vamos em http://localhost:8080/pedidos-venda/CadastroPedido.xhtml.
+
+116. Vamos colocar, aqui, em Referencia, "Campinas".
+
+117. Status PENDENTE, eu posso clicar, aqui, em Adicionar item, Descricao: Sabonete, Quantidade: 10, Valor unitario: 3. Clico em Salvar. Ele salvou. Se eu for la em Pesquisa, procurar por PENDENTE, que eh esse ultimo que eu criei, em que eu coloquei como PENDENTE, olha ai.
+
+118. Posso vir, aqui, em Editar, mudar o Status para REALIZADA, por exemplo, clicar em Salvar esse Pedido.
+
+119. Vamos voltar, aqui, na Pesquisa, olha la, o Registro de Campinas ja esta como REALIZADA.
+
+120. Okay?
+
+121. Entao, vamos la. O nosso DAO, esta percebendo, ai, a ideia, nao eh?
+
+122. Isso ja estava claro, ai, eu acho que voce foi percebendo isso durante o Curso, nao eh? Que o DAO eh responsavel por isso, nao eh? Para a parte de Acesso aos Dados.
+
+123. O que, talvez, nao ficou claro, eh,... vamos fazer na proxima telinha, aqui, oh.
+
+124. Normalmente, a gente cria um DAO, uma classe DAO, oh, por exemplo PedidoDAO, a gente pega o nome do Modelo, e coloca um DAO na frente, entao, PedidoDAO. 
+
+125. Normalmente, eh 1 DAO para cada Entidade. Entao, eu tenho um DAO, aqui, para ItemPedido, tambem.
+
+126. Por que que eu coloquei esse DAO para ItemPedido?
+
+127. Porque eu coloquei, aqui, no Sisteminha, oh, uma especie de Relatorio / Entregas pendentes.
+
+128. O que que significa esse Entregas pendentes?
+
+129. Eu quero saber, o cara chegou, no dia, para trabalhar, e tem que ver todos os itens que tem para ele entregar hoje, para ele poder separar, la, no Estoque.
+
+130. Entao, vamos supor, la, tem Sabonete, Shampoo, essas coisas, ele vai la e pesquisa, nao eh?, os Itens Pendentes, e, ai, ele ja separa, no estoque, ali, para agilizar.
+
+131. Seria algo assim.
+
+132. Entao, como, isso, a gente quer pesquisar os Itens que estao Pendentes, entao, a gente criaria, aqui, no ItemPedidoDAO, porque eu vou fazer uma Pesquisa no Item.
+
+133. Okay?
+
+134. So que eu vou fazer o filtro na Entrega, por ser uma Entrega Pendente.
+
+135. Vamos criar isso, aqui, com Criteria tambem? ..., createCriteria para ItemPedido,
+
+public List<ItemPedido> buscarItensPendentes() {
+    Session session = this.manager.unwrap(Session.class);
+    Criteria criteria = session.createCriteria(ItemPedido.class);
+
+
+    return null;    
+}
+
+136. E, aqui, ele vai retornar criteria.list();
+
+public List<ItemPedido> buscarItensPendentes() {
+    Session session = this.manager.unwrap(Session.class);
+    Criteria criteria = session.createCriteria(ItemPedido.class);
+
+
+    return criteria.list();    
+}
+
+137. Okay, vamos adicionar o filtro, aqui, entao, 
+
+    criteria.createAlias("", "");
+
+, por que que eu vou criar esse alias, ai? Porque eu preciso fazer o filtro em Pedido.
+
+138. Entao, o atributo Pedido, la dentro, em ItemPedido, chamando de "p",
+
+    criteria.createAlias("pedido", "p");
+
+, e, ai, eu vou adicionar uma Restricao, onde a propriedade p.entrega vai ser igual a Entrega.PENDENTE,
+
+    criteria.createAlias("pedido", "p")
+            .add(Restrictions.eq("p.entrega", Entrega.PENDENTE));
+
+139. Okay?
+
+140. Falta criar o Controller. Deixa eu criar o Controller, ai, dessa EntregasPendentesBean, senao, nao vai dar certo. Aqui, em EntregasPendentes.xhtml, tem o entregasPendentesBean,
+
+    <f:viewAction action="#{entregasPendentesBean.buscarItensPendentes}"/>
+
+141. Eu crio esse Controller. Mas eh uma classe bem simples,
+
+package com.algaworks.pedidovenda.controller;
+
+public class EntregaPedidoBean {
+
+}
+
+142. Anoto, aqui, com @ViewScoped, que, como eu disse, ja comecei a fazer com atualizacao, ViewScoped, do pacote javax.faces.view.ViewScoped, ja eh um pacote diferente, oh. Aqui, no JSF 2.2, ja tem suporte ao ViewScoped,
+
+package com.algaworks.pedidovenda.controller;
+
+import javax.faces.view.ViewScoped;
+
+@ViewScoped
+public class EntregaPedidoBean {
+
+
+
+}
+
+143. 
+
+import javax.faces.view.ViewScoped;
+import javax.inject.Named;
+
+@ViewScoped
+@Named
+public class EntregaPedidoBean {
+
+
+}
+
+144. Eh que este curso nao eh de JSF, mas, se voce olhar a diferenca, ai, do locadora-veiculo-web, que, na epoca que eu gravei, nao tinha, esse, aqui, ja tem.
+
+145. Essa seria uma diferenca, ai.
+
+146. implemens Serializable,
+
+import javax.faces.view.ViewScoped;
+import javax.inject.Named;
+
+import java.io.Serializable;
+
+@ViewScoped
+@Named
+public class EntregaPedidoBean implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+
+}
+
+147. Aqui, a gente vai ter uma Lista, de ItemPedido, itensPendentes,
+
+@ViewScoped
+@Named
+public class EntregaPedidoBean implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private List<ItemPedido> itensPendentes;
+
+
+}
+
+148. Aqui, na Telinha, EntregasPendentes.xhtml, na hora em que ele esta Carregando a Telinha, ele vai chamar esse metodo, buscarItensPendentes(),
+
+    <f:viewAction action="#{entregasPendentesBean.buscarItensPendentes}" />
+
+, entao, a gente precisa criar esse metodo, aqui,
+
+
+@ViewScoped
+@Named
+public class EntregaPedidoBean implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private List<ItemPedido> itensPendentes;
+
+
+    public void buscarItensPendentes() {
+
+    }
+
+}
+
+, que vai iniciar esse itensPendentes, aqui. Ele vai inicar com o que?
+
+149. Com a consulta que a gente implementou la no ItemPedidoDAO,
+
+@ViewScoped
+@Named
+public class EntregaPedidoBean implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private List<ItemPedido> itensPendentes;
+
+    @Inject
+    private ItemPedidoDAO itemPedidoDAO;
+
+    public void buscarItensPendentes() {
+        this.itensPendentes = this.itemPedidoDAO.buscarItensPendentes();
+    }
+    
+
+}
+
+150. Vamos injetar o DAO, aqui, direto, ItemPedidoDAO. Para aparecer la na telinha, deixa eu so gerar o Getter de itensPendentes, para ele conseguir mostrar, aqui, no dataTable, em EntregasPendentes.xhtml,
+
+    <p:dataTable value="#{entregasPendentesBean.itensPendentes}" var="item"
+        style="..." emptyMessage="..."
+    ...
+    </p:dataTable>
+
+151. Nao eh? Eh so um dataTable, simples, que vai mostrar, la, o Codigo, Descricao, e Quantidade. Como eu disse, se fosse uma regrinha, ali, o cara chegou, deixa eu ver o que que eu tenho que separar no Estoque, aqui.
+
+152. Vamos subir, novamente, o Tomcat.
+
+153. Acessar a http://localhost:8080/pedidos-venda/PesquisaPedido.xhtml.
+
+154. Okay, vamos Pesquisar, para ele iniciar o Hibernate, aqui.
+
+155. Okay, fez a Consulta. 
+
+156. Nao existe nenhuma Entrega Pendente. Vou cadastrar uma nova Entrega, aqui, Referencia Campinas, Status PENDENTE.
+
+157. Adicionar 1 Item, aqui, Sabonete, 10, isso custa 2,00. E, tambem Pasta de dente, 5, custa 8 reais.
+
+158. Clicar em Salvar.
+
+159. Pedido salvo com sucesso.
+
+160. Na Pesquisa de Pedidos, para a gente confirmar, eu tenho 1 Entrega Pendente, agora.
+
+161. Entao, se ele for Pesquisar as Entregas Pendentes, deixa eu limpar o Log do Console, aqui, Menu Relatorios / Entregas Pendentes, entao, ele vai la, oh, mostra o Codigo do Pedido, so para ele saber, olha la, o Sabonete, ele tem que entregar 10, e a Pasta de dente, ele tem que entregar 5.
+
+162. E esse eh o SELECT que ele fez,
+
+Hibernate: 
+    select
+        this_.codigo as codigo1_0_1_,
+        this_.descricao as descrica2_0_1_,
+        this_.codigo_pedido as codigo_p5_0_1_,
+        this_.quantidade as quantida3_0_1_,
+        this_.valor as valor4_0_1_,
+        p1_.codigo as codigo1_1_0_,
+        p1_.data_venda as data_ven2_1_0_,
+        p1_.entrega as entrega3_1_0_,
+        p1_.referencia as referenc4_1_0_,
+        p1_.valor_total as valor_to5_1_0_ 
+    from
+        item_pedido this_ 
+    inner join
+        pedido p1_ 
+            on this_.codigo_pedido=p1_.codigo 
+    where
+        p1_.entrega=?
+
+, no ITEM_PEDIDO, fez o JOIN com PEDIDO, para fazer o filtro, ali, na ENTREGA.
+
+163. Okay?
+
+164. Bom, a ultima telinha que eu criei, aqui, para a gente trabalhar nesse DAO, para a gente mexer nas proximas aulas, ai, no DAO Generico, depois, chegar, ai, falar um pouquinho de Repositorio, eh o Vendas por dia.
+
+165. Entao, vamos la.
+
+166. Eu criei essa telinha, ValorVendaPorDia.xhtml, que vai mostrar o seguinte: eu quero saber, por dia, quanto que eu vendi.
+
+167. Eh uma especie de Relatorio, la, que o Cliente pediu para voce fazer, que ele queria saber assim, oh, no dia tal, eu vendi 500,00, no outro dia, 600,00, por ai, vai.
+
+168. Beleza? Entao, eh uma consulta com Agregacao, que a gente vai precisar fazer aqui, em cima do Pedido.
+
+169. Porque, no Pedido, eu tenho o atributo valorTotal.
+
+170. E tem o atributo dataVenda.
+
+171. Entao, nos vamos agrupar pela Data e somar o Valor.
+
+172. Beleza?
+
+173. Entao, vamos la.
+
+174. Para a gente fazer isso, tambem, eu vou criar uma nova classe, aqui, dentro do pacote .dao, que vai representar isso, dai, para mim. Eu vou colocar, aqui, como um vo, um Value Object, que vai representar, para mim, o Valor total de venda do dia, ValorTotalVendaDoDia,
+
+package com.algaworks.pedidosvenda.dao.vo;
+
+public class ValorTotalVendaDoDia {
+
+}
+
+175. O que que eu vou ter, aqui, nessa classe? O dia em que foi vendido, e um BigDecimal, com o valor total das vendas desse dia,
+
+package com.algaworks.pedidosvenda.dao.vo;
+
+public class ValorTotalVendaDoDia {
+
+
+    private Date dia;
+    private BigDecimal valorTotal;
+}
+
+176. Eu preciso gerar o Construtor que recebe esses caras, porque eu vou fazer uma Consulta, la, com JPQL, por exemplo, que ja inicia isso, para mim.
+
+177. Vamos gerar os Getters e os Setters, aqui, tambem.
+
+178. Okay.
+
+179. ValorTotalVendaDoDia, se voce olhar, aqui, em ValorVendasPorDia.xhtml, vai estar, la, o dia e o valorTotal, que vai ser mostrado no dataTable, em cima de uma propriedade, la, no ManagedBean, chamada de vendas,
+
+    <p:dataTable value="#{valorVendasPorDiaBean.vendas}" var="venda"
+            style="..." emptyMessage="..."
+            <p:column headerText="Data">
+                <h:outputText value="#{venda.dia}">
+                    <f:convertDateTime pattern="dd/MM/yyyy" />
+                </h:outputText>
+            </p:column>
+            <p:column headerText="Valor total">
+                <h:outputText value="#{venda.valorTotal}" />
+            </p:column>
+    </p:dataTable>
+
+180. Esse cara, eu tambem nao criei. Vamos criar esse Controller, aqui, chamei, ele, aqui, de ValorVendasPorDiaBean,
+
+import javax.faces.view.ViewScoped;
+import javax.inject.Named;
+
+import java.io.Serializable;
+
+@ViewScoped
+@Named
+public class ValorVendasPorDiaBean implements Serializable {
+
+
+
+}
+
+181. Okay, entao, eu preciso de uma Lista, de ValorTotalVendaDoDia, que eu estou chamando de vendas, 
+
+@ViewScoped
+@Named
+public class ValorVendasPorDiaBean implements Serializable {
+
+    ...
+
+    private List<ValorTotalVendaDoDia> vendas;
+
+
+}
+
+182. E eu vou injetar, aqui, PedidoDAO, porque eu vou fazer a Consulta em cima do Pedido,
+
+@ViewScoped
+@Named
+public class ValorVendasPorDiaBean implements Serializable {
+
+    ...
+
+    private List<ValorTotalVendaDoDia> vendas;
+
+    @Inject
+    private PedidoDAO pedidoDAO;
+
+}
+
+183. Beleza? Quando eu estou iniciando essa Telinha, ValorVendasPorDia.xhtml, ele vai chamar esse metodo, oh, buscarValorTotalVendaDoDia(),
+
+    <f:metadata>
+        <f:viewAction action="#{valorVendasPorDiaBean.buscarValorTotalVendaDoDia}" />
+    </f:metadata>
+
+184. Vamos criar esse metodo, aqui. E, nesse metodo, a gente vai inicializar essa propriedade vendas, no meu PedidoDAO.buscarValorTotalVendaDoDia(), nao existe esse metodo, a gente vai criar ele, aqui, agora. Vamos, so, antes, gerar o Getter, aqui, de vendas. Nao precisa gerar o Setter, porque a gente nao esta setando nada, la,
+
+@ViewScoped
+@Named
+public class ValorVendasPorDiaBean implements Serializable {
+
+    ...
+
+    private List<ValorTotalVendaDoDia> vendas;
+
+    @Inject
+    private PedidoDAO pedidoDAO;
+
+    public void buscarValorTotalVendaDoDia() {
+        this.vendas = this.pedidoDAO.buscarValorTotalVendaDoDia();
+    }
+
+    public List<ValorTotalVendaDoDia> getVendas() {
+        return vendas;
+    }
+
+}
+
+185. Entao, em PedidoDAO, o metodo buscarValorTotalVendaDoDia(),
+
+public List<ValorTotalVendaDoDia> buscarValorTotalVendaDoDia() {
+    return null;    
+}
+
+186. Vamos la, 
+
+    return this.manager.createQuery()
+
+, vamos fazer com JPQL, mesmo,
+
+    return this.manager.createQuery("select NEW", ""); 
+
+, "select NEW", porque eu vou criar um objeto desse tipo, aqui, ValorTotalVendaDoDia, deixa eu copiar, aqui, oh, o nome do pacote, para nao ter nenhum errinho, com.algaworks.pedidovenda.dao.vo.ValorTotalVendaDoDia, 
+
+    return this.manager.createQuery("select "
+                    + "NEW com.algaworks.pedidovenda.dao.vo.ValorTotalVendaDoDia()", resultClass);
+
+, o que que eu vou precisar passar aqui, no Construtor?
+
+187. Agora, mesmo eu volto, aqui, 
+
+    return this.manager.createQuery("select "
+                    + "NEW com.algaworks.pedidovenda.dao.vo.ValorTotalVendaDoDia() "
+                    + "from Pedido p "
+                    + "group by p.dataVenda", resultClass)
+
+188. Ou seja, eu estou agrupando pela DataVenda, e quero somar os valores totais desse Pedido.
+
+189. Entao, se a gente voltar, aqui, oh, em ValorTotalVendaDoDia, o que que eu preciso? Passar, no Construtor, a Data que eu estou agrupando, e a soma dos valores, de valorTotal. Entao, 
+
+    return this.manager.createQuery("select "
+            + "NEW com.algaworks.pedidoVenda.dao.vo.ValorTotalVendaDoDia(p.dataVenda, sum(p.valorTotal)) "
+            + "from Pedido p "
+            + "group by p.dataVenda "
+            , ValorTotalVendaDoDia.class
+    ).getResultList();
+
+190. Entao, eu passo, no Construtor, p.dataVenda, vai ser o dia que, justamente, por isso que eu estou agrupando, e eu quero somar o valor total de cada Pedido, ou seja, sum(p.valorTotal).
+
+191. Entao, por dia, eu vou somar o valorTotal de cada Pedido.
+
+192. Isso, aqui, vai me retornar um ValorTotalVendaDoDia.class, .getResultList();
+
+193. Vamos testar. Reiniciar o Tomcat.
+
+194. Acessar http://localhost:8080/pedidos-venda/EntregasPendentes.xhtml, que, ai, ele ja vai iniciar, ate, o Hibernate, aqui, para mim.
+
+195. Nao tem nenhuma entrega pendente. Okay.
+
+196. Agora, acessar Vendas Por Dia, http://localhost:8080/pedidos-venda/ValorVendasPorDia.xhtml.
+
+197. Retornou, no Log do Console,
+
+Hibernate: 
+    select
+        pedido0_.data_venda as col_0_0_,
+        sum(pedido0_.valor_total) as col_1_0_ 
+    from
+        pedido pedido0_ 
+    group by
+        pedido0_.data_venda
+
+198. Oh, os que eu ja inseri, ele ja esta fazendo o agrupamenteo, la, para mim. Vou cadastrar mais alguns, aqui, Campinas, Sabonete, 10, 2. 
+
+198. Colocar Belo Horizonte, Pasta de Dente, 50, 6.
+
+199. Okay, acessar, novamente, Vendas por Dia.
+
+200. No dia 11/03/2019, ele adicionou 320,00, aqui, falando, para a gente, do Valor da Venda.
+
+201. Bom, aqui, oh, 
+
+Hibernate: 
+    select
+        pedido0_.data_venda as col_0_0_,
+        sum(pedido0_.valor_total) as col_1_0_ 
+    from
+        pedido pedido0_ 
+    group by
+        pedido0_.data_venda
+
+, o SELECT, agrupando pela Data de Venda, somando o Valor Total do Pedido.
+
+202. Bom, so, mais uma vez, falando, aqui, do DAO.
+
+203. Repara, entao, que eu fiz todas as consultas, acessando o Hibernate, essas coisas, sempre no DAO.
+
+204. E, normalmente, eh 1 DAO para cada Entidade.
+
+205. Beleza?
+
+206. No DAO, o padrao eh esse, para cada Entidade que eu tenho, eu vou la e crio um DAO e faco a Consulta em cima daquele DAO, eu faco a consulta em cima daquela Entidade, no DAO especifico. Beleza?
+
+207. E adiciono, vou adicionando novos metodos, sempre que eu preciso de uma nova consulta, sempre que eu preciso de alguma coisa, aqui, uma consulta diferente, alguma coisa, assim, eu vou la, e adiciono o novo metodo nesse DAO.
+
+208. Bom, era isso, daqui, que eu queria falar com voce a respeito do DAO. Na proxima aula, a gente vai criar um DAO generico, para facilitar um pouquinho a nossa vida, ai.
+
+209. Fim da     Aula 15.001. O Pattern DAO.
+
+
+-->

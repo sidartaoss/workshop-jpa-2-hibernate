@@ -1,0 +1,74 @@
+<!--
+
+    Aula 11.005. Consultas Nativas
+
+1. 
+
+@Test
+public void consultaNativa() {
+    Query query = this.manager.createNativeQuery("select * from carro", Carro.class);
+
+    List<Carro> carros = query.getResultList();
+
+    for (Carro carro : carros) {
+        System.out.println(carro.getPlaca());
+    }
+}
+
+2. Ate agora, nos vimos JPQL e Criteria. E elas sao bastante flexiveis, voce consegue fazer quase todas as queries que voce precisar no seu Sistema, no Sistema Comum que voce estiver fazendo, a maioria dos Sistemas, voce consegue executar. 
+
+3. Mas, pode ter alguma situacao muito especifica, que voce vai precisar de executar uma Consulta Nativa.
+
+4. Pode acontecer algo assim.
+
+5. Pode acontecer, as vezes voce esta migrando algum Sistema, que esta em uma outra linguagem, para Java, e voce esta usando o Hibernate com JPA, e, ai, tem uma Query, la, muito grande, complicada, que ja esta funcionando, e, voce, 'Po, eu nao quero trocar essa query, entao, eu vou usar uma consulta nativa.'. Sei la, sao alguns motivos que voce pode querer usar uma Consulta Nativa.
+
+6. Ou seja, nao usar nem JPQL e nao usar nem Criteria.
+
+7. Para esses casos, eh so, a gente consegue, entao, fazer uma Consulta Nativa, direto. Aqui, eu estou escrevendo 'select * from carro', eh uma Consulta que a gente escreve la no Workbench, por exemplo, aqui, oh, eh uma consulta totalmente comum,
+
+# codigo, chassi, cor, placa, valor_diaria, codigo_modelo, data_criacao, data_modificacao, foto
+1, , Branco, AAA-1234, 205.00, 1, 2019-02-02 17:15:27, 2019-02-02 17:25:31, 
+3, , Prata, AAA-9999, 120.00, 3, , , 
+4, , Branco, BBB-8888, 250.00, 1, , , 
+5, , Azul, AAA-7788, 230.00, 2, , , 
+6, , Prata, DDD-1234, 130.00, 3, , , 
+8, , Prata, XXX-1111, 200.00, 2, , , 
+9, , Prata, ADD-8989, 200.00, 14, , , 
+10, , Vermelho, YNP-5588, 230.00, 13, , , 
+12, , Preto, AAA-1111, , 16, 2019-02-19 18:24:45, 2019-02-19 18:24:45, 
+13, , Prata, ABC-1234, , , 2019-02-19 19:13:00, 2019-02-19 19:13:00, 
+14, , Branco, MMM-1111, 200.00, 1, 2019-02-24 14:23:24, 2019-02-24 14:23:24, ...
+
+, okay?, a gente pode fazer, eh um SQL normal, entao, a diferenca dele eh, no EntityManager, chamar o metodo .createNativeQuery("", .class). Entao, quando a gente invocar o metodo createNativeQuery(), eu vou passar um SQL comum, uma String representando um SQL comum.
+
+8. Okay?
+
+9. Ele vai retornar isso numa Query e, ai, voce pega o resultList(), pronto. Como nos usamos o nosso mapeamento, aqui, foi usado para gerar as tabelas no banco de dados, todos os mapeamentos estao certinhos.
+
+10. E, ai, entao, se eu mandar executar esse metodo, aqui, ele fez, la, o select * from carro, e trouxe, para a gente, o resultado,
+
+Hibernate: 
+    select
+        * 
+    from
+        carro
+AAA-1234
+AAA-9999
+BBB-8888
+AAA-7788
+DDD-1234
+XXX-1111
+ADD-8989
+YNP-5588
+AAA-1111
+ABC-1234
+MMM-1111
+
+11. Okay?
+
+12. Bom, eh isso daqui que a gente precisa para saber fazer Query Nativa, mas, mais uma vez, nao va usar isso tanto, nao, prefira muito mais usar JPQL, usar Criteria, ao inves de usar SQL normal. 
+
+13. Fim da     Aula 11.005. Consultas Nativas.
+
+-->

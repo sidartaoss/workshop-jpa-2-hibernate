@@ -1,0 +1,568 @@
+<!--
+    Aula 15.006. Trabalhando com Procedures
+
+1. Nesta aula, aqui, eu vou te explicar como eh que a gente usa o JPA 2.1, na versao 2.1, para chamar uma Procedure.
+
+2. Okay?
+
+3. O objetivo nao eh te explicar a respeito de Stored Procedure, mas, te mostrar o JPA faz para chamar Uma.
+
+4. Okay? Entao, se voce quiser em Stored Procedure, tem Documentacao do proprio MySQL, do Oracle, entao, para aprender a linguagem, dentro da Procedure.
+
+5. Entao, se voce ja trabalha numa empresa, isso eh muito comum, eu ja trabalhei em empresas assim, onde tinha um Analista que criava as Stored Procedures, e, eu, como Desenvolvedor Java, chamava a Procedure, quando precisasse.
+
+6. Okay? Entao, tem empresas que gostam de trabalhar assim.
+
+7. Okay?
+
+8. Bom, entao, essa eh a ideia.
+
+9. Eu criei, aqui, uma parte de exemplo para te mostrar. No JPA 2.1, ficou simples a gente chamar uma Stored Procedure, beleza?
+
+10. Entao, vamos la.
+
+11. Vamos criar, aqui.
+
+12. Eu criei, la, um Schema exemplo_procedures, okay? Estou na versao 2.1, do JPA, okay?
+
+<persistence version="2.1"
+  xmlns="http://xmlns.jcp.org/xml/ns/persistence" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence 
+  http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">	
+
+	<persistence-unit name="exemploProceduresPU" transaction-type="RESOURCE_LOCAL">
+		<properties>
+			<property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/exemplo_procedures"/> 
+			<property name="javax.persistence.jdbc.user" value="admin" /> 
+			<property name="javax.persistence.jdbc.password" value="root" /> 
+			<property name="javax.persistence.jdbc.driver" value="com.mysql.jdbc.Driver" />
+
+			<property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect" />
+
+			<property name="hibernate.show_sql" value="true" />
+			<property name="hibernate.format_sql" value="true" />
+		</properties>
+	</persistence-unit>
+
+13. Criei, aqui, o EntityManagerFactory,
+
+package com.algaworks.procedure;
+
+public class AnalisarPedido {
+
+    public static void main(String[] args) {
+        EntityManagerFactory factory = Persistence.createEntityManagerFactory("exemploProcedurePU");
+        EntityManager manager = factory.createEntityManager();
+
+
+    }
+}
+
+, para recuperar o EntityManager.
+
+14. Vamos brincar, aqui, no Banco.
+
+15. Eu criei, aqui, 3 tabelinhas, para criar alguma coisa, que, talvez, teria sentido, ai, de usar uma StoredProcedure, para ficar um pouco mais proximo, ai, de uma utilizacao, okay?
+
+16. Mas, como eu disse, cada empresa gosta de trabalhar de um jeito, tem empresas que gostam de usar Stored Procedures, tem outras que nao, okay?
+
+17. Eu, particularmente, ja usei algumas vezes, mas, nao sou tao fa, nao. 
+
+18. Claro que tem as suas aplicacoes, okay?
+
+19. Mas, eu prefiro evitar. Se chegar a alguma situacao que precise, acaba usando.
+
+20. Entao, olha so, eu criei 3 tabelas, aqui, pedido, devolucao, e entrega.
+
+21. Eu vou mandar rodar, aqui, para gerar elas.
+
+22. Essas tabelas, junto com o codigo da Procedure, eu vou colocar, aqui, oh, nesse arquivinho script.sql, para voce pegar aqui, okay?
+
+23. Entao, olha la, tem a tabela pedido, bem simples, tem o codigo, valor, status.
+
+24. A tabela devolucao, tem, la, codigo, codigo_pedido, e status, tambem.
+
+25. A tabela entrega tem codigo, codigo_pedido, e uma previsao de entrega, algo assim.
+
+26. E a ideia que eu quero fazer, eh, dentro da procedure, se voce nunca ouviu falar o que eh procedure e esta assistindo esta aula, Procedure eh como se fosse um metodo dentro do Banco de Dados.
+
+27. Okay? Eh um metodo que eu vou chamar, passando parametros, ele vai executar um monte de coisas, e, depois, pode devolver um resultado, ou nao.
+
+28. Okay?
+
+29. Entao, esse "metodo", entre aspas, essa Procedure, esse Procedimento, nao eh?, que eu vou executar, ali, eu quero fazer algo do tipo assim, eu vou passar o codigo do pedido, para a Procedure, para ela analisar, e, dentro dela, eu vou verificar se o status for igual a CANCELADO, eu vou gerar uma Devolucao, com o Status, aqui, PENDENTE.
+
+30. Falando, oh, "Entao, eu tenho que gerar uma Devolucao, eu coloco essa Devolucao como Pendente, para esse Pedido, nao eh?, codigo do pedido, aqui,"
+
+create table devolucao (
+    codigo bigint primary key auto_increment,
+    >>> codigo_pedido bigint, <<<
+    status varchar(50)
+)
+
+, para, depois, o Sistema, la na frente, devolver o dinheiro para a pessoa, algo assim.
+
+31. Se o Pedido for diferente, for APROVADO, por exemplo, eu posso mandar para ENTREGA, mandando entregar agora, para hoje, coloca a data de hoje em previsao,
+
+create table entrega (
+    codigo bigint primary key auto_increment,
+    codigo_pedido bigint,
+    previsao date
+)
+
+32. Okay? Seria algo que rodaria todo dia a noite, alguma coisa assim, chamando essa procedure.
+
+33. Okay?
+
+34. Entao, isso, daqui, sao as tabelas, que a gente vai brincar com elas.
+
+35. Para a gente criar a Procedure, no MySQL, nos vamos escrever, aqui, oh, 
+
+DELIMITER $$
+
+, DELIMITER, eu escolho um Delimitador, esses 2 dolares, ai, por exemplo, e, la no fim, eu vou colocar END $$, e os 2 dolares, e, depois, DELIMITER ;
+
+
+DELIMITER $$
+
+
+END $$
+
+DELIMITER ;
+
+
+
+36. Aqui, nesse meio, a gente vai escrever o codigo da Procedure, a criacao da Procedure, e o codigo dela, o que que ela vai fazer. Okay?
+
+37. Entao, vamos la.
+
+38. Eu vou escrever, aqui, oh. Eu estou escrevendo com letra maiuscula, mas, poderia ser minuscula.
+
+39. CREATE PROCEDURE, eu vou chamar ela de analisarPedido(), e, aqui, oh, vai comecar a receber os parametros. No Java, eh String x, nao eh?, aqui, eh o contrario, aqui, eu coloco codigo bigint. Como eh uma variavel que eu estou criando, aqui, eu costumo colocar um Vzinho na frente, ou seja, vCodigo, criar um padraozinho, por ser uma variavel que eu estou criando, aqui, dentro, da Procedure, comeca com "v".
+
+40. Isso, voce vai entender agorinha. Aqui, dentro, eu coloco BEGIN.
+
+DELIMITER $$
+
+CREATE PROCEDURE analisarPedido(vCodigo bigint)
+BEGIN
+
+END $$
+
+DELIMITER ;
+
+41. Para fazer o END, aqui. Okay, vamos declarar, aqui, uma variavel, eu vou chamar de vStatus, do tipo varchar(50). Oh, repara que eu estou programando para banco de dados, por isso que falei, esse curso nao eh so abrir Procedure. Eu estou fazendo essa, aqui, do inicio, so para voce ver, basicamente, como eh que ela funciona,
+
+DELIMITER $$
+
+CREATE PROCEDURE analisarPedido(vCodigo bigint)
+BEGIN
+
+    DECLARE vStatus VARCHAR(50);
+
+
+
+END $$
+
+DELIMITER ;
+
+42. Entao, vamos la, eu vou te escrever o select, aqui, normal, 'select status', eu vou fazer o select em pedido, eu preciso pegar o status, aqui, do pedido, para fazer a comparacao. Entao, eu vou pegar esse status, de select 'status', e vou colocar dentro dessa variavel vStatus,
+
+DELIMITER $$
+
+CREATE PROCEDURE analisarPedido(vCodigo BIGINT)
+BEGIN
+
+    DECLARE vStatus VARCHAR(50);
+
+    SELECT status INTO vStatus 
+    FROM pedido
+    WHERE codigo = vCodigo;
+
+END $$
+
+DELIMITER ;
+
+43. Ta vendo?
+
+44. Entao, aqui, eu ja consigo ver, oh, vCodigo eh um parametro que eu estou passando, vStatus eh uma variavel que eu declarei ali, okay?
+
+45. Entao, por isso que eu costumo colocar esse Vzinho, aqui, na frente. Eu sei que status, oh, eh o status da tabela pedido, nao eh o vStatus da variavel que eu criei.
+
+46. OKay? Entao, vamos la.
+
+47. Se o vStatus for igual a 'CANCELADO', por exemplo, se ele for igual a 'CANCELADO', entao, eu vou fazer um INSERT na tabela devolucao, porque a tabela devolucao tem o codigo_pedido e o status, nao eh?
+
+48. E eu vou passar os valores vCodigo e, aqui, eu falei, eu vou colocar 'PENDENTE',
+
+DELIMITER $$
+
+CREATE PROCEDURE analisarPedido(vCodigo BIGINT)
+BEGIN
+
+    DECLARE vStatus VARCHAR(50);
+
+    SELECT status INTO vStatus
+    FROM pedido
+    WHERE codigo = vCodigo;
+
+    IF vStatus = 'CANCELADO' THEN
+            INSERT INTO devolucao (codigo_pedido, status) VALUES (vCodigo, 'PENDENTE');
+
+END $$
+
+DELIMITER ;
+
+49. Okay? Senao, eu vou fazer o INSERT na tabela entrega (codigo_pedido, previsao), ou seja, se ele nao esta CANCELADO, vamos supor que so tem 2 ESTADOS, se ele nao eh CANCELADO, uma outra coisa, poderia fazer, nao eh?, else if vStatus = 'APROVADO' then, a gente insere, oh, entao, se, else if vStatus for igual a APROVADO, entao, a gente insere, na entrega, os valores do vCodigo e, aqui, a previsao, eu vou colocar now(), vamos pegar hoje, vamos supor que isso, aqui, esta rodando meia-noite, e eh para os pedidos serem entregues no dia seguinte, end if;
+
+DELIMITER $$
+
+CREATE PROCEDURE analisarPedido(vCodigo BIGINT)
+BEGIN
+
+    DECLARE vStatus VARCHAR(50);
+
+    SELECT status INTO vStatus
+    FROM pedido
+    WHERE codigo = vCodigo;
+
+    IF vStatus = 'CANCELADO' THEN
+        INSERT INTO devolucao(codigo_pedido, status) VALUES (vCodigo, 'PENDENTE');
+    ELSEIF vStatus = 'APROVADO' THEN
+        INSERT INTO entrega(codigp_pedido, previsao) VALUES (vCodigo, now());
+    END IF; 
+
+END $$
+
+DELIMITER ;
+
+50. Vamos testar isso daqui?
+
+51. Ver se, ate aqui, esta funcionando?
+
+52. Vamos tentar criar, aqui, no Workbench.
+
+53. Okay. Criamos, aqui, a Procedure analisarPedido, ela esta com esse codigo, aqui, dentro dela.
+
+54. Vamos aprender a chamar,..., primeiro, vamos inserir alguns pedidos, aqui, dentro, nao eh?, para a gente poder brincar.
+
+55. Vou pegar, aqui, oh,
+
+insert into pedido (valor, status) values (100, 'CANCELADO');
+insert into pedido (valor, status) values (200, 'APROVADO');
+insert into pedido (valor, status) values (200, 'APROVADO');
+
+56. Inseri, ai, 3 Pedidos, select * from pedido,
+
+# codigo, valor, status
+1, 100.00, CANCELADO
+2, 200.00, APROVADO
+3, 200.00, APROVADO
+
+57. Olha la, o 1 eh CANCELADO, o 2 eh APROVADO, o 3 eh APROVADO, tambem.
+
+58. Vamos, aqui, no Eclipse, agora, entao, para a gente aprender como eh que a gente chama a Stored Procedure, a partir do JPA.
+
+59. Entao, olha la, eu ja criei o EntityManagerFactory, peguei o EntityManager, vou fazer tudo no metodo main(), diretao, okay?
+
+60. O seguinte, StoredProcedureQuery, do pacote javax.persistence, na variavel storedProcedure, StoredProcedureQuery storedProcedure = , olha so, manager.createStoredProcedureQuery(""), e, aqui, eu passo o nome da Procedure, esse nome, aqui, oh, analisarPedido(), que eh o nome da Procedure que eu criei.
+
+61. Vamos la. O que que eu preciso fazer agora?
+
+62. Eu vou registrar os parametros de entrada,
+
+    public static void main(String[] args) {
+        EntityManagerFactory factory = Persistence.createEntityManagerFactory("exemploProcedurePU");
+        EntityManager manager = factory.createEntityManager();
+
+        StoredProcedureQuery storedProcedure = manager.createStoredProcedureQuery("analisarPedido");
+
+
+    }
+
+63. Essa Procedure, ela nao recebe, aqui, oh, vCodigo?, que eh um inteiro?
+
+64. Entao, eu vou escrever aqui, oh, storedProcedure.registerStoredProcedureParameter(position, type, mode). Eu posso passar por posicao, eu vou passar o nome, aqui, oh, codigoPedido, eh do tipo Long, ParameterMode, eh do Tipo IN, eh um Parametro de Entrada,
+
+    StoredProcedureQuery storedProcedure = manager.createStoredProcedureQuery("analisarPedido");
+    storedProcedure.registerStoredProcedureParameter("codigoPedido", Long.class, ParameterMode.IN);
+
+64. Ja vou falar sobre Parametros de Saida, agora, mesmo, que a gente mexer na Stored Procedure.
+
+65. Entao, eh um Parametro de Entrada, certo?, eh um parametro que eu quero passar para ca, 
+
+...
+
+CREATE PROCEDURE analisarPedido(>>> vCodigo BIGINT <<< )
+BEGIN
+
+...
+
+, por isso que eu passei ParameterMode.IN, do tipo Long, e eu estou dando o nome para ele, aqui, codigoPedido.
+
+66. Okay?
+
+67. O que que eu vou fazer, aqui, agora, oh, storedProcedure.set..., vamos definir um valor para esse Parametro? storedProcedure.setParameter("codigoPedido", 1L);, vou passar o 1, aqui,
+
+
+    StoredProcedureQuery storedProcedure = manager.createStoredProcedureQuery("analisarPedido");
+    storedProcedure.registerStoredProcedueParameter("codigoPedido", Long.class, ParameterMode.IN);
+    storedProcedure.setParameter("codigoPedido", 1L);
+
+68. Eu quero pesquisar, quando ele for fazer esse select, aqui,
+
+    SELECT status INTO vStatus
+    FROM pedido
+    WHERE codigo = vCodigo
+
+, o de codigo 1, que eh esse CANCELADO,
+
+# codigo, valor, status
+>>> 1, 100.00, CANCELADO
+2, 200.00, APROVADO
+3, 200.00, APROVADO
+
+69. O CANCELADO deve gerar uma devolucao, okay?
+
+70. Se a gente for olhar, aqui, agora, oh, nao tem nenhuma devolucao no Banco, select * from devolucao;
+
+# codigo, codigo_pedido, status
+
+
+71. Entao, vamos la, vamos mandar executar?
+
+72. storedProcedure.execute();
+
+73. So isso. Se eu mandar executar ela, ele ja vai executar.
+
+74. Vamos ver que, vai faltar uma coisinha, ai, que eu ja falo para voce, ele nao vai inserir, la dentro da Procedure,
+
+    StoredProcedureQuery storedProcedure = manager.createStoredProcedureQuery("analisarPedido");
+    storedProcedure.registerStoredProcedureQuery("codigoPedido", Long.class, Parameter.IN);
+    storedProcedure.setParameter("codigoPedido", 1L);
+    stoedProcedure.execute();
+
+75. Vou mandar executar, aqui, oh, o AnalisadorPedido. Vai comecar a carregar o Hibernate. Olha la, ele fez a chamada da Procedure. Eh assim que a gente faz, oh, call analisarPedido(), passando os parametros,
+
+Hibernate: 
+    {call analisarPedido(?)}
+
+76. Beleza? Entao, ele ja conseguiu chamar a Stored Procedure pra gente.
+
+77. Vamos ver se ele inseriu la na tabela devolucao?
+
+78. select * from devolucao;
+
+# codigo, codigo_pedido, status
+
+
+79. Nao trouxe.
+
+80. Mas, por que, Normandes? Nao tinha um INSERT, la?
+
+81. O que que a gente precisa fazer toda vez que a gente quer fazer 1 INSERT?
+
+82. TRANSACAO, nao eh?
+
+83. Entao, faltou, eu posso fazer de duas formas. Eu posso fazer, aqui, oh,
+
+    manager.getTransaction.begin();
+    storedProcedure.execute();
+    manager.getTransaction.commit();
+
+84. Mandar executar mais uma vez.
+
+85. Vai chamar a Procedure, agora, vamos dar uma olhada, select * from devolucao;
+
+# codigo, codigo_pedido, status
+2, 1, PENDENTE
+
+
+86. Olha, aqui, na tabela devolucao, a devolucao gerada.
+
+87. Para codigo_pedido 1, o Tipo PENDENTE.
+
+88. Perceberam?
+
+89. Entao, eu preciso ABRIR A TRANSACAO.
+
+90. Se a Transacao nao for controlada dentro da Stored Procedure, eu preciso controlar ela, aqui, fora.
+
+91. Como eh que eu faco, entao? Tem jeito de eu controlar dentro da Procedure?
+
+92. Tem.
+
+93. Para a gente poder brincar, aqui, pode apagar ela para criar de novo. E, ai, vamos la, vamos abrir a Transacao, a gente pode abrir ela aqui, oh, START TRANSACTION; e, la no fim, a gente da o COMMIT,
+
+    DECLARE vStatus VARCHAR(50);
+
+    SELECT status INTO vStatus
+    FROM pedido
+    WHERE codigo = vCodigo
+
+    >>> START TRANSACTION;
+
+    if vStatus = 'CANCELADO' then
+        INSERT INTO devolucao(codigo_pedido, status) VALUES(vCodigo, 'PENDENTE');
+    ELSEIF vStatus = 'APROVADO' then
+        INSERT INTO entrega(codigo_pedido, previsao) VALUES(vCodigo, now());
+    END IF;
+
+    COMMIT;
+
+94. Se o cara que criou a Procedure, nao sei se voce ou nao, mas, o cara que criou falou, 'Pode deixar que eu controlo a Transacao', ou 'Nao, voce controla la no Java', entao, voces decidem, ai.
+
+95. Da o Commit, se der tudo certo, ou seja, se ele chamar o Rollback, ele vai dar o Rollback de tudo que ele fez.
+
+96. Vamos mandar criar, de novo, a Procedure.
+
+97. Vou mandar executar, novamente. Ele vai inserir uma nova devolucao.
+
+98. select * from devolucao;
+
+# codigo, codigo_pedido, status
+2, 1, PENDENTE
+3, 1, PENDENTE
+
+99. Olha la, a segunda devolucao que ele gerou, aqui, para aquele mesmo Pedido.
+
+100. Por que a gente nao colocou, aqui, no codigo fonte da Stored Procedure, regra para verificar so na hora de buscar, aqui, so os pedidos que estiverem com Status tal, nao eh?, teria que criar algo assim.
+
+101. Eu nao criei para a gente poder ficar repetindo esses testes, assim, mesmo, sem ter que ficar inserindo e apagando o banco de dados toda hora.
+
+102. Bom, vamos brincar mais um pouquinho, aqui.
+
+103. Vamos testar, aqui, vamos passar um outro codigo, aqui, se eu passar o Pedido de Codigo 2, ele vai buscar, o Pedido de Codigo 2 eh um APROVADO, se for um APROVADO, ele vai gerar uma Entrega.
+
+104. select * from entrega;
+
+# codigo, codigo_pedido, previsao
+
+
+105. Nao tem nenhuma.
+
+106. Eu coloquei o 2, aqui,
+
+        storedProcedure.setParameter("codigoPedido", 2L);
+
+        // manager.getTransaction.begin();
+        storedProcedure.execute();
+        // manager.getTransaction.commit();
+
+107. Vamos executar. Entao, a gente ve que o if(), ali, esta funcionando dentro da Procedure.
+
+108. Fazer o select na entrega, select * from entrega;
+
+# codigo, codigo_pedido, previsao
+1, 2, 2019-03-13
+
+, e, ai, deu certo, fez o insert, aqui, em Entrega.
+
+109. Oh, Normandes, voce me falou a respeito de Parametro de Entrada. E de Saida?
+
+110. Vamos mexer com isso, agora?
+
+111. Vamos. Vamos fazer o seguinte.
+
+112. Vamos criar uma Analise, aqui, dentro da Procedure, ou seja, que ele definiu, aqui, se ele Cancelou, a gente fala que gerou, ai, a Analise foi de Devolucao. Se ele registrou a Entrega, a gente fala que a analise eh uma Entrega.
+
+113. E esse eh um Parametro de Saida.
+
+114. O parametro de Saida, significa que eu vou colocar um OUT, aqui, como se fosse o retorno, eu posso ter alguns retornos, aqui, posso ter varios parametros de Entrada, que eh o Default, ou eu escrevo IN, se voce quiser deixar explicito, o Default eh IN, se voce nao colocar nada,
+
+CREATE PROCEDURE analisarPedido(IN vCodigo BIGINT, OUT)
+BEGIN
+
+...
+
+115. OUT eu estou falando que eh um parametro de saida, entao, OUT vAnalise, do tipo VARCHAR(50), de 50, tambem,
+
+116. Entao,
+
+CREATE PROCEDURE analisarPedido(IN vCodigo BIGINT, OUT vAnalise VARCHAR(50))
+
+117. Entao, eu vou fazer o seguinte, oh, se ele inseriu, aqui, eu vou SET vAnalise = 'DEVOLUCAO'. Se ele caiu, aqui, na entrega, a Analise foi 'ENTREGA'. Okay? Eh isso que eu estou querendo fazer, aqui,
+
+    IF vStatus = 'CANCELADO' THEN
+        INSERT INTO devolucao(codigo_pedido, status) VALUES(vCodigo, 'PENDENTE');
+        SET vAnalise = 'DEVOLUCAO';
+    ELSEIF THEN
+        INSERT INTO entrega(codigo_pedido, previsao) VALUES(vCodigo, now());
+        SET vAnalise = 'ENTREGA';
+    END IF;
+    
+, fazer essa separacao, criar uma Analise, para te mostrar o parametro de saida sendo registrado.
+
+118. Okay? Entao, foi isso aqui, vamos apagar a Procedure e criar ela de novo.
+
+119. Okay, criamos a Procedure, agora, tem um Parametro de saida.
+
+120. Como eh que eu faco isso no JPA, Normandes?
+
+121. A gente, tambem, vai registrar, aqui, oh, storedProcedure.registerStoredProcedureParameter(position, type, mode). Vou dar, aqui, o nome de "analise", o tipo String.class, ParameterMode.OUT, porque eh um parametro de saida,
+
+    storedProcedure.registerStoredProcedureParameter("analise", String.class, ParameterMode.OUT);
+
+122. Okay?
+
+123. Ai, eu vou mandar executar a Procedure, depois que ele executou, ele ja vai conseguir recuperar o Parametro de Saida.
+
+124. Entao, eu posso recuperar, aqui, analise, String analise = , da seguinte forma,
+
+    String analise = storedProcedure.getOutputParameterValue("analise");
+
+, ai, ele vai reclamar para a gente fazer o Cast,
+
+    String analise = (String) storedProcedure.getOutputParameterValue("analise");
+
+125. System.out.println(), vamos mostrar, aqui, na tela, "A analise foi: " + analise;
+
+126. A gente mostra a Analise, aqui.
+
+127. Vamos mandar executar de novo.
+
+128. Retornou, 
+
+Hibernate: 
+    {call analisarPedido(?,?)}
+A analise foi: ENTREGA
+
+129. Se eu colocar, aqui, 1L,
+
+        ...
+        storedProcedure.registerStoredProcedureParameter("codigoPedido", Long.class, ParameterMode.IN);
+        storedProcedure.setParameter("codigoPedido", 1L);
+
+        ...
+
+, e executar de novo, retornou,
+
+Hibernate: 
+    {call analisarPedido(?,?)}
+A analise foi: DEVOLUCAO
+
+
+130. Ou seja, ele chamou e retornou os parametros.
+
+131. O objetivo principal desta aula eh te mostrar isso daqui,
+
+    EntityManagerFactory factory = Persistence.createEntityManagerFactory("exemploProceduresPU");
+    EntityManager manager = factory.createEntityManager();
+
+    >>>
+    StoredProcedureQuery storedProcedure = manager.createStoredProcedureQuery("analisarPedido");
+    storedProcedure.registerStoredProcedureParamenter("codigoPedido", Long.class, ParameterMode.IN);
+    storedProcedure.setParameter("codigoPedido", 1L);
+    storedProcedure.registerStoredProcedureParameter("analise", String.class, ParameterMode.OUT);
+    storedProcedure.execute();
+    String analise = storedProcedure.getOutputParameterValue("analise");
+    <<<
+
+    System.out.println("A analise foi: " + analise);
+
+132. No JPA 2.1, nao se esqueca, eh assim que a gente faz, ficou bem legal, voce coloca, ai, se eh um Parametro de Entrada, se eh um Parametro de Saida, o Tipo dele, da um nome para os parametros, passa os valores para os Parametros, nao eh?, os parametros de entrada, porque os de saida voce vai recuperar depois da execucao da Procedure, obviamente.
+
+133. Fim da     Aula 15.006. Trabalhando com Procedures.
+
+-->
