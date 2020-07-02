@@ -15,7 +15,7 @@
 		<hibernate.version>4.3.11.Final</hibernate.version>
 		
 		<!-- Driver MySQL -->
-		<mysql.connector.version>5.1.35</mysql.connector.version>
+		<mysql.connector.version>8.0.16</mysql.connector.version>
 		
 		<!-- Omnifaces -->
 		<omnifaces.version>2.1</omnifaces.version>
